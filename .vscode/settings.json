@@ -1,0 +1,7 @@
+{
+  // Tự động Hot Reload khi lưu file
+  "dart.flutterHotReloadOnSave": "always",
+  
+  // Tự động lưu file khi chuyển tab hoặc click ra ngoài
+  "files.autoSave": "onFocusChange"
+}

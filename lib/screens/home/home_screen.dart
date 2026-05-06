@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../constants/app_colors.dart';
 import '../main_screen.dart';
 import '../library/library_screen.dart';
 import '../leaderboard/leaderboard_screen.dart';
@@ -9,22 +8,22 @@ import 'widgets/greeting_card.dart';
 import 'widgets/category_card.dart';
 import 'widgets/congrats_banner.dart';
 
-/// Màn hình Trang chủ — 5 màu hài hòa, mỗi card khác biệt
+/// Màn hình Trang chủ — Màu tươi sáng theo mẫu
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFEEF2FB),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(
           children: [
             const HomeHeader(),
-            const SizedBox(height: 20),
-            const GreetingCard(),
-            const SizedBox(height: 20),
+            Transform.translate(
+              offset: const Offset(0, -18),
+              child: const GreetingCard()),
             _buildCategoryRow1(context),
             const SizedBox(height: 14),
             _buildCategoryRow2(context),
@@ -46,7 +45,7 @@ class HomeScreen extends StatelessWidget {
             child: CategoryCard(
               imagePath: 'image/Học.png',
               label: 'Học',
-              color: AppColors.primary,
+              color: const Color(0xFF5B8FD4), // Xanh dương mềm
               height: 150,
               onTap: () => MainScreenState.of(context)?.switchTab(1),
             ),
@@ -56,7 +55,7 @@ class HomeScreen extends StatelessWidget {
             child: CategoryCard(
               imagePath: 'image/Trò chơi.png',
               label: 'Chơi',
-              color: AppColors.coral,
+              color: const Color(0xFFE88070), // Coral ấm
               height: 150,
               onTap: () => MainScreenState.of(context)?.switchTab(2),
             ),
@@ -75,7 +74,7 @@ class HomeScreen extends StatelessWidget {
             child: CategoryCard(
               imagePath: 'image/Thư viện.png',
               label: 'Thư viện',
-              color: AppColors.tertiary,
+              color: const Color(0xFF3AA09A), // Teal
               height: 120,
               onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const LibraryScreen())),
@@ -86,7 +85,7 @@ class HomeScreen extends StatelessWidget {
             child: CategoryCard(
               imagePath: 'image/Xếp hạng.png',
               label: 'Xếp hạng',
-              color: AppColors.secondary,
+              color: const Color(0xFFF0A030), // Vàng cam ấm
               height: 120,
               onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const LeaderboardScreen())),
@@ -97,7 +96,7 @@ class HomeScreen extends StatelessWidget {
             child: CategoryCard(
               imagePath: 'image/Thành tích.png',
               label: 'Thành tích',
-              color: AppColors.violet,
+              color: const Color(0xFF9070CF), // Tím mềm
               height: 120,
               onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const AchievementsScreen())),

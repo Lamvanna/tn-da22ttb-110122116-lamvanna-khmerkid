@@ -92,13 +92,13 @@ class _CategoryCardState extends State<CategoryCard> {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Text(widget.label,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16, fontWeight: FontWeight.w800,
+                    fontSize: 16, fontWeight: FontWeight.w900,
                     color: Colors.white,
-                    letterSpacing: 0.3,
+                    letterSpacing: 0.5,
                     shadows: [
                       Shadow(
-                        color: Colors.black.withValues(alpha: 0.35),
-                        blurRadius: 6,
+                        color: Colors.black.withValues(alpha: 0.5),
+                        blurRadius: 8,
                         offset: const Offset(0, 2)),
                     ])),
               ),

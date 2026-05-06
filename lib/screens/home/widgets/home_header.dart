@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../constants/app_colors.dart';
-import '../../../screens/settings/settings_screen.dart';
+
 import '../../../services/storage_service.dart';
 import '../../../services/score_service.dart';
 
-/// Header trang chủ — Gradient sáng sang trọng + thông tin user
+/// Header trang chủ — Gradient xanh nhạt + avatar + stats card trắng
 class HomeHeader extends StatefulWidget {
   const HomeHeader({super.key});
   @override
@@ -57,36 +56,49 @@ class _HomeHeaderState extends State<HomeHeader> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment(-0.5, -1),
-          end: Alignment(0.5, 1),
-          colors: [Color(0xFF4580C4), Color(0xFF6A9DD6)],
+    return Column(children: [
+      // ═══ HEADER GRADIENT ═══
+      Container(
+        clipBehavior: Clip.none,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment(-0.5, -1),
+            end: Alignment(0.5, 1),
+            colors: [Color(0xFF1976D2), Color(0xFF64B5F6)]),
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(24),
+            bottomRight: Radius.circular(24)),
         ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(16),
-          bottomRight: Radius.circular(16)),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 22),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // === Row: Avatar + Name + Settings ===
-              Row(
+        child: Stack(clipBehavior: Clip.none, children: [
+          // Decorative stars
+          Positioned(right: 20, top: 45,
+            child: Icon(Icons.star_rounded,
+              color: Colors.white.withValues(alpha: 0.15), size: 20)),
+          Positioned(right: 55, top: 35,
+            child: Icon(Icons.star_rounded,
+              color: Colors.white.withValues(alpha: 0.1), size: 14)),
+          Positioned(left: 30, top: 55,
+            child: Icon(Icons.star_rounded,
+              color: Colors.white.withValues(alpha: 0.08), size: 12)),
+          // Elephant mascot — bên phải, to rõ
+          Positioned(right: -42, bottom: -80,
+            child: Image.asset('image/Voi header.png',
+              width: 260, height: 260, fit: BoxFit.contain)),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 52),
+              child: Row(
                 children: [
                   // Avatar circle
                   Container(
-                    width: 52, height: 52,
+                    width: 56, height: 56,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white.withValues(alpha: 0.25),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 2),
-                    ),
-                    child: const Icon(Icons.face_rounded, color: Colors.white, size: 30),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2.5)),
+                    child: ClipOval(
+                      child: Image.asset('image/Đại diện.png', fit: BoxFit.cover)),
                   ),
                   const SizedBox(width: 14),
                   // Name + Level
@@ -96,83 +108,122 @@ class _HomeHeaderState extends State<HomeHeader> {
                       children: [
                         Text(_username,
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
+                            fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
                         const SizedBox(height: 3),
                         Row(children: [
                           Icon(_getLevelIcon(_level),
-                            color: AppColors.secondaryContainer, size: 16),
+                            color: const Color(0xFF66BB6A), size: 16),
                           const SizedBox(width: 5),
                           Text('Cấp $_level: ${_getLevelTitle(_level)}',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 13, fontWeight: FontWeight.w600,
-                              color: Colors.white.withValues(alpha: 0.92))),
+                              color: Colors.white.withValues(alpha: 0.9))),
                         ]),
                       ],
                     ),
                   ),
-                  // Settings
-                  GestureDetector(
-                    onTap: () => Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => const SettingsScreen())),
-                    child: Container(
-                      width: 44, height: 44,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.15))),
-                      child: const Icon(Icons.settings_rounded, color: Colors.white, size: 22),
-                    ),
-                  ),
+
                 ],
               ),
-              const SizedBox(height: 18),
-              // === Stats bar ===
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.12))),
-                child: Row(children: [
-                  // Streak
-                  const Icon(Icons.local_fire_department_rounded,
-                    color: AppColors.secondaryLight, size: 19),
-                  const SizedBox(width: 5),
-                  Text('$_streak ngày',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
-                  Container(
-                    width: 1, height: 18,
-                    margin: const EdgeInsets.symmetric(horizontal: 14),
-                    color: Colors.white.withValues(alpha: 0.3)),
-                  // Stars
-                  const Icon(Icons.star_rounded,
-                    color: AppColors.secondaryLight, size: 19),
-                  const SizedBox(width: 5),
-                  Text('$_totalStars sao',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
-                  const Spacer(),
-                  // Level progress
+            ),
+          ),
+        ]),
+      ),
+
+      // ═══ STATS CARD (nền trắng, đè lên header) ═══
+      Transform.translate(
+        offset: const Offset(0, -28),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 16, offset: const Offset(0, 4))]),
+          child: Row(children: [
+            // Streak
+            Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Image.asset('image/Lửa chuổi.png', width: 20, height: 20),
+                const SizedBox(width: 5),
+                Text('$_streak ngày', style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16, fontWeight: FontWeight.w800,
+                  color: const Color(0xFF2C3345))),
+              ]),
+              const SizedBox(height: 3),
+              Text('Chuỗi ngày', style: GoogleFonts.plusJakartaSans(
+                fontSize: 11, fontWeight: FontWeight.w500,
+                color: const Color(0xFF9CA3AF))),
+            ])),
+            // Divider
+            Container(width: 1, height: 40, color: const Color(0xFFEEF1F8)),
+            // Stars
+            Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Image.asset('image/sao.png', width: 20, height: 20),
+                const SizedBox(width: 5),
+                Text('$_totalStars sao', style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16, fontWeight: FontWeight.w800,
+                  color: const Color(0xFF2C3345))),
+              ]),
+              const SizedBox(height: 3),
+              Text('Điểm thưởng', style: GoogleFonts.plusJakartaSans(
+                fontSize: 11, fontWeight: FontWeight.w500,
+                color: const Color(0xFF9CA3AF))),
+            ])),
+            // Divider
+            Container(width: 1, height: 40, color: const Color(0xFFEEF1F8)),
+            // Level
+            Expanded(child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Text('Lv.$_level', style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16, fontWeight: FontWeight.w800,
+                    color: const Color(0xFF2C3345))),
+                  const SizedBox(width: 8),
                   SizedBox(
-                    width: 55,
+                    width: 40,
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
                         value: _score?.levelProgress ?? 0,
-                        minHeight: 7,
-                        backgroundColor: Colors.white.withValues(alpha: 0.25),
-                        valueColor: const AlwaysStoppedAnimation(AppColors.secondaryLight)))),
-                  const SizedBox(width: 8),
-                  Text('Lv.$_level',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+                        minHeight: 6,
+                        backgroundColor: const Color(0xFFEEF1F8),
+                        valueColor: const AlwaysStoppedAnimation(Color(0xFF1976D2))))),
                 ]),
-              ),
-            ],
-          ),
+                const SizedBox(height: 3),
+                Text('Cấp độ hiện tại', style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11, fontWeight: FontWeight.w500,
+                  color: const Color(0xFF9CA3AF))),
+              ],
+            )),
+          ]),
         ),
       ),
-    );
+    ]);
+  }
+
+  Widget _buildStatItem({
+    required IconData icon,
+    required Color iconColor,
+    required String value,
+    required String label,
+  }) {
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Icon(icon, color: iconColor, size: 18),
+        const SizedBox(width: 5),
+        Text(value, style: GoogleFonts.plusJakartaSans(
+          fontSize: 16, fontWeight: FontWeight.w800,
+          color: const Color(0xFF2C3345))),
+      ]),
+      const SizedBox(height: 3),
+      Text(label, style: GoogleFonts.plusJakartaSans(
+        fontSize: 11, fontWeight: FontWeight.w500,
+        color: const Color(0xFF9CA3AF))),
+    ]);
   }
 }

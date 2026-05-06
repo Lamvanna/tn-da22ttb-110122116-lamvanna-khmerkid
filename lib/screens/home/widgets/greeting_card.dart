@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../constants/app_colors.dart';
 
-/// Greeting card — mascot + speech bubble Khmer (sáng, sang trọng)
+/// Greeting card — mascot + speech bubble Khmer (tươi sáng, gọn gàng)
 class GreetingCard extends StatelessWidget {
   const GreetingCard({super.key});
 
@@ -10,7 +10,7 @@ class GreetingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -22,29 +22,20 @@ class GreetingCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Mascot icon
-              Container(
-                width: 68, height: 68,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft, end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.tertiary.withValues(alpha: 0.12),
-                      AppColors.primary.withValues(alpha: 0.08),
-                    ]),
-                  borderRadius: BorderRadius.circular(20)),
-                child: Icon(Icons.pets_rounded, color: AppColors.tertiary, size: 34),
-              ),
+              // Mascot
+              SizedBox(
+                width: 95, height: 95,
+                child: Image.asset('image/Vật chào.png', fit: BoxFit.contain)),
               const SizedBox(width: 14),
               // Speech bubble
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.primary, AppColors.primaryLight]),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1976D2), Color(0xFF7EB5EA)]),
                   borderRadius: BorderRadius.circular(18),
                   boxShadow: [BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.20),
+                    color: const Color(0xFF1976D2).withValues(alpha: 0.20),
                     blurRadius: 12, offset: const Offset(0, 4))]),
                 child: Column(children: [
                   Text('សួស្តី!',

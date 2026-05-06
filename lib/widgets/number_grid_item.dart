@@ -62,7 +62,7 @@ class NumberGridItem extends StatelessWidget {
             else
               Text(
                 'Không',
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 9,
                   color: AppColors.textHint,
                   fontWeight: FontWeight.w500,

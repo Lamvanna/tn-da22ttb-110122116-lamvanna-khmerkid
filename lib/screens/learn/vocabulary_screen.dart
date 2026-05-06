@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../../models/khmer_vocabulary.dart';
+import '../../widgets/app_header.dart';
 
 /// Màn hình học từ vựng Khmer theo chủ đề
 class VocabularyScreen extends StatefulWidget {
@@ -62,20 +63,10 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(colors: [Color(0xFF7E57C2), Color(0xFF5C6BC0)]),
-        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(28), bottomRight: Radius.circular(28)),
-      ),
-      child: SafeArea(bottom: false, child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 4, 16, 20),
-        child: Row(children: [
-          IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_rounded), color: Colors.white),
-          Expanded(child: Text('📚 Từ vựng Khmer', textAlign: TextAlign.center,
-              style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white))),
-          const SizedBox(width: 48),
-        ]),
-      )),
+    return AppHeader(
+      title: '📚 Từ vựng Khmer',
+      onBack: () => Navigator.pop(context),
+      gradientColors: const [Color(0xFF7E57C2), Color(0xFF5C6BC0)],
     );
   }
 
@@ -105,7 +96,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 Text(c.emoji, style: const TextStyle(fontSize: 16)),
                 const SizedBox(width: 6),
-                Text(c.name, style: GoogleFonts.nunito(fontSize: 13, fontWeight: FontWeight.w700,
+                Text(c.name, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700,
                     color: selected ? Colors.white : const Color(0xFF616161))),
               ]),
             ),
@@ -130,9 +121,9 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
           Text(cat.emoji, style: const TextStyle(fontSize: 36)),
           const SizedBox(width: 14),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(cat.name, style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w800, color: cat.color)),
+            Text(cat.name, style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w800, color: cat.color)),
             Text('$learned/${cat.words.length} từ đã học',
-                style: GoogleFonts.nunito(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF757575))),
+                style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF757575))),
           ])),
           CircularProgressIndicator(
             value: cat.words.isEmpty ? 0 : learned / cat.words.length,
@@ -188,17 +179,17 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
             ]),
             const SizedBox(height: 2),
             Text('"${word.romanized}" — ${word.meaning}',
-                style: GoogleFonts.nunito(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF757575))),
+                style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF757575))),
             if (word.pronunciation.isNotEmpty)
               Text('Phát âm: ${word.pronunciation}',
-                  style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w500, color: const Color(0xFF9E9E9E))),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w500, color: const Color(0xFF9E9E9E))),
           ])),
           // Number
           Container(
             width: 28, height: 28,
             decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
             child: Center(child: Text('${index + 1}',
-                style: GoogleFonts.nunito(fontSize: 12, fontWeight: FontWeight.w800, color: color))),
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w800, color: color))),
           ),
         ]),
       ),

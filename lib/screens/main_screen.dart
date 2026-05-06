@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
+import '../constants/app_colors.dart';
 import 'home/home_screen.dart';
 import 'learn/learn_screen.dart';
 import 'play/play_screen.dart';
@@ -39,61 +41,68 @@ class MainScreenState extends State<MainScreen> {
           ProfileScreen(),
         ],
       ),
+      extendBody: true,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, -2),
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
+        child: ClipRect(
           child: BottomNavigationBar(
             currentIndex: _currentIndex,
             onTap: (index) => setState(() => _currentIndex = index),
             type: BottomNavigationBarType.fixed,
             backgroundColor: Colors.white,
-            selectedItemColor: const Color(0xFF6C63FF),
-            unselectedItemColor: const Color(0xFF9E9E9E),
+            selectedItemColor: AppColors.primary,
+            unselectedItemColor: AppColors.navInactive,
             selectedFontSize: 12,
             unselectedFontSize: 12,
-            selectedLabelStyle: GoogleFonts.nunito(
-              fontWeight: FontWeight.w700,
-            ),
-            unselectedLabelStyle: GoogleFonts.nunito(
-              fontWeight: FontWeight.w600,
-            ),
+            selectedLabelStyle: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w700),
+            unselectedLabelStyle: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w500),
             elevation: 0,
             items: const [
               BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined, size: 26),
-                activeIcon: Icon(Icons.home_rounded, size: 26),
+                icon: Padding(
+                  padding: EdgeInsets.only(bottom: 2),
+                  child: Icon(Icons.home_outlined, size: 26)),
+                activeIcon: Padding(
+                  padding: EdgeInsets.only(bottom: 2),
+                  child: Icon(Icons.home_rounded, size: 26)),
                 label: 'Trang chủ',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.school_outlined, size: 26),
-                activeIcon: Icon(Icons.school_rounded, size: 26),
+                icon: Padding(
+                  padding: EdgeInsets.only(bottom: 2),
+                  child: Icon(Icons.school_outlined, size: 26)),
+                activeIcon: Padding(
+                  padding: EdgeInsets.only(bottom: 2),
+                  child: Icon(Icons.school_rounded, size: 26)),
                 label: 'Học',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.sports_esports_outlined, size: 26),
-                activeIcon: Icon(Icons.sports_esports_rounded, size: 26),
+                icon: Padding(
+                  padding: EdgeInsets.only(bottom: 2),
+                  child: Icon(Icons.sports_esports_outlined, size: 26)),
+                activeIcon: Padding(
+                  padding: EdgeInsets.only(bottom: 2),
+                  child: Icon(Icons.sports_esports_rounded, size: 26)),
                 label: 'Chơi',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline_rounded, size: 26),
-                activeIcon: Icon(Icons.person_rounded, size: 26),
+                icon: Padding(
+                  padding: EdgeInsets.only(bottom: 2),
+                  child: Icon(Icons.person_outline_rounded, size: 26)),
+                activeIcon: Padding(
+                  padding: EdgeInsets.only(bottom: 2),
+                  child: Icon(Icons.person_rounded, size: 26)),
                 label: 'Hồ sơ',
               ),
             ],

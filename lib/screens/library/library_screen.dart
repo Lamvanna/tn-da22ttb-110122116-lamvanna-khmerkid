@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/app_header.dart';
 
 /// Màn hình Thư viện - Library Screen
 /// Hiển thị bộ sưu tập bài học/truyện theo danh mục
@@ -111,40 +112,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF6C63FF), Color(0xFFFFD700)],
-        ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 8, 20, 24),
-          child: Row(
-            children: [
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.arrow_back_rounded),
-                color: AppColors.textWhite,
-                iconSize: 28,
-              ),
-              Expanded(
-                child: Text(
-                  AppStrings.libraryTitle,
-                  style: AppTextStyles.screenTitle,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(width: 48),
-            ],
-          ),
-        ),
-      ),
+    return AppHeader(
+      title: '📚 Thư viện',
+      onBack: () => Navigator.pop(context),
+      gradientColors: const [Color(0xFF6C63FF), Color(0xFF9089E0)],
     );
   }
 

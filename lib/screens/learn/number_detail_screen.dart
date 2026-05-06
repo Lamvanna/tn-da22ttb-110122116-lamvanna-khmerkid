@@ -6,7 +6,7 @@ import '../../constants/app_strings.dart';
 import '../../constants/app_text_styles.dart';
 import '../../models/khmer_number.dart';
 import '../../widgets/number_grid_item.dart';
-import 'spelling_screen.dart';
+import 'spelling_map_screen.dart';
 
 /// Màn hình chi tiết số Khmer
 /// Tích hợp TTS phát âm, tập viết, lưới chọn số, mẹo học
@@ -387,10 +387,7 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => SpellingScreen(
-                character: _current.character,
-                romanized: _current.romanized,
-              ),
+              builder: (_) => const SpellingMapScreen(),
             ),
           );
         },

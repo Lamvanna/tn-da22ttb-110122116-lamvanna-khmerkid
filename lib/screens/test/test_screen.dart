@@ -148,7 +148,7 @@ class _TestScreenState extends State<TestScreen> {
               Text(stars >= 2 ? '🎉' : '📝', style: const TextStyle(fontSize: 48)),
               const SizedBox(height: 8),
               Text('Kết quả bài kiểm tra',
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 22, fontWeight: FontWeight.w800,
                       color: const Color(0xFF37474F))),
               const SizedBox(height: 12),
@@ -165,7 +165,7 @@ class _TestScreenState extends State<TestScreen> {
               ),
               const SizedBox(height: 12),
               Text('$_correct/${_questions.length} câu đúng ($pct%)',
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 18, fontWeight: FontWeight.w600,
                       color: const Color(0xFF616161))),
               const SizedBox(height: 20),
@@ -183,7 +183,7 @@ class _TestScreenState extends State<TestScreen> {
                               borderRadius: BorderRadius.circular(14)),
                           side: const BorderSide(color: Color(0xFF5B9CF5))),
                       child: Text('Về lại',
-                          style: GoogleFonts.nunito(fontWeight: FontWeight.w700,
+                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700,
                               color: const Color(0xFF5B9CF5))),
                     ),
                   ),
@@ -200,7 +200,7 @@ class _TestScreenState extends State<TestScreen> {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14))),
                       child: Text('Làm lại',
-                          style: GoogleFonts.nunito(fontWeight: FontWeight.w700,
+                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700,
                               color: Colors.white)),
                     ),
                   ),
@@ -234,7 +234,7 @@ class _TestScreenState extends State<TestScreen> {
               children: [
                 const SizedBox(height: 8),
                 Text('Chọn độ khó',
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: const Color(0xFF37474F))),
@@ -276,7 +276,7 @@ class _TestScreenState extends State<TestScreen> {
                           borderRadius: BorderRadius.circular(18)),
                     ),
                     child: Text('Bắt đầu kiểm tra',
-                        style: GoogleFonts.nunito(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                             color: Colors.white)),
@@ -326,12 +326,12 @@ class _TestScreenState extends State<TestScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: color)),
                   Text(sub,
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                           color: const Color(0xFF757575))),
@@ -369,7 +369,7 @@ class _TestScreenState extends State<TestScreen> {
               Expanded(
                 child: Text('📝 Kiểm tra',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                         color: Colors.white)),
@@ -399,11 +399,11 @@ class _TestScreenState extends State<TestScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Câu ${_qIdx + 1}/${_questions.length}',
-                        style: GoogleFonts.nunito(fontSize: 14,
+                        style: GoogleFonts.plusJakartaSans(fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF757575))),
                     Text('Đúng: $_correct',
-                        style: GoogleFonts.nunito(fontSize: 14,
+                        style: GoogleFonts.plusJakartaSans(fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF4CAF50))),
                   ],
@@ -435,7 +435,7 @@ class _TestScreenState extends State<TestScreen> {
                   ),
                   child: Text(q.q,
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 20, fontWeight: FontWeight.w700,
                           color: const Color(0xFF37474F))),
                 ),
@@ -490,7 +490,7 @@ class _TestScreenState extends State<TestScreen> {
                                     ? Icon(ok ? Icons.check_rounded : Icons.close_rounded,
                                         color: Colors.white, size: 16)
                                     : Text(String.fromCharCode(65 + i),
-                                        style: GoogleFonts.nunito(
+                                        style: GoogleFonts.plusJakartaSans(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w800,
                                             color: const Color(0xFF5B9CF5))),
@@ -503,7 +503,7 @@ class _TestScreenState extends State<TestScreen> {
                                       ? GoogleFonts.kantumruyPro(
                                           fontSize: 24,
                                           color: const Color(0xFF3E2C6E))
-                                      : GoogleFonts.nunito(
+                                      : GoogleFonts.plusJakartaSans(
                                           fontSize: 17,
                                           fontWeight: FontWeight.w600,
                                           color: const Color(0xFF37474F))),
@@ -545,7 +545,7 @@ class _TestScreenState extends State<TestScreen> {
               Expanded(
                 child: Text('Kiểm tra',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: Colors.white)),

@@ -105,19 +105,19 @@ class _LetterFindGameScreenState extends State<LetterFindGameScreen>
                   style: const TextStyle(fontSize: 48)),
               const SizedBox(height: 12),
               Text('Kết quả',
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
                       color: const Color(0xFF37474F))),
               const SizedBox(height: 8),
               Text('$_correctCount/$_totalQuestions đúng ($pct%)',
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF616161))),
               const SizedBox(height: 4),
               Text('Tổng điểm: $_score ⭐',
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
                       color: const Color(0xFFFFA726))),
@@ -136,7 +136,7 @@ class _LetterFindGameScreenState extends State<LetterFindGameScreen>
                               borderRadius: BorderRadius.circular(14)),
                           side: const BorderSide(color: Color(0xFF7E57C2))),
                       child: Text('Thoát',
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.plusJakartaSans(
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF7E57C2))),
                     ),
@@ -159,7 +159,7 @@ class _LetterFindGameScreenState extends State<LetterFindGameScreen>
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14))),
                       child: Text('Chơi lại',
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.plusJakartaSans(
                               fontWeight: FontWeight.w700,
                               color: Colors.white)),
                     ),
@@ -228,7 +228,7 @@ class _LetterFindGameScreenState extends State<LetterFindGameScreen>
               Expanded(
                 child: Text('Trò chơi chữ',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: Colors.white)),
@@ -240,7 +240,7 @@ class _LetterFindGameScreenState extends State<LetterFindGameScreen>
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Text('⭐ $_score',
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: Colors.white)),
@@ -259,12 +259,12 @@ class _LetterFindGameScreenState extends State<LetterFindGameScreen>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('Câu $_questionNum/$_totalQuestions',
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF757575))),
             Text('Đúng: $_correctCount',
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF4CAF50))),
@@ -301,7 +301,7 @@ class _LetterFindGameScreenState extends State<LetterFindGameScreen>
       child: Column(
         children: [
           Text('Tìm chữ cái Khmer có phiên âm:',
-              style: GoogleFonts.nunito(
+              style: GoogleFonts.plusJakartaSans(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF757575))),
@@ -314,7 +314,7 @@ class _LetterFindGameScreenState extends State<LetterFindGameScreen>
               borderRadius: BorderRadius.circular(16),
             ),
             child: Text('"${_correctLetter.romanized}"',
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF7E57C2))),
@@ -322,7 +322,7 @@ class _LetterFindGameScreenState extends State<LetterFindGameScreen>
           if (_correctLetter.meaning.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text('Gợi ý: ${_correctLetter.meaning}',
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFFBDBDBD))),

@@ -81,7 +81,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                       child: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2E7D32), size: 22)),
                   ),
                   const Spacer(),
-                  Text('Mật khẩu mới', style: GoogleFonts.fredoka(
+                  Text('Mật khẩu mới', style: GoogleFonts.plusJakartaSans(
                     fontSize: 24, fontWeight: FontWeight.w600, color: const Color(0xFF1B5E20))),
                   const Spacer(),
                   const SizedBox(width: 44),
@@ -116,11 +116,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                         BoxShadow(color: const Color(0xFF4CAF50).withValues(alpha: 0.08), blurRadius: 32, offset: const Offset(0, 12)),
                         BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 4))]),
                     child: Column(children: [
-                      Text('Tạo mật khẩu mới', style: GoogleFonts.nunito(
+                      Text('Tạo mật khẩu mới', style: GoogleFonts.plusJakartaSans(
                         fontSize: 22, fontWeight: FontWeight.w800, color: const Color(0xFF1B5E20))),
                       const SizedBox(height: 6),
                       Text('Mật khẩu mới phải khác với\nmật khẩu đã sử dụng trước đó.', textAlign: TextAlign.center,
-                        style: GoogleFonts.nunito(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF9E9E9E), height: 1.5)),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF9E9E9E), height: 1.5)),
                       const SizedBox(height: 24),
                       // Password field
                       _buildPassField(
@@ -143,7 +143,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                           color: const Color(0xFF43A047).withValues(alpha: 0.06),
                           borderRadius: BorderRadius.circular(14)),
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text('Yêu cầu mật khẩu:', style: GoogleFonts.nunito(
+                          Text('Yêu cầu mật khẩu:', style: GoogleFonts.plusJakartaSans(
                             fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF2E7D32))),
                           const SizedBox(height: 6),
                           _req('Ít nhất 6 ký tự'),
@@ -166,7 +166,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                           child: _isLoading
                             ? const SizedBox(width: 24, height: 24,
                                 child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                            : Text('Đặt lại mật khẩu', style: GoogleFonts.nunito(
+                            : Text('Đặt lại mật khẩu', style: GoogleFonts.plusJakartaSans(
                                 fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
                         ),
                       ),
@@ -191,10 +191,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
     return TextField(
       controller: controller,
       obscureText: obscure,
-      style: GoogleFonts.nunito(fontSize: 15, fontWeight: FontWeight.w600, color: const Color(0xFF2D2D2D)),
+      style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w600, color: const Color(0xFF2D2D2D)),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFFBDBDBD)),
+        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFFBDBDBD)),
         prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF66BB6A), size: 22),
         suffixIcon: IconButton(
           onPressed: onToggle,
@@ -217,7 +217,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
       child: Row(children: [
         const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF66BB6A), size: 16),
         const SizedBox(width: 8),
-        Text(text, style: GoogleFonts.nunito(fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFF757575))),
+        Text(text, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFF757575))),
       ]),
     );
   }
@@ -238,7 +238,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
 
   void _showError(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: GoogleFonts.nunito(fontWeight: FontWeight.w600)),
+      content: Text(msg, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
       backgroundColor: const Color(0xFFEF5350),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))));
@@ -254,11 +254,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
               color: const Color(0xFF43A047).withValues(alpha: 0.1), shape: BoxShape.circle),
             child: const Icon(Icons.check_circle_rounded, color: Color(0xFF43A047), size: 44)),
           const SizedBox(height: 20),
-          Text('Thành công!', style: GoogleFonts.nunito(
+          Text('Thành công!', style: GoogleFonts.plusJakartaSans(
             fontSize: 20, fontWeight: FontWeight.w800, color: const Color(0xFF1B5E20))),
           const SizedBox(height: 8),
           Text('Mật khẩu đã được đặt lại.\nHãy đăng nhập với mật khẩu mới!', textAlign: TextAlign.center,
-            style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFF757575))),
+            style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFF757575))),
           const SizedBox(height: 24),
           SizedBox(width: double.infinity, height: 50, child: ElevatedButton(
             onPressed: () {
@@ -269,7 +269,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF43A047),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-            child: Text('Đăng nhập ngay', style: GoogleFonts.nunito(
+            child: Text('Đăng nhập ngay', style: GoogleFonts.plusJakartaSans(
               fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)))),
         ])),
     ));

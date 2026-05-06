@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/app_header.dart';
 
 /// Màn hình Cài đặt - Settings Screen
 /// Bao gồm: Âm thanh, Ngôn ngữ (Khmer/Việt/English), Học offline
@@ -60,38 +61,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: AppColors.purpleGradient,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 8, 20, 24),
-          child: Row(
-            children: [
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.arrow_back_rounded),
-                color: AppColors.textWhite,
-                iconSize: 28,
-              ),
-              Expanded(
-                child: Text(
-                  AppStrings.settingsTitle,
-                  style: AppTextStyles.screenTitle,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(width: 48),
-            ],
-          ),
-        ),
-      ),
+    return AppHeader(
+      title: '⚙️ Cài đặt',
+      onBack: () => Navigator.pop(context),
     );
   }
 

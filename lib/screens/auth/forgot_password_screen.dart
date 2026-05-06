@@ -87,7 +87,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                     ),
                   ),
                   const Spacer(),
-                  Text('Quên mật khẩu', style: GoogleFonts.fredoka(
+                  Text('Quên mật khẩu', style: GoogleFonts.plusJakartaSans(
                     fontSize: 24, fontWeight: FontWeight.w600, color: const Color(0xFF1B5E20))),
                   const Spacer(),
                   const SizedBox(width: 44),
@@ -123,20 +123,20 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                         BoxShadow(color: const Color(0xFF4CAF50).withValues(alpha: 0.08), blurRadius: 32, offset: const Offset(0, 12)),
                         BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 4))]),
                     child: Column(children: [
-                      Text('Đừng lo lắng!', style: GoogleFonts.nunito(
+                      Text('Đừng lo lắng!', style: GoogleFonts.plusJakartaSans(
                         fontSize: 22, fontWeight: FontWeight.w800, color: const Color(0xFF1B5E20))),
                       const SizedBox(height: 6),
                       Text('Nhập email hoặc số điện thoại\nđã đăng ký để nhận mã xác minh.', textAlign: TextAlign.center,
-                        style: GoogleFonts.nunito(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF9E9E9E), height: 1.5)),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF9E9E9E), height: 1.5)),
                       const SizedBox(height: 24),
                       // Email field
                       TextField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        style: GoogleFonts.nunito(fontSize: 15, fontWeight: FontWeight.w600, color: const Color(0xFF2D2D2D)),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w600, color: const Color(0xFF2D2D2D)),
                         decoration: InputDecoration(
                           hintText: 'Email hoặc số điện thoại',
-                          hintStyle: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFFBDBDBD)),
+                          hintStyle: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFFBDBDBD)),
                           prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF66BB6A), size: 22),
                           filled: true,
                           fillColor: Colors.white.withValues(alpha: 0.7),
@@ -163,7 +163,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                           child: _isLoading
                             ? const SizedBox(width: 24, height: 24,
                                 child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                            : Text('Gửi mã xác minh', style: GoogleFonts.nunito(
+                            : Text('Gửi mã xác minh', style: GoogleFonts.plusJakartaSans(
                                 fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
                         ),
                       ),
@@ -180,7 +180,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     const Icon(Icons.arrow_back_rounded, color: Color(0xFF2E7D32), size: 18),
                     const SizedBox(width: 6),
-                    Text('Quay lại đăng nhập', style: GoogleFonts.nunito(
+                    Text('Quay lại đăng nhập', style: GoogleFonts.plusJakartaSans(
                       fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF2E7D32))),
                   ]),
                 ),
@@ -197,7 +197,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     final email = _emailController.text.trim();
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Vui lòng nhập email hoặc số điện thoại', style: GoogleFonts.nunito(fontWeight: FontWeight.w600)),
+        content: Text('Vui lòng nhập email hoặc số điện thoại', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
         backgroundColor: const Color(0xFFEF5350),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))));
@@ -302,7 +302,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen>
                       child: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2E7D32), size: 22)),
                   ),
                   const Spacer(),
-                  Text('Xác minh', style: GoogleFonts.fredoka(
+                  Text('Xác minh', style: GoogleFonts.plusJakartaSans(
                     fontSize: 24, fontWeight: FontWeight.w600, color: const Color(0xFF1B5E20))),
                   const Spacer(),
                   const SizedBox(width: 44),
@@ -337,11 +337,11 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen>
                         BoxShadow(color: const Color(0xFF4CAF50).withValues(alpha: 0.08), blurRadius: 32, offset: const Offset(0, 12)),
                         BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 4))]),
                     child: Column(children: [
-                      Text('Nhập mã xác minh', style: GoogleFonts.nunito(
+                      Text('Nhập mã xác minh', style: GoogleFonts.plusJakartaSans(
                         fontSize: 22, fontWeight: FontWeight.w800, color: const Color(0xFF1B5E20))),
                       const SizedBox(height: 6),
                       Text('Chúng tôi đã gửi mã 4 số đến\n${widget.email}', textAlign: TextAlign.center,
-                        style: GoogleFonts.nunito(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF9E9E9E), height: 1.5)),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF9E9E9E), height: 1.5)),
                       const SizedBox(height: 28),
                       // OTP boxes
                       Row(
@@ -355,7 +355,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen>
                             textAlign: TextAlign.center,
                             keyboardType: TextInputType.number,
                             maxLength: 1,
-                            style: GoogleFonts.nunito(fontSize: 26, fontWeight: FontWeight.w800, color: const Color(0xFF1B5E20)),
+                            style: GoogleFonts.plusJakartaSans(fontSize: 26, fontWeight: FontWeight.w800, color: const Color(0xFF1B5E20)),
                             decoration: InputDecoration(
                               counterText: '',
                               contentPadding: const EdgeInsets.symmetric(vertical: 16),
@@ -379,16 +379,16 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen>
                             onTap: () {
                               _startResendTimer();
                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content: Text('Đã gửi lại mã xác minh!', style: GoogleFonts.nunito(fontWeight: FontWeight.w600)),
+                                content: Text('Đã gửi lại mã xác minh!', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
                                 backgroundColor: const Color(0xFF4CAF50),
                                 behavior: SnackBarBehavior.floating,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))));
                             },
-                            child: Text('Gửi lại mã', style: GoogleFonts.nunito(
+                            child: Text('Gửi lại mã', style: GoogleFonts.plusJakartaSans(
                               fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF2E7D32),
                               decoration: TextDecoration.underline, decorationColor: const Color(0xFF2E7D32))))
                         : RichText(text: TextSpan(
-                            style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFF9E9E9E)),
+                            style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFF9E9E9E)),
                             children: [
                               const TextSpan(text: 'Gửi lại mã sau '),
                               TextSpan(text: '${_resendSeconds}s',
@@ -409,7 +409,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen>
                           child: _isLoading
                             ? const SizedBox(width: 24, height: 24,
                                 child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                            : Text('Xác minh', style: GoogleFonts.nunito(
+                            : Text('Xác minh', style: GoogleFonts.plusJakartaSans(
                                 fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
                         ),
                       ),
@@ -429,7 +429,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen>
     final code = _codeControllers.map((c) => c.text).join();
     if (code.length < 4) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Vui lòng nhập đủ 4 số', style: GoogleFonts.nunito(fontWeight: FontWeight.w600)),
+        content: Text('Vui lòng nhập đủ 4 số', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
         backgroundColor: const Color(0xFFEF5350),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))));

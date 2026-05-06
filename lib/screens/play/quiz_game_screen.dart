@@ -158,7 +158,7 @@ class _QuizGameScreenState extends State<QuizGameScreen> {
               const SizedBox(height: 12),
               Text(msg,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
                       color: const Color(0xFF37474F))),
@@ -196,7 +196,7 @@ class _QuizGameScreenState extends State<QuizGameScreen> {
                               borderRadius: BorderRadius.circular(14)),
                           side: const BorderSide(color: Color(0xFF7E57C2))),
                       child: Text('Thoát',
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.plusJakartaSans(
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF7E57C2))),
                     ),
@@ -221,7 +221,7 @@ class _QuizGameScreenState extends State<QuizGameScreen> {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14))),
                       child: Text('Chơi lại',
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.plusJakartaSans(
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF5D4037))),
                     ),
@@ -240,12 +240,12 @@ class _QuizGameScreenState extends State<QuizGameScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(value,
-            style: GoogleFonts.nunito(
+            style: GoogleFonts.plusJakartaSans(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFF37474F))),
         Text(label,
-            style: GoogleFonts.nunito(
+            style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF9E9E9E))),
@@ -279,7 +279,7 @@ class _QuizGameScreenState extends State<QuizGameScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text('${q.emoji} ${q.category}',
-                        style: GoogleFonts.nunito(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFFF57F17))),
@@ -302,7 +302,7 @@ class _QuizGameScreenState extends State<QuizGameScreen> {
                     ),
                     child: Text(q.question,
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.nunito(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF37474F))),
@@ -372,7 +372,7 @@ class _QuizGameScreenState extends State<QuizGameScreen> {
                                           size: 18)
                                       : Text(
                                           String.fromCharCode(65 + i),
-                                          style: GoogleFonts.nunito(
+                                          style: GoogleFonts.plusJakartaSans(
                                               fontSize: 15,
                                               fontWeight: FontWeight.w800,
                                               color: const Color(0xFFF57F17)),
@@ -386,7 +386,7 @@ class _QuizGameScreenState extends State<QuizGameScreen> {
                                         ? GoogleFonts.kantumruyPro(
                                             fontSize: 24,
                                             color: const Color(0xFF3E2C6E))
-                                        : GoogleFonts.nunito(
+                                        : GoogleFonts.plusJakartaSans(
                                             fontSize: 18,
                                             fontWeight: FontWeight.w600,
                                             color: const Color(0xFF37474F))),
@@ -429,7 +429,7 @@ class _QuizGameScreenState extends State<QuizGameScreen> {
               Expanded(
                 child: Text('Đố vui Khmer',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: Colors.white)),
@@ -441,7 +441,7 @@ class _QuizGameScreenState extends State<QuizGameScreen> {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Text('⭐ $_score',
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: Colors.white)),
@@ -460,12 +460,12 @@ class _QuizGameScreenState extends State<QuizGameScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('Câu ${_qIdx + 1}/$_total',
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF757575))),
             Text('Đúng: $_correct',
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF4CAF50))),

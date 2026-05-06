@@ -48,7 +48,7 @@ class LearningPathCard extends StatelessWidget {
             // Title
             Text(
               title,
-              style: GoogleFonts.nunito(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFF37474F),
@@ -131,7 +131,7 @@ class LearningPathCard extends StatelessWidget {
                       ),
                       child: Text(
                         '${(progress * 100).toInt()}%',
-                        style: GoogleFonts.nunito(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                           color: progressColor,
@@ -163,7 +163,7 @@ class LearningPathCard extends StatelessWidget {
               child: Text(
                 buttonText,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,

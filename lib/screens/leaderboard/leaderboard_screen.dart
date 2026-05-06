@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/score_service.dart';
+import '../../widgets/app_header.dart';
 
 /// Màn hình Xếp hạng - Bảng xếp hạng học sinh
 class LeaderboardScreen extends StatefulWidget {
@@ -63,66 +64,17 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft, end: Alignment.bottomRight,
-          colors: [Color(0xFFFFA726), Color(0xFFFF7043)]),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30)),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 4, 16, 22),
-          child: Column(children: [
-            Row(children: [
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white)),
-              Expanded(child: Text(
-                '🏅 Bảng xếp hạng',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.fredoka(
-                  fontSize: 22, fontWeight: FontWeight.w600, color: Colors.white))),
-              const SizedBox(width: 48),
-            ]),
-            const SizedBox(height: 12),
-            // My rank card
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(16)),
-              child: Row(children: [
-                const Text('🐘', style: TextStyle(fontSize: 28)),
-                const SizedBox(width: 12),
-                Expanded(child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Bạn', style: GoogleFonts.nunito(
-                      fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-                    Text('$_myStars ⭐  •  Cấp ${_score?.level ?? 1}',
-                      style: GoogleFonts.nunito(
-                        fontSize: 13, fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.9))),
-                  ],
-                )),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20)),
-                  child: Text('#$_myRank', style: GoogleFonts.fredoka(
-                    fontSize: 18, fontWeight: FontWeight.w600,
-                    color: const Color(0xFFFF7043))),
-                ),
-              ]),
-            ),
-          ]),
-        ),
-      ),
+    return AppHeader(
+      title: '🏅 Bảng xếp hạng',
+      subtitle: 'Hạng của bạn: #$_myRank',
+      onBack: () => Navigator.pop(context),
+      gradientColors: const [Color(0xFFFFA726), Color(0xFFFF7043)],
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(16)),
+        child: Text('#$_myRank', style: GoogleFonts.plusJakartaSans(
+          fontSize: 15, fontWeight: FontWeight.w800, color: const Color(0xFFFF7043)))),
     );
   }
 
@@ -186,10 +138,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         Expanded(child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(item['name'] as String, style: GoogleFonts.nunito(
+            Text(item['name'] as String, style: GoogleFonts.plusJakartaSans(
               fontSize: 15, fontWeight: FontWeight.w800,
               color: const Color(0xFF2D2D2D))),
-            Text('Cấp ${item['level']}', style: GoogleFonts.nunito(
+            Text('Cấp ${item['level']}', style: GoogleFonts.plusJakartaSans(
               fontSize: 12, fontWeight: FontWeight.w600,
               color: const Color(0xFF9E9E9E))),
           ],
@@ -198,7 +150,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         Row(children: [
           const Text('⭐', style: TextStyle(fontSize: 16)),
           const SizedBox(width: 4),
-          Text('${item['stars']}', style: GoogleFonts.nunito(
+          Text('${item['stars']}', style: GoogleFonts.plusJakartaSans(
             fontSize: 16, fontWeight: FontWeight.w800,
             color: const Color(0xFFFFA726))),
         ]),

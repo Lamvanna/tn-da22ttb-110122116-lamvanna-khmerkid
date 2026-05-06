@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../../constants/app_colors.dart';
-import '../../constants/app_text_styles.dart';
+import '../../widgets/app_header.dart';
 
 /// Màn hình Tập đọc - Reading Practice Screen
 /// Bài đọc Khmer từ cơ bản đến nâng cao, tích hợp TTS
@@ -144,21 +144,9 @@ class _ReadingScreenState extends State<ReadingScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: AppColors.purpleGradient,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
-      ),
-      child: SafeArea(bottom: false, child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 8, 20, 24),
-        child: Row(children: [
-          IconButton(onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back_rounded), color: AppColors.textWhite, iconSize: 28),
-          Expanded(child: Text('📖 Tập đọc', style: AppTextStyles.screenTitle, textAlign: TextAlign.center)),
-          const SizedBox(width: 48),
-        ]),
-      )),
+    return AppHeader(
+      title: '📖 Tập đọc',
+      onBack: () => Navigator.pop(context),
     );
   }
 
@@ -187,7 +175,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 Text(l.emoji, style: const TextStyle(fontSize: 16)),
                 const SizedBox(width: 6),
-                Text('Bài ${index + 1}', style: GoogleFonts.nunito(fontSize: 13, fontWeight: FontWeight.w700,
+                Text('Bài ${index + 1}', style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700,
                     color: selected ? Colors.white : const Color(0xFF616161))),
               ]),
             ),
@@ -210,8 +198,8 @@ class _ReadingScreenState extends State<ReadingScreen> {
         Text(lesson.emoji, style: const TextStyle(fontSize: 36)),
         const SizedBox(width: 14),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(lesson.title, style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w800, color: lesson.color)),
-          Text(lesson.subtitle, style: GoogleFonts.nunito(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF757575))),
+          Text(lesson.title, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: lesson.color)),
+          Text(lesson.subtitle, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF757575))),
         ])),
       ]),
     );
@@ -250,9 +238,9 @@ class _ReadingScreenState extends State<ReadingScreen> {
                       color: isHighlight ? lesson.color : const Color(0xFFBDBDBD), size: 22),
                 ]),
                 const SizedBox(height: 4),
-                Text(line.romanized, style: GoogleFonts.nunito(fontSize: 13, fontWeight: FontWeight.w600,
+                Text(line.romanized, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600,
                     color: isHighlight ? lesson.color : const Color(0xFF9E9E9E))),
-                Text(line.meaning, style: GoogleFonts.nunito(fontSize: 12, fontWeight: FontWeight.w500,
+                Text(line.meaning, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w500,
                     color: const Color(0xFFBDBDBD))),
               ]),
             ),
@@ -276,7 +264,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 22),
             const SizedBox(width: 8),
-            Text('Nghe toàn bài', style: GoogleFonts.nunito(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+            Text('Nghe toàn bài', style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
           ]),
         ),
       )),

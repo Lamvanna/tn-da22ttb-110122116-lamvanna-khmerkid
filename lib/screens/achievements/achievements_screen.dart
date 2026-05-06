@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/score_service.dart';
+import '../../widgets/app_header.dart';
 
 /// Màn hình Thành tích — Hiển thị huy chương, badge, cột mốc
 class AchievementsScreen extends StatefulWidget {
@@ -160,73 +161,18 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   }
 
   Widget _buildHeader(BuildContext context, int done, int total) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-            colors: [Color(0xFFF5A623), Color(0xFFFF8F00)]),
-        borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(28),
-            bottomRight: Radius.circular(28)),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 4, 16, 22),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back_rounded),
-                    color: Colors.white,
-                  ),
-                  Expanded(
-                    child: Text('🏆 Thành tích',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.nunito(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white)),
-                  ),
-                  const SizedBox(width: 48),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('$done/$total hoàn thành',
-                        style: GoogleFonts.nunito(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white)),
-                    const SizedBox(width: 10),
-                    SizedBox(
-                      width: 80,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: LinearProgressIndicator(
-                          value: done / total,
-                          minHeight: 8,
-                          backgroundColor: Colors.white.withValues(alpha: 0.3),
-                          valueColor: const AlwaysStoppedAnimation(Colors.white),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return AppHeader(
+      title: '🏆 Thành tích',
+      subtitle: '$done/$total hoàn thành',
+      onBack: () => Navigator.pop(context),
+      gradientColors: const [Color(0xFFF5A623), Color(0xFFFF8F00)],
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(12)),
+        child: Text('$done/$total', style: GoogleFonts.plusJakartaSans(
+          fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white))),
     );
   }
 
@@ -278,7 +224,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   children: [
                     Expanded(
                       child: Text(a.title,
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                               color: a.done
@@ -292,7 +238,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(a.desc,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF9E9E9E))),
@@ -313,7 +259,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text('${a.current}/${a.total}',
-                        style: GoogleFonts.nunito(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF757575))),

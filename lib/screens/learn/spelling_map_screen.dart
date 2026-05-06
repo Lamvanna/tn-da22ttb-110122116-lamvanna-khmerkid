@@ -2,59 +2,54 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
-import '../../models/khmer_letter.dart';
-import 'letter_detail_screen.dart';
+import '../../models/khmer_spelling.dart';
+import 'spelling_screen.dart';
 
-/// Bản đồ chữ cái Khmer — Premium learning path
-class LetterMapView extends StatefulWidget {
-  final VoidCallback onBack;
-  const LetterMapView({super.key, required this.onBack});
-
+/// Bản đồ đánh vần Khmer — Premium learning path (zigzag)
+class SpellingMapScreen extends StatefulWidget {
+  const SpellingMapScreen({super.key});
   @override
-  State<LetterMapView> createState() => _LetterMapViewState();
+  State<SpellingMapScreen> createState() => _SpellingMapScreenState();
 }
 
-class _LetterMapViewState extends State<LetterMapView>
+class _SpellingMapScreenState extends State<SpellingMapScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
   late ScrollController _scrollCtrl;
 
-  final List<KhmerLetter> _letters = KhmerLetterData.consonants;
+  final List<KhmerSpelling> _lessons = KhmerSpellingData.lessons;
 
   static const double _nodeSpacingY = 100.0;
   static const double _topPadding = 28.0;
   static const double _nodeSize = 62.0;
 
   int get _currentIdx {
-    final idx = _letters.indexWhere((l) => !l.isLearned);
-    return idx == -1 ? _letters.length - 1 : idx;
+    final idx = _lessons.indexWhere((l) => !l.isLearned);
+    return idx == -1 ? _lessons.length - 1 : idx;
   }
 
-  int get _doneCount => _letters.where((l) => l.isLearned).length;
+  int get _doneCount => _lessons.where((l) => l.isLearned).length;
 
   @override
   void initState() {
     super.initState();
     _pulseCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    )..repeat(reverse: true);
+      vsync: this, duration: const Duration(milliseconds: 1400))
+      ..repeat(reverse: true);
     _pulseAnim = Tween<double>(begin: 1.0, end: 1.08).animate(
-      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
-    );
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
     _scrollCtrl = ScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrent());
   }
 
   void _scrollToCurrent() {
-    final target = (_letters.length - 1 - _currentIdx) * _nodeSpacingY - 200;
+    final target = (_lessons.length - 1 - _currentIdx) * _nodeSpacingY - 200;
     if (_scrollCtrl.hasClients && target > 0) {
       _scrollCtrl.animateTo(
         target.clamp(0.0, _scrollCtrl.position.maxScrollExtent),
         duration: const Duration(milliseconds: 900),
-        curve: Curves.easeOutCubic,
-      );
+        curve: Curves.easeOutCubic);
     }
   }
 
@@ -65,7 +60,6 @@ class _LetterMapViewState extends State<LetterMapView>
     super.dispose();
   }
 
-  // Zigzag positions
   double _nodeX(int displayIdx, double w) {
     final centerX = w / 2;
     final amplitude = w * 0.18;
@@ -74,14 +68,10 @@ class _LetterMapViewState extends State<LetterMapView>
 
   double _nodeY(int displayIdx) => _topPadding + displayIdx * _nodeSpacingY;
 
-  // 5 màu xoay vòng theo nhóm 5 chữ
   Color _nodeColor(int idx) {
     const colors = [
-      AppColors.primary,     // 🔵
-      AppColors.tertiary,    // 🟢
-      AppColors.secondary,   // 🟡
-      AppColors.violet,      // 🟣
-      AppColors.coral,       // 🩷
+      AppColors.primary, AppColors.tertiary, AppColors.secondary,
+      AppColors.violet, AppColors.coral,
     ];
     return colors[(idx ~/ 5) % colors.length];
   }
@@ -89,46 +79,41 @@ class _LetterMapViewState extends State<LetterMapView>
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
-    final mapH = _letters.length * _nodeSpacingY + 120;
+    final mapH = _lessons.length * _nodeSpacingY + 120;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: ClipRect(
-                child: SingleChildScrollView(
-                  controller: _scrollCtrl,
-                  physics: const BouncingScrollPhysics(),
-                  reverse: true,
-                  child: SizedBox(
+      body: Column(children: [
+        _buildHeader(),
+        Expanded(
+          child: ClipRect(
+            child: SingleChildScrollView(
+              controller: _scrollCtrl,
+              physics: const BouncingScrollPhysics(),
+              reverse: true,
+              child: SizedBox(
+                width: w,
+                height: mapH,
+                child: CustomPaint(
+                  painter: _SpellingMapPainter(
+                    count: _lessons.length,
                     width: w,
-                    height: mapH,
-                    child: CustomPaint(
-                      painter: _MapPainter(
-                        count: _letters.length,
-                        width: w,
-                        getX: _nodeX,
-                        getY: _nodeY,
-                        doneCount: _doneCount,
-                      ),
-                      child: Stack(
-                        children: _buildAllNodes(w),
-                      ),
-                    ),
-                  ),
+                    getX: _nodeX,
+                    getY: _nodeY,
+                    doneCount: _doneCount),
+                  child: Stack(children: _buildAllNodes(w)),
                 ),
               ),
             ),
-          ],
-      ),
+          ),
+        ),
+      ]),
     );
   }
 
   // ─── HEADER ───
   Widget _buildHeader() {
-    final progress = _doneCount / _letters.length;
+    final progress = _doneCount / _lessons.length;
     final pct = (progress * 100).toInt();
     return Container(
       clipBehavior: Clip.antiAlias,
@@ -151,10 +136,6 @@ class _LetterMapViewState extends State<LetterMapView>
           child: Container(width: 80, height: 80,
             decoration: BoxDecoration(shape: BoxShape.circle,
               color: Colors.white.withValues(alpha: 0.04)))),
-        Positioned(right: 60, bottom: -10,
-          child: Container(width: 40, height: 40,
-            decoration: BoxDecoration(shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.05)))),
         SafeArea(
           bottom: false,
           child: Padding(
@@ -162,7 +143,7 @@ class _LetterMapViewState extends State<LetterMapView>
             child: Column(children: [
               Row(children: [
                 GestureDetector(
-                  onTap: widget.onBack,
+                  onTap: () => Navigator.pop(context),
                   child: Container(
                     width: 40, height: 40,
                     decoration: BoxDecoration(
@@ -175,11 +156,11 @@ class _LetterMapViewState extends State<LetterMapView>
                 Expanded(child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Phụ âm Khmer',
+                    Text('Đánh vần Khmer',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
                     const SizedBox(height: 2),
-                    Text('$_doneCount/${_letters.length} đã hoàn thành',
+                    Text('$_doneCount/${_lessons.length} đã hoàn thành',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12, fontWeight: FontWeight.w600,
                         color: Colors.white.withValues(alpha: 0.8))),
@@ -190,7 +171,7 @@ class _LetterMapViewState extends State<LetterMapView>
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(14)),
-                  child: const Center(child: Text('🔤', style: TextStyle(fontSize: 24)))),
+                  child: const Center(child: Text('✏️', style: TextStyle(fontSize: 24)))),
               ]),
               const SizedBox(height: 14),
               Row(children: [
@@ -233,12 +214,12 @@ class _LetterMapViewState extends State<LetterMapView>
   List<Widget> _buildAllNodes(double w) {
     final widgets = <Widget>[];
 
-    for (int i = 0; i < _letters.length; i++) {
-      final ri = _letters.length - 1 - i;
-      final letter = _letters[ri];
+    for (int i = 0; i < _lessons.length; i++) {
+      final ri = _lessons.length - 1 - i;
+      final lesson = _lessons[ri];
       final x = _nodeX(i, w);
       final y = _nodeY(i);
-      final done = letter.isLearned;
+      final done = lesson.isLearned;
       final curr = ri == _currentIdx;
       final locked = !done && !curr;
       final color = _nodeColor(ri);
@@ -248,39 +229,26 @@ class _LetterMapViewState extends State<LetterMapView>
           left: x - _nodeSize / 2,
           top: y - _nodeSize / 2,
           child: GestureDetector(
-            onTap: locked ? null : () => _openLetter(ri),
+            onTap: locked ? null : () => _openLesson(ri),
             child: SizedBox(
               width: _nodeSize,
               height: _nodeSize + (done ? 20 : 0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Circle
-                  curr
-                      ? AnimatedBuilder(
-                          animation: _pulseCtrl,
-                          builder: (_, child) => Transform.scale(
-                            scale: _pulseAnim.value,
-                            child: child,
-                          ),
-                          child: _circle(letter, color, done, curr, locked),
-                        )
-                      : _circle(letter, color, done, curr, locked),
-                  // Stars
-                  if (done && letter.starRating > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 3),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: List.generate(
-                          min(letter.starRating, 3),
-                          (_) => Icon(Icons.star_rounded,
-                            color: AppColors.secondary, size: 13),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                curr
+                  ? AnimatedBuilder(
+                      animation: _pulseCtrl,
+                      builder: (_, child) => Transform.scale(
+                        scale: _pulseAnim.value, child: child),
+                      child: _circle(lesson, color, done, curr, locked))
+                  : _circle(lesson, color, done, curr, locked),
+                if (done && lesson.starRating > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 3),
+                    child: Row(mainAxisSize: MainAxisSize.min,
+                      children: List.generate(
+                        min(lesson.starRating, 3),
+                        (_) => Icon(Icons.star_rounded, color: AppColors.secondary, size: 13)))),
+              ]),
             ),
           ),
         ),
@@ -290,86 +258,51 @@ class _LetterMapViewState extends State<LetterMapView>
     return widgets;
   }
 
-  Widget _circle(KhmerLetter letter, Color color, bool done, bool curr, bool locked) {
+  Widget _circle(KhmerSpelling lesson, Color color, bool done, bool curr, bool locked) {
     if (locked) {
       return Container(
-        width: _nodeSize,
-        height: _nodeSize,
+        width: _nodeSize, height: _nodeSize,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: AppColors.surfaceContainerLow,
-          border: Border.all(
-            color: AppColors.surfaceContainerHighest,
-            width: 3,
-          ),
-        ),
-        child: Icon(Icons.lock_rounded,
-          color: AppColors.textHint, size: 22),
-      );
+          border: Border.all(color: AppColors.surfaceContainerHighest, width: 3)),
+        child: Icon(Icons.lock_rounded, color: AppColors.textHint, size: 22));
     }
 
     return Container(
-      width: _nodeSize,
-      height: _nodeSize,
+      width: _nodeSize, height: _nodeSize,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+          begin: Alignment.topCenter, end: Alignment.bottomCenter,
           colors: [
             Color.lerp(color, Colors.white, 0.20)!,
             color,
-            Color.lerp(color, Colors.black, 0.12)!,
-          ],
-          stops: const [0.0, 0.45, 1.0],
-        ),
-        border: Border.all(
-          color: Color.lerp(color, Colors.white, 0.4)!,
-          width: 3,
-        ),
+            Color.lerp(color, Colors.black, 0.12)!],
+          stops: const [0.0, 0.45, 1.0]),
+        border: Border.all(color: Color.lerp(color, Colors.white, 0.4)!, width: 3),
         boxShadow: [
-          // Bottom 3D effect
           BoxShadow(
             color: Color.lerp(color, Colors.black, 0.4)!.withValues(alpha: 0.5),
-            blurRadius: 0,
-            offset: const Offset(0, 4),
-          ),
-          // Glow for current
-          if (curr)
-            BoxShadow(
-              color: color.withValues(alpha: 0.4),
-              blurRadius: 18,
-              spreadRadius: 2,
-            ),
-        ],
-      ),
+            blurRadius: 0, offset: const Offset(0, 4)),
+          if (curr) BoxShadow(
+            color: color.withValues(alpha: 0.4),
+            blurRadius: 18, spreadRadius: 2),
+        ]),
       child: Center(
-        child: Text(
-          letter.character,
+        child: Text(lesson.combined,
           style: GoogleFonts.kantumruyPro(
-            fontSize: 25,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
+            fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white,
             height: 1.2,
-            shadows: [
-              Shadow(
-                color: Colors.black.withValues(alpha: 0.20),
-                blurRadius: 2,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-        ),
-      ),
+            shadows: [Shadow(
+              color: Colors.black.withValues(alpha: 0.20),
+              blurRadius: 2, offset: const Offset(0, 1))]))),
     );
   }
 
-  void _openLetter(int idx) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => LetterDetailScreen(initialIndex: idx),
-      ),
+  void _openLesson(int idx) {
+    Navigator.push(context,
+      MaterialPageRoute(builder: (_) => SpellingScreen(initialIndex: idx)),
     ).then((_) {
       if (mounted) setState(() {});
     });
@@ -377,29 +310,25 @@ class _LetterMapViewState extends State<LetterMapView>
 }
 
 // ═══════════════════════════════════════════════
-// MAP PAINTER — path + subtle decorations
+// MAP PAINTER — path + decorations
 // ═══════════════════════════════════════════════
 
-class _MapPainter extends CustomPainter {
+class _SpellingMapPainter extends CustomPainter {
   final int count;
   final double width;
   final double Function(int, double) getX;
   final double Function(int) getY;
   final int doneCount;
 
-  _MapPainter({
-    required this.count,
-    required this.width,
-    required this.getX,
-    required this.getY,
-    required this.doneCount,
-  });
+  _SpellingMapPainter({
+    required this.count, required this.width,
+    required this.getX, required this.getY,
+    required this.doneCount});
 
   @override
   void paint(Canvas canvas, Size size) {
     if (count < 2) return;
 
-    // Build full path
     final path = Path();
     for (int i = 0; i < count; i++) {
       final x = getX(i, width);
@@ -413,18 +342,13 @@ class _MapPainter extends CustomPainter {
       }
     }
 
-    // Undone path — subtle
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = AppColors.surfaceContainerHighest
-        ..strokeWidth = 10
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
+    canvas.drawPath(path, Paint()
+      ..color = AppColors.surfaceContainerHighest
+      ..strokeWidth = 10
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round);
 
-    // Done portion — blue gradient path
     if (doneCount > 1) {
       final dp = Path();
       final si = count - 1;
@@ -441,7 +365,6 @@ class _MapPainter extends CustomPainter {
         }
       }
 
-      // Shadow
       canvas.drawPath(dp, Paint()
         ..color = AppColors.primaryDark.withValues(alpha: 0.3)
         ..strokeWidth = 12
@@ -449,7 +372,6 @@ class _MapPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round);
 
-      // Main
       canvas.drawPath(dp, Paint()
         ..color = AppColors.primary
         ..strokeWidth = 8
@@ -457,7 +379,6 @@ class _MapPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round);
 
-      // Highlight
       canvas.drawPath(dp, Paint()
         ..color = AppColors.primaryLight.withValues(alpha: 0.5)
         ..strokeWidth = 3

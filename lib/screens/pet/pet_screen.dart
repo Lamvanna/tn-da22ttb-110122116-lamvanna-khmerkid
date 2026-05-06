@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../../constants/app_text_styles.dart';
+import '../../widgets/app_header.dart';
 
 /// Màn hình Thú vui - Pet Screen
 /// Thú cưng ảo có thể tương tác: cho ăn, chơi, ngủ
@@ -112,7 +113,7 @@ class _PetScreenState extends State<PetScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg,
-            style: GoogleFonts.nunito(
+            style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.w600, color: Colors.white)),
         backgroundColor: const Color(0xFF7E57C2),
         behavior: SnackBarBehavior.floating,
@@ -155,44 +156,21 @@ class _PetScreenState extends State<PetScreen>
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      color: AppColors.backgroundLight,
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
-          child: Row(
-            children: [
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.arrow_back_rounded),
-                color: AppColors.textPrimary,
-                iconSize: 28,
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.accentYellow.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.star_rounded,
-                        color: AppColors.accentYellow, size: 20),
-                    const SizedBox(width: 4),
-                    Text('$_stars',
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          color: AppColors.accentOrange,
-                          fontWeight: FontWeight.w700,
-                        )),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+    return AppHeader(
+      title: '🐱 Thú cưng',
+      onBack: () => Navigator.pop(context),
+      gradientColors: const [Color(0xFFFF6B9D), Color(0xFFFF8E53)],
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(12)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.star_rounded, color: Colors.white, size: 18),
+          const SizedBox(width: 4),
+          Text('$_stars', style: GoogleFonts.plusJakartaSans(
+            fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white)),
+        ]),
       ),
     );
   }
@@ -405,7 +383,7 @@ class _PetScreenState extends State<PetScreen>
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(_petAction,
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF616161))),
@@ -488,12 +466,12 @@ class _PetScreenState extends State<PetScreen>
             Icon(icon, color: Colors.white, size: 28),
             const SizedBox(height: 4),
             Text(label,
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: Colors.white)),
             Text(sub,
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                     color: Colors.white.withValues(alpha: 0.8))),

@@ -103,7 +103,7 @@ class _SortingGameScreenState extends State<SortingGameScreen> {
                   Expanded(
                     child: Text(
                       'Sắp xếp các chữ cái theo đúng thứ tự bảng chữ cái Khmer!',
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF616161)),
@@ -122,7 +122,7 @@ class _SortingGameScreenState extends State<SortingGameScreen> {
             child: Row(
               children: [
                 Text('Thứ tự đúng: ',
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF9E9E9E))),
@@ -138,7 +138,7 @@ class _SortingGameScreenState extends State<SortingGameScreen> {
                       ),
                       child: Center(
                         child: Text('${i + 1}',
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFFBDBDBD))),
@@ -218,7 +218,7 @@ class _SortingGameScreenState extends State<SortingGameScreen> {
                         ),
                         child: Center(
                           child: Text('${index + 1}',
-                              style: GoogleFonts.nunito(
+                              style: GoogleFonts.plusJakartaSans(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w800,
                                   color: const Color(0xFF42A5F5))),
@@ -233,7 +233,7 @@ class _SortingGameScreenState extends State<SortingGameScreen> {
                       const SizedBox(width: 12),
                       // Phiên âm
                       Text(letter.romanized,
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: const Color(0xFF757575))),
@@ -282,7 +282,7 @@ class _SortingGameScreenState extends State<SortingGameScreen> {
                       : _showResult
                           ? '❌ Sai rồi — Thử lại!'
                           : 'Kiểm tra thứ tự',
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
                       color: Colors.white),
@@ -318,7 +318,7 @@ class _SortingGameScreenState extends State<SortingGameScreen> {
               Expanded(
                 child: Text('Xếp hình — Vòng $_round',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: Colors.white)),
@@ -330,7 +330,7 @@ class _SortingGameScreenState extends State<SortingGameScreen> {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Text('⭐ $_score',
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: Colors.white)),

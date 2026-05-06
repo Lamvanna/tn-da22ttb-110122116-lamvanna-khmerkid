@@ -138,7 +138,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
               const SizedBox(height: 12),
-              Text('Đang tải...', style: GoogleFonts.nunito(
+              Text('Đang tải...', style: GoogleFonts.plusJakartaSans(
                 fontSize: 14, fontWeight: FontWeight.w600,
                 color: Colors.white,
                 shadows: [Shadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 4)])),

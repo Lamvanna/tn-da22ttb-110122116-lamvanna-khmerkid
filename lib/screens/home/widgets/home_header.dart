@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../constants/app_colors.dart';
 import '../../../screens/settings/settings_screen.dart';
 import '../../../services/storage_service.dart';
 import '../../../services/score_service.dart';
 
-/// Header trang chủ — Gradient tím + thông tin user
+/// Header trang chủ — Gradient sáng sang trọng + thông tin user
 class HomeHeader extends StatefulWidget {
   const HomeHeader({super.key});
   @override
@@ -59,19 +60,18 @@ class _HomeHeaderState extends State<HomeHeader> {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF6C63FF), Color(0xFF9B8FFF)],
+          begin: Alignment(-0.5, -1),
+          end: Alignment(0.5, 1),
+          colors: [Color(0xFF4580C4), Color(0xFF6A9DD6)],
         ),
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
-        ),
+          bottomLeft: Radius.circular(16),
+          bottomRight: Radius.circular(16)),
       ),
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -80,21 +80,13 @@ class _HomeHeaderState extends State<HomeHeader> {
                 children: [
                   // Avatar circle
                   Container(
-                    width: 50,
-                    height: 50,
+                    width: 52, height: 52,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.2),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.5),
-                        width: 2.5,
-                      ),
+                      color: Colors.white.withValues(alpha: 0.25),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 2),
                     ),
-                    child: const Icon(
-                      Icons.face_rounded,
-                      color: Colors.white,
-                      size: 30,
-                    ),
+                    child: const Icon(Icons.face_rounded, color: Colors.white, size: 30),
                   ),
                   const SizedBox(width: 14),
                   // Name + Level
@@ -102,125 +94,80 @@ class _HomeHeaderState extends State<HomeHeader> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          _username,
-                          style: GoogleFonts.nunito(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Icon(
-                              _getLevelIcon(_level),
-                              color: const Color(0xFFFFD54F),
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Cấp $_level: ${_getLevelTitle(_level)}',
-                              style: GoogleFonts.nunito(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white.withValues(alpha: 0.9),
-                              ),
-                            ),
-                          ],
-                        ),
+                        Text(_username,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
+                        const SizedBox(height: 3),
+                        Row(children: [
+                          Icon(_getLevelIcon(_level),
+                            color: AppColors.secondaryContainer, size: 16),
+                          const SizedBox(width: 5),
+                          Text('Cấp $_level: ${_getLevelTitle(_level)}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13, fontWeight: FontWeight.w600,
+                              color: Colors.white.withValues(alpha: 0.92))),
+                        ]),
                       ],
                     ),
                   ),
                   // Settings
                   GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                    ),
+                    onTap: () => Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const SettingsScreen())),
                     child: Container(
-                      width: 42,
-                      height: 42,
+                      width: 44, height: 44,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Icon(
-                        Icons.settings_rounded,
-                        color: Colors.white,
-                        size: 22,
-                      ),
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.15))),
+                      child: const Icon(Icons.settings_rounded, color: Colors.white, size: 22),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
               // === Stats bar ===
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    // Streak
-                    Icon(Icons.local_fire_department_rounded,
-                      color: const Color(0xFFFFAB40), size: 18),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$_streak ngày',
-                      style: GoogleFonts.nunito(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Container(
-                      width: 1,
-                      height: 18,
-                      margin: const EdgeInsets.symmetric(horizontal: 14),
-                      color: Colors.white.withValues(alpha: 0.3),
-                    ),
-                    // Stars
-                    const Icon(Icons.star_rounded,
-                      color: Color(0xFFFFD54F), size: 18),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$_totalStars sao',
-                      style: GoogleFonts.nunito(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const Spacer(),
-                    // Level progress
-                    SizedBox(
-                      width: 55,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(5),
-                        child: LinearProgressIndicator(
-                          value: _score?.levelProgress ?? 0,
-                          minHeight: 7,
-                          backgroundColor: Colors.white.withValues(alpha: 0.25),
-                          valueColor: const AlwaysStoppedAnimation(
-                            Color(0xFFFFD54F),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Lv.$_level',
-                      style: GoogleFonts.nunito(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
+                  color: Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.12))),
+                child: Row(children: [
+                  // Streak
+                  const Icon(Icons.local_fire_department_rounded,
+                    color: AppColors.secondaryLight, size: 19),
+                  const SizedBox(width: 5),
+                  Text('$_streak ngày',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+                  Container(
+                    width: 1, height: 18,
+                    margin: const EdgeInsets.symmetric(horizontal: 14),
+                    color: Colors.white.withValues(alpha: 0.3)),
+                  // Stars
+                  const Icon(Icons.star_rounded,
+                    color: AppColors.secondaryLight, size: 19),
+                  const SizedBox(width: 5),
+                  Text('$_totalStars sao',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+                  const Spacer(),
+                  // Level progress
+                  SizedBox(
+                    width: 55,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                        value: _score?.levelProgress ?? 0,
+                        minHeight: 7,
+                        backgroundColor: Colors.white.withValues(alpha: 0.25),
+                        valueColor: const AlwaysStoppedAnimation(AppColors.secondaryLight)))),
+                  const SizedBox(width: 8),
+                  Text('Lv.$_level',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+                ]),
               ),
             ],
           ),

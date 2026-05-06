@@ -1,90 +1,178 @@
 import 'package:flutter/material.dart';
 
-/// Bảng màu ứng dụng - Trích xuất từ Figma design
-/// App color palette - Extracted from the Figma design
+/// Bảng màu ứng dụng KhmerKid
+/// Design System: 5 màu hài hòa + Neutral
+/// 🔵 Primary    — Header, điều hướng, học tập
+/// 🟢 Green      — Thành công, hoàn thành
+/// 🟡 Gold       — Phần thưởng, sao, xếp hạng
+/// 🟣 Violet     — Khám phá, thành tích
+/// 🩷 Coral      — Chơi, tương tác
 class AppColors {
-  AppColors._(); // Prevent instantiation
+  AppColors._();
 
-  // ─── Primary Colors ───────────────────────────────────────────────
-  static const Color primaryPurple = Color(0xFF6C63FF);
-  static const Color primaryPurpleLight = Color(0xFF9B8FFF);
-  static const Color primaryPurpleDark = Color(0xFF5A52D5);
+  // ═══════════════════════════════════════════════════════════════════
+  // 🔵 PRIMARY — Xanh dương (Header, Học, Navigation)
+  // ═══════════════════════════════════════════════════════════════════
+  static const Color primary = Color(0xFF4580C4);
+  static const Color primaryLight = Color(0xFF6A9DD6);
+  static const Color primaryDark = Color(0xFF3468A8);
+  static const Color primarySurface = Color(0xFFEDF3FB);
 
-  // ─── Header Gradient ──────────────────────────────────────────────
-  static const Color headerGradientStart = Color(0xFF7B6CF6);
-  static const Color headerGradientEnd = Color(0xFF9B8FFF);
+  // ═══════════════════════════════════════════════════════════════════
+  // 🟢 GREEN — Xanh lá (Thành công, Listen, Nhiệm vụ)
+  // ═══════════════════════════════════════════════════════════════════
+  static const Color tertiary = Color(0xFF3DA06A);
+  static const Color tertiaryLight = Color(0xFF6BBF8E);
+  static const Color tertiaryDark = Color(0xFF2D8054);
+  static const Color tertiarySurface = Color(0xFFEDF8F2);
 
-  // ─── Accent Colors ────────────────────────────────────────────────
-  static const Color accentOrange = Color(0xFFFF9800);
-  static const Color accentYellow = Color(0xFFFFD600);
-  static const Color accentPink = Color(0xFFFF4081);
-  static const Color accentRed = Color(0xFFF44336);
-  static const Color accentGreen = Color(0xFF4CAF50);
-  static const Color accentTeal = Color(0xFF26C6DA);
+  // ═══════════════════════════════════════════════════════════════════
+  // 🟡 GOLD — Vàng ấm (Phần thưởng, Sao, Xếp hạng)
+  // ═══════════════════════════════════════════════════════════════════
+  static const Color secondary = Color(0xFFD4A430);
+  static const Color secondaryLight = Color(0xFFE8BE55);
+  static const Color secondaryDark = Color(0xFFB88A20);
+  static const Color secondarySurface = Color(0xFFFFF8E8);
 
-  // ─── Background Colors ────────────────────────────────────────────
-  static const Color backgroundLight = Color(0xFFF0F2FF);
-  static const Color backgroundWhite = Color(0xFFFFFFFF);
-  static const Color backgroundMint = Color(0xFFE0F7FA); // Pet screen bg
+  // ═══════════════════════════════════════════════════════════════════
+  // 🟣 VIOLET — Tím thanh (Thành tích, Khám phá, Module phụ âm)
+  // ═══════════════════════════════════════════════════════════════════
+  static const Color violet = Color(0xFF7367D6);
+  static const Color violetLight = Color(0xFF9089E0);
+  static const Color violetDark = Color(0xFF5F54C0);
+  static const Color violetSurface = Color(0xFFF2F0FF);
 
-  // ─── Card Colors ──────────────────────────────────────────────────
-  static const Color cardWhite = Color(0xFFFFFFFF);
-  static const Color cardShadow = Color(0x1A000000);
+  // ═══════════════════════════════════════════════════════════════════
+  // 🩷 CORAL — Hồng cam (Chơi, Tương tác, Speak)
+  // ═══════════════════════════════════════════════════════════════════
+  static const Color coral = Color(0xFFE07065);
+  static const Color coralLight = Color(0xFFEA9590);
+  static const Color coralDark = Color(0xFFC85A50);
+  static const Color coralSurface = Color(0xFFFFF0EF);
 
-  // ─── Text Colors ──────────────────────────────────────────────────
-  static const Color textPrimary = Color(0xFF2D2D2D);
-  static const Color textSecondary = Color(0xFF757575);
+  // ═══════════════════════════════════════════════════════════════════
+  // ⚪ NEUTRAL
+  // ═══════════════════════════════════════════════════════════════════
+  static const Color background = Color(0xFFF6F7FB);
+  static const Color surface = Color(0xFFF6F7FB);
+  static const Color surfaceContainerLow = Color(0xFFEDF0F7);
+  static const Color surfaceContainerLowest = Color(0xFFFFFFFF);
+  static const Color surfaceContainerHighest = Color(0xFFDDE2EE);
+
+  static const Color textPrimary = Color(0xFF2C3345);
+  static const Color onBackground = Color(0xFF2C3345);
+  static const Color textSecondary = Color(0xFF6B7280);
   static const Color textWhite = Color(0xFFFFFFFF);
-  static const Color textHint = Color(0xFFBDBDBD);
+  static const Color textHint = Color(0xFFADB5BD);
 
-  // ─── Test Category Colors ─────────────────────────────────────────
-  /// Kiểm tra nói - Speaking test (Coral/Red)
-  static const Color testSpeaking = Color(0xFFEF5350);
-  /// Kiểm tra nghe - Listening test (Blue)
-  static const Color testListening = Color(0xFF5C6BC0);
-  /// Kiểm tra viết - Writing test (Pink)
-  static const Color testWriting = Color(0xFFEC407A);
-  /// Kiểm tra tổng hợp - Comprehensive test (Green)
-  static const Color testComprehensive = Color(0xFF66BB6A);
+  static const Color cardWhite = surfaceContainerLowest;
+  static const Color cardShadow = Color(0x10304060);
+  static const Color outlineVariant = Color(0x1A2C3345);
 
-  // ─── Star Rating Colors ───────────────────────────────────────────
-  static const Color starFilled = Color(0xFFFFD600);
-  static const Color starEmpty = Color(0xFFE0E0E0);
+  // ═══════════════════════════════════════════════════════════════════
+  // LEGACY ALIASES — backward compatibility
+  // ═══════════════════════════════════════════════════════════════════
+  static const Color primaryContainer = primaryLight;
+  static const Color primaryPurple = primary;
+  static const Color primaryPurpleLight = primaryLight;
+  static const Color primaryPurpleDark = primaryDark;
+  static const Color secondaryContainer = secondaryLight;
+  static const Color tertiaryContainer = tertiaryLight;
 
-  // ─── Progress Bar Colors ──────────────────────────────────────────
-  static const Color progressGreen = Color(0xFF4CAF50);
-  static const Color progressBackground = Color(0xFFE8E8E8);
+  // Consonant module → Violet
+  static const Color consonantAccent = violet;
+  static const Color consonantAccentLight = violetLight;
+  static const Color consonantAccentDark = violetDark;
+  static const Color consonantBg = violetSurface;
 
-  // ─── Pet Stats Colors ─────────────────────────────────────────────
-  static const Color statHealth = Color(0xFFEF5350);    // ❤️ Heart
-  static const Color statHunger = Color(0xFFFF7043);     // 🍗 Hunger
-  static const Color statEnergy = Color(0xFF42A5F5);     // ⚡ Energy
-  static const Color statHappiness = Color(0xFFFFCA28);  // 😊 Happiness
+  // Accent aliases
+  static const Color accentOrange = secondary;
+  static const Color accentYellow = secondaryLight;
+  static const Color accentPink = coral;
+  static const Color accentRed = coral;
+  static const Color accentGreen = tertiary;
+  static const Color accentTeal = primaryLight;
 
-  // ─── Shop Tab Colors ──────────────────────────────────────────────
-  static const Color shopFood = Color(0xFFF44336);       // Đồ ăn
-  static const Color shopItems = Color(0xFFFFFFFF);       // Vật phẩm
-  static const Color shopDecor = Color(0xFFFFFFFF);       // Trang trí
+  // Background legacy
+  static const Color backgroundLight = background;
+  static const Color backgroundWhite = surfaceContainerLowest;
+  static const Color backgroundMint = secondarySurface;
 
-  // ─── Navigation Colors ────────────────────────────────────────────
-  static const Color navActive = Color(0xFF6C63FF);
-  static const Color navInactive = Color(0xFF9E9E9E);
+  // Semantic
+  static const Color testSpeaking = coral;
+  static const Color testListening = primary;
+  static const Color testWriting = secondary;
+  static const Color testComprehensive = tertiary;
 
-  // ─── Gradient Definitions ─────────────────────────────────────────
+  static const Color starFilled = secondary;
+  static const Color starEmpty = surfaceContainerLow;
+  static const Color progressGreen = tertiary;
+  static const Color progressBackground = surfaceContainerLow;
+
+  static const Color statHealth = coral;
+  static const Color statHunger = secondary;
+  static const Color statEnergy = primary;
+  static const Color statHappiness = tertiaryLight;
+
+  static const Color shopFood = coral;
+  static const Color shopItems = surfaceContainerLowest;
+  static const Color shopDecor = surfaceContainerLowest;
+
+  static const Color navActive = primary;
+  static const Color navInactive = textHint;
+
+  static const Color difficultyEasy = tertiary;
+  static const Color difficultyMedium = secondary;
+  static const Color difficultyHard = coral;
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 🌈 GRADIENTS
+  // ═══════════════════════════════════════════════════════════════════
   static const LinearGradient headerGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [headerGradientStart, headerGradientEnd],
+    begin: Alignment.topLeft, end: Alignment.bottomRight,
+    colors: [primary, primaryLight],
+  );
+  static const LinearGradient primaryGradient = headerGradient;
+  static const LinearGradient consonantGradient = LinearGradient(
+    begin: Alignment.topLeft, end: Alignment.bottomRight,
+    colors: [violet, violetLight],
+  );
+  static const LinearGradient purpleGradient = consonantGradient;
+
+  static const LinearGradient listenGradient = LinearGradient(
+    begin: Alignment.topLeft, end: Alignment.bottomRight,
+    colors: [tertiary, tertiaryLight],
+  );
+  static const LinearGradient speakGradient = LinearGradient(
+    begin: Alignment.topLeft, end: Alignment.bottomRight,
+    colors: [coral, coralLight],
+  );
+  static const LinearGradient writeGradient = LinearGradient(
+    begin: Alignment.topLeft, end: Alignment.bottomRight,
+    colors: [primary, primaryLight],
   );
 
-  static const LinearGradient purpleGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color(0xFF7B6CF6), Color(0xFF6C63FF)],
-  );
+  // ═══════════════════════════════════════════════════════════════════
+  // 🔲 SHADOWS
+  // ═══════════════════════════════════════════════════════════════════
+  static List<BoxShadow> ambientShadow = [
+    BoxShadow(
+      color: const Color(0xFF304060).withValues(alpha: 0.07),
+      blurRadius: 24,
+      offset: const Offset(0, 8),
+    ),
+  ];
 
-  // ─── Difficulty Badge Colors ──────────────────────────────────────
-  static const Color difficultyEasy = Color(0xFF4CAF50);
-  static const Color difficultyMedium = Color(0xFFFF9800);
-  static const Color difficultyHard = Color(0xFFF44336);
+  static List<BoxShadow> cardShadowList = [
+    BoxShadow(
+      color: const Color(0xFF304060).withValues(alpha: 0.05),
+      blurRadius: 20,
+      offset: const Offset(0, 6),
+    ),
+    BoxShadow(
+      color: const Color(0xFF304060).withValues(alpha: 0.03),
+      blurRadius: 40,
+      offset: const Offset(0, 16),
+    ),
+  ];
 }

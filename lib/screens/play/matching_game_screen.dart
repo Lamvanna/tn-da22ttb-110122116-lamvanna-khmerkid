@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../constants/app_colors.dart';
 import '../../models/khmer_letter.dart';
 
 /// Trò chơi Ghép hình — Ghép chữ Khmer đúng với nghĩa / hình ảnh
@@ -122,16 +123,16 @@ class _MatchingGameScreenState extends State<MatchingGameScreen>
               const Text('🎉', style: TextStyle(fontSize: 48)),
               const SizedBox(height: 12),
               Text('Hoàn thành!',
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF2E7D32))),
+                      color: AppColors.tertiary)),
               const SizedBox(height: 8),
               Text('Vòng $_round — +${_totalPairs * 10} điểm',
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFFFFA726))),
+                      color: AppColors.accentOrange)),
               const SizedBox(height: 20),
               Row(
                 children: [
@@ -145,12 +146,12 @@ class _MatchingGameScreenState extends State<MatchingGameScreen>
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14)),
-                          side: const BorderSide(color: Color(0xFF7E57C2))),
+                          side: BorderSide(color: AppColors.primary)),
                       child: Text('Thoát',
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF7E57C2))),
+                              color: AppColors.primary)),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -162,12 +163,12 @@ class _MatchingGameScreenState extends State<MatchingGameScreen>
                         _generateRound();
                       },
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF4CAF50),
+                          backgroundColor: AppColors.tertiary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14))),
                       child: Text('Vòng tiếp →',
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: Colors.white)),
@@ -185,7 +186,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4FF),
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           _buildHeader(),
@@ -246,12 +247,12 @@ class _MatchingGameScreenState extends State<MatchingGameScreen>
                                     ? GoogleFonts.kantumruyPro(
                                         fontSize: 36,
                                         fontWeight: FontWeight.w500,
-                                        color: const Color(0xFF3E2C6E),
+                                        color: AppColors.consonantAccent,
                                       )
-                                    : GoogleFonts.nunito(
+                                    : GoogleFonts.plusJakartaSans(
                                         fontSize: 22,
                                         fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF455A64),
+                                        color: AppColors.textPrimary,
                                       ),
                               ),
                             ),
@@ -272,20 +273,20 @@ class _MatchingGameScreenState extends State<MatchingGameScreen>
                                   horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
                                 color: item.type == _MatchType.khmer
-                                    ? const Color(0xFF7E57C2).withValues(alpha: 0.1)
-                                    : const Color(0xFFFFA726).withValues(alpha: 0.1),
+                                    ? AppColors.consonantAccent.withValues(alpha: 0.1)
+                                    : AppColors.accentOrange.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 item.type == _MatchType.khmer
                                     ? 'Chữ Khmer'
                                     : 'Phiên âm',
-                                style: GoogleFonts.nunito(
+                                style: GoogleFonts.plusJakartaSans(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                     color: item.type == _MatchType.khmer
-                                        ? const Color(0xFF7E57C2)
-                                        : const Color(0xFFFFA726)),
+                                        ? AppColors.consonantAccent
+                                        : AppColors.accentOrange),
                               ),
                             ),
                           ),
@@ -306,7 +307,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen>
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-            colors: [Color(0xFFFF6B6B), Color(0xFFEE5A24)]),
+            colors: [AppColors.accentRed, const Color(0xFFEE5A24)]),
         borderRadius: BorderRadius.only(
             bottomLeft: Radius.circular(28),
             bottomRight: Radius.circular(28)),
@@ -325,7 +326,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen>
               Expanded(
                 child: Text('Ghép hình — Vòng $_round',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: Colors.white)),
@@ -337,7 +338,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen>
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Text('⭐ $_score',
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: Colors.white)),

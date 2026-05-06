@@ -35,7 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment(-0.7, -0.7), end: Alignment(0.7, 0.7),
-            colors: [AppColors.primary, AppColors.primaryLight]),
+            colors: [Color(0xFF1565C0), Color(0xFF42A5F5)]),
         ),
         child: Stack(children: [
           // ── Radial glow overlays ──
@@ -97,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(40),
                             boxShadow: [BoxShadow(
-                              color: AppColors.primaryDark.withValues(alpha: 0.10),
+                              color: const Color(0xFF0D47A1).withValues(alpha: 0.10),
                               blurRadius: 40, offset: const Offset(0, 12))]),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(40),
@@ -174,14 +174,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                     width: double.infinity,
                                     padding: const EdgeInsets.symmetric(vertical: 16),
                                     decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [AppColors.secondaryLight, AppColors.secondary]),
+                                      color: Colors.white,
                                       borderRadius: BorderRadius.circular(50),
                                       boxShadow: [BoxShadow(
-                                        color: AppColors.secondary.withValues(alpha: 0.30),
+                                        color: Colors.white.withValues(alpha: 0.30),
                                         blurRadius: 20, offset: const Offset(0, 8))]),
                                     child: Center(child: Text('Đăng nhập', style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.onBackground))),
+                                      fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFF1976D2)))),
                                   ),
                                 ),
 

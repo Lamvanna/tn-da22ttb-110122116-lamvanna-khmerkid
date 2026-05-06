@@ -9,7 +9,7 @@ import 'vowel_screen.dart';
 import 'vocabulary_screen.dart';
 import '../../services/score_service.dart';
 
-/// Màn hình Học - Lộ trình học tập Khmer
+/// Màn hình Học - Lộ trình học tập Khmer (dạng danh sách)
 class LearnScreen extends StatefulWidget {
   const LearnScreen({super.key});
   @override
@@ -35,396 +35,392 @@ class _LearnScreenState extends State<LearnScreen> {
   @override
   Widget build(BuildContext context) {
     if (_showLetterMap) {
-      return LetterMapView(
-        onBack: () => setState(() => _showLetterMap = false),
-      );
+      return LetterMapView(onBack: () => setState(() => _showLetterMap = false));
     }
     if (_showVowels) {
-      return VowelScreen(
-        onBack: () => setState(() => _showVowels = false),
-      );
+      return VowelScreen(onBack: () => setState(() => _showVowels = false));
     }
     return _buildOverview(context);
   }
 
+  List<_Zone> _getZones() {
+    final lp = (_score?.lettersLearned ?? 0) / 33;
+    final vp = (_score?.vowelsLearned ?? 0) / 18;
+    return [
+      _Zone(n: 1, title: 'Học phụ âm', sub: 'Nhận biết 33 phụ âm Khmer',
+        icon: Icons.abc_rounded, prog: lp, total: 33, done: _score?.lettersLearned ?? 0,
+        color: const Color(0xFF4A90D9), stars: 10, btn: 'Bắt đầu học',
+        onTap: () => setState(() => _showLetterMap = true)),
+      _Zone(n: 2, title: 'Học nguyên âm', sub: 'Học 18 nguyên âm Khmer',
+        icon: Icons.record_voice_over_rounded, prog: vp, total: 18, done: _score?.vowelsLearned ?? 0,
+        color: const Color(0xFFFF7043), stars: 10, btn: 'Bắt đầu học',
+        onTap: () => setState(() => _showVowels = true)),
+      _Zone(n: 3, title: 'Đánh vần', sub: 'Ghép âm thành tiếng và từ',
+        icon: Icons.spellcheck_rounded, prog: 0, total: 30, done: 0,
+        color: const Color(0xFF7E57C2), stars: 15, btn: 'Bắt đầu học',
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SpellingMapScreen()))),
+      _Zone(n: 4, title: 'Tập đọc', sub: 'Làm quen và đọc câu đơn giản',
+        icon: Icons.auto_stories_rounded, prog: 0, total: 28, done: 0,
+        color: const Color(0xFF42A5F5), stars: 15, btn: 'Bắt đầu học',
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReadingScreen()))),
+      _Zone(n: 5, title: 'Luyện viết', sub: 'Tập viết chữ Khmer đúng nét',
+        icon: Icons.draw_rounded, prog: 0, total: 30, done: 0,
+        color: const Color(0xFFFFA726), stars: 15, btn: 'Bắt đầu học',
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WritingMapScreen()))),
+      _Zone(n: 6, title: 'Đọc hiểu', sub: 'Hiểu nội dung và trả lời câu hỏi',
+        icon: Icons.menu_book_rounded, prog: 0, total: 25, done: 0,
+        color: const Color(0xFFEC407A), stars: 20, btn: 'Bắt đầu học',
+        onTap: () {}),
+      _Zone(n: 7, title: 'Khám phá văn hóa', sub: 'Tìm hiểu văn hóa Khmer',
+        icon: Icons.temple_buddhist_rounded, prog: 0, total: 20, done: 0,
+        color: const Color(0xFF5C6BC0), stars: 20, btn: 'Bắt đầu học',
+        onTap: () {}),
+    ];
+  }
+
   Widget _buildOverview(BuildContext context) {
-    final letterProg = (_score?.lettersLearned ?? 0) / 33;
-    final vowelProg = (_score?.vowelsLearned ?? 0) / 18;
+    final zones = _getZones();
+    final cont = zones.firstWhere((z) => z.prog < 1.0, orElse: () => zones.first);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          // Header gradient
-          Container(
-            decoration: const BoxDecoration(
-              gradient: AppColors.headerGradient,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(16),
-                bottomRight: Radius.circular(16)),
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
-                child: Column(children: [
-                  // Title row with stats
-                  Row(children: [
-                    // Stars
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(12)),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(Icons.star_rounded, color: AppColors.secondaryLight, size: 18),
-                        const SizedBox(width: 4),
-                        Text('${_score?.totalStars ?? 0}',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white)),
-                      ]),
-                    ),
-                    const Spacer(),
-                    Text('Lộ trình học',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
-                    const Spacer(),
-                    // Streak
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(12)),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(Icons.local_fire_department_rounded, color: AppColors.coral, size: 18),
-                        const SizedBox(width: 4),
-                        Text('${_score?.streak ?? 0}',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white)),
-                      ]),
-                    ),
-                  ]),
-                ]),
-              ),
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                children: [
-              const SizedBox(height: 16),
-              _buildFinishBadge(),
-              const SizedBox(height: 8),
-
-              _buildZoneCard(
-                align: Alignment.centerRight, padLeft: 50, padRight: 20,
-                zone: _Zone(number: 6, title: 'Từ vựng', subtitle: 'Học từ vựng theo chủ đề',
-                  icon: Icons.translate_rounded,
-                  progress: (_score?.vocabLearned ?? 0) / 38,
-                  lessons: '${_score?.vocabLearned ?? 0}/38 từ',
-                  color: AppColors.violet,
-                  buttonText: 'Học từ vựng',
-                  onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const VocabularyScreen())))),
-              _buildConnector(leftToRight: false),
-
-              _buildZoneCard(
-                align: Alignment.centerLeft, padLeft: 20, padRight: 50,
-                zone: _Zone(number: 5, title: 'Tập đọc', subtitle: 'Đọc từ và câu đơn giản',
-                  icon: Icons.auto_stories_rounded, progress: 0.3, lessons: '6/20 bài',
-                  color: AppColors.primary,
-                  buttonText: 'Tập đọc',
-                  onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const ReadingScreen())))),
-              _buildConnector(leftToRight: true),
-
-              _buildZoneCard(
-                align: Alignment.centerRight, padLeft: 50, padRight: 20,
-                zone: _Zone(number: 4, title: 'Tập viết', subtitle: 'Viết đúng nét chữ Khmer',
-                  icon: Icons.draw_rounded, progress: 0.8, lessons: '16/20 bài',
-                  color: AppColors.tertiary,
-                  buttonText: 'Tập viết',
-                  onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const WritingMapScreen())))),
-              _buildConnector(leftToRight: false),
-
-              _buildZoneCard(
-                align: Alignment.centerLeft, padLeft: 20, padRight: 50,
-                zone: _Zone(number: 3, title: 'Đánh vần', subtitle: 'Ghép phụ âm + nguyên âm',
-                  icon: Icons.spellcheck_rounded, progress: 0.45, lessons: '9/20 bài',
-                  color: AppColors.secondary,
-                  buttonText: 'Tiếp tục học',
-                  onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const SpellingMapScreen())))),
-              _buildConnector(leftToRight: true),
-
-              _buildZoneCard(
-                align: Alignment.centerRight, padLeft: 50, padRight: 20,
-                zone: _Zone(number: 2, title: 'Nguyên âm', subtitle: 'Học 18 nguyên âm Khmer',
-                  icon: Icons.record_voice_over_rounded, progress: vowelProg,
-                  lessons: '${_score?.vowelsLearned ?? 0}/18 bài',
-                  color: AppColors.coral,
-                  buttonText: 'Học nguyên âm',
-                  onTap: () => setState(() => _showVowels = true))),
-              _buildConnector(leftToRight: false),
-
-              _buildZoneCard(
-                align: Alignment.centerLeft, padLeft: 20, padRight: 50,
-                zone: _Zone(number: 1, title: 'Học chữ cái', subtitle: 'Nhận biết 33 phụ âm Khmer',
-                  icon: Icons.abc_rounded, progress: letterProg,
-                  lessons: '${_score?.lettersLearned ?? 0}/33 bài',
-                  color: AppColors.primary,
-                  buttonText: 'Bắt đầu học',
-                  onTap: () => setState(() => _showLetterMap = true))),
-
-              const SizedBox(height: 16),
-              _buildStartBadge(),
-              const SizedBox(height: 100),
-            ],
-          ),
-        ),
-      ),
-      ],
-      ),
+      backgroundColor: const Color(0xFFF5F7FB),
+      body: Column(children: [
+        _buildHeader(),
+        Expanded(child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(children: [
+            const SizedBox(height: 16),
+            _buildContinueCard(cont),
+            const SizedBox(height: 20),
+            ...zones.map((z) => _buildZoneRow(z, isLast: z.n == zones.length)),
+            const SizedBox(height: 8),
+            _buildStartBanner(),
+            const SizedBox(height: 100),
+          ]),
+        )),
+      ]),
     );
   }
 
-  Widget _buildZoneCard({
-    required Alignment align,
-    required double padLeft,
-    required double padRight,
-    required _Zone zone,
-  }) {
-    return Padding(
-      padding: EdgeInsets.only(left: padLeft, right: padRight),
-      child: Align(
-        alignment: align,
-        child: Container(
-          width: 260,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: zone.color.withValues(alpha: 0.08),
-                blurRadius: 20,
-                offset: const Offset(0, 6)),
-              BoxShadow(
-                color: const Color(0xFF304060).withValues(alpha: 0.04),
-                blurRadius: 40,
-                offset: const Offset(0, 16)),
-            ],
-            border: Border.all(color: zone.color.withValues(alpha: 0.12), width: 1.5),
+  // ── Header ──
+  Widget _buildHeader() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(colors: [Color(0xFF1976D2), Color(0xFF64B5F6)]),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(20), bottomRight: Radius.circular(20))),
+      child: SafeArea(bottom: false, child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
+        child: Row(children: [
+          // Stars badge - white card
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 8, offset: const Offset(0, 2))]),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                Image.asset('image/sao.png', width: 18, height: 18),
+                const SizedBox(width: 5),
+                Text('${_score?.totalStars ?? 0}',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF2C3345))),
+              ]),
+              const SizedBox(height: 2),
+              Text('Điểm của bạn', style: GoogleFonts.plusJakartaSans(
+                fontSize: 10, fontWeight: FontWeight.w600, color: const Color(0xFF616161))),
+            ]),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          const Spacer(),
+          Text('Lộ trình học', style: GoogleFonts.plusJakartaSans(
+            fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white)),
+          const Spacer(),
+          // Streak badge - white card
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 8, offset: const Offset(0, 2))]),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                Image.asset('image/Lửa chuổi.png', width: 18, height: 18),
+                const SizedBox(width: 5),
+                Text('${_score?.streak ?? 0}',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF2C3345))),
+              ]),
+              const SizedBox(height: 2),
+              Text('Chuỗi ngày', style: GoogleFonts.plusJakartaSans(
+                fontSize: 10, fontWeight: FontWeight.w600, color: const Color(0xFF616161))),
+            ]),
+          ),
+        ]),
+      )),
+    );
+  }
+
+  // ── Continue Learning Card ──
+  Widget _buildContinueCard(_Zone zone) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(
+          color: Colors.black.withValues(alpha: 0.06),
+          blurRadius: 20, offset: const Offset(0, 6))]),
+      child: Column(children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: SizedBox(width: 150, height: 150,
+              child: Image.asset('image/Sách.png', fit: BoxFit.contain)),
+          ),
+          const SizedBox(width: 12),
+          // RIGHT: title + progress + reward
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text('Tiếp tục học', style: GoogleFonts.plusJakartaSans(
+                fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+              const SizedBox(height: 8),
               Row(children: [
-                // Number badge
+                SizedBox(width: 65, height: 65,
+                  child: Stack(alignment: Alignment.center, children: [
+                    SizedBox(width: 65, height: 65, child: CircularProgressIndicator(
+                      value: 1.0, strokeWidth: 5,
+                      color: const Color(0xFFFFA726).withValues(alpha: 0.15))),
+                    SizedBox(width: 65, height: 65, child: CircularProgressIndicator(
+                      value: zone.prog.clamp(0, 1), strokeWidth: 5,
+                      color: const Color(0xFFFFA726), strokeCap: StrokeCap.round)),
+                    Column(mainAxisSize: MainAxisSize.min, children: [
+                      Text('${(zone.prog.clamp(0, 1) * 100).toInt()}%',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 17, fontWeight: FontWeight.w900, color: const Color(0xFF2C3345))),
+                      Text('${zone.done}/${zone.total} bài', style: GoogleFonts.plusJakartaSans(
+                        fontSize: 8, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                    ]),
+                  ]),
+                ),
+                const Spacer(),
                 Container(
-                  width: 34, height: 34,
+                  width: 65, height: 65,
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft, end: Alignment.bottomRight,
-                      colors: [zone.color, zone.color.withValues(alpha: 0.8)]),
-                    shape: BoxShape.circle,
+                    color: const Color(0xFFFFF8E1), borderRadius: BorderRadius.circular(14)),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Image.asset('image/sao.png', width: 18, height: 18),
+                    const SizedBox(height: 2),
+                    Text('+${zone.stars}', style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12, fontWeight: FontWeight.w800, color: const Color(0xFFF0A030))),
+                    Text('Điểm', style: GoogleFonts.plusJakartaSans(
+                      fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                  ]),
+                ),
+              ]),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: zone.onTap,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFFB340), Color(0xFFF0A030)]),
+                    borderRadius: BorderRadius.circular(12),
                     boxShadow: [BoxShadow(
-                      color: zone.color.withValues(alpha: 0.25),
-                      blurRadius: 8, offset: const Offset(0, 3))]),
-                  child: Center(child: Text('${zone.number}',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800,
-                      color: Colors.white))),
+                      color: const Color(0xFFF0A030).withValues(alpha: 0.30),
+                      blurRadius: 6, offset: const Offset(0, 2))]),
+                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Text('Tiếp tục học', style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+                    const SizedBox(width: 6),
+                    const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
+                  ]),
+                ),
+              ),
+            ],
+          )),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _buildZoneRow(_Zone zone, {bool isLast = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: IntrinsicHeight(
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // Timeline: circle + dotted line
+          SizedBox(width: 36, child: Column(children: [
+            Container(
+              width: 34, height: 34,
+              decoration: BoxDecoration(
+                color: zone.color, shape: BoxShape.circle,
+                boxShadow: [BoxShadow(
+                  color: zone.color.withValues(alpha: 0.3),
+                  blurRadius: 6, offset: const Offset(0, 2))]),
+              child: Center(child: Text('${zone.n}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white))),
+            ),
+            if (!isLast)
+              Expanded(child: CustomPaint(
+                painter: _DottedLinePainter(color: zone.color.withValues(alpha: 0.3)))),
+          ])),
+          const SizedBox(width: 10),
+          // Card
+          Expanded(child: Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 12, offset: const Offset(0, 4))]),
+            child: Column(children: [
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                // Icon
+                Container(
+                  width: 60, height: 60,
+                  decoration: BoxDecoration(
+                    color: zone.color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16)),
+                  child: Icon(zone.icon, color: zone.color, size: 30),
                 ),
                 const SizedBox(width: 12),
                 Expanded(child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(zone.title,
-                      style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800,
-                        color: AppColors.onBackground)),
-                    const SizedBox(height: 1),
-                    Text(zone.subtitle, style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
+                    Text(zone.title, style: GoogleFonts.plusJakartaSans(
+                      fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                    const SizedBox(height: 3),
+                    Text(zone.sub, style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
                   ],
                 )),
-              ]),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  // Icon
-                  Container(
-                    width: 48, height: 48,
-                    decoration: BoxDecoration(
-                      color: zone.color.withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(14)),
-                    child: Icon(zone.icon, color: zone.color, size: 24),
-                  ),
-                  const SizedBox(width: 14),
-                  // Progress ring
-                  SizedBox(
-                    width: 52, height: 52,
-                    child: Stack(alignment: Alignment.center, children: [
-                      SizedBox(width: 52, height: 52,
-                        child: CircularProgressIndicator(
-                          value: 1.0, strokeWidth: 4,
-                          color: zone.color.withValues(alpha: 0.12))),
-                      SizedBox(width: 52, height: 52,
-                        child: CircularProgressIndicator(
-                          value: zone.progress.clamp(0, 1), strokeWidth: 4,
-                          color: zone.color, strokeCap: StrokeCap.round)),
-                      Column(mainAxisSize: MainAxisSize.min, children: [
-                        Text('${(zone.progress.clamp(0, 1) * 100).toInt()}%',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800,
-                            color: zone.color)),
-                        Text(zone.lessons, style: GoogleFonts.plusJakartaSans(
-                          fontSize: 8, fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary)),
-                      ]),
-                    ]),
-                  ),
-                  const Spacer(),
-                  // Stars reward
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: AppColors.secondarySurface,
-                      borderRadius: BorderRadius.circular(12)),
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.star_rounded, color: AppColors.secondary, size: 14),
-                      const SizedBox(width: 3),
-                      Text('+${zone.number * 5}',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.secondary)),
-                    ]),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              // Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: zone.onTap,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: zone.color,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shadowColor: Colors.transparent,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14))),
-                  child: Text(zone.buttonText,
-                    style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF8E1), borderRadius: BorderRadius.circular(10)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Image.asset('image/sao.png', width: 14, height: 14),
+                    const SizedBox(width: 3),
+                    Text('+${zone.stars}', style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFFF0A030))),
+                  ]),
                 ),
-              ),
-            ],
-          ),
+              ]),
+              const SizedBox(height: 12),
+              Row(children: [
+                Text('${(zone.prog * 100).toInt()}%', style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12, fontWeight: FontWeight.w700, color: zone.color)),
+                const SizedBox(width: 8),
+                Expanded(child: ClipRRect(
+                  borderRadius: BorderRadius.circular(5),
+                  child: LinearProgressIndicator(
+                    value: zone.prog.clamp(0, 1), minHeight: 6,
+                    backgroundColor: zone.color.withValues(alpha: 0.12), color: zone.color),
+                )),
+                const SizedBox(width: 8),
+                Text('${zone.done}/${zone.total} bài', style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: zone.onTap,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF6B6B),
+                      borderRadius: BorderRadius.circular(12)),
+                    child: Text(zone.btn, style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                  ),
+                ),
+              ]),
+            ]),
+          )),
+        ])),
+    );
+  }
+
+  // ── Start Banner ──
+  Widget _buildStartBanner() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Color(0xFF1976D2), Color(0xFF64B5F6)]),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(
+          color: const Color(0xFF1976D2).withValues(alpha: 0.25),
+          blurRadius: 16, offset: const Offset(0, 6))]),
+      child: Row(children: [
+        const Text('🚀', style: TextStyle(fontSize: 28)),
+        const SizedBox(width: 12),
+        Expanded(child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Bắt đầu từ đây!', style: GoogleFonts.plusJakartaSans(
+              fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white)),
+            const SizedBox(height: 2),
+            Text('Học mỗi ngày – Tiến bộ mỗi ngày', style: GoogleFonts.plusJakartaSans(
+              fontSize: 12, fontWeight: FontWeight.w500,
+              color: Colors.white.withValues(alpha: 0.85))),
+          ],
+        )),
+        Container(
+          width: 36, height: 36,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
+          child: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
         ),
-      ),
-    );
-  }
-
-  Widget _buildConnector({required bool leftToRight}) {
-    return SizedBox(
-      height: 50,
-      child: CustomPaint(
-        painter: _PathConnectorPainter(isLeftToRight: leftToRight),
-        size: const Size(double.infinity, 50),
-      ),
-    );
-  }
-
-  Widget _buildFinishBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.secondaryLight, AppColors.secondary]),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(
-          color: AppColors.secondary.withValues(alpha: 0.18),
-          blurRadius: 20, offset: const Offset(0, 8))],
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 26),
-        const SizedBox(width: 10),
-        Text('Hoàn thành tất cả!',
-          style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w800,
-            color: Colors.white)),
-        const SizedBox(width: 8),
-        const Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 24),
-      ]),
-    );
-  }
-
-  Widget _buildStartBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-      decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(
-          color: AppColors.primary.withValues(alpha: 0.18),
-          blurRadius: 20, offset: const Offset(0, 8))],
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        const Icon(Icons.flag_rounded, color: Colors.white, size: 22),
-        const SizedBox(width: 8),
-        Text('Bắt đầu từ đây!',
-          style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w800,
-            color: Colors.white)),
-        const SizedBox(width: 6),
-        const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 20),
       ]),
     );
   }
 }
 
 class _Zone {
-  final int number;
-  final String title, subtitle, lessons, buttonText;
+  final int n, total, done, stars;
+  final String title, sub, btn;
   final IconData icon;
-  final double progress;
+  final double prog;
   final Color color;
   final VoidCallback? onTap;
 
   _Zone({
-    required this.number, required this.title, required this.subtitle,
-    required this.icon, required this.progress, required this.lessons,
-    required this.color, required this.buttonText, this.onTap,
+    required this.n, required this.title, required this.sub,
+    required this.icon, required this.prog,
+    required this.total, required this.done,
+    required this.color, required this.btn, required this.stars,
+    this.onTap,
   });
 }
 
-class _PathConnectorPainter extends CustomPainter {
-  final bool isLeftToRight;
-  _PathConnectorPainter({required this.isLeftToRight});
+class _DottedLinePainter extends CustomPainter {
+  final Color color;
+  _DottedLinePainter({required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
     final paint = Paint()
-      ..color = AppColors.textHint.withValues(alpha: 0.35)
+      ..color = color
       ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round;
-
-    final startX = isLeftToRight ? w * 0.35 : w * 0.65;
-    final endX = isLeftToRight ? w * 0.65 : w * 0.35;
-
-    for (int i = 0; i < 6; i++) {
-      final t = i / 5.0;
-      canvas.drawCircle(
-        Offset(startX + (endX - startX) * t, h * 0.2 + (h * 0.6) * t),
-        2.5, paint);
+    final cx = size.width / 2;
+    double y = 6;
+    while (y < size.height) {
+      canvas.drawCircle(Offset(cx, y), 1.5, paint);
+      y += 8;
     }
-
-    final midX = (startX + endX) / 2;
-    canvas.drawCircle(Offset(midX, h / 2), 7,
-      Paint()..color = AppColors.secondaryLight);
-    canvas.drawCircle(Offset(midX, h / 2), 7,
-      Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 2);
   }
 
   @override

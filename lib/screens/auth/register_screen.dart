@@ -35,7 +35,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment(-0.7, -0.7), end: Alignment(0.7, 0.7),
-            colors: [AppColors.primary, AppColors.primaryLight]),
+            colors: [Color(0xFF1565C0), Color(0xFF42A5F5)]),
         ),
         child: Stack(children: [
           // ── Blurred background shapes ──
@@ -84,7 +84,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(40),
                             boxShadow: [BoxShadow(
-                              color: AppColors.primaryDark.withValues(alpha: 0.10),
+                              color: const Color(0xFF0D47A1).withValues(alpha: 0.10),
                               blurRadius: 40, offset: const Offset(0, 12))]),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(40),
@@ -127,14 +127,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       width: double.infinity,
                                       padding: const EdgeInsets.symmetric(vertical: 16),
                                       decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [AppColors.secondaryLight, AppColors.secondary]),
+                                        color: Colors.white,
                                         borderRadius: BorderRadius.circular(50),
                                         boxShadow: [BoxShadow(
-                                          color: AppColors.secondary.withValues(alpha: 0.30),
+                                          color: Colors.white.withValues(alpha: 0.30),
                                           blurRadius: 20, offset: const Offset(0, 8))]),
                                       child: Center(child: Text('Đăng ký', style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.onBackground))),
+                                        fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFF1976D2)))),
                                     ),
                                   ),
 
@@ -280,7 +279,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           SizedBox(width: double.infinity, height: 50, child: ElevatedButton(
             onPressed: () { Navigator.pop(ctx); Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen())); },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: const Color(0xFF1976D2),
               shape: const StadiumBorder()),
             child: Text('Đăng nhập ngay', style: GoogleFonts.plusJakartaSans(
               fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)))),

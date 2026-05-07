@@ -40,9 +40,10 @@ class _LetterMapViewState extends State<LetterMapView>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
-    _pulseAnim = Tween<double>(begin: 1.0, end: 1.08).animate(
-      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
-    );
+    _pulseAnim = Tween<double>(
+      begin: 1.0,
+      end: 1.08,
+    ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
     _scrollCtrl = ScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrent());
   }
@@ -77,11 +78,11 @@ class _LetterMapViewState extends State<LetterMapView>
   // 5 màu xoay vòng theo nhóm 5 chữ
   Color _nodeColor(int idx) {
     const colors = [
-      AppColors.primary,     // 🔵
-      AppColors.tertiary,    // 🟢
-      AppColors.secondary,   // 🟡
-      AppColors.violet,      // 🟣
-      AppColors.coral,       // 🩷
+      Color(0xFF2979FF), // 🔵 xanh tươi
+      Color(0xFF00E676), // 🟢 xanh lá neon
+      Color(0xFFFFD600), // 🟡 vàng tươi
+      Color(0xFFAA00FF), // 🟣 tím neon
+      Color(0xFFFF1744), // 🔴 đỏ tươi
     ];
     return colors[(idx ~/ 5) % colors.length];
   }
@@ -92,36 +93,34 @@ class _LetterMapViewState extends State<LetterMapView>
     final mapH = _letters.length * _nodeSpacingY + 120;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFF0F4FF),
       body: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: ClipRect(
-                child: SingleChildScrollView(
-                  controller: _scrollCtrl,
-                  physics: const BouncingScrollPhysics(),
-                  reverse: true,
-                  child: SizedBox(
-                    width: w,
-                    height: mapH,
-                    child: CustomPaint(
-                      painter: _MapPainter(
-                        count: _letters.length,
-                        width: w,
-                        getX: _nodeX,
-                        getY: _nodeY,
-                        doneCount: _doneCount,
-                      ),
-                      child: Stack(
-                        children: _buildAllNodes(w),
-                      ),
+        children: [
+          _buildHeader(),
+          Expanded(
+            child: ClipRect(
+              child: SingleChildScrollView(
+                controller: _scrollCtrl,
+                physics: const BouncingScrollPhysics(),
+                reverse: true,
+                child: SizedBox(
+                  width: w,
+                  height: mapH,
+                  child: CustomPaint(
+                    painter: _MapPainter(
+                      count: _letters.length,
+                      width: w,
+                      getX: _nodeX,
+                      getY: _nodeY,
+                      doneCount: _doneCount,
                     ),
+                    child: Stack(children: _buildAllNodes(w)),
                   ),
                 ),
               ),
             ),
-          ],
+          ),
+        ],
       ),
     );
   }
@@ -134,98 +133,176 @@ class _LetterMapViewState extends State<LetterMapView>
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          begin: Alignment(-0.5, -1), end: Alignment(0.5, 1),
-          colors: [Color(0xFF4580C4), Color(0xFF6A9DD6)]),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(16),
-          bottomRight: Radius.circular(16)),
-        boxShadow: [BoxShadow(
-          color: const Color(0xFF4580C4).withValues(alpha: 0.25),
-          blurRadius: 20, offset: const Offset(0, 6))]),
-      child: Stack(children: [
-        Positioned(right: -40, top: -30,
-          child: Container(width: 120, height: 120,
-            decoration: BoxDecoration(shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.06)))),
-        Positioned(left: -25, bottom: -20,
-          child: Container(width: 80, height: 80,
-            decoration: BoxDecoration(shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.04)))),
-        Positioned(right: 60, bottom: -10,
-          child: Container(width: 40, height: 40,
-            decoration: BoxDecoration(shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.05)))),
-        SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 6, 16, 18),
-            child: Column(children: [
-              Row(children: [
-                GestureDetector(
-                  onTap: widget.onBack,
-                  child: Container(
-                    width: 40, height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(13),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.12))),
-                    child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20)),
-                ),
-                const SizedBox(width: 14),
-                Expanded(child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Phụ âm Khmer',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
-                    const SizedBox(height: 2),
-                    Text('$_doneCount/${_letters.length} đã hoàn thành',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12, fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.8))),
-                  ],
-                )),
-                Container(
-                  width: 46, height: 46,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(14)),
-                  child: const Center(child: Text('🔤', style: TextStyle(fontSize: 24)))),
-              ]),
-              const SizedBox(height: 14),
-              Row(children: [
-                Expanded(child: Container(
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(6)),
-                  child: Stack(children: [
-                    FractionallySizedBox(
-                      alignment: Alignment.centerLeft,
-                      widthFactor: progress.clamp(0.0, 1.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Colors.white, Color(0xFFE0E8F0)]),
-                          borderRadius: BorderRadius.circular(6),
-                          boxShadow: [BoxShadow(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            blurRadius: 8)])))]),
-                )),
-                const SizedBox(width: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8)),
-                  child: Text('$pct%',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white))),
-              ]),
-            ]),
-          ),
+          begin: Alignment(-0.5, -1),
+          end: Alignment(0.5, 1),
+          colors: [Color(0xFF1565C0), Color(0xFF42A5F5), Color(0xFF29B6F6)],
         ),
-      ]),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1565C0).withValues(alpha: 0.35),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Decorative circles
+          Positioned(
+            right: -40,
+            top: -30,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.06),
+              ),
+            ),
+          ),
+          Positioned(
+            left: -25,
+            bottom: -20,
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.04),
+              ),
+            ),
+          ),
+          // Mascot elephant
+          Positioned(
+            right: 0,
+            bottom: -15,
+            child: Image.asset(
+              'image/Voi nguyên âm.png',
+              width: 100,
+              height: 100,
+              fit: BoxFit.contain,
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 105, 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Row: Back + Title
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: widget.onBack,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(13),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.12),
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.arrow_back_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Flexible(
+                        child: Text(
+                          'Học phụ âm Khmer',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 0),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 52),
+                    child: Text(
+                      '$_doneCount/${_letters.length} đã hoàn thành',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  // Progress bar
+                  Padding(
+                    padding: const EdgeInsets.only(left: 52),
+                    child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Stack(
+                            children: [
+                              FractionallySizedBox(
+                                alignment: Alignment.centerLeft,
+                                widthFactor: progress.clamp(0.0, 1.0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFF66BB6A),
+                                        Color(0xFF43A047),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFF43A047,
+                                        ).withValues(alpha: 0.5),
+                                        blurRadius: 8,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        '$pct%',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -274,8 +351,11 @@ class _LetterMapViewState extends State<LetterMapView>
                         mainAxisSize: MainAxisSize.min,
                         children: List.generate(
                           min(letter.starRating, 3),
-                          (_) => Icon(Icons.star_rounded,
-                            color: AppColors.secondary, size: 13),
+                          (_) => Icon(
+                            Icons.star_rounded,
+                            color: AppColors.secondary,
+                            size: 13,
+                          ),
                         ),
                       ),
                     ),
@@ -290,7 +370,13 @@ class _LetterMapViewState extends State<LetterMapView>
     return widgets;
   }
 
-  Widget _circle(KhmerLetter letter, Color color, bool done, bool curr, bool locked) {
+  Widget _circle(
+    KhmerLetter letter,
+    Color color,
+    bool done,
+    bool curr,
+    bool locked,
+  ) {
     if (locked) {
       return Container(
         width: _nodeSize,
@@ -303,8 +389,7 @@ class _LetterMapViewState extends State<LetterMapView>
             width: 3,
           ),
         ),
-        child: Icon(Icons.lock_rounded,
-          color: AppColors.textHint, size: 22),
+        child: Icon(Icons.lock_rounded, color: AppColors.textHint, size: 22),
       );
     }
 
@@ -367,9 +452,7 @@ class _LetterMapViewState extends State<LetterMapView>
   void _openLetter(int idx) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => LetterDetailScreen(initialIndex: idx),
-      ),
+      MaterialPageRoute(builder: (_) => LetterDetailScreen(initialIndex: idx)),
     ).then((_) {
       if (mounted) setState(() {});
     });
@@ -417,7 +500,7 @@ class _MapPainter extends CustomPainter {
     canvas.drawPath(
       path,
       Paint()
-        ..color = AppColors.surfaceContainerHighest
+        ..color = const Color(0xFFD6E4F0)
         ..strokeWidth = 10
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
@@ -442,28 +525,37 @@ class _MapPainter extends CustomPainter {
       }
 
       // Shadow
-      canvas.drawPath(dp, Paint()
-        ..color = AppColors.primaryDark.withValues(alpha: 0.3)
-        ..strokeWidth = 12
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round);
+      canvas.drawPath(
+        dp,
+        Paint()
+          ..color = const Color(0xFF1565C0).withValues(alpha: 0.4)
+          ..strokeWidth = 12
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round,
+      );
 
       // Main
-      canvas.drawPath(dp, Paint()
-        ..color = AppColors.primary
-        ..strokeWidth = 8
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round);
+      canvas.drawPath(
+        dp,
+        Paint()
+          ..color = const Color(0xFF2979FF)
+          ..strokeWidth = 8
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round,
+      );
 
       // Highlight
-      canvas.drawPath(dp, Paint()
-        ..color = AppColors.primaryLight.withValues(alpha: 0.5)
-        ..strokeWidth = 3
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round);
+      canvas.drawPath(
+        dp,
+        Paint()
+          ..color = const Color(0xFF82B1FF).withValues(alpha: 0.6)
+          ..strokeWidth = 3
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round,
+      );
     }
   }
 

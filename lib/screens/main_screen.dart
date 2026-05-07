@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 import 'home/home_screen.dart';
@@ -48,64 +49,66 @@ class MainScreenState extends State<MainScreen> {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 16,
-              offset: const Offset(0, -2),
+              blurRadius: 16.r,
+              offset: Offset(0, -2.h),
             ),
           ],
         ),
-        child: ClipRect(
-          child: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) => setState(() => _currentIndex = index),
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.white,
-            selectedItemColor: AppColors.primary,
-            unselectedItemColor: AppColors.navInactive,
-            selectedFontSize: 12,
-            unselectedFontSize: 12,
-            selectedLabelStyle: GoogleFonts.plusJakartaSans(
-              fontWeight: FontWeight.w700),
-            unselectedLabelStyle: GoogleFonts.plusJakartaSans(
-              fontWeight: FontWeight.w500),
-            elevation: 0,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 2),
-                  child: Icon(Icons.home_outlined, size: 26)),
-                activeIcon: Padding(
-                  padding: EdgeInsets.only(bottom: 2),
-                  child: Icon(Icons.home_rounded, size: 26)),
-                label: 'Trang chủ',
-              ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 2),
-                  child: Icon(Icons.school_outlined, size: 26)),
-                activeIcon: Padding(
-                  padding: EdgeInsets.only(bottom: 2),
-                  child: Icon(Icons.school_rounded, size: 26)),
-                label: 'Học',
-              ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 2),
-                  child: Icon(Icons.sports_esports_outlined, size: 26)),
-                activeIcon: Padding(
-                  padding: EdgeInsets.only(bottom: 2),
-                  child: Icon(Icons.sports_esports_rounded, size: 26)),
-                label: 'Chơi',
-              ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 2),
-                  child: Icon(Icons.person_outline_rounded, size: 26)),
-                activeIcon: Padding(
-                  padding: EdgeInsets.only(bottom: 2),
-                  child: Icon(Icons.person_rounded, size: 26)),
-                label: 'Hồ sơ',
-              ),
-            ],
+        child: SafeArea(
+          child: ClipRect(
+            child: BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: (index) => setState(() => _currentIndex = index),
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: Colors.white,
+              selectedItemColor: AppColors.primary,
+              unselectedItemColor: AppColors.navInactive,
+              selectedFontSize: 12.sp,
+              unselectedFontSize: 12.sp,
+              selectedLabelStyle: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w700),
+              unselectedLabelStyle: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w500),
+              elevation: 0,
+              items: [
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: EdgeInsets.only(bottom: 2.h),
+                    child: Icon(Icons.home_outlined, size: 26.sp)),
+                  activeIcon: Padding(
+                    padding: EdgeInsets.only(bottom: 2.h),
+                    child: Icon(Icons.home_rounded, size: 26.sp)),
+                  label: 'Trang chủ',
+                ),
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: EdgeInsets.only(bottom: 2.h),
+                    child: Icon(Icons.school_outlined, size: 26.sp)),
+                  activeIcon: Padding(
+                    padding: EdgeInsets.only(bottom: 2.h),
+                    child: Icon(Icons.school_rounded, size: 26.sp)),
+                  label: 'Học',
+                ),
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: EdgeInsets.only(bottom: 2.h),
+                    child: Icon(Icons.sports_esports_outlined, size: 26.sp)),
+                  activeIcon: Padding(
+                    padding: EdgeInsets.only(bottom: 2.h),
+                    child: Icon(Icons.sports_esports_rounded, size: 26.sp)),
+                  label: 'Chơi',
+                ),
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: EdgeInsets.only(bottom: 2.h),
+                    child: Icon(Icons.person_outline_rounded, size: 26.sp)),
+                  activeIcon: Padding(
+                    padding: EdgeInsets.only(bottom: 2.h),
+                    child: Icon(Icons.person_rounded, size: 26.sp)),
+                  label: 'Hồ sơ',
+                ),
+              ],
+            ),
           ),
         ),
       ),

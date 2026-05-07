@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../constants/app_colors.dart';
 import '../daily_quest_screen.dart';
@@ -20,28 +21,28 @@ class CongratsBanner extends StatelessWidget {
       onTap: () => Navigator.push(context,
         MaterialPageRoute(builder: (_) => const DailyQuestScreen())),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
-        padding: const EdgeInsets.all(16),
+        margin: EdgeInsets.symmetric(horizontal: 16.w),
+        padding: EdgeInsets.all(14.w),
         decoration: BoxDecoration(
-          color: const Color(0xFFEAF2FF),
-          borderRadius: BorderRadius.circular(22),
+          color: const Color(0xFFE3F2FF),
+          borderRadius: BorderRadius.circular(22.r),
           boxShadow: [BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 16, offset: const Offset(0, 4))],
-          border: Border.all(color: const Color(0xFFEEF1F8))),
+            blurRadius: 16.r, offset: Offset(0, 4.h))],
+          border: Border.all(color: const Color(0xFFD6E9FF), width: 1.5)),
         child: Row(
           children: [
             // Gift icon
             Container(
-              width: 50, height: 60,
+              width: 48.w, height: 52.h,
               decoration: BoxDecoration(
-                color: const Color(0xFFE6F1FF),
-                borderRadius: BorderRadius.circular(16)),
+                color: const Color(0xFFD6E9FF),
+                borderRadius: BorderRadius.circular(14.r)),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12.r),
                 child: Image.asset('image/Nhiệm vụ.png', fit: BoxFit.cover)),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14.w),
             // Text
             Expanded(
               child: Column(
@@ -49,26 +50,26 @@ class CongratsBanner extends StatelessWidget {
                 children: [
                   Text(title,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16, fontWeight: FontWeight.w800,
+                      fontSize: 15.sp, fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary)),
-                  const SizedBox(height: 3),
+                  SizedBox(height: 2.h),
                   Text(message,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13, fontWeight: FontWeight.w500,
+                      fontSize: 12.sp, fontWeight: FontWeight.w500,
                       color: AppColors.textSecondary)),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 5.h),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFD6EAFF),
-                      borderRadius: BorderRadius.circular(12)),
+                      color: const Color(0xFFCCE5FF),
+                      borderRadius: BorderRadius.circular(12.r)),
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.star_rounded, color: const Color(0xFFFFB340), size: 16),
-                      const SizedBox(width: 4),
+                      Icon(Icons.star_rounded, color: const Color(0xFFFFA726), size: 14.sp),
+                      SizedBox(width: 4.w),
                       Text('0/5 nhiệm vụ',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12, fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1976D2))),
+                          fontSize: 11.sp, fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1565C0))),
                     ]),
                   ),
                 ],
@@ -76,15 +77,15 @@ class CongratsBanner extends StatelessWidget {
             ),
             // Arrow button
             Container(
-              width: 40, height: 40,
+              width: 38.w, height: 38.w,
               decoration: BoxDecoration(
-                color: const Color(0xFF1976D2),
+                color: const Color(0xFF1976D2).withValues(alpha: 0.85),
                 shape: BoxShape.circle,
                 boxShadow: [BoxShadow(
                   color: const Color(0xFF1976D2).withValues(alpha: 0.25),
-                  blurRadius: 8, offset: const Offset(0, 3))]),
-              child: const Icon(Icons.arrow_forward_rounded,
-                color: Colors.white, size: 20),
+                  blurRadius: 8.r, offset: Offset(0, 3.h))]),
+              child: Icon(Icons.arrow_forward_rounded,
+                color: Colors.white, size: 19.sp),
             ),
           ],
         ),

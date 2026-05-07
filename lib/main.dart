@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash/splash_screen.dart';
 
@@ -31,11 +32,18 @@ class KhmerKidApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'KhmerKid - Học chữ Khmer',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      home: const SplashScreen(),
+    return ScreenUtilInit(
+      designSize: const Size(393, 852),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) {
+        return MaterialApp(
+          title: 'KhmerKid - Học chữ Khmer',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          home: const SplashScreen(),
+        );
+      },
     );
   }
 }

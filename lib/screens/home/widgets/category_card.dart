@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Thẻ danh mục — gradient + ảnh to ở trên, label dưới
@@ -50,22 +51,22 @@ class _CategoryCardState extends State<CategoryCard> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
           width: widget.width,
-          height: widget.height ?? 130,
+          height: widget.height ?? 130.h,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: const Alignment(-0.5, -1),
               end: const Alignment(0.5, 1),
               colors: [lighter, widget.color]),
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(22.r),
             boxShadow: [
               BoxShadow(
                 color: darker.withValues(alpha: _pressed ? 0.15 : 0.35),
                 blurRadius: 0,
-                offset: Offset(0, _pressed ? 2 : 4)),
+                offset: Offset(0, _pressed ? 2.h : 4.h)),
               BoxShadow(
                 color: widget.color.withValues(alpha: 0.20),
-                blurRadius: 24,
-                offset: const Offset(0, 10)),
+                blurRadius: 24.r,
+                offset: Offset(0, 10.h)),
             ],
           ),
           child: Column(
@@ -73,33 +74,33 @@ class _CategoryCardState extends State<CategoryCard> {
               // Ảnh to ở trên
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                  padding: EdgeInsets.fromLTRB(12.w, 8.h, 12.w, 0),
                   child: widget.imagePath != null
                     ? Image.asset(widget.imagePath!, fit: BoxFit.contain)
                     : Center(
                         child: Container(
-                          width: 48, height: 48,
+                          width: 48.w, height: 48.h,
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.25),
-                            borderRadius: BorderRadius.circular(14)),
-                          child: Icon(widget.icon, color: Colors.white, size: 26),
+                            borderRadius: BorderRadius.circular(14.r)),
+                          child: Icon(widget.icon, color: Colors.white, size: 26.sp),
                         ),
                       ),
                 ),
               ),
               // Label nổi bật ở dưới
               Padding(
-                padding: const EdgeInsets.only(bottom: 10),
+                padding: EdgeInsets.only(bottom: 10.h),
                 child: Text(widget.label,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16, fontWeight: FontWeight.w900,
+                    fontSize: 16.sp, fontWeight: FontWeight.w900,
                     color: Colors.white,
                     letterSpacing: 0.5,
                     shadows: [
                       Shadow(
                         color: Colors.black.withValues(alpha: 0.5),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2)),
+                        blurRadius: 8.r,
+                        offset: Offset(0, 2.h)),
                     ])),
               ),
             ],

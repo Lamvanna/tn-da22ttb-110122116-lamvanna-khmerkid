@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui';
 import '../../constants/app_colors.dart';
@@ -6,7 +7,7 @@ import '../main_screen.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 
-/// Màn hình Đăng nhập - Deep glassmorphism design
+/// Màn hình Đăng nhập - Deep glassmorphism design - RESPONSIVE
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
   @override
@@ -28,13 +29,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     return Scaffold(
       body: Container(
-        width: size.width, height: size.height,
+        width: 1.sw,
+        height: 1.sh,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment(-0.7, -0.7), end: Alignment(0.7, 0.7),
+            begin: Alignment(-0.7, -0.7), 
+            end: Alignment(0.7, 0.7),
             colors: [Color(0xFF1565C0), Color(0xFF42A5F5)]),
         ),
         child: Stack(children: [
@@ -52,25 +54,25 @@ class _LoginScreenState extends State<LoginScreen> {
 
           // ── Large decorative circle (top-left) ──
           Positioned(
-            top: -size.height * 0.25, left: -size.width * 0.3,
+            top: -230.h, left: -125.w,
             child: Container(
-              width: size.width * 1.6, height: size.width * 1.6,
+              width: 660.w, height: 660.w,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white.withValues(alpha: 0.10), width: 40),
-                boxShadow: [BoxShadow(color: Colors.white.withValues(alpha: 0.10), blurRadius: 40)]),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.10), width: 40.w),
+                boxShadow: [BoxShadow(color: Colors.white.withValues(alpha: 0.10), blurRadius: 40.r)]),
             ),
           ),
 
           // ── Large decorative circle (bottom-right) ──
           Positioned(
-            bottom: -size.height * 0.25, right: -size.width * 0.35,
+            bottom: -230.h, right: -145.w,
             child: Container(
-              width: size.width * 1.5, height: size.width * 1.5,
+              width: 620.w, height: 620.w,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white.withValues(alpha: 0.12), width: 50),
-                boxShadow: [BoxShadow(color: Colors.white.withValues(alpha: 0.12), blurRadius: 40)]),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.12), width: 50.w),
+                boxShadow: [BoxShadow(color: Colors.white.withValues(alpha: 0.12), blurRadius: 40.r)]),
             ),
           ),
 
@@ -80,9 +82,9 @@ class _LoginScreenState extends State<LoginScreen> {
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: EdgeInsets.symmetric(horizontal: 24.w),
                   child: Column(children: [
-                    SizedBox(height: size.height * 0.01),
+                    SizedBox(height: 8.h),
 
                     Stack(
                       clipBehavior: Clip.none,
@@ -91,117 +93,120 @@ class _LoginScreenState extends State<LoginScreen> {
                         // Glass Card
                         Container(
                           width: double.infinity,
-                          margin: const EdgeInsets.only(top: 68),
-                          padding: const EdgeInsets.fromLTRB(28, 90, 28, 36),
+                          margin: EdgeInsets.only(top: 68.h),
+                          padding: EdgeInsets.fromLTRB(28.w, 90.h, 28.w, 36.h),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(40),
+                            borderRadius: BorderRadius.circular(40.r),
                             boxShadow: [BoxShadow(
                               color: const Color(0xFF0D47A1).withValues(alpha: 0.10),
-                              blurRadius: 40, offset: const Offset(0, 12))]),
+                              blurRadius: 40.r, offset: Offset(0, 12.h))]),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(40),
+                            borderRadius: BorderRadius.circular(40.r),
                             child: BackdropFilter(
                               filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
                               child: Column(children: [
                                 Text('Khmer Kids', style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 34, fontWeight: FontWeight.w800,
+                                  fontSize: 34.sp, fontWeight: FontWeight.w800,
                                   color: Colors.white, letterSpacing: -0.5)),
-                                const SizedBox(height: 4),
+                                SizedBox(height: 4.h),
                                 Text('Học chữ Khmer vui nhộn ☀️', style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9))),
+                                  fontSize: 15.sp, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9))),
 
-                                const SizedBox(height: 28),
+                                SizedBox(height: 28.h),
 
                                 Text('Đăng nhập', style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 27, fontWeight: FontWeight.w700, color: Colors.white)),
-                                const SizedBox(height: 4),
+                                  fontSize: 27.sp, fontWeight: FontWeight.w700, color: Colors.white)),
+                                SizedBox(height: 4.h),
                                 Text('Chào mừng bạn trở lại! 👋', style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.85))),
+                                  fontSize: 16.sp, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.85))),
 
-                                const SizedBox(height: 24),
+                                SizedBox(height: 24.h),
 
                                 _glassInput(controller: _userCtrl,
                                   hint: 'Tên đăng nhập hoặc SĐT',
                                   icon: Icons.person_outline_rounded),
-                                const SizedBox(height: 14),
+                                SizedBox(height: 14.h),
 
                                 _glassInput(controller: _passCtrl,
                                   hint: 'Mật khẩu',
                                   icon: Icons.lock_outline_rounded,
                                   isPassword: true),
-                                const SizedBox(height: 8),
+                                SizedBox(height: 8.h),
 
                                 // Remember + Forgot
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      GestureDetector(
-                                        onTap: () => setState(() => _remember = !_remember),
-                                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                          SizedBox(width: 18, height: 18, child: Checkbox(
-                                            value: _remember,
-                                            onChanged: (v) => setState(() => _remember = v ?? false),
-                                            activeColor: AppColors.primaryContainer,
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                                            side: BorderSide(color: Colors.white.withValues(alpha: 0.8), width: 1.5),
-                                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                            visualDensity: VisualDensity.compact)),
-                                          const SizedBox(width: 8),
-                                          Text('Ghi nhớ đăng nhập', style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9))),
-                                        ]),
+                                      Flexible(
+                                        child: GestureDetector(
+                                          onTap: () => setState(() => _remember = !_remember),
+                                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                            SizedBox(width: 18.w, height: 18.w, child: Checkbox(
+                                              value: _remember,
+                                              onChanged: (v) => setState(() => _remember = v ?? false),
+                                              activeColor: AppColors.primaryContainer,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.r)),
+                                              side: BorderSide(color: Colors.white.withValues(alpha: 0.8), width: 1.5.w),
+                                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                              visualDensity: VisualDensity.compact)),
+                                            SizedBox(width: 6.w),
+                                            Flexible(child: Text('Ghi nhớ', style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 13.sp, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9)),
+                                              overflow: TextOverflow.ellipsis)),
+                                          ]),
+                                        ),
                                       ),
                                       GestureDetector(
                                         onTap: () => Navigator.push(context,
                                           MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
                                         child: Text('Quên mật khẩu?', style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9),
+                                          fontSize: 13.sp, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9),
                                           decoration: TextDecoration.underline,
                                           decorationColor: Colors.white.withValues(alpha: 0.5)))),
                                     ],
                                   ),
                                 ),
 
-                                const SizedBox(height: 16),
+                                SizedBox(height: 16.h),
 
                                 // Login button (gradient pill)
                                 GestureDetector(
                                   onTap: _handleLogin,
                                   child: Container(
                                     width: double.infinity,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: EdgeInsets.symmetric(vertical: 16.h),
                                     decoration: BoxDecoration(
                                       color: Colors.white,
-                                      borderRadius: BorderRadius.circular(50),
+                                      borderRadius: BorderRadius.circular(50.r),
                                       boxShadow: [BoxShadow(
                                         color: Colors.white.withValues(alpha: 0.30),
-                                        blurRadius: 20, offset: const Offset(0, 8))]),
+                                        blurRadius: 20.r, offset: Offset(0, 8.h))]),
                                     child: Center(child: Text('Đăng nhập', style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFF1976D2)))),
+                                      fontSize: 18.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1976D2)))),
                                   ),
                                 ),
 
-                                const SizedBox(height: 24),
+                                SizedBox(height: 24.h),
 
                                 Row(children: [
                                   Expanded(child: _socialGlassBtn('Google', isGoogle: true)),
-                                  const SizedBox(width: 14),
+                                  SizedBox(width: 14.w),
                                   Expanded(child: _socialGlassBtn('Facebook', icon: Icons.facebook, color: Colors.white)),
                                 ]),
 
-                                const SizedBox(height: 28),
+                                SizedBox(height: 28.h),
 
                                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                                   Text('Chưa có tài khoản? ', style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9))),
+                                    fontSize: 15.sp, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9))),
                                   GestureDetector(
                                     onTap: () => Navigator.push(context,
                                       MaterialPageRoute(builder: (_) => const RegisterScreen())),
                                     child: Text('Đăng ký ngay', style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white,
+                                      fontSize: 15.sp, fontWeight: FontWeight.w700, color: Colors.white,
                                       decoration: TextDecoration.underline,
                                       decorationColor: Colors.white.withValues(alpha: 0.5)))),
                                 ]),
@@ -214,16 +219,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         Positioned(
                           top: 0,
                           child: Container(
-                            width: 136, height: 136,
+                            width: 136.w, height: 136.w,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: Colors.white.withValues(alpha: 0.3),
-                              boxShadow: [BoxShadow(color: Colors.white.withValues(alpha: 0.3), blurRadius: 20)]),
+                              boxShadow: [BoxShadow(color: Colors.white.withValues(alpha: 0.3), blurRadius: 20.r)]),
                             child: ClipOval(
                               child: BackdropFilter(
                                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                                 child: Padding(
-                                  padding: const EdgeInsets.all(4),
+                                  padding: EdgeInsets.all(4.w),
                                   child: ClipOval(
                                     child: Image.asset('assets/images/elephant_mascot.png', fit: BoxFit.cover)),
                                 ),
@@ -234,7 +239,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
 
-                    SizedBox(height: size.height * 0.04),
+                    SizedBox(height: 36.h),
                   ]),
                 ),
               ),
@@ -254,23 +259,23 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(18)),
+        borderRadius: BorderRadius.circular(18.r)),
       child: TextField(
         controller: controller,
         obscureText: isPassword ? _obscure : false,
-        style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white),
+        style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w500, color: Colors.white),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w400, color: Colors.white.withValues(alpha: 0.6)),
-          prefixIcon: Icon(icon, color: Colors.white.withValues(alpha: 0.7), size: 22),
+          hintStyle: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w400, color: Colors.white.withValues(alpha: 0.6)),
+          prefixIcon: Icon(icon, color: Colors.white.withValues(alpha: 0.7), size: 22.sp),
           suffixIcon: isPassword
             ? IconButton(
                 onPressed: () => setState(() => _obscure = !_obscure),
                 icon: Icon(_obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  color: Colors.white.withValues(alpha: 0.6), size: 22))
+                  color: Colors.white.withValues(alpha: 0.6), size: 22.sp))
             : null,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 18.h),
         ),
       ),
     );
@@ -278,21 +283,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _socialGlassBtn(String label, {bool isGoogle = false, IconData? icon, Color? color}) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
+      padding: EdgeInsets.symmetric(vertical: 14.h),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(50)),
+        borderRadius: BorderRadius.circular(50.r)),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         if (isGoogle)
-          Text('G', style: GoogleFonts.roboto(fontSize: 20, fontWeight: FontWeight.w700,
+          Text('G', style: GoogleFonts.roboto(fontSize: 20.sp, fontWeight: FontWeight.w700,
             foreground: Paint()..shader = const LinearGradient(
               colors: [Color(0xFFEA4335), Color(0xFFFBBC05), Color(0xFF34A853), Color(0xFF4285F4)])
               .createShader(const Rect.fromLTWH(0, 0, 20, 20))))
         else
-          Icon(icon, color: color, size: 20),
-        const SizedBox(width: 8),
+          Icon(icon, color: color, size: 20.sp),
+        SizedBox(width: 8.w),
         Text(label, style: GoogleFonts.plusJakartaSans(
-          fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9))),
+          fontSize: 15.sp, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9))),
       ]),
     );
   }

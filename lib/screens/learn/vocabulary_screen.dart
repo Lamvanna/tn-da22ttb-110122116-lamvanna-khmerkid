@@ -25,13 +25,27 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
 
   Future<void> _initTts() async {
     final languages = await _tts.getLanguages;
-    final langList = (languages as List).map((l) => l.toString().toLowerCase()).toList();
-    final hasKhmer = langList.any((l) => l.contains('km') || l.contains('khmer'));
-    await _tts.setLanguage(hasKhmer ? 'km' : langList.any((l) => l.contains('vi')) ? 'vi-VN' : 'en-US');
+    final langList = (languages as List)
+        .map((l) => l.toString().toLowerCase())
+        .toList();
+    final hasKhmer = langList.any(
+      (l) => l.contains('km') || l.contains('khmer'),
+    );
+    await _tts.setLanguage(
+      hasKhmer
+          ? 'km'
+          : langList.any((l) => l.contains('vi'))
+          ? 'vi-VN'
+          : 'en-US',
+    );
     await _tts.setSpeechRate(0.4);
     await _tts.setVolume(1.0);
-    _tts.setCompletionHandler(() { if (mounted) setState(() => _playingWord = null); });
-    _tts.setErrorHandler((_) { if (mounted) setState(() => _playingWord = null); });
+    _tts.setCompletionHandler(() {
+      if (mounted) setState(() => _playingWord = null);
+    });
+    _tts.setErrorHandler((_) {
+      if (mounted) setState(() => _playingWord = null);
+    });
     if (mounted) setState(() => _ttsReady = true);
   }
 
@@ -42,7 +56,10 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
   }
 
   @override
-  void dispose() { _tts.stop(); super.dispose(); }
+  void dispose() {
+    _tts.stop();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,15 +67,17 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
     final cat = cats[_selectedCat];
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4FF),
-      body: Column(children: [
-        _buildHeader(context),
-        const SizedBox(height: 12),
-        _buildCategoryTabs(cats),
-        const SizedBox(height: 12),
-        _buildCategoryInfo(cat),
-        const SizedBox(height: 12),
-        Expanded(child: _buildWordList(cat)),
-      ]),
+      body: Column(
+        children: [
+          _buildHeader(context),
+          const SizedBox(height: 12),
+          _buildCategoryTabs(cats),
+          const SizedBox(height: 12),
+          _buildCategoryInfo(cat),
+          const SizedBox(height: 12),
+          Expanded(child: _buildWordList(cat)),
+        ],
+      ),
     );
   }
 
@@ -90,15 +109,34 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
               decoration: BoxDecoration(
                 color: selected ? c.color : Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: selected ? c.color : const Color(0xFFE0E0E0)),
-                boxShadow: selected ? [BoxShadow(color: c.color.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 3))] : null,
+                border: Border.all(
+                  color: selected ? c.color : const Color(0xFFE0E0E0),
+                ),
+                boxShadow: selected
+                    ? [
+                        BoxShadow(
+                          color: c.color.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ]
+                    : null,
               ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text(c.emoji, style: const TextStyle(fontSize: 16)),
-                const SizedBox(width: 6),
-                Text(c.name, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700,
-                    color: selected ? Colors.white : const Color(0xFF616161))),
-              ]),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(c.emoji, style: const TextStyle(fontSize: 16)),
+                  const SizedBox(width: 6),
+                  Text(
+                    c.name,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: selected ? Colors.white : const Color(0xFF616161),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -117,21 +155,41 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: cat.color.withValues(alpha: 0.2)),
         ),
-        child: Row(children: [
-          Text(cat.emoji, style: const TextStyle(fontSize: 36)),
-          const SizedBox(width: 14),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(cat.name, style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w800, color: cat.color)),
-            Text('$learned/${cat.words.length} từ đã học',
-                style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF757575))),
-          ])),
-          CircularProgressIndicator(
-            value: cat.words.isEmpty ? 0 : learned / cat.words.length,
-            strokeWidth: 4,
-            backgroundColor: const Color(0xFFE0E0E0),
-            valueColor: AlwaysStoppedAnimation(cat.color),
-          ),
-        ]),
+        child: Row(
+          children: [
+            Text(cat.emoji, style: const TextStyle(fontSize: 36)),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    cat.name,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: cat.color,
+                    ),
+                  ),
+                  Text(
+                    '$learned/${cat.words.length} từ đã học',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF757575),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            CircularProgressIndicator(
+              value: cat.words.isEmpty ? 0 : learned / cat.words.length,
+              strokeWidth: 4,
+              backgroundColor: const Color(0xFFE0E0E0),
+              valueColor: AlwaysStoppedAnimation(cat.color),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -141,7 +199,8 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       itemCount: cat.words.length,
-      itemBuilder: (context, index) => _buildWordCard(cat.words[index], cat.color, index),
+      itemBuilder: (context, index) =>
+          _buildWordCard(cat.words[index], cat.color, index),
     );
   }
 
@@ -156,42 +215,93 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
         decoration: BoxDecoration(
           color: isPlaying ? color.withValues(alpha: 0.06) : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: isPlaying ? Border.all(color: color.withValues(alpha: 0.4), width: 1.5) : null,
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
-        ),
-        child: Row(children: [
-          // Emoji
-          Container(
-            width: 52, height: 52,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(14),
+          border: isPlaying
+              ? Border.all(color: color.withValues(alpha: 0.4), width: 1.5)
+              : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            child: Center(child: Text(word.emoji, style: const TextStyle(fontSize: 28))),
-          ),
-          const SizedBox(width: 14),
-          // Info
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Text(word.khmer, style: GoogleFonts.kantumruyPro(fontSize: 22, color: const Color(0xFF3E2C6E))),
-              const SizedBox(width: 8),
-              if (isPlaying) Icon(Icons.volume_up_rounded, color: color, size: 18),
-            ]),
-            const SizedBox(height: 2),
-            Text('"${word.romanized}" — ${word.meaning}',
-                style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF757575))),
-            if (word.pronunciation.isNotEmpty)
-              Text('Phát âm: ${word.pronunciation}',
-                  style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w500, color: const Color(0xFF9E9E9E))),
-          ])),
-          // Number
-          Container(
-            width: 28, height: 28,
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
-            child: Center(child: Text('${index + 1}',
-                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w800, color: color))),
-          ),
-        ]),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Emoji
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Center(
+                child: Text(word.emoji, style: const TextStyle(fontSize: 28)),
+              ),
+            ),
+            const SizedBox(width: 14),
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        word.khmer,
+                        style: GoogleFonts.battambang(
+                          fontSize: 22,
+                          color: const Color(0xFF3E2C6E),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (isPlaying)
+                        Icon(Icons.volume_up_rounded, color: color, size: 18),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '"${word.romanized}" — ${word.meaning}',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF757575),
+                    ),
+                  ),
+                  if (word.pronunciation.isNotEmpty)
+                    Text(
+                      'Phát âm: ${word.pronunciation}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF9E9E9E),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            // Number
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  '${index + 1}',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

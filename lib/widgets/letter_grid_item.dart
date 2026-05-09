@@ -48,7 +48,7 @@ class LetterGridItem extends StatelessWidget {
             // Ký tự Khmer
             Text(
               letter.character,
-              style: GoogleFonts.kantumruyPro(
+              style: GoogleFonts.battambang(
                 fontSize: 22,
                 fontWeight: FontWeight.w500,
                 color: letter.isLearned

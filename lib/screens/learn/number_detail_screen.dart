@@ -280,7 +280,7 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
                 children: [
                   Text(
                     _current.character,
-                    style: GoogleFonts.kantumruyPro(
+                    style: GoogleFonts.battambang(
                       fontSize: 48,
                       color: AppColors.primaryPurple,
                     ),

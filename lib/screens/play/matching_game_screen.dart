@@ -244,7 +244,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen>
                               child: Text(
                                 item.content,
                                 style: item.type == _MatchType.khmer
-                                    ? GoogleFonts.kantumruyPro(
+                                    ? GoogleFonts.battambang(
                                         fontSize: 36,
                                         fontWeight: FontWeight.w500,
                                         color: AppColors.consonantAccent,

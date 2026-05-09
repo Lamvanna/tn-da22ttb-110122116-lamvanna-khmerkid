@@ -500,7 +500,7 @@ class _TestScreenState extends State<TestScreen> {
                             Expanded(
                               child: Text(q.options[i],
                                   style: q.options[i].length <= 2
-                                      ? GoogleFonts.kantumruyPro(
+                                      ? GoogleFonts.battambang(
                                           fontSize: 24,
                                           color: const Color(0xFF3E2C6E))
                                       : GoogleFonts.plusJakartaSans(

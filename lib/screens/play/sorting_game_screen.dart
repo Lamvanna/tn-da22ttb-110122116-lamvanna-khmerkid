@@ -227,7 +227,7 @@ class _SortingGameScreenState extends State<SortingGameScreen> {
                       const SizedBox(width: 16),
                       // Chữ Khmer
                       Text(letter.character,
-                          style: GoogleFonts.kantumruyPro(
+                          style: GoogleFonts.battambang(
                               fontSize: 32,
                               color: const Color(0xFF3E2C6E))),
                       const SizedBox(width: 12),

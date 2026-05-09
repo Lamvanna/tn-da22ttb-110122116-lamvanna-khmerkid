@@ -232,7 +232,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
                   Expanded(child: Text(line.khmer,
-                      style: GoogleFonts.kantumruyPro(fontSize: 24, color: const Color(0xFF3E2C6E),
+                      style: GoogleFonts.battambang(fontSize: 24, color: const Color(0xFF3E2C6E),
                           fontWeight: isHighlight ? FontWeight.w600 : FontWeight.w400))),
                   Icon(isHighlight ? Icons.volume_up_rounded : Icons.play_circle_outline_rounded,
                       color: isHighlight ? lesson.color : const Color(0xFFBDBDBD), size: 22),

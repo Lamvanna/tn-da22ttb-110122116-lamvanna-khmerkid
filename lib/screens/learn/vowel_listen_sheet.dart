@@ -116,7 +116,7 @@ class _State extends State<VowelListenSheet> with SingleTickerProviderStateMixin
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
           child: Column(children: [
             // Character
-            Text(widget.vowel.character, style: GoogleFonts.kantumruyPro(
+            Text(widget.vowel.character, style: GoogleFonts.battambang(
               fontSize: 80, fontWeight: FontWeight.w700,
               color: AppColors.primary, height: 1.1)),
             const SizedBox(height: 8),

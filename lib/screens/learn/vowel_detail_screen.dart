@@ -279,7 +279,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
           color: AppColors.primary.withValues(alpha: 0.10),
           blurRadius: 20, offset: const Offset(0, 6))]),
       child: Column(children: [
-        Text(_v.character, style: GoogleFonts.kantumruyPro(
+        Text(_v.character, style: GoogleFonts.battambang(
           fontSize: 100, fontWeight: FontWeight.w400,
           color: AppColors.primary, height: 1.1)),
         const SizedBox(height: 10),
@@ -300,7 +300,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8)),
-              child: Text(_v.character, style: GoogleFonts.kantumruyPro(
+              child: Text(_v.character, style: GoogleFonts.battambang(
                 fontSize: 20, fontWeight: FontWeight.w500, color: AppColors.primary)),
             ),
             const SizedBox(width: 12),
@@ -319,7 +319,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
             decoration: BoxDecoration(
               color: AppColors.tertiary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(10)),
-            child: Text(_v.dependent, style: GoogleFonts.kantumruyPro(
+            child: Text(_v.dependent, style: GoogleFonts.battambang(
               fontSize: 24, color: AppColors.tertiary)),
           ),
         ]),
@@ -350,7 +350,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
                 color: AppColors.primary.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(16)),
               child: Column(children: [
-                Text(_v.dependent, style: GoogleFonts.kantumruyPro(
+                Text(_v.dependent, style: GoogleFonts.battambang(
                   fontSize: 32, color: AppColors.primary)),
                 const SizedBox(height: 4),
                 Text('Phụ thuộc', style: GoogleFonts.plusJakartaSans(
@@ -369,7 +369,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
                 color: AppColors.tertiary.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(16)),
               child: Column(children: [
-                Text(_v.example, style: GoogleFonts.kantumruyPro(
+                Text(_v.example, style: GoogleFonts.battambang(
                   fontSize: 32, color: AppColors.tertiary)),
                 const SizedBox(height: 4),
                 Text(_v.exampleMeaning, style: GoogleFonts.plusJakartaSans(

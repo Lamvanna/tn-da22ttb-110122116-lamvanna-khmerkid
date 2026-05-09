@@ -260,7 +260,7 @@ class _SpellingScreenState extends State<SpellingScreen> {
             blurRadius: 10, offset: const Offset(0, 4))]),
         child: Center(
           child: Text(char,
-            style: GoogleFonts.kantumruyPro(
+            style: GoogleFonts.battambang(
               fontSize: char == '?' ? 30 : 28,
               fontWeight: FontWeight.w700,
               color: isQuestion ? AppColors.textHint : Colors.white))),
@@ -513,7 +513,7 @@ class _SpellingScreenState extends State<SpellingScreen> {
       color: c.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(14),
       border: Border.all(color: c.withValues(alpha: 0.25))),
-    child: Center(child: Text(ch, style: GoogleFonts.kantumruyPro(
+    child: Center(child: Text(ch, style: GoogleFonts.battambang(
       fontSize: 26, fontWeight: FontWeight.w700, color: c))));
 
   // ── NÓI ──
@@ -569,7 +569,7 @@ class _SpellingScreenState extends State<SpellingScreen> {
                 Text('Hãy đọc:', style: GoogleFonts.plusJakartaSans(
                   fontSize: 13, color: AppColors.textSecondary)),
                 const SizedBox(height: 4),
-                Text(_lesson.combined, style: GoogleFonts.kantumruyPro(
+                Text(_lesson.combined, style: GoogleFonts.battambang(
                   fontSize: 52, fontWeight: FontWeight.w700, color: AppColors.primary)),
                 Text('"${_lesson.romanized}"', style: GoogleFonts.plusJakartaSans(
                   fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textHint)),
@@ -675,7 +675,7 @@ class _SpellingScreenState extends State<SpellingScreen> {
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: AppColors.coral.withValues(alpha: 0.15), width: 2)),
               child: Stack(children: [
-                Center(child: Text(_lesson.combined, style: GoogleFonts.kantumruyPro(
+                Center(child: Text(_lesson.combined, style: GoogleFonts.battambang(
                   fontSize: 110, color: AppColors.coral.withValues(alpha: 0.07)))),
                 GestureDetector(
                   onPanStart: (d) => setS(() => _currentStroke = [d.localPosition]),

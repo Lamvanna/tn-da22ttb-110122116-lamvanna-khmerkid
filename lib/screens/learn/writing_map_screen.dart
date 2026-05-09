@@ -291,7 +291,7 @@ class _WritingMapScreenState extends State<WritingMapScreen>
         ]),
       child: Center(
         child: Text(lesson.character,
-          style: GoogleFonts.kantumruyPro(
+          style: GoogleFonts.battambang(
             fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white,
             height: 1.2,
             shadows: [Shadow(

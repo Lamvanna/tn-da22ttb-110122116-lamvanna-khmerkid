@@ -140,7 +140,7 @@ class _State extends State<VowelSpeakSheet> with SingleTickerProviderStateMixin 
               decoration: BoxDecoration(shape: BoxShape.circle,
                 gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF90CAF9), Color(0xFF42A5F5)]),
                 boxShadow: [BoxShadow(color: const Color(0xFF42A5F5).withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))]),
-              child: Center(child: Text(widget.vowel.character, style: GoogleFonts.kantumruyPro(fontSize: 56, fontWeight: FontWeight.w700, color: Colors.white, height: 1.1))))),
+              child: Center(child: Text(widget.vowel.character, style: GoogleFonts.battambang(fontSize: 56, fontWeight: FontWeight.w700, color: Colors.white, height: 1.1))))),
             const SizedBox(height: 8),
             Center(child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
@@ -213,7 +213,7 @@ class _State extends State<VowelSpeakSheet> with SingleTickerProviderStateMixin 
                   decoration: BoxDecoration(shape: BoxShape.circle,
                     gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
                       colors: _isCorrect ? [const Color(0xFF81C784), const Color(0xFF43A047)] : [const Color(0xFFEF9A9A), const Color(0xFFEF5350)])),
-                  child: Center(child: Text(widget.vowel.character, style: GoogleFonts.kantumruyPro(fontSize: 36, fontWeight: FontWeight.w700, color: Colors.white, height: 1.1)))),
+                  child: Center(child: Text(widget.vowel.character, style: GoogleFonts.battambang(fontSize: 36, fontWeight: FontWeight.w700, color: Colors.white, height: 1.1)))),
                 const SizedBox(height: 12),
                 Text(_isCorrect ? 'Tuyệt vời!' : 'Chưa chính xác', style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.w800, color: _isCorrect ? const Color(0xFF2E7D32) : const Color(0xFFC62828))),
                 const SizedBox(height: 4),

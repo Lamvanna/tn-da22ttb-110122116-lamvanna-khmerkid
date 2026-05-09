@@ -381,7 +381,7 @@ class _LetterFindGameScreenState extends State<LetterFindGameScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(option.character,
-                      style: GoogleFonts.kantumruyPro(
+                      style: GoogleFonts.battambang(
                           fontSize: 42,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF3E2C6E))),

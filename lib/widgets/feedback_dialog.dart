@@ -181,7 +181,7 @@ class _FeedbackOverlayState extends State<_FeedbackOverlay>
                             const SizedBox(width: 8),
                             Text(
                               'កករ',
-                              style: GoogleFonts.kantumruyPro(
+                              style: GoogleFonts.battambang(
                                 fontSize: 16,
                                 color: AppColors.primaryPurple,
                                 fontWeight: FontWeight.w600,

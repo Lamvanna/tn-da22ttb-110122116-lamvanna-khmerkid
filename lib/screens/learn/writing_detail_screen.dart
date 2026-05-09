@@ -167,7 +167,7 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
                         color: typeColor.withValues(alpha: 0.3),
                         blurRadius: 10, offset: const Offset(0, 4))]),
                     child: Center(child: Text(_lesson.character,
-                      style: GoogleFonts.kantumruyPro(
+                      style: GoogleFonts.battambang(
                         fontSize: 32, fontWeight: FontWeight.w700, color: Colors.white))),
                   ),
                 ),
@@ -320,7 +320,7 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
         // Guide character
         if (_showGuide)
           Center(child: Text(_lesson.character,
-            style: GoogleFonts.kantumruyPro(
+            style: GoogleFonts.battambang(
               fontSize: 180,
               fontWeight: FontWeight.w700,
               color: accentColor.withValues(alpha: 0.08)))),

@@ -92,25 +92,25 @@ class AppTextStyles {
   );
 
   // ─── Khmer Text ───────────────────────────────────────────────────
-  static TextStyle khmerLarge = GoogleFonts.kantumruyPro(
+  static TextStyle khmerLarge = GoogleFonts.battambang(
     fontSize: 48,
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle khmerMedium = GoogleFonts.kantumruyPro(
+  static TextStyle khmerMedium = GoogleFonts.battambang(
     fontSize: 32,
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle khmerSmall = GoogleFonts.kantumruyPro(
+  static TextStyle khmerSmall = GoogleFonts.battambang(
     fontSize: 20,
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle khmerGrid = GoogleFonts.kantumruyPro(
+  static TextStyle khmerGrid = GoogleFonts.battambang(
     fontSize: 24,
     fontWeight: FontWeight.w500,
     color: AppColors.primaryPurple,

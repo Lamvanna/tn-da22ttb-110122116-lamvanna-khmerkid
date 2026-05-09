@@ -47,7 +47,7 @@ class NumberGridItem extends StatelessWidget {
             // Ký tự số Khmer
             Text(
               number.character,
-              style: GoogleFonts.kantumruyPro(
+              style: GoogleFonts.battambang(
                 fontSize: 26,
                 fontWeight: FontWeight.w500,
                 color: number.isLearned

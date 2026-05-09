@@ -60,7 +60,7 @@ class _State extends State<VowelWriteSheet> {
                 decoration: BoxDecoration(color: const Color(0xFF8D6E63), borderRadius: BorderRadius.circular(10)),
                 child: Text('Mẫu', style: GoogleFonts.nunito(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)))),
               Center(child: Padding(padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Text(widget.vowel.character, style: GoogleFonts.kantumruyPro(fontSize: 90, fontWeight: FontWeight.w700, color: const Color(0xFF3E2723), height: 1.15)))),
+                child: Text(widget.vowel.character, style: GoogleFonts.battambang(fontSize: 90, fontWeight: FontWeight.w700, color: const Color(0xFF3E2723), height: 1.15)))),
             ]),
           ),
           const SizedBox(height: 6),
@@ -81,7 +81,7 @@ class _State extends State<VowelWriteSheet> {
             child: ClipRRect(borderRadius: BorderRadius.circular(14),
               child: Stack(children: [
                 CustomPaint(size: Size.infinite, painter: _GridPainter()),
-                Center(child: Text(widget.vowel.character, style: GoogleFonts.kantumruyPro(fontSize: 180, fontWeight: FontWeight.w300, color: const Color(0xFFE0D5C5).withValues(alpha: 0.45)))),
+                Center(child: Text(widget.vowel.character, style: GoogleFonts.battambang(fontSize: 180, fontWeight: FontWeight.w300, color: const Color(0xFFE0D5C5).withValues(alpha: 0.45)))),
                 GestureDetector(
                   onPanStart: (d) => setState(() { _current = [d.localPosition]; _passed = null; _feedback = null; }),
                   onPanUpdate: (d) => setState(() => _current.add(d.localPosition)),
@@ -118,7 +118,7 @@ class _State extends State<VowelWriteSheet> {
                   decoration: BoxDecoration(shape: BoxShape.circle,
                     gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF81C784), Color(0xFF43A047)]),
                     boxShadow: [BoxShadow(color: const Color(0xFF4CAF50).withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))]),
-                  child: Center(child: Text(widget.vowel.character, style: GoogleFonts.kantumruyPro(fontSize: 52, fontWeight: FontWeight.w700, color: Colors.white, height: 1.1)))),
+                  child: Center(child: Text(widget.vowel.character, style: GoogleFonts.battambang(fontSize: 52, fontWeight: FontWeight.w700, color: Colors.white, height: 1.1)))),
                 const SizedBox(height: 16),
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(3, (i) => const Padding(padding: EdgeInsets.symmetric(horizontal: 4), child: Icon(Icons.star_rounded, size: 36, color: Color(0xFFFFC107))))),
                 const SizedBox(height: 12),

@@ -40,7 +40,7 @@ class GreetingCard extends StatelessWidget {
                     blurRadius: 12.r, offset: Offset(0, 4.h))]),
                 child: Column(children: [
                   Text('សួស្តី!',
-                    style: GoogleFonts.kantumruyPro(
+                    style: GoogleFonts.battambang(
                       fontSize: 22.sp, fontWeight: FontWeight.w700,
                       color: Colors.white)),
                   Text('(Xin chào!)',

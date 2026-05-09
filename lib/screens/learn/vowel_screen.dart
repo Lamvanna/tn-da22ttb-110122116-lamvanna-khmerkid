@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_vowel.dart';
@@ -22,9 +23,10 @@ class _VowelScreenState extends State<VowelScreen>
 
   final List<KhmerVowel> _vowels = KhmerVowelData.vowels;
 
-  static const double _nodeSpacingY = 100.0;
-  static const double _topPadding = 28.0;
-  static const double _nodeSize = 62.0;
+  // Responsive constants — sử dụng getter thay vì static const
+  double get _nodeSpacingY => 100.h;
+  double get _topPadding => 28.h;
+  double get _nodeSize => 62.w;
 
   int get _currentIdx {
     final idx = _vowels.indexWhere((v) => !v.isLearned);
@@ -47,7 +49,7 @@ class _VowelScreenState extends State<VowelScreen>
   }
 
   void _scrollToCurrent() {
-    final target = (_vowels.length - 1 - _currentIdx) * _nodeSpacingY - 200;
+    final target = (_vowels.length - 1 - _currentIdx) * _nodeSpacingY - 200.h;
     if (_scrollCtrl.hasClients && target > 0) {
       _scrollCtrl.animateTo(
         target.clamp(0.0, _scrollCtrl.position.maxScrollExtent),
@@ -87,7 +89,7 @@ class _VowelScreenState extends State<VowelScreen>
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
-    final mapH = _vowels.length * _nodeSpacingY + 120;
+    final mapH = _vowels.length * _nodeSpacingY + 120.h;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4FF),
@@ -108,7 +110,12 @@ class _VowelScreenState extends State<VowelScreen>
                     width: w,
                     getX: _nodeX,
                     getY: _nodeY,
-                    doneCount: _doneCount),
+                    doneCount: _doneCount,
+                    undonePath: 10.w,
+                    shadowStroke: 12.w,
+                    mainStroke: 8.w,
+                    highlightStroke: 3.w,
+                  ),
                   child: Stack(children: _buildAllNodes(w)),
                 ),
               ),
@@ -131,9 +138,9 @@ class _VowelScreenState extends State<VowelScreen>
           end: Alignment(0.5, 1),
           colors: [Color(0xFF1565C0), Color(0xFF42A5F5), Color(0xFF29B6F6)],
         ),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(24),
-          bottomRight: Radius.circular(24),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24.r),
+          bottomRight: Radius.circular(24.r),
         ),
         boxShadow: [
           BoxShadow(
@@ -145,63 +152,66 @@ class _VowelScreenState extends State<VowelScreen>
       ),
       child: Stack(children: [
         // Decorative circles
-        Positioned(right: -40, top: -30,
-          child: Container(width: 120, height: 120,
+        Positioned(right: -40.w, top: -30.h,
+          child: Container(width: 120.w, height: 120.w,
             decoration: BoxDecoration(shape: BoxShape.circle,
               color: Colors.white.withValues(alpha: 0.06)))),
-        Positioned(left: -25, bottom: -20,
-          child: Container(width: 80, height: 80,
+        Positioned(left: -25.w, bottom: -20.h,
+          child: Container(width: 80.w, height: 80.w,
             decoration: BoxDecoration(shape: BoxShape.circle,
               color: Colors.white.withValues(alpha: 0.04)))),
         // Mascot elephant
         Positioned(
-          right: 0, bottom: -15,
+          right: 0, bottom: -15.h,
           child: Image.asset('image/Voi nguyên âm.png',
-            width: 100, height: 100, fit: BoxFit.contain)),
+            width: 100.w, height: 100.w, fit: BoxFit.contain)),
         // Content
         SafeArea(
           bottom: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 105, 6),
+            padding: EdgeInsets.fromLTRB(16.w, 0, 105.w, 6.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Row: Back + Title
                 Row(children: [
-                  GestureDetector(
-                    onTap: widget.onBack,
-                    child: Container(
-                      width: 40, height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(13),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.12))),
-                      child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20)),
+                  Padding(
+                    padding: EdgeInsets.only(top: 8.h),
+                    child: GestureDetector(
+                      onTap: widget.onBack,
+                      child: Container(
+                        width: 40.w, height: 40.w,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.15),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.12))),
+                        child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w)),
+                    ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12.w),
                   Flexible(child: Text('Học nguyên âm Khmer',
                     maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white))),
+                      fontSize: 20.sp, fontWeight: FontWeight.w800, color: Colors.white))),
                 ]),
-                const SizedBox(height: 0),
+                SizedBox(height: 0.h),
                 Padding(
-                  padding: const EdgeInsets.only(left: 52),
+                  padding: EdgeInsets.only(left: 52.w),
                   child: Text('$_doneCount/${_vowels.length} đã hoàn thành',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13, fontWeight: FontWeight.w600,
+                      fontSize: 13.sp, fontWeight: FontWeight.w600,
                       color: Colors.white.withValues(alpha: 0.85))),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6.h),
                 // Progress bar
                 Padding(
-                  padding: const EdgeInsets.only(left: 52),
+                  padding: EdgeInsets.only(left: 52.w),
                   child: Row(children: [
                     Expanded(child: Container(
-                      height: 10,
+                      height: 10.h,
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(6)),
+                        borderRadius: BorderRadius.circular(6.r)),
                       child: Stack(children: [
                         FractionallySizedBox(
                           alignment: Alignment.centerLeft,
@@ -210,15 +220,15 @@ class _VowelScreenState extends State<VowelScreen>
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: [Color(0xFF66BB6A), Color(0xFF43A047)]),
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: BorderRadius.circular(6.r),
                               boxShadow: [BoxShadow(
                                 color: const Color(0xFF43A047).withValues(alpha: 0.5),
                                 blurRadius: 8)])))]),
                     )),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10.w),
                     Text('$pct%',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white)),
+                        fontSize: 14.sp, fontWeight: FontWeight.w800, color: Colors.white)),
                   ]),
                 ),
               ],
@@ -251,7 +261,7 @@ class _VowelScreenState extends State<VowelScreen>
             onTap: locked ? null : () => _openVowel(ri),
             child: SizedBox(
               width: _nodeSize,
-              height: _nodeSize + (done ? 20 : 0),
+              height: _nodeSize + (done ? 20.h : 0),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
                 // Circle
                 curr
@@ -264,12 +274,12 @@ class _VowelScreenState extends State<VowelScreen>
                 // Stars
                 if (done && vowel.starRating > 0)
                   Padding(
-                    padding: const EdgeInsets.only(top: 3),
+                    padding: EdgeInsets.only(top: 3.h),
                     child: Row(mainAxisSize: MainAxisSize.min,
                       children: List.generate(
                         min(vowel.starRating, 3),
                         (_) => Icon(Icons.star_rounded,
-                          color: AppColors.secondary, size: 13)))),
+                          color: AppColors.secondary, size: 13.w)))),
               ]),
             ),
           ),
@@ -287,8 +297,8 @@ class _VowelScreenState extends State<VowelScreen>
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: AppColors.surfaceContainerLow,
-          border: Border.all(color: AppColors.surfaceContainerHighest, width: 3)),
-        child: Icon(Icons.lock_rounded, color: AppColors.textHint, size: 22),
+          border: Border.all(color: AppColors.surfaceContainerHighest, width: 3.w)),
+        child: Icon(Icons.lock_rounded, color: AppColors.textHint, size: 22.w),
       );
     }
 
@@ -305,19 +315,19 @@ class _VowelScreenState extends State<VowelScreen>
           ],
           stops: const [0.0, 0.45, 1.0]),
         border: Border.all(
-          color: Color.lerp(color, Colors.white, 0.4)!, width: 3),
+          color: Color.lerp(color, Colors.white, 0.4)!, width: 3.w),
         boxShadow: [
           BoxShadow(
             color: Color.lerp(color, Colors.black, 0.4)!.withValues(alpha: 0.5),
-            blurRadius: 0, offset: const Offset(0, 4)),
+            blurRadius: 0, offset: Offset(0, 4.h)),
           if (curr) BoxShadow(
             color: color.withValues(alpha: 0.4),
             blurRadius: 18, spreadRadius: 2),
         ]),
       child: Center(
         child: Text(vowel.character,
-          style: GoogleFonts.kantumruyPro(
-            fontSize: 25, fontWeight: FontWeight.w700,
+          style: GoogleFonts.battambang(
+            fontSize: 25.sp, fontWeight: FontWeight.w700,
             color: Colors.white, height: 1.2,
             shadows: [Shadow(
               color: Colors.black.withValues(alpha: 0.20),
@@ -344,6 +354,10 @@ class _VowelMapPainter extends CustomPainter {
   final double Function(int, double) getX;
   final double Function(int) getY;
   final int doneCount;
+  final double undonePath;
+  final double shadowStroke;
+  final double mainStroke;
+  final double highlightStroke;
 
   _VowelMapPainter({
     required this.count,
@@ -351,6 +365,10 @@ class _VowelMapPainter extends CustomPainter {
     required this.getX,
     required this.getY,
     required this.doneCount,
+    required this.undonePath,
+    required this.shadowStroke,
+    required this.mainStroke,
+    required this.highlightStroke,
   });
 
   @override
@@ -374,7 +392,7 @@ class _VowelMapPainter extends CustomPainter {
     // Undone path — subtle
     canvas.drawPath(path, Paint()
       ..color = const Color(0xFFD6E4F0)
-      ..strokeWidth = 10
+      ..strokeWidth = undonePath
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round);
@@ -399,7 +417,7 @@ class _VowelMapPainter extends CustomPainter {
       // Shadow
       canvas.drawPath(dp, Paint()
         ..color = const Color(0xFF1565C0).withValues(alpha: 0.4)
-        ..strokeWidth = 12
+        ..strokeWidth = shadowStroke
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round);
@@ -407,7 +425,7 @@ class _VowelMapPainter extends CustomPainter {
       // Main
       canvas.drawPath(dp, Paint()
         ..color = const Color(0xFF2979FF)
-        ..strokeWidth = 8
+        ..strokeWidth = mainStroke
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round);
@@ -415,7 +433,7 @@ class _VowelMapPainter extends CustomPainter {
       // Highlight
       canvas.drawPath(dp, Paint()
         ..color = const Color(0xFF82B1FF).withValues(alpha: 0.6)
-        ..strokeWidth = 3
+        ..strokeWidth = highlightStroke
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round);

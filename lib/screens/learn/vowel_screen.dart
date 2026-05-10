@@ -23,10 +23,10 @@ class _VowelScreenState extends State<VowelScreen>
 
   final List<KhmerVowel> _vowels = KhmerVowelData.vowels;
 
-  // Responsive constants — sử dụng getter thay vì static const
-  double get _nodeSpacingY => 100.h;
-  double get _topPadding => 28.h;
-  double get _nodeSize => 62.w;
+  // Responsive constants — giống phụ âm
+  double get _nodeSpacingY => 140.h;
+  double get _topPadding => 60.h;
+  double get _nodeSize => 78.w;
 
   int get _currentIdx {
     final idx = _vowels.indexWhere((v) => !v.isLearned);
@@ -252,39 +252,129 @@ class _VowelScreenState extends State<VowelScreen>
       final curr = ri == _currentIdx;
       final locked = !done && !curr;
       final color = _nodeColor(ri);
+      final baiNum = ri + 1;
+
+      // Label position: alternate left/right
+      final isNodeOnRight = x > w / 2;
+      final labelOnLeft = isNodeOnRight;
+
+      // ── Label card ──
+      final labelW = 95.w;
+      final labelX = labelOnLeft
+          ? x - _nodeSize / 2 - labelW - 10.w
+          : x + _nodeSize / 2 + 10.w;
+      final labelY = y - 45.h;
 
       widgets.add(
         Positioned(
-          left: x - _nodeSize / 2,
-          top: y - _nodeSize / 2,
+          left: labelX, top: labelY,
+          child: Container(
+            width: labelW,
+            padding: EdgeInsets.fromLTRB(12.w, 10.h, 12.w, 10.h),
+            decoration: BoxDecoration(
+              color: locked ? Colors.white.withValues(alpha: 0.45) : Colors.white,
+              borderRadius: BorderRadius.circular(18.r),
+              border: locked ? null : Border.all(
+                color: color.withValues(alpha: 0.15), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: locked ? Colors.black.withValues(alpha: 0.03) : color.withValues(alpha: 0.10),
+                  blurRadius: 14, offset: const Offset(0, 5)),
+                if (!locked) BoxShadow(
+                  color: color.withValues(alpha: 0.06), blurRadius: 4, spreadRadius: 1),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                  decoration: BoxDecoration(
+                    color: locked ? const Color(0xFFE8EEF5) : color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6.r)),
+                  child: Text('Bài $baiNum',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10.sp, fontWeight: FontWeight.w800,
+                      color: locked ? const Color(0xFFB0BEC5) : color)),
+                ),
+                SizedBox(height: 4.h),
+                Text(vowel.character,
+                  style: GoogleFonts.battambang(
+                    fontSize: 26.sp, fontWeight: FontWeight.w700, height: 1.2,
+                    color: locked ? const Color(0xFFB0BEC5) : const Color(0xFF1A202C))),
+                Text(vowel.romanized.isNotEmpty
+                    ? vowel.romanized[0].toUpperCase() + vowel.romanized.substring(1) : '',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.sp, fontWeight: FontWeight.w500,
+                    color: locked ? const Color(0xFFCFD8DC) : const Color(0xFF718096))),
+                SizedBox(height: 4.h),
+                Row(mainAxisSize: MainAxisSize.min,
+                  children: List.generate(3, (si) => Icon(
+                    Icons.star_rounded, size: 16.w,
+                    color: (done && si < vowel.starRating)
+                        ? const Color(0xFFFFB300)
+                        : locked
+                            ? const Color(0xFFE0E0E0).withValues(alpha: 0.4)
+                            : const Color(0xFFE0E0E0)))),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // ── Arrow pointer ──
+      final arrowX = labelOnLeft ? labelX + labelW - 2.w : labelX - 8.w;
+      widgets.add(
+        Positioned(
+          left: arrowX, top: y - 6.h,
+          child: CustomPaint(
+            size: Size(14.w, 16.h),
+            painter: _ArrowPainter(
+              pointsRight: labelOnLeft,
+              color: locked ? Colors.white.withValues(alpha: 0.45) : Colors.white)),
+        ),
+      );
+
+      // ── Node circle ──
+      widgets.add(
+        Positioned(
+          left: x - _nodeSize / 2, top: y - _nodeSize / 2,
           child: GestureDetector(
             onTap: locked ? null : () => _openVowel(ri),
             child: SizedBox(
-              width: _nodeSize,
-              height: _nodeSize + (done ? 20.h : 0),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                // Circle
-                curr
+              width: _nodeSize, height: _nodeSize,
+              child: curr
                   ? AnimatedBuilder(
                       animation: _pulseCtrl,
                       builder: (_, child) => Transform.scale(
                         scale: _pulseAnim.value, child: child),
                       child: _circle(vowel, color, done, curr, locked))
                   : _circle(vowel, color, done, curr, locked),
-                // Stars
-                if (done && vowel.starRating > 0)
-                  Padding(
-                    padding: EdgeInsets.only(top: 3.h),
-                    child: Row(mainAxisSize: MainAxisSize.min,
-                      children: List.generate(
-                        min(vowel.starRating, 3),
-                        (_) => Icon(Icons.star_rounded,
-                          color: AppColors.secondary, size: 13.w)))),
-              ]),
             ),
           ),
         ),
       );
+
+      // ── Lesson number badge ──
+      if (!locked) {
+        widgets.add(
+          Positioned(
+            left: x + _nodeSize / 2 - 16.w,
+            top: y - _nodeSize / 2 - 4.h,
+            child: Container(
+              width: 22.w, height: 22.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle, color: color,
+                border: Border.all(color: Colors.white, width: 2.w),
+                boxShadow: [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 4)]),
+              child: Center(child: Text('$baiNum',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10.sp, fontWeight: FontWeight.w800, color: Colors.white))),
+            ),
+          ),
+        );
+      }
     }
 
     return widgets;
@@ -342,6 +432,36 @@ class _VowelScreenState extends State<VowelScreen>
       if (mounted) setState(() {});
     });
   }
+}
+
+// ═══════════════════════════════════════════════
+// ARROW PAINTER — label → node pointer
+// ═══════════════════════════════════════════════
+
+class _ArrowPainter extends CustomPainter {
+  final bool pointsRight;
+  final Color color;
+  _ArrowPainter({required this.pointsRight, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color..style = PaintingStyle.fill;
+    final path = Path();
+    if (pointsRight) {
+      path.moveTo(0, 0);
+      path.lineTo(size.width, size.height / 2);
+      path.lineTo(0, size.height);
+    } else {
+      path.moveTo(size.width, 0);
+      path.lineTo(0, size.height / 2);
+      path.lineTo(size.width, size.height);
+    }
+    path.close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
 }
 
 // ═══════════════════════════════════════════════

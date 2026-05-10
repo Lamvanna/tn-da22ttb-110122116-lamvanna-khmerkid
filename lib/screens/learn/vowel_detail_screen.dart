@@ -4,9 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_vowel.dart';
-import 'vowel_sheets.dart';
+import 'vowel_inline_listen.dart';
+import 'vowel_inline_speak.dart';
+import 'vowel_inline_write.dart';
 
-/// Chi tiết 1 nguyên âm — 3 bước: Nghe, Nói, Viết (giống phụ âm)
+/// Chi tiết 1 nguyên âm — 3 bước inline: Nghe, Nói, Viết (giống phụ âm)
 class VowelDetailScreen extends StatefulWidget {
   final int initialIndex;
   const VowelDetailScreen({super.key, this.initialIndex = 0});
@@ -26,6 +28,9 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
 
   // Track hoàn thành (0=nghe, 1=nói, 2=viết)
   final Map<int, Set<int>> _completedSteps = {};
+
+  // 0 = none, 1 = listen, 2 = speak, 3 = write
+  int _activeSheet = 0;
 
   @override
   void initState() {
@@ -138,33 +143,37 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
   void _goTo(int i) {
     if (!_canGo(i)) return;
     _animCtrl.reset();
-    setState(() => _idx = i);
+    setState(() { _idx = i; _activeSheet = 0; });
     _animCtrl.forward();
   }
+
+  void _showListenSheet() => setState(() => _activeSheet = _activeSheet == 1 ? 0 : 1);
+  void _showSpeakSheet() => setState(() => _activeSheet = _activeSheet == 2 ? 0 : 2);
+  void _showWriteSheet() => setState(() => _activeSheet = _activeSheet == 3 ? 0 : 3);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFF0F4FF),
       body: Column(children: [
         _buildHeader(),
         Expanded(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
+            padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
             child: ScaleTransition(
               scale: _scaleAnim,
               child: Column(children: [
-                _buildMainCard(),
-                SizedBox(height: 12.h),
-                _buildExampleCard(),
-                SizedBox(height: 12.h),
-                _buildListenSpeakRow(),
-                SizedBox(height: 10.h),
-                _buildWriteButton(),
-                SizedBox(height: 12.h),
-                _buildProgressIndicator(),
-                SizedBox(height: 12.h),
+                ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: 470.h),
+                  child: Stack(children: [
+                    _buildMainCard(),
+                    if (_activeSheet != 0) Positioned.fill(child: _buildInlineSheet()),
+                  ]),
+                ),
+                SizedBox(height: 8.h),
+                _buildActionRow(),
+                SizedBox(height: 16.h),
                 _buildNavButtons(),
               ]),
             ),
@@ -174,428 +183,357 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
     );
   }
 
-  // ═══════════════════ HEADER (giống phụ âm) ═══════════════════
+  // ═══════════════════ HEADER ═══════════════════
   Widget _buildHeader() {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        gradient: AppColors.headerGradient,
+        gradient: const LinearGradient(
+          begin: Alignment(-0.5, -1), end: Alignment(0.5, 1),
+          colors: [Color(0xFF1565C0), Color(0xFF42A5F5), Color(0xFF29B6F6)],
+        ),
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(16.r),
-          bottomRight: Radius.circular(16.r)),
+          bottomLeft: Radius.circular(24.r),
+          bottomRight: Radius.circular(24.r)),
+        boxShadow: [BoxShadow(
+          color: const Color(0xFF1565C0).withValues(alpha: 0.35),
+          blurRadius: 24.r, offset: Offset(0, 8.h))],
       ),
       child: Stack(children: [
-        // Decorative circles
         Positioned(right: -20.w, top: -20.h,
           child: Container(width: 100.w, height: 100.w,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
+            decoration: BoxDecoration(shape: BoxShape.circle,
               color: Colors.white.withValues(alpha: 0.06)))),
         Positioned(left: -30.w, bottom: -10.h,
           child: Container(width: 70.w, height: 70.w,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
+            decoration: BoxDecoration(shape: BoxShape.circle,
               color: Colors.white.withValues(alpha: 0.04)))),
-        // Content
         SafeArea(
           bottom: false,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(4.w, 0, 8.w, 12.h),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              // Top row: back + title + stars
-              Row(children: [
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back_rounded),
-                  color: Colors.white, iconSize: 22.sp,
-                  padding: EdgeInsets.zero,
-                  constraints: BoxConstraints(minWidth: 44.w, minHeight: 44.w)),
-                Expanded(child: Text('Nguyên âm ${_idx + 1}/${_vowels.length}',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16.sp, fontWeight: FontWeight.w800, color: Colors.white))),
-                Row(mainAxisSize: MainAxisSize.min,
-                  children: List.generate(3, (i) => Padding(
-                    padding: EdgeInsets.only(left: 2.w),
-                    child: Icon(
-                      i < _v.starRating ? Icons.star_rounded : Icons.star_outline_rounded,
-                      size: 20.sp,
-                      color: i < _v.starRating ? AppColors.secondaryLight : Colors.white24)))),
-              ]),
-              SizedBox(height: 8.h),
-              // Step indicators
-              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                _headerStep(Icons.headphones_rounded, 'Nghe', 0),
-                _headerDivider(),
-                _headerStep(Icons.mic_rounded, 'Nói', 1),
-                _headerDivider(),
-                _headerStep(Icons.edit_rounded, 'Viết', 2),
-              ]),
-            ]),
+          child: Transform.translate(
+            offset: Offset(0, -5.h),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(8.w, 0, 0, 2.h),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(children: [
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: Container(
+                              padding: EdgeInsets.all(8.w),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                shape: BoxShape.circle),
+                              child: Icon(Icons.arrow_back_rounded, size: 20.w)),
+                            color: Colors.white, padding: EdgeInsets.zero,
+                            constraints: BoxConstraints(minWidth: 44.w, minHeight: 44.w)),
+                          SizedBox(width: 6.w),
+                          Expanded(child: Text('Nguyên âm ${_idx + 1}/${_vowels.length}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 24.sp, fontWeight: FontWeight.w800, color: Colors.white))),
+                        ]),
+                        Padding(
+                          padding: EdgeInsets.only(left: 54.w, top: 8.h),
+                          child: Row(children: [
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(12.r)),
+                              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                Text('⭐', style: TextStyle(fontSize: 13.sp)),
+                                SizedBox(width: 4.w),
+                                Text('${_vowels.where((v) => v.isLearned).length * 15}',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13.sp, fontWeight: FontWeight.w700, color: Colors.white)),
+                              ]),
+                            ),
+                            SizedBox(width: 6.w),
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(12.r)),
+                              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                Text('🔥', style: TextStyle(fontSize: 13.sp)),
+                                SizedBox(width: 4.w),
+                                Text('7 ngày',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13.sp, fontWeight: FontWeight.w700, color: Colors.white)),
+                              ]),
+                            ),
+                          ]),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Mascot
+                  Transform.translate(
+                    offset: Offset(-5.w, -5.h),
+                    child: SizedBox(
+                      width: 130.w, height: 75.h,
+                      child: OverflowBox(
+                        maxHeight: 200.w, maxWidth: 200.w,
+                        child: Image.asset('assets/images/elephant_mascot.png',
+                          width: 200.w, height: 200.w, fit: BoxFit.contain),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ]),
     );
-  }
-
-  Widget _headerStep(IconData icon, String label, int stepIdx) {
-    final done = _isStepComplete(stepIdx);
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
-      decoration: BoxDecoration(
-        color: done ? Colors.white.withValues(alpha: 0.22) : Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(
-          color: done ? Colors.white.withValues(alpha: 0.3) : Colors.transparent, width: 1)),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 15.sp, color: done ? Colors.white : Colors.white60),
-        SizedBox(width: 5.w),
-        Text(label, style: GoogleFonts.plusJakartaSans(
-          fontSize: 12.sp, fontWeight: FontWeight.w700,
-          color: done ? Colors.white : Colors.white60)),
-        if (done) ...[
-          SizedBox(width: 4.w),
-          Icon(Icons.check_circle_rounded, size: 14.sp, color: AppColors.tertiaryLight),
-        ],
-      ]),
-    );
-  }
-
-  Widget _headerDivider() {
-    return Container(
-      width: 16.w, height: 1,
-      margin: EdgeInsets.symmetric(horizontal: 4.w),
-      color: Colors.white24);
   }
 
   // ═══════════════════ MAIN CARD ═══════════════════
   Widget _buildMainCard() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 20.w),
+      constraints: BoxConstraints(minHeight: 470.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24.r),
+        borderRadius: BorderRadius.circular(28.r),
+        border: Border.all(color: const Color(0xFFE0E0E0).withValues(alpha: 0.5)),
         boxShadow: [BoxShadow(
-          color: AppColors.primary.withValues(alpha: 0.10),
-          blurRadius: 20.r, offset: Offset(0, 6.h))]),
+          color: Colors.black.withValues(alpha: 0.06),
+          blurRadius: 20.r, offset: Offset(0, 6.h))],
+      ),
       child: Column(children: [
-        Text(_v.character, style: GoogleFonts.battambang(
-          fontSize: 100.sp, fontWeight: FontWeight.w400,
-          color: AppColors.primary, height: 1.1)),
-        SizedBox(height: 10.h),
-        Container(
-          width: 80.w, height: 3.h,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]),
-            borderRadius: BorderRadius.circular(2.r))),
-        SizedBox(height: 14.h),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10.r)),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(20.w, 50.h, 20.w, 0),
+          child: Center(child: Column(children: [
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+              padding: EdgeInsets.all(36.w),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8.r)),
+                shape: BoxShape.circle,
+                color: const Color(0xFF1E88E5).withValues(alpha: 0.06)),
               child: Text(_v.character, style: GoogleFonts.battambang(
-                fontSize: 20.sp, fontWeight: FontWeight.w500, color: AppColors.primary)),
+                fontSize: 100.sp, fontWeight: FontWeight.w400,
+                color: const Color(0xFF1E88E5), height: 1.1)),
             ),
-            SizedBox(width: 12.w),
-            Text('Phát âm: "${_v.romanized}"',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 15.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+            SizedBox(height: 10.h),
+            Container(
+              width: 80.w, height: 3.h,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [
+                  const Color(0xFF1E88E5).withValues(alpha: 0.1),
+                  const Color(0xFF1E88E5),
+                  const Color(0xFF1E88E5).withValues(alpha: 0.1)]),
+                borderRadius: BorderRadius.circular(2.r))),
+          ])),
+        ),
+        SizedBox(height: 80.h),
+        // Info row
+        Container(
+          margin: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 34.h),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEEF4FC),
+            borderRadius: BorderRadius.circular(18.r),
+            border: Border.all(color: const Color(0xFF1E88E5).withValues(alpha: 0.15))),
+          child: Row(children: [
+            Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8.r)),
+                  child: Text(_v.character, style: GoogleFonts.battambang(
+                    fontSize: 20.sp, fontWeight: FontWeight.w500, color: AppColors.primary)),
+                ),
+                SizedBox(height: 6.h),
+                Row(children: [
+                  Icon(Icons.volume_up_rounded, size: 16.w, color: const Color(0xFF1E88E5)),
+                  SizedBox(width: 6.w),
+                  Text('Phát âm: "${_v.romanized}"',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14.sp, fontWeight: FontWeight.w700,
+                      color: AppColors.textSecondary)),
+                ]),
+              ],
+            )),
+            if (_v.dependent.isNotEmpty) ...[
+              SizedBox(width: 12.w),
+              Column(children: [
+                Text('Phụ thuộc', style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10.sp, fontWeight: FontWeight.w600, color: AppColors.textHint)),
+                SizedBox(height: 2.h),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.tertiary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10.r)),
+                  child: Text(_v.dependent, style: GoogleFonts.battambang(
+                    fontSize: 22.sp, color: AppColors.tertiary)),
+                ),
+              ]),
+            ],
           ]),
         ),
-        SizedBox(height: 12.h),
-        // Dạng phụ thuộc
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text('Dạng phụ thuộc: ', style: GoogleFonts.plusJakartaSans(
-            fontSize: 13.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: AppColors.tertiary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10.r)),
-            child: Text(_v.dependent, style: GoogleFonts.battambang(
-              fontSize: 24.sp, color: AppColors.tertiary)),
-          ),
-        ]),
       ]),
     );
   }
 
-  // ═══════════════════ EXAMPLE ═══════════════════
-  Widget _buildExampleCard() {
-    if (_v.example.isEmpty) return const SizedBox.shrink();
-    return Container(
-      width: double.infinity, padding: EdgeInsets.all(18.w),
-      decoration: BoxDecoration(
-        color: Colors.white, borderRadius: BorderRadius.circular(22.r),
-        boxShadow: [BoxShadow(
-          color: Colors.black.withValues(alpha: 0.04),
-          blurRadius: 14.r, offset: Offset(0, 4.h))]),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('📝 Ví dụ', style: GoogleFonts.plusJakartaSans(
-          fontSize: 15.sp, fontWeight: FontWeight.w800, color: AppColors.onBackground)),
-        SizedBox(height: 12.h),
-        Row(children: [
-          Expanded(child: GestureDetector(
-            onTap: () => _speak(_v.dependent),
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 14.h),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(16.r)),
-              child: Column(children: [
-                Text(_v.dependent, style: GoogleFonts.battambang(
-                  fontSize: 32.sp, color: AppColors.primary)),
-                SizedBox(height: 4.h),
-                Text('Phụ thuộc', style: GoogleFonts.plusJakartaSans(
-                  fontSize: 10.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-              ]),
-            ),
-          )),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.w),
-            child: Icon(Icons.arrow_forward_rounded, color: AppColors.textHint, size: 20.sp)),
-          Expanded(child: GestureDetector(
-            onTap: () => _speak(_v.example),
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 14.h),
-              decoration: BoxDecoration(
-                color: AppColors.tertiary.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(16.r)),
-              child: Column(children: [
-                Text(_v.example, style: GoogleFonts.battambang(
-                  fontSize: 32.sp, color: AppColors.tertiary)),
-                SizedBox(height: 4.h),
-                Text(_v.exampleMeaning, style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-              ]),
-            ),
-          )),
-        ]),
-        SizedBox(height: 6.h),
-        Center(child: Text('👆 Chạm để nghe', style: GoogleFonts.plusJakartaSans(
-          fontSize: 10.sp, fontWeight: FontWeight.w500, color: AppColors.textHint))),
-      ]),
-    );
-  }
-
-  // ═══════════════════ NGHE + NÓI (giống phụ âm) ═══════════════════
-  Widget _buildListenSpeakRow() {
-    return Row(children: [
-      Expanded(child: GestureDetector(
-        onTap: _showListenSheet,
-        child: _actionButton(
-          icon: Icons.headphones_rounded, label: 'Nghe',
-          sub: 'Phát âm mẫu', color: AppColors.tertiary, stepIdx: 0),
-      )),
-      SizedBox(width: 12.w),
-      Expanded(child: GestureDetector(
-        onTap: _showSpeakSheet,
-        child: _actionButton(
-          icon: Icons.mic_rounded, label: 'Nói',
-          sub: 'Luyện phát âm', color: AppColors.secondary, stepIdx: 1),
-      )),
-    ]);
-  }
-
-  Widget _actionButton({
-    required IconData icon, required String label,
-    required String sub, required Color color, required int stepIdx,
-  }) {
-    final done = _isStepComplete(stepIdx);
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 16.h),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft, end: Alignment.bottomRight,
-          colors: [color, Color.lerp(color, Colors.black, 0.12)!]),
-        borderRadius: BorderRadius.circular(20.r),
-        boxShadow: [
-          BoxShadow(color: color.withValues(alpha: 0.30), blurRadius: 12.r, offset: Offset(0, 5.h)),
-        ]),
-      child: Column(children: [
-        Stack(alignment: Alignment.topRight, children: [
-          Container(
-            width: 44.w, height: 44.w,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.20),
-              borderRadius: BorderRadius.circular(14.r)),
-            child: Icon(icon, color: Colors.white, size: 24.sp)),
-          if (done) Container(
-            width: 18.w, height: 18.w,
-            decoration: BoxDecoration(
-              color: Colors.white, shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4.r)]),
-            child: Icon(Icons.check_rounded, size: 12.sp, color: color)),
-        ]),
-        SizedBox(height: 8.h),
-        Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 17.sp, fontWeight: FontWeight.w800, color: Colors.white)),
-        SizedBox(height: 2.h),
-        Text(sub, style: GoogleFonts.plusJakartaSans(fontSize: 11.sp, fontWeight: FontWeight.w500,
-          color: Colors.white.withValues(alpha: 0.75))),
-      ]),
-    );
-  }
-
-  // ═══════════════════ VIẾT (giống phụ âm) ═══════════════════
-  Widget _buildWriteButton() {
-    final done = _isStepComplete(2);
-    return GestureDetector(
-      onTap: _showWriteSheet,
+  // ═══════════════════ INLINE SHEET OVERLAY ═══════════════════
+  Widget _buildInlineSheet() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28.r),
       child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: 14.h),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft, end: Alignment.bottomRight,
-            colors: [AppColors.violet, AppColors.violetDark]),
-          borderRadius: BorderRadius.circular(20.r),
-          boxShadow: [
-            BoxShadow(color: AppColors.violet.withValues(alpha: 0.30), blurRadius: 12.r, offset: Offset(0, 5.h)),
+        width: double.infinity, color: Colors.white,
+        child: Stack(children: [
+          Column(children: [
+            if (_activeSheet == 1)
+              Expanded(child: VowelInlineListenContent(vowel: _v, onComplete: () => _markStepComplete(0))),
+            if (_activeSheet == 2)
+              Expanded(child: VowelInlineSpeakContent(vowel: _v, onComplete: () => _markStepComplete(1))),
+            if (_activeSheet == 3)
+              Expanded(child: VowelInlineWriteContent(vowel: _v, onComplete: () => _markStepComplete(2))),
           ]),
-        child: Column(children: [
-          Stack(alignment: Alignment.topRight, children: [
-            Container(
-              width: 44.w, height: 44.w,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.20),
-                borderRadius: BorderRadius.circular(14.r)),
-              child: Icon(Icons.edit_rounded, color: Colors.white, size: 24.sp)),
-            if (done) Container(
-              width: 18.w, height: 18.w,
-              decoration: BoxDecoration(
-                color: Colors.white, shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4.r)]),
-              child: Icon(Icons.check_rounded, size: 12.sp, color: AppColors.violet)),
-          ]),
-          SizedBox(height: 8.h),
-          Text('Viết', style: GoogleFonts.plusJakartaSans(fontSize: 17.sp, fontWeight: FontWeight.w800, color: Colors.white)),
-          Text('Tập viết chữ', style: GoogleFonts.plusJakartaSans(fontSize: 11.sp, fontWeight: FontWeight.w500,
-            color: Colors.white.withValues(alpha: 0.75))),
+          Positioned(top: 10.h, right: 10.w,
+            child: GestureDetector(
+              onTap: () => setState(() => _activeSheet = 0),
+              child: Container(
+                width: 30.w, height: 30.w,
+                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                child: Icon(Icons.close_rounded, size: 16.sp, color: AppColors.textSecondary)),
+            ),
+          ),
         ]),
       ),
     );
   }
 
-  // ═══════════════════ PROGRESS (giống phụ âm) ═══════════════════
-  Widget _buildProgressIndicator() {
-    final allDone = _completedCount == 3;
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: allDone ? AppColors.tertiarySurface : Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: allDone ? AppColors.tertiary.withValues(alpha: 0.3) : AppColors.surfaceContainerLow),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6.r, offset: Offset(0, 2.h)),
-        ]),
-      child: Row(children: [
-        ...List.generate(3, (i) {
-          final isDone = _isStepComplete(i);
-          return Container(
-            width: 24.w, height: 24.w,
-            margin: EdgeInsets.only(right: 5.w),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isDone ? AppColors.tertiary : AppColors.surfaceContainerLow),
-            child: isDone
-              ? Icon(Icons.check_rounded, color: Colors.white, size: 14.sp)
-              : Center(child: Text('${i + 1}',
-                  style: GoogleFonts.plusJakartaSans(fontSize: 11.sp, fontWeight: FontWeight.w800, color: AppColors.textHint))),
-          );
-        }),
-        SizedBox(width: 8.w),
-        Expanded(child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              allDone ? 'Hoàn thành! 🎉' : '$_completedCount/3 bước hoàn thành',
-              style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700,
-                color: allDone ? AppColors.tertiaryDark : AppColors.textSecondary)),
-            SizedBox(height: 4.h),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4.r),
-              child: LinearProgressIndicator(
-                value: _completedCount / 3, minHeight: 5.h,
-                backgroundColor: allDone ? AppColors.tertiaryLight : AppColors.surfaceContainerLow,
-                valueColor: AlwaysStoppedAnimation(allDone ? AppColors.tertiary : AppColors.primary),
-              ),
-            ),
-          ],
-        )),
-      ]),
-    );
-  }
-
-  // ═══════════════════ NAVIGATION (giống phụ âm) ═══════════════════
-  Widget _buildNavButtons() {
-    final canPrev = _canGo(_idx - 1);
-    final canNext = _canGo(_idx + 1);
+  // ═══════════════════ ACTION ROW ═══════════════════
+  Widget _buildActionRow() {
     return Row(children: [
       Expanded(child: GestureDetector(
-        onTap: canPrev ? () => _goTo(_idx - 1) : null,
-        child: Container(
-          padding: EdgeInsets.symmetric(vertical: 12.h),
-          decoration: BoxDecoration(
-            color: canPrev ? Colors.white : AppColors.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(14.r),
-            border: canPrev ? Border.all(color: AppColors.surfaceContainerHighest) : null),
-          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(Icons.chevron_left_rounded,
-              color: canPrev ? AppColors.primary : AppColors.textHint, size: 20.sp),
-            Text('Trước', style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700,
-              color: canPrev ? AppColors.primary : AppColors.textHint)),
-          ]),
-        ),
+        onTap: _showListenSheet,
+        child: _actionCard(
+          imagePath: 'image/Nghe.png', label: 'Nghe', sub: 'Nghe phát âm',
+          bgColor: const Color(0xFFE8F5E9), accentColor: const Color(0xFF43A047), stepIdx: 0),
       )),
       SizedBox(width: 10.w),
       Expanded(child: GestureDetector(
-        onTap: canNext ? () => _goTo(_idx + 1) : null,
-        child: Container(
-          padding: EdgeInsets.symmetric(vertical: 12.h),
-          decoration: BoxDecoration(
-            color: canNext ? AppColors.primary : AppColors.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(14.r),
-            boxShadow: canNext ? [BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.25),
-              blurRadius: 6.r, offset: Offset(0, 2.h))] : null),
-          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Text('Tiếp theo', style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700,
-              color: canNext ? Colors.white : AppColors.textHint)),
-            if (canNext) Icon(Icons.chevron_right_rounded, color: Colors.white, size: 20.sp),
-          ]),
-        ),
+        onTap: _showSpeakSheet,
+        child: _actionCard(
+          imagePath: 'image/Mic.png', label: 'Nói', sub: 'Luyện phát âm',
+          bgColor: const Color(0xFFFFF3E0), accentColor: const Color(0xFFF57C00), stepIdx: 1),
+      )),
+      SizedBox(width: 10.w),
+      Expanded(child: GestureDetector(
+        onTap: _showWriteSheet,
+        child: _actionCard(
+          imagePath: 'image/Viết.png', label: 'Viết', sub: 'Tập viết chữ',
+          bgColor: const Color(0xFFEDE7F6), accentColor: const Color(0xFF5E35B1), stepIdx: 2),
       )),
     ]);
   }
 
-  // ═══════════════════ SHEETS ═══════════════════
-  void _showListenSheet() {
-    showModalBottomSheet(
-      context: context, backgroundColor: Colors.transparent,
-      builder: (_) => VowelListenSheet(vowel: _v, onComplete: () => _markStepComplete(0)),
+  Widget _actionCard({
+    required String imagePath, required String label,
+    required String sub, required Color bgColor,
+    required Color accentColor, required int stepIdx,
+  }) {
+    final done = _isStepComplete(stepIdx);
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 18.h, horizontal: 10.w),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(
+          color: done ? accentColor.withValues(alpha: 0.5) : accentColor.withValues(alpha: 0.18),
+          width: done ? 2.5 : 1.5),
+        boxShadow: [
+          BoxShadow(color: accentColor.withValues(alpha: 0.15), blurRadius: 16.r, offset: Offset(0, 6.h)),
+          BoxShadow(color: accentColor.withValues(alpha: 0.06), blurRadius: 4.r, offset: Offset(0, 2.h)),
+        ]),
+      child: Column(children: [
+        Image.asset(imagePath, width: 70.w, height: 70.w, fit: BoxFit.contain),
+        SizedBox(height: 10.h),
+        Text(label, style: GoogleFonts.plusJakartaSans(
+          fontSize: 18.sp, fontWeight: FontWeight.w800, color: accentColor)),
+        SizedBox(height: 3.h),
+        Text(sub, style: GoogleFonts.plusJakartaSans(
+          fontSize: 11.sp, fontWeight: FontWeight.w600,
+          color: accentColor.withValues(alpha: 0.65))),
+      ]),
     );
   }
 
-  void _showSpeakSheet() {
-    showModalBottomSheet(
-      context: context, backgroundColor: Colors.transparent, isScrollControlled: true,
-      builder: (_) => VowelSpeakSheet(vowel: _v, onComplete: () => _markStepComplete(1)),
-    );
-  }
-
-  void _showWriteSheet() {
-    showModalBottomSheet(
-      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
-      builder: (_) => VowelWriteSheet(vowel: _v, onComplete: () => _markStepComplete(2)),
-    );
+  // ═══════════════════ NAVIGATION + STEPPER ═══════════════════
+  Widget _buildNavButtons() {
+    final canPrev = _canGo(_idx - 1);
+    final canNext = _canGo(_idx + 1);
+    final labels = ['Nghe', 'Nói', 'Viết'];
+    final stepColors = [const Color(0xFF3D5AFE), const Color(0xFFFF9100), const Color(0xFF7C4DFF)];
+    return Row(children: [
+      GestureDetector(
+        onTap: canPrev ? () => _goTo(_idx - 1) : null,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(color: const Color(0xFF1E88E5).withValues(alpha: 0.12)),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6.r, offset: Offset(0, 2.h))]),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.chevron_left_rounded, color: canPrev ? const Color(0xFF1E88E5) : AppColors.textHint, size: 18.w),
+            Text('Trước', style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700, color: canPrev ? const Color(0xFF1E88E5) : AppColors.textHint)),
+          ]),
+        ),
+      ),
+      SizedBox(width: 6.w),
+      Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(5, (i) {
+        if (i.isOdd) {
+          final prevDone = _isStepComplete(i ~/ 2);
+          return Row(mainAxisSize: MainAxisSize.min, children: List.generate(3, (_) => Container(
+            width: 4.w, height: 2.5.h, margin: EdgeInsets.symmetric(horizontal: 1.5.w),
+            decoration: BoxDecoration(color: prevDone ? stepColors[i ~/ 2].withValues(alpha: 0.5) : const Color(0xFFE0E0E0), borderRadius: BorderRadius.circular(1.r)),
+          )));
+        }
+        final stepI = i ~/ 2;
+        final done = _isStepComplete(stepI);
+        return Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(width: 28.w, height: 28.w, decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
+              colors: done ? [stepColors[stepI], stepColors[stepI].withValues(alpha: 0.7)] : [const Color(0xFFE8E8E8), const Color(0xFFD8D8D8)]),
+            boxShadow: done ? [BoxShadow(color: stepColors[stepI].withValues(alpha: 0.35), blurRadius: 6.r, offset: Offset(0, 2.h))] : null,
+          ), child: Center(child: done
+            ? Icon(Icons.check_rounded, size: 14.w, color: Colors.white)
+            : Text('${stepI + 1}', style: GoogleFonts.plusJakartaSans(fontSize: 12.sp, fontWeight: FontWeight.w800, color: Colors.white)))),
+          SizedBox(height: 2.h),
+          Text(labels[stepI], style: GoogleFonts.plusJakartaSans(fontSize: 9.sp, fontWeight: FontWeight.w700, color: done ? stepColors[stepI] : AppColors.textHint)),
+        ]);
+      }))),
+      SizedBox(width: 6.w),
+      GestureDetector(
+        onTap: canNext ? () => _goTo(_idx + 1) : null,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
+          decoration: BoxDecoration(
+            gradient: canNext ? const LinearGradient(colors: [Color(0xFF42A5F5), Color(0xFF1E88E5)]) : null,
+            color: canNext ? null : AppColors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(20.r),
+            boxShadow: canNext ? [BoxShadow(color: const Color(0xFF1E88E5).withValues(alpha: 0.35), blurRadius: 10.r, offset: Offset(0, 3.h))] : null),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Text(canNext ? 'Tiếp theo' : 'Khóa', style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: canNext ? Colors.white : AppColors.textHint)),
+            SizedBox(width: 4.w),
+            Icon(canNext ? Icons.chevron_right_rounded : Icons.lock_rounded, color: canNext ? Colors.white : AppColors.textHint, size: 18.w),
+          ]),
+        ),
+      ),
+    ]);
   }
 }

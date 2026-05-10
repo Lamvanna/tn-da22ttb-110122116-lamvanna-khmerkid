@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,6 +8,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_letter.dart';
+import '../../data/stroke_guide_data.dart';
 
 /// Màn hình chi tiết học chữ cái Khmer
 /// Tích hợp TTS (nghe), STT (nói), stroke validation (viết)
@@ -28,6 +30,9 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
 
   // Track hoàn thành (0=nghe, 1=nói, 2=viết)
   final Map<int, Set<int>> _completedSteps = {};
+
+  // 0 = none, 1 = listen, 2 = speak, 3 = write
+  int _activeSheet = 0;
 
   @override
   void initState() {
@@ -62,7 +67,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
   void _goTo(int i) {
     if (i < 0 || i >= _letters.length || _isLocked(i)) return;
     _animCtrl.reset();
-    setState(() => _idx = i);
+    setState(() { _idx = i; _activeSheet = 0; });
     _animCtrl.forward();
   }
 
@@ -217,7 +222,15 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                 scale: _scaleAnim,
                 child: Column(
                   children: [
-                    _buildLetterCard(),
+                    // Letter card always exists (determines height),
+                    // inline sheet overlays on top when active
+                    Stack(
+                      children: [
+                        _buildLetterCard(),
+                        if (_activeSheet != 0)
+                          Positioned.fill(child: _buildInlineSheet()),
+                      ],
+                    ),
                     SizedBox(height: 8.h),
                     _buildActionRow(),
                     SizedBox(height: 16.h),
@@ -639,6 +652,69 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
     );
   }
 
+  // ═══════════════════ INLINE SHEET OVERLAY ═══════════════════
+  Widget _buildInlineSheet() {
+    // Dynamic colors per sheet type
+    final List<Color> gradColors = _activeSheet == 1
+      ? [AppColors.tertiary, AppColors.tertiaryDark]
+      : _activeSheet == 2
+        ? [AppColors.coral, AppColors.coralDark]
+        : [AppColors.primary, AppColors.primaryDark];
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28.r),
+      child: Container(
+        width: double.infinity,
+        color: Colors.white,
+        child: Stack(
+          children: [
+            // Content
+            Column(
+              children: [
+                if (_activeSheet == 1)
+                  Expanded(
+                    child: _InlineListenContent(
+                      letter: _letter,
+                      onComplete: () => _markStepComplete(0),
+                    ),
+                  ),
+                if (_activeSheet == 2)
+                  Expanded(
+                    child: _InlineSpeakContent(
+                      letter: _letter,
+                      onComplete: () => _markStepComplete(1),
+                    ),
+                  ),
+                if (_activeSheet == 3)
+                  Expanded(
+                    child: _InlineWriteContent(
+                      letter: _letter,
+                      onComplete: () => _markStepComplete(2),
+                    ),
+                  ),
+              ],
+            ),
+            // Close button
+            Positioned(
+              top: 10.h, right: 10.w,
+              child: GestureDetector(
+                onTap: () => setState(() => _activeSheet = 0),
+                child: Container(
+                  width: 30.w, height: 30.w,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.close_rounded, size: 16.sp, color: AppColors.textSecondary),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ═══════════════════ NGHE + NÓI + VIẾT ═══════════════════
   Widget _buildActionRow() {
     return Row(
@@ -729,10 +805,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
           Text(sub, style: GoogleFonts.plusJakartaSans(
             fontSize: 11.sp, fontWeight: FontWeight.w600,
             color: accentColor.withValues(alpha: 0.65))),
-          if (done) ...[
-            SizedBox(height: 6.h),
-            Icon(Icons.check_circle_rounded, color: accentColor, size: 20.sp),
-          ],
+
         ],
       ),
     );
@@ -811,32 +884,15 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
 
   // ═══════════════════ SHEETS ═══════════════════
   void _showListenSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) =>
-          _ListenSheet(letter: _letter, onComplete: () => _markStepComplete(0)),
-    );
+    setState(() => _activeSheet = _activeSheet == 1 ? 0 : 1);
   }
 
   void _showSpeakSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) =>
-          _SpeakSheet(letter: _letter, onComplete: () => _markStepComplete(1)),
-    );
+    setState(() => _activeSheet = _activeSheet == 2 ? 0 : 2);
   }
 
   void _showWriteSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) =>
-          _WriteSheet(letter: _letter, onComplete: () => _markStepComplete(2)),
-    );
+    setState(() => _activeSheet = _activeSheet == 3 ? 0 : 3);
   }
 
   Widget _buildIllustration() {
@@ -946,6 +1002,265 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
 }
 
 // ═══════════════════════════════════════════════════════════════
+
+class _InlineListenContent extends StatefulWidget {
+  final KhmerLetter letter;
+  final VoidCallback onComplete;
+  const _InlineListenContent({required this.letter, required this.onComplete});
+
+  @override
+  State<_InlineListenContent> createState() => _InlineListenContentState();
+}
+
+class _InlineListenContentState extends State<_InlineListenContent>
+    with SingleTickerProviderStateMixin {
+  final FlutterTts _tts = FlutterTts();
+  bool _isPlaying = false;
+  int _speed = 1;
+  int _playCount = 0;
+  bool _ttsReady = false;
+  bool _khmerSupported = false;
+  late AnimationController _pulseCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseCtrl = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 1200),
+    );
+    _initTts();
+  }
+
+  Future<void> _initTts() async {
+    final languages = await _tts.getLanguages;
+    final langList = (languages as List).map((l) => l.toString().toLowerCase()).toList();
+    _khmerSupported = langList.any((l) => l.contains('km') || l.contains('khmer'));
+    if (_khmerSupported) {
+      await _tts.setLanguage('km');
+    } else {
+      final viSupported = langList.any((l) => l.contains('vi'));
+      await _tts.setLanguage(viSupported ? 'vi-VN' : 'en-US');
+    }
+    await _tts.setSpeechRate(_speedRate);
+    await _tts.setVolume(1.0);
+    await _tts.setPitch(1.0);
+    _tts.setCompletionHandler(() {
+      if (mounted) { setState(() => _isPlaying = false); _pulseCtrl.stop(); }
+    });
+    _tts.setErrorHandler((msg) {
+      if (mounted) { setState(() => _isPlaying = false); _pulseCtrl.stop(); }
+    });
+    if (mounted) setState(() => _ttsReady = true);
+  }
+
+  double get _speedRate {
+    switch (_speed) { case 0: return 0.2; case 2: return 0.7; default: return 0.4; }
+  }
+
+  @override
+  void dispose() { _tts.stop(); _pulseCtrl.dispose(); super.dispose(); }
+
+  Future<void> _play() async {
+    if (_isPlaying) return;
+    setState(() { _isPlaying = true; _playCount++; });
+    _pulseCtrl.repeat(reverse: true);
+    await _tts.setSpeechRate(_speedRate);
+    final text = _khmerSupported ? widget.letter.character
+      : widget.letter.pronunciation.isNotEmpty ? widget.letter.pronunciation : widget.letter.romanized;
+    final result = await _tts.speak(text);
+    if (result != 1 && mounted) {
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (mounted) { setState(() => _isPlaying = false); _pulseCtrl.stop(); }
+      });
+    }
+    if (_playCount >= 1) widget.onComplete();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // ── Header ──
+        Padding(
+          padding: EdgeInsets.only(top: 18.h, bottom: 8.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.headphones_rounded, color: AppColors.tertiary, size: 20.w),
+              SizedBox(width: 8.w),
+              Text('Nghe phát âm', style: GoogleFonts.plusJakartaSans(
+                fontSize: 16.sp, fontWeight: FontWeight.w800, color: AppColors.tertiaryDark,
+              )),
+            ],
+          ),
+        ),
+
+        // ── Main content (fills remaining space) ──
+        Expanded(
+          child: Align(
+            alignment: const Alignment(0, -0.35),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Character with circle glow
+                  Container(
+                    width: 120.w, height: 120.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.tertiarySurface,
+                      boxShadow: [BoxShadow(
+                        color: AppColors.tertiary.withValues(alpha: 0.12),
+                        blurRadius: 24.r, spreadRadius: 4,
+                      )],
+                    ),
+                    child: Center(
+                      child: Text(widget.letter.character, style: GoogleFonts.battambang(
+                        fontSize: 64.sp, fontWeight: FontWeight.w700,
+                        color: AppColors.primaryDark, height: 1.1,
+                      )),
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
+
+                  // Pronunciation badge
+                  GestureDetector(
+                    onTap: _ttsReady ? _play : null,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                      decoration: BoxDecoration(
+                        color: AppColors.tertiarySurface,
+                        borderRadius: BorderRadius.circular(20.r),
+                        border: Border.all(color: AppColors.tertiary.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.volume_up_rounded, size: 14.sp, color: AppColors.tertiary),
+                        SizedBox(width: 6.w),
+                        Text('Phát âm: "${widget.letter.romanized}"', style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.sp, fontWeight: FontWeight.w700, color: AppColors.tertiaryDark,
+                        )),
+                      ]),
+                    ),
+                  ),
+                  SizedBox(height: 18.h),
+
+                  // Play button with rings
+                  GestureDetector(
+                    onTap: _ttsReady ? _play : null,
+                    child: AnimatedBuilder(
+                      animation: _pulseCtrl,
+                      builder: (_, __) => Column(
+                        children: [
+                          // Triple ring play
+                          Container(
+                            width: 140.w, height: 140.w,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.tertiary.withValues(alpha: _isPlaying ? 0.5 : 0.25),
+                                width: 1.5.w,
+                                strokeAlign: BorderSide.strokeAlignOutside,
+                              ),
+                            ),
+                            child: Center(
+                              child: Container(
+                                width: 120.w, height: 120.w,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.tertiarySurface,
+                                ),
+                                child: Center(
+                                  child: Container(
+                                    width: 90.w, height: 90.w,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                                        colors: _isPlaying
+                                          ? [AppColors.tertiary, AppColors.tertiaryDark]
+                                          : [AppColors.tertiaryLight, AppColors.tertiary],
+                                      ),
+                                      boxShadow: [BoxShadow(
+                                        color: AppColors.tertiary.withValues(
+                                          alpha: 0.3 + (_isPlaying ? 0.25 * _pulseCtrl.value : 0)),
+                                        blurRadius: (16 + (_isPlaying ? 12 * _pulseCtrl.value : 0)).r,
+                                        offset: Offset(0, 4.h),
+                                      )],
+                                    ),
+                                    child: Icon(
+                                      _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                                      color: Colors.white, size: 40.w,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 12.h),
+                          // Wave bars
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(11, (i) {
+                              final center = 5;
+                              final dist = (i - center).abs();
+                              final base = dist <= 1 ? 20.h : dist <= 3 ? 10.h : 5.h;
+                              final h = _isPlaying
+                                ? base * (0.5 + 0.5 * _pulseCtrl.value)
+                                : base * 0.4;
+                              return Container(
+                                width: dist <= 1 ? 4.w : 3.w,
+                                height: h,
+                                margin: EdgeInsets.symmetric(horizontal: 1.5.w),
+                                decoration: BoxDecoration(
+                                  color: AppColors.tertiary.withValues(alpha: _isPlaying ? 0.8 : 0.3),
+                                  borderRadius: BorderRadius.circular(2.r),
+                                ),
+                              );
+                            }),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    _isPlaying ? 'Đang phát âm...'
+                      : _playCount > 0 ? 'Đã nghe $_playCount lần • Nhấn nghe lại'
+                      : 'Nhấn nút để nghe phát âm',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.sp, fontWeight: FontWeight.w600,
+                      color: _isPlaying ? AppColors.tertiary : AppColors.textHint,
+                    ),
+                  ),
+                  SizedBox(height: 14.h),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _chip(String label, int val) {
+    final active = _speed == val;
+    return GestureDetector(
+      onTap: () => setState(() => _speed = val),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
+        decoration: BoxDecoration(
+          color: active ? AppColors.tertiary : const Color(0xFFF0F0F0),
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: Text(label, style: GoogleFonts.plusJakartaSans(
+          fontSize: 12.sp, fontWeight: FontWeight.w700,
+          color: active ? Colors.white : AppColors.textHint,
+        )),
+      ),
+    );
+  }
+}
 
 class _ListenSheet extends StatefulWidget {
   final KhmerLetter letter;
@@ -1076,210 +1391,171 @@ class _ListenSheetState extends State<_ListenSheet>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Gradient Header ──
+          // ── Handle bar ──
+          SizedBox(height: 12.h),
           Container(
-            width: double.infinity,
-            padding: EdgeInsets.fromLTRB(20.w, 14.h, 20.w, 20.h),
+            width: 40.w, height: 4.h,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppColors.tertiary, AppColors.tertiaryDark],
-              ),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2.r),
             ),
-            child: Column(
-              children: [
-                Container(
-                  width: 36.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: Colors.white38,
-                    borderRadius: BorderRadius.circular(2.r),
-                  ),
-                ),
-                SizedBox(height: 12.h),
-                Icon(
-                  Icons.headphones_rounded,
-                  color: Colors.white,
-                  size: 28.w,
-                ),
-                SizedBox(height: 6.h),
-                Text(
-                  'Nghe phát âm',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(
-                  'Lắng nghe và ghi nhớ cách đọc',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12.sp,
-                    color: Colors.white70,
-                  ),
+          ),
+          SizedBox(height: 16.h),
+
+          // ── Title ──
+          Text('Nghe phát âm', style: GoogleFonts.plusJakartaSans(
+            fontSize: 22.sp, fontWeight: FontWeight.w800,
+            color: const Color(0xFF1565C0),
+          )),
+          SizedBox(height: 4.h),
+          Text('Lắng nghe và ghi nhớ cách đọc', style: GoogleFonts.plusJakartaSans(
+            fontSize: 13.sp, fontWeight: FontWeight.w500,
+            color: AppColors.textHint,
+          )),
+          SizedBox(height: 20.h),
+
+          // ── Character Card ──
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 40.w),
+            padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 20.w),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft, end: Alignment.bottomRight,
+                colors: [const Color(0xFFE3F2FD), const Color(0xFFBBDEFB).withValues(alpha: 0.5)],
+              ),
+              borderRadius: BorderRadius.circular(24.r),
+              border: Border.all(color: const Color(0xFF42A5F5).withValues(alpha: 0.2)),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF1E88E5).withValues(alpha: 0.1),
+                  blurRadius: 20.r, offset: Offset(0, 8.h),
                 ),
               ],
             ),
-          ),
-
-          Padding(
-            padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 24.h),
             child: Column(
               children: [
-                // ── Character ──
-                Text(
-                  widget.letter.character,
-                  style: GoogleFonts.battambang(
-                    fontSize: 80.sp,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1E88E5),
-                    height: 1.1,
-                  ),
-                ),
-                SizedBox(height: 6.h),
+                Text(widget.letter.character, style: GoogleFonts.battambang(
+                  fontSize: 80.sp, fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1565C0), height: 1.1,
+                )),
+                SizedBox(height: 8.h),
                 Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 14.w,
-                    vertical: 5.h,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
                   decoration: BoxDecoration(
-                    color: AppColors.violetSurface,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(20.r),
+                    boxShadow: [BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 8.r, offset: Offset(0, 2.h),
+                    )],
                   ),
-                  child: Text(
-                    'Phát âm: "${widget.letter.romanized}"',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.violet,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 24.h),
-
-                // ── Wave Bars + Play Button ──
-                AnimatedBuilder(
-                  animation: _waveCtrl,
-                  builder: (_, __) => Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      ...List.generate(8, (i) {
-                        final h = _isPlaying
-                            ? 12.0.h +
-                                  20.h *
-                                      ((i % 4 + 1) / 4) *
-                                      (0.4 + 0.6 * _waveCtrl.value)
-                            : 8.0.h + (i % 3) * 4.0.h;
-                        return Container(
-                          width: 4.w,
-                          height: h,
-                          margin: EdgeInsets.symmetric(horizontal: 2.w),
-                          decoration: BoxDecoration(
-                            color: AppColors.tertiary.withValues(
-                              alpha: _isPlaying ? 0.8 : 0.25,
-                            ),
-                            borderRadius: BorderRadius.circular(2.r),
-                          ),
-                        );
-                      }),
-                      SizedBox(width: 14.w),
-                      GestureDetector(
-                        onTap: _ttsReady ? _play : null,
-                        child: Container(
-                          width: 68.w,
-                          height: 68.w,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                AppColors.tertiaryLight,
-                                AppColors.tertiaryDark,
-                              ],
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.tertiary.withValues(
-                                  alpha: 0.4,
-                                ),
-                                blurRadius: 16.r,
-                                offset: Offset(0, 6.h),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            _isPlaying
-                                ? Icons.pause_rounded
-                                : Icons.play_arrow_rounded,
-                            color: Colors.white,
-                            size: 36.w,
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 14.w),
-                      ...List.generate(8, (i) {
-                        final h = _isPlaying
-                            ? 12.0.h +
-                                  20.h *
-                                      (((7 - i) % 4 + 1) / 4) *
-                                      (0.4 + 0.6 * _waveCtrl.value)
-                            : 8.0.h + ((7 - i) % 3) * 4.0.h;
-                        return Container(
-                          width: 4.w,
-                          height: h,
-                          margin: EdgeInsets.symmetric(horizontal: 2.w),
-                          decoration: BoxDecoration(
-                            color: AppColors.tertiary.withValues(
-                              alpha: _isPlaying ? 0.8 : 0.25,
-                            ),
-                            borderRadius: BorderRadius.circular(2.r),
-                          ),
-                        );
-                      }),
+                      Icon(Icons.record_voice_over_rounded, size: 16.sp,
+                        color: const Color(0xFF1E88E5)),
+                      SizedBox(width: 6.w),
+                      Text('"${widget.letter.romanized}"', style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15.sp, fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1565C0),
+                      )),
                     ],
                   ),
                 ),
-                SizedBox(height: 10.h),
-                Text(
-                  _isPlaying
-                      ? 'Đang phát âm...'
-                      : _playCount > 0
-                      ? 'Đã nghe $_playCount lần • Nhấn nghe lại'
-                      : 'Nhấn nút để nghe phát âm',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textHint,
+              ],
+            ),
+          ),
+          SizedBox(height: 24.h),
+
+          // ── Play Button with Rings ──
+          GestureDetector(
+            onTap: _ttsReady ? _play : null,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Outer ring
+                if (_isPlaying) Container(
+                  width: 100.w, height: 100.w,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF43A047).withValues(alpha: 0.15), width: 3,
+                    ),
                   ),
                 ),
-                SizedBox(height: 20.h),
-
-                // ── Speed ──
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Tốc độ: ',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textHint,
-                      ),
+                // Middle ring
+                if (_isPlaying) Container(
+                  width: 84.w, height: 84.w,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF43A047).withValues(alpha: 0.25), width: 2,
                     ),
-                    SizedBox(width: 6.w),
-                    _speedChip('🐢 Chậm', 0),
-                    SizedBox(width: 8.w),
-                    _speedChip('🔊 Vừa', 1),
-                    SizedBox(width: 8.w),
-                    _speedChip('🐇 Nhanh', 2),
-                  ],
+                  ),
+                ),
+                // Button
+                Container(
+                  width: 68.w, height: 68.w,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft, end: Alignment.bottomRight,
+                      colors: _isPlaying
+                        ? [const Color(0xFF43A047), const Color(0xFF2E7D32)]
+                        : [const Color(0xFF42A5F5), const Color(0xFF1E88E5)],
+                    ),
+                    boxShadow: [BoxShadow(
+                      color: (_isPlaying
+                        ? const Color(0xFF43A047) : const Color(0xFF1E88E5))
+                        .withValues(alpha: 0.4),
+                      blurRadius: 16.r, offset: Offset(0, 6.h),
+                    )],
+                  ),
+                  child: Icon(
+                    _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                    color: Colors.white, size: 36.w,
+                  ),
                 ),
               ],
             ),
           ),
+          SizedBox(height: 10.h),
+          Text(
+            _isPlaying ? 'Đang phát âm...'
+              : _playCount > 0 ? 'Đã nghe $_playCount lần • Nhấn nghe lại'
+              : 'Nhấn nút để nghe phát âm',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13.sp, fontWeight: FontWeight.w600,
+              color: _isPlaying ? const Color(0xFF43A047) : AppColors.textHint,
+            ),
+          ),
+          SizedBox(height: 20.h),
+
+          // ── Speed Selector ──
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 30.w),
+            padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Tốc độ:', style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13.sp, fontWeight: FontWeight.w600,
+                  color: AppColors.textHint,
+                )),
+                SizedBox(width: 8.w),
+                _speedChip('🐢 Chậm', 0),
+                SizedBox(width: 6.w),
+                _speedChip('🔊 Vừa', 1),
+                SizedBox(width: 6.w),
+                _speedChip('🐇 Nhanh', 2),
+              ],
+            ),
+          ),
+          SizedBox(height: 20.h),
         ],
       ),
     );
@@ -1310,6 +1586,570 @@ class _ListenSheetState extends State<_ListenSheet>
     );
   }
 }
+// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// INLINE SPEAK CONTENT
+// ═══════════════════════════════════════════════════════════════
+
+class _InlineSpeakContent extends StatefulWidget {
+  final KhmerLetter letter;
+  final VoidCallback onComplete;
+  const _InlineSpeakContent({required this.letter, required this.onComplete});
+  @override
+  State<_InlineSpeakContent> createState() => _InlineSpeakContentState();
+}
+
+class _InlineSpeakContentState extends State<_InlineSpeakContent>
+    with SingleTickerProviderStateMixin {
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  final FlutterTts _tts = FlutterTts();
+  late AnimationController _pulseCtrl;
+  bool _sttReady = false;
+  bool _isListening = false;
+  String _recognized = '';
+  String _statusMsg = '';
+  bool _hasResult = false;
+  bool _isCorrect = false;
+  int _accuracy = 0;
+  String _selectedLocaleId = 'vi-VN';
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
+    _initTts();
+    _initSTT();
+  }
+
+  Future<void> _initTts() async {
+    final languages = await _tts.getLanguages;
+    final langList = (languages as List).map((l) => l.toString().toLowerCase()).toList();
+    final hasKhmer = langList.any((l) => l.contains('km') || l.contains('khmer'));
+    if (hasKhmer) { await _tts.setLanguage('km'); }
+    else {
+      final hasVi = langList.any((l) => l.contains('vi'));
+      await _tts.setLanguage(hasVi ? 'vi-VN' : 'en-US');
+    }
+    await _tts.setSpeechRate(0.4);
+    await _tts.setVolume(1.0);
+  }
+
+  Future<void> _initSTT() async {
+    final micStatus = await Permission.microphone.request();
+    if (!micStatus.isGranted) {
+      if (mounted) setState(() => _statusMsg = 'Cần cấp quyền microphone!');
+      return;
+    }
+    try {
+      _sttReady = await _speech.initialize(
+        onError: (err) {
+          if (mounted && _isListening) {
+            _pulseCtrl.stop();
+            setState(() { _isListening = false;
+              _statusMsg = _recognized.isEmpty ? 'Không nghe được. Nói to hơn!' : '';
+            });
+            if (_recognized.isNotEmpty) _evaluate();
+          }
+        },
+        onStatus: (status) {
+          if (status == 'done' && mounted && _isListening) {
+            _pulseCtrl.stop();
+            setState(() => _isListening = false);
+            _evaluate();
+          }
+        },
+      );
+      if (_sttReady) {
+        final locales = await _speech.locales();
+        for (final l in locales) {
+          if (l.localeId.toLowerCase().startsWith('vi')) { _selectedLocaleId = l.localeId; break; }
+        }
+      }
+    } catch (e) { _sttReady = false; }
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() { _speech.stop(); _tts.stop(); _pulseCtrl.dispose(); super.dispose(); }
+
+  Future<void> _startListening() async {
+    await _tts.stop();
+    setState(() { _recognized = ''; _statusMsg = ''; _hasResult = false; _isListening = true; });
+    _pulseCtrl.repeat(reverse: true);
+    try {
+      await _speech.listen(
+        onResult: (result) {
+          if (mounted) {
+            setState(() => _recognized = result.recognizedWords);
+            if (result.finalResult) { _pulseCtrl.stop(); setState(() => _isListening = false); _evaluate(); }
+          }
+        },
+        listenFor: const Duration(seconds: 10),
+        pauseFor: const Duration(seconds: 4),
+        localeId: _selectedLocaleId,
+      );
+    } catch (e) {
+      _pulseCtrl.stop();
+      if (mounted) setState(() { _isListening = false; _statusMsg = 'Lỗi nhận diện. Thử lại!'; });
+    }
+  }
+
+  void _evaluate() {
+    if (_hasResult) return;
+    final spoken = _recognized.toLowerCase().trim();
+    if (spoken.isEmpty) { setState(() => _statusMsg = 'Không nhận diện được. Nói to hơn!'); return; }
+    String normalize(String s) => s.toLowerCase().trim().replaceAll(RegExp(r'\s+'), '');
+    final spokenNorm = normalize(spoken);
+    final targets = [widget.letter.romanized, widget.letter.pronunciation, widget.letter.character]
+      .where((t) => t.isNotEmpty).map(normalize).toList();
+    bool exact = targets.any((t) => spokenNorm.contains(t) || t.contains(spokenNorm));
+    if (exact) {
+      _accuracy = 100;
+      _isCorrect = true;
+    } else {
+      double best = 0;
+      for (final t in targets) { final s = _sim(spokenNorm, t); if (s > best) best = s; }
+      _accuracy = (best * 100).round().clamp(0, 99);
+      _isCorrect = _accuracy >= 30;
+    }
+    setState(() => _hasResult = true);
+    if (_isCorrect) widget.onComplete();
+  }
+
+  Future<void> _stopListening() async {
+    _pulseCtrl.stop();
+    await _speech.stop();
+    if (mounted) {
+      setState(() => _isListening = false);
+      _evaluate();
+    }
+  }
+
+  double _sim(String a, String b) {
+    if (a.isEmpty || b.isEmpty) return 0;
+    final mx = a.length > b.length ? a.length : b.length;
+    int m = a.length, n = b.length;
+    final d = List.generate(m + 1, (_) => List.filled(n + 1, 0));
+    for (int i = 0; i <= m; i++) d[i][0] = i;
+    for (int j = 0; j <= n; j++) d[0][j] = j;
+    for (int i = 1; i <= m; i++) for (int j = 1; j <= n; j++) {
+      final c = a[i-1] == b[j-1] ? 0 : 1;
+      d[i][j] = [d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+c].reduce((a,b) => a<b?a:b);
+    }
+    return 1.0 - (d[m][n] / mx);
+  }
+
+  Future<void> _playExample() async {
+    final text = widget.letter.pronunciation.isNotEmpty ? widget.letter.pronunciation : widget.letter.romanized;
+    await _tts.speak(text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Header
+        Padding(
+          padding: EdgeInsets.only(top: 18.h, bottom: 8.h),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(Icons.mic_rounded, color: AppColors.coral, size: 20.w),
+            SizedBox(width: 8.w),
+            Text('Nói phát âm', style: GoogleFonts.plusJakartaSans(
+              fontSize: 16.sp, fontWeight: FontWeight.w800, color: AppColors.coralDark,
+            )),
+          ]),
+        ),
+        // Content
+        Expanded(
+          child: Align(
+            alignment: const Alignment(0, -0.35),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Character
+                  Container(
+                    width: 120.w, height: 120.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.coralSurface,
+                      boxShadow: [BoxShadow(color: AppColors.coral.withValues(alpha: 0.12), blurRadius: 24.r, spreadRadius: 4)],
+                    ),
+                    child: Center(child: Text(widget.letter.character, style: GoogleFonts.battambang(
+                      fontSize: 64.sp, fontWeight: FontWeight.w700, color: AppColors.primaryDark, height: 1.1,
+                    ))),
+                  ),
+                  SizedBox(height: 10.h),
+                  // Pronunciation badge
+                  GestureDetector(
+                    onTap: _playExample,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                      decoration: BoxDecoration(
+                        color: AppColors.coralSurface,
+                        borderRadius: BorderRadius.circular(20.r),
+                        border: Border.all(color: AppColors.coral.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.volume_up_rounded, size: 14.sp, color: AppColors.coral),
+                        SizedBox(width: 6.w),
+                        Text('Phát âm: "${widget.letter.romanized}"', style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.sp, fontWeight: FontWeight.w700, color: AppColors.coralDark,
+                        )),
+                      ]),
+                    ),
+                  ),
+                  SizedBox(height: 18.h),
+                  // Mic button with rings
+                  GestureDetector(
+                    onLongPressStart: _sttReady && !_isListening ? (_) => _startListening() : null,
+                    onLongPressEnd: _isListening ? (_) => _stopListening() : null,
+                    child: AnimatedBuilder(
+                      animation: _pulseCtrl,
+                      builder: (_, __) => Column(
+                        children: [
+                          // Triple ring mic
+                          Container(
+                            width: 140.w, height: 140.w,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.coral.withValues(alpha: _isListening ? 0.5 : 0.25),
+                                width: 1.5.w,
+                                strokeAlign: BorderSide.strokeAlignOutside,
+                              ),
+                            ),
+                            child: Center(
+                              child: Container(
+                                width: 120.w, height: 120.w,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.coralSurface,
+                                ),
+                                child: Center(
+                                  child: Container(
+                                    width: 90.w, height: 90.w,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                                        colors: _isListening
+                                          ? [AppColors.coral, AppColors.coralDark]
+                                          : [AppColors.coralLight, AppColors.coral],
+                                      ),
+                                      boxShadow: [BoxShadow(
+                                        color: AppColors.coral.withValues(
+                                          alpha: 0.3 + (_isListening ? 0.25 * _pulseCtrl.value : 0)),
+                                        blurRadius: (16 + (_isListening ? 12 * _pulseCtrl.value : 0)).r,
+                                        offset: Offset(0, 4.h),
+                                      )],
+                                    ),
+                                    child: Icon(
+                                      _isListening ? Icons.stop_rounded : Icons.mic_rounded,
+                                      color: Colors.white, size: 40.w,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 12.h),
+                          // Wave bars
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(11, (i) {
+                              final center = 5;
+                              final dist = (i - center).abs();
+                              final base = dist <= 1 ? 20.h : dist <= 3 ? 10.h : 5.h;
+                              final h = _isListening
+                                ? base * (0.5 + 0.5 * _pulseCtrl.value)
+                                : base * 0.4;
+                              return Container(
+                                width: dist <= 1 ? 4.w : 3.w,
+                                height: h,
+                                margin: EdgeInsets.symmetric(horizontal: 1.5.w),
+                                decoration: BoxDecoration(
+                                  color: AppColors.coral.withValues(alpha: _isListening ? 0.8 : 0.3),
+                                  borderRadius: BorderRadius.circular(2.r),
+                                ),
+                              );
+                            }),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  // Status
+                  if (_hasResult)
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                      decoration: BoxDecoration(
+                        color: _isCorrect ? AppColors.tertiarySurface : AppColors.coralSurface,
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Text(_isCorrect ? '🎉' : '😅', style: TextStyle(fontSize: 16.sp)),
+                        SizedBox(width: 6.w),
+                        Text('$_accuracy%', style: GoogleFonts.plusJakartaSans(
+                          fontSize: 18.sp, fontWeight: FontWeight.w800,
+                          color: _isCorrect ? AppColors.tertiaryDark : AppColors.coralDark)),
+                        SizedBox(width: 6.w),
+                        Text(_isCorrect ? 'Chính xác!' : 'Thử lại!',
+                          style: GoogleFonts.plusJakartaSans(fontSize: 12.sp, fontWeight: FontWeight.w600,
+                            color: _isCorrect ? AppColors.tertiaryDark : AppColors.coralDark)),
+                      ]),
+                    )
+                  else
+                    Text(
+                      _isListening ? 'Đang thu âm... Bỏ tay để kết thúc'
+                        : _statusMsg.isNotEmpty ? _statusMsg
+                        : !_sttReady ? 'Đang khởi tạo...'
+                        : 'Nhấn giữ mic và đọc "${widget.letter.romanized}"',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.sp, fontWeight: FontWeight.w600,
+                        color: _isListening ? AppColors.coral : AppColors.textHint,
+                      ),
+                    ),
+                  SizedBox(height: 14.h),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INLINE WRITE CONTENT
+// ═══════════════════════════════════════════════════════════════
+
+class _InlineWriteContent extends StatefulWidget {
+  final KhmerLetter letter;
+  final VoidCallback onComplete;
+  const _InlineWriteContent({required this.letter, required this.onComplete});
+  @override
+  State<_InlineWriteContent> createState() => _InlineWriteContentState();
+}
+
+class _InlineWriteContentState extends State<_InlineWriteContent> {
+  final List<List<Offset>> _strokes = [];
+  List<Offset> _current = [];
+  bool? _passed;
+  bool _showHint = false;
+
+  void _clear() => setState(() { _strokes.clear(); _current = []; _passed = null; });
+
+  void _check() {
+    final total = _strokes.fold<int>(0, (s, l) => s + l.length);
+    if (total < 10) {
+      setState(() => _passed = false);
+      return;
+    }
+    setState(() => _passed = true);
+    widget.onComplete();
+  }
+
+  Widget _buildHintPage() {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(12.w, 4.h, 12.w, 8.h),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: AppColors.tertiary.withValues(alpha: 0.3), width: 2.w),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14.r),
+          child: Stack(
+            children: [
+              CustomPaint(size: Size.infinite, painter: _GuideLinePainter()),
+              Center(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 20.h),
+                  child: Text(widget.letter.character, style: GoogleFonts.battambang(
+                    fontSize: 180.sp, fontWeight: FontWeight.w700,
+                    color: AppColors.tertiary.withValues(alpha: 0.65),
+                  )),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCanvas() {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(12.w, 4.h, 12.w, 8.h),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: _passed == null ? const Color(0xFFD7CCC8)
+              : _passed! ? AppColors.tertiary : AppColors.coral,
+            width: 2.w,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14.r),
+          child: Stack(
+            children: [
+              // Grid
+              CustomPaint(size: Size.infinite, painter: _GuideLinePainter()),
+              // Guide letter (light)
+              Center(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 20.h),
+                  child: Text(widget.letter.character, style: GoogleFonts.battambang(
+                    fontSize: 180.sp, fontWeight: FontWeight.w300,
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                  )),
+                ),
+              ),
+              // Drawing
+              GestureDetector(
+                onPanStart: (d) => setState(() { _current = [d.localPosition]; _passed = null; }),
+                onPanUpdate: (d) => setState(() => _current.add(d.localPosition)),
+                onPanEnd: (_) => setState(() { _strokes.add(List.from(_current)); _current = []; }),
+                child: CustomPaint(
+                  size: Size.infinite,
+                  painter: _StrokePainter(_strokes, _current),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Header
+        Padding(
+          padding: EdgeInsets.only(top: 18.h, bottom: 8.h),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(_showHint ? Icons.lightbulb_rounded : Icons.edit_rounded,
+              color: _showHint ? AppColors.tertiary : AppColors.primary, size: 20.w),
+            SizedBox(width: 8.w),
+            Text(_showHint ? 'Gợi ý viết' : 'Viết chữ', style: GoogleFonts.plusJakartaSans(
+              fontSize: 16.sp, fontWeight: FontWeight.w800,
+              color: _showHint ? AppColors.tertiaryDark : AppColors.primaryDark,
+            )),
+          ]),
+        ),
+        // Content area — Hint page OR Canvas
+        Expanded(
+          child: _showHint ? _buildHintPage() : _buildCanvas(),
+        ),
+        // Toolbar
+        Padding(
+          padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 12.h),
+          child: Row(
+            children: [
+              // Xóa
+              Expanded(
+                child: GestureDetector(
+                  onTap: _clear,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 10.h),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(16.r),
+                      border: Border.all(color: const Color(0xFFE0E0E0)),
+                    ),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(Icons.refresh_rounded, size: 16.sp, color: AppColors.textHint),
+                      SizedBox(width: 4.w),
+                      Text('Xóa', style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.sp, fontWeight: FontWeight.w700, color: AppColors.textHint,
+                      )),
+                    ]),
+                  ),
+                ),
+              ),
+              SizedBox(width: 8.w),
+              // Kiểm tra / Kết quả
+              Expanded(
+                flex: 2,
+                child: GestureDetector(
+                  onTap: _passed != null ? () => setState(() => _passed = null) : _check,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 10.h),
+                    decoration: BoxDecoration(
+                      gradient: _passed == null
+                        ? const LinearGradient(colors: [AppColors.primary, AppColors.primaryDark])
+                        : _passed!
+                          ? const LinearGradient(colors: [AppColors.tertiary, AppColors.tertiaryDark])
+                          : const LinearGradient(colors: [AppColors.coral, AppColors.coralDark]),
+                      borderRadius: BorderRadius.circular(16.r),
+                      boxShadow: [BoxShadow(color: (_passed == null ? AppColors.primary : _passed! ? AppColors.tertiary : AppColors.coral).withValues(alpha: 0.3), blurRadius: 8.r, offset: Offset(0, 3.h))],
+                    ),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(
+                        _passed == null ? Icons.check_circle_outline_rounded
+                          : _passed! ? Icons.celebration_rounded : Icons.refresh_rounded,
+                        size: 16.sp, color: Colors.white),
+                      SizedBox(width: 4.w),
+                      Text(
+                        _passed == null ? 'Kiểm tra' : _passed! ? 'Đẹp lắm! 🎉' : 'Thử lại',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.sp, fontWeight: FontWeight.w700, color: Colors.white,
+                      )),
+                    ]),
+                  ),
+                ),
+              ),
+              SizedBox(width: 8.w),
+              // Gợi ý
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _showHint = !_showHint),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 10.h),
+                    decoration: BoxDecoration(
+                      color: _showHint ? AppColors.tertiarySurface : const Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(16.r),
+                      border: Border.all(color: _showHint ? AppColors.tertiary.withValues(alpha: 0.3) : const Color(0xFFE0E0E0)),
+                    ),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(Icons.lightbulb_outline_rounded, size: 16.sp,
+                        color: _showHint ? AppColors.tertiaryDark : AppColors.textHint),
+                      SizedBox(width: 4.w),
+                      Text('Gợi ý', style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.sp, fontWeight: FontWeight.w700,
+                        color: _showHint ? AppColors.tertiaryDark : AppColors.textHint,
+                      )),
+                    ]),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _toolBtn(IconData icon, String label, VoidCallback onTap, Color color) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 22.w, color: color),
+        Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 10.sp, fontWeight: FontWeight.w600, color: color)),
+      ]),
+    );
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════
 // SPEAK SHEET — Nhận diện giọng nói THẬT bằng Speech-to-Text
 // Flow: Bấm mic → Nói → Hệ thống tự chấm điểm
@@ -2539,6 +3379,80 @@ class _WriteSheetState extends State<_WriteSheet> {
 // PAINTERS
 // ═══════════════════════════════════════════════════════════════
 
+class _StrokeGuidePainter extends CustomPainter {
+  final List<List<double>> strokes;
+  _StrokeGuidePainter(this.strokes);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final arrowPaint = Paint()
+      ..color = const Color(0xFFD32F2F)
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    for (final s in strokes) {
+      final num = s[0].toInt();
+      final px = s[1] * size.width;
+      final py = s[2] * size.height;
+      final angleDeg = s[3];
+      final angleRad = angleDeg * math.pi / 180;
+
+      // Draw curved arrow
+      final r = 18.0;  // radius of arc
+      final startAngle = angleRad - 0.8;
+      final sweepAngle = 1.6;
+
+      // Arc
+      final rect = Rect.fromCircle(center: Offset(px, py), radius: r);
+      canvas.drawArc(rect, startAngle, sweepAngle, false, arrowPaint);
+
+      // Arrowhead at end of arc
+      final endAngle = startAngle + sweepAngle;
+      final tipX = px + r * math.cos(endAngle);
+      final tipY = py + r * math.sin(endAngle);
+      final headLen = 8.0;
+      final h1 = Offset(
+        tipX - headLen * math.cos(endAngle - 0.6),
+        tipY - headLen * math.sin(endAngle - 0.6),
+      );
+      final h2 = Offset(
+        tipX - headLen * math.cos(endAngle + 0.8),
+        tipY - headLen * math.sin(endAngle + 0.8),
+      );
+      canvas.drawLine(Offset(tipX, tipY), h1, arrowPaint..strokeWidth = 2.0);
+      canvas.drawLine(Offset(tipX, tipY), h2, arrowPaint..strokeWidth = 2.0);
+
+      // Number label (positioned outside the arc)
+      final labelDist = r + 14;
+      final labelAngle = angleRad;
+      final lx = px + labelDist * math.cos(labelAngle - math.pi);
+      final ly = py + labelDist * math.sin(labelAngle - math.pi);
+
+      // Circle background
+      final bgPaint = Paint()..color = const Color(0xFFD32F2F);
+      canvas.drawCircle(Offset(lx, ly), 10, bgPaint);
+
+      // Number text
+      final tp = TextPainter(
+        text: TextSpan(
+          text: '$num',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, Offset(lx - tp.width / 2, ly - tp.height / 2));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _StrokeGuidePainter old) => true;
+}
+
 class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -2573,6 +3487,46 @@ class _GridPainter extends CustomPainter {
       Offset(size.width, size.height / 2),
       centerPaint,
     );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
+}
+
+class _GuideLinePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Full grid
+    final gridPaint = Paint()
+      ..color = const Color(0xFFE0E0E0)
+      ..strokeWidth = 0.5;
+    const cols = 6;
+    final cellW = size.width / cols;
+    final rows = (size.height / cellW).ceil();
+    for (int i = 1; i < cols; i++) {
+      final x = i * cellW;
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+    }
+    for (int j = 1; j < rows; j++) {
+      final y = j * cellW;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+  }
+
+  void _drawDashed(Canvas canvas, Offset p1, Offset p2, Paint paint, double dash, double gap) {
+    final d = (p2 - p1);
+    final len = d.distance;
+    if (len == 0) return;
+    final ux = d.dx / len, uy = d.dy / len;
+    double pos = 0;
+    while (pos < len) {
+      final s = Offset(p1.dx + ux * pos, p1.dy + uy * pos);
+      pos += dash;
+      if (pos > len) pos = len;
+      final e = Offset(p1.dx + ux * pos, p1.dy + uy * pos);
+      canvas.drawLine(s, e, paint);
+      pos += gap;
+    }
   }
 
   @override

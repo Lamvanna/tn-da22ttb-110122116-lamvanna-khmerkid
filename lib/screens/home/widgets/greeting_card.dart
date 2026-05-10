@@ -33,10 +33,10 @@ class GreetingCard extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 14.h),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF1976D2), Color(0xFF7EB5EA)]),
+                    colors: [AppColors.headerMid, Color(0xFF7EB5EA)]),
                   borderRadius: BorderRadius.circular(18.r),
                   boxShadow: [BoxShadow(
-                    color: const Color(0xFF1976D2).withValues(alpha: 0.20),
+                    color: AppColors.headerMid.withValues(alpha: 0.20),
                     blurRadius: 12.r, offset: Offset(0, 4.h))]),
                 child: Column(children: [
                   Text('សួស្តី!',

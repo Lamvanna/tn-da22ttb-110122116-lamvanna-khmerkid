@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import '../../constants/app_colors.dart';
 import '../../models/khmer_vocabulary.dart';
 import '../../widgets/app_header.dart';
 
-/// Màn hình học từ vựng Khmer theo chủ đề
+/// Màn hình học từ vựng Khmer theo chủ đề — RESPONSIVE
 class VocabularyScreen extends StatefulWidget {
   const VocabularyScreen({super.key});
   @override
@@ -66,15 +68,15 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
     final cats = KhmerVocabularyData.categories;
     final cat = cats[_selectedCat];
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4FF),
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           _buildHeader(context),
-          const SizedBox(height: 12),
+          SizedBox(height: 12.h),
           _buildCategoryTabs(cats),
-          const SizedBox(height: 12),
+          SizedBox(height: 12.h),
           _buildCategoryInfo(cat),
-          const SizedBox(height: 12),
+          SizedBox(height: 12.h),
           Expanded(child: _buildWordList(cat)),
         ],
       ),
@@ -91,11 +93,11 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
 
   Widget _buildCategoryTabs(List<VocabCategory> cats) {
     return SizedBox(
-      height: 44,
+      height: 44.h,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
         itemCount: cats.length,
         itemBuilder: (context, index) {
           final c = cats[index];
@@ -104,20 +106,20 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
             onTap: () => setState(() => _selectedCat = index),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              margin: EdgeInsets.only(right: 8.w),
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
               decoration: BoxDecoration(
                 color: selected ? c.color : Colors.white,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(20.r),
                 border: Border.all(
-                  color: selected ? c.color : const Color(0xFFE0E0E0),
+                  color: selected ? c.color : AppColors.surfaceContainerHighest,
                 ),
                 boxShadow: selected
                     ? [
                         BoxShadow(
                           color: c.color.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
+                          blurRadius: 8.r,
+                          offset: Offset(0, 3.h),
                         ),
                       ]
                     : null,
@@ -125,14 +127,14 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(c.emoji, style: const TextStyle(fontSize: 16)),
-                  const SizedBox(width: 6),
+                  Text(c.emoji, style: TextStyle(fontSize: 16.sp)),
+                  SizedBox(width: 6.w),
                   Text(
                     c.name,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
+                      fontSize: 13.sp,
                       fontWeight: FontWeight.w700,
-                      color: selected ? Colors.white : const Color(0xFF616161),
+                      color: selected ? Colors.white : AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -147,18 +149,18 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
   Widget _buildCategoryInfo(VocabCategory cat) {
     final learned = cat.words.where((w) => w.isLearned).length;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
           color: cat.color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(18.r),
           border: Border.all(color: cat.color.withValues(alpha: 0.2)),
         ),
         child: Row(
           children: [
-            Text(cat.emoji, style: const TextStyle(fontSize: 36)),
-            const SizedBox(width: 14),
+            Text(cat.emoji, style: TextStyle(fontSize: 36.sp)),
+            SizedBox(width: 14.w),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,7 +168,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                   Text(
                     cat.name,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 18,
+                      fontSize: 18.sp,
                       fontWeight: FontWeight.w800,
                       color: cat.color,
                     ),
@@ -174,19 +176,22 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                   Text(
                     '$learned/${cat.words.length} từ đã học',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
+                      fontSize: 13.sp,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF757575),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
-            CircularProgressIndicator(
-              value: cat.words.isEmpty ? 0 : learned / cat.words.length,
-              strokeWidth: 4,
-              backgroundColor: const Color(0xFFE0E0E0),
-              valueColor: AlwaysStoppedAnimation(cat.color),
+            SizedBox(
+              width: 40.w, height: 40.w,
+              child: CircularProgressIndicator(
+                value: cat.words.isEmpty ? 0 : learned / cat.words.length,
+                strokeWidth: 4.w,
+                backgroundColor: AppColors.surfaceContainerHighest,
+                valueColor: AlwaysStoppedAnimation(cat.color),
+              ),
             ),
           ],
         ),
@@ -197,7 +202,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
   Widget _buildWordList(VocabCategory cat) {
     return ListView.builder(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h),
       itemCount: cat.words.length,
       itemBuilder: (context, index) =>
           _buildWordCard(cat.words[index], cat.color, index),
@@ -210,19 +215,19 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
       onTap: () => _speak(word.khmer),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(16),
+        margin: EdgeInsets.only(bottom: 10.h),
+        padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
           color: isPlaying ? color.withValues(alpha: 0.06) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20.r),
           border: isPlaying
               ? Border.all(color: color.withValues(alpha: 0.4), width: 1.5)
               : null,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              blurRadius: 8.r,
+              offset: Offset(0, 2.h),
             ),
           ],
         ),
@@ -230,17 +235,17 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
           children: [
             // Emoji
             Container(
-              width: 52,
-              height: 52,
+              width: 52.w,
+              height: 52.w,
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(14.r),
               ),
               child: Center(
-                child: Text(word.emoji, style: const TextStyle(fontSize: 28)),
+                child: Text(word.emoji, style: TextStyle(fontSize: 28.sp)),
               ),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14.w),
             // Info
             Expanded(
               child: Column(
@@ -251,31 +256,31 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                       Text(
                         word.khmer,
                         style: GoogleFonts.battambang(
-                          fontSize: 22,
-                          color: const Color(0xFF3E2C6E),
+                          fontSize: 22.sp,
+                          color: AppColors.violet,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8.w),
                       if (isPlaying)
-                        Icon(Icons.volume_up_rounded, color: color, size: 18),
+                        Icon(Icons.volume_up_rounded, color: color, size: 18.sp),
                     ],
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2.h),
                   Text(
                     '"${word.romanized}" — ${word.meaning}',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
+                      fontSize: 13.sp,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF757575),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   if (word.pronunciation.isNotEmpty)
                     Text(
                       'Phát âm: ${word.pronunciation}',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
+                        fontSize: 11.sp,
                         fontWeight: FontWeight.w500,
-                        color: const Color(0xFF9E9E9E),
+                        color: AppColors.textHint,
                       ),
                     ),
                 ],
@@ -283,8 +288,8 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
             ),
             // Number
             Container(
-              width: 28,
-              height: 28,
+              width: 28.w,
+              height: 28.w,
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
@@ -293,7 +298,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                 child: Text(
                   '${index + 1}',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.w800,
                     color: color,
                   ),

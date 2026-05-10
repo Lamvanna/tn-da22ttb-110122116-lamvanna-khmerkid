@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_vowel.dart';
 
+/// Sheet nghe phát âm nguyên âm — RESPONSIVE
 class VowelListenSheet extends StatefulWidget {
   final KhmerVowel vowel;
   final VoidCallback onComplete;
@@ -73,63 +75,63 @@ class _State extends State<VowelListenSheet> with SingleTickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
       ),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         // ── Gradient Header ──
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 22),
-          decoration: const BoxDecoration(
+          padding: EdgeInsets.fromLTRB(20.w, 14.h, 20.w, 22.h),
+          decoration: BoxDecoration(
             gradient: AppColors.listenGradient,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
           ),
           child: Column(children: [
             // Drag handle
             Container(
-              width: 40, height: 4,
+              width: 48.w, height: 5.h,
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2)),
+                borderRadius: BorderRadius.circular(3.r)),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14.h),
             Container(
-              width: 48, height: 48,
+              width: 48.w, height: 48.w,
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(16)),
-              child: const Icon(Icons.headphones_rounded, color: Colors.white, size: 26),
+                borderRadius: BorderRadius.circular(16.r)),
+              child: Icon(Icons.headphones_rounded, color: Colors.white, size: 26.sp),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10.h),
             Text('Nghe phát âm', style: GoogleFonts.plusJakartaSans(
-              fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
-            const SizedBox(height: 4),
+              fontSize: 20.sp, fontWeight: FontWeight.w800, color: Colors.white)),
+            SizedBox(height: 4.h),
             Text('Lắng nghe và ghi nhớ cách đọc', style: GoogleFonts.plusJakartaSans(
-              fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.85))),
+              fontSize: 13.sp, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.85))),
           ]),
         ),
 
         // ── Content ──
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+          padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 28.h),
           child: Column(children: [
             // Character
             Text(widget.vowel.character, style: GoogleFonts.battambang(
-              fontSize: 80, fontWeight: FontWeight.w700,
+              fontSize: 80.sp, fontWeight: FontWeight.w700,
               color: AppColors.primary, height: 1.1)),
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
             // Pronunciation badge
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(20)),
+                borderRadius: BorderRadius.circular(20.r)),
               child: Text('Phát âm: "${widget.vowel.romanized}"', style: GoogleFonts.plusJakartaSans(
-                fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                fontSize: 14.sp, fontWeight: FontWeight.w700, color: AppColors.primary)),
             ),
-            const SizedBox(height: 28),
+            SizedBox(height: 28.h),
 
             // ── Wave Bars + Play Button ──
             AnimatedBuilder(
@@ -140,14 +142,14 @@ class _State extends State<VowelListenSheet> with SingleTickerProviderStateMixin
                   final h = _isPlaying
                     ? 14.0 + 22 * ((i % 4 + 1) / 4) * (0.3 + 0.7 * _waveCtrl.value)
                     : 8.0 + (i % 3) * 5.0;
-                  return Container(width: 4, height: h,
-                    margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                  return Container(width: 4.w, height: h,
+                    margin: EdgeInsets.symmetric(horizontal: 2.5.w),
                     decoration: BoxDecoration(
                       color: AppColors.tertiary.withValues(alpha: _isPlaying ? 0.8 : 0.25),
-                      borderRadius: BorderRadius.circular(2)));
+                      borderRadius: BorderRadius.circular(2.r)));
                 }),
-                const SizedBox(width: 16),
-                // Play button with pressed state
+                SizedBox(width: 16.w),
+                // Play button
                 GestureDetector(
                   onTapDown: (_) => setState(() => _playBtnPressed = true),
                   onTapUp: (_) => setState(() => _playBtnPressed = false),
@@ -157,50 +159,50 @@ class _State extends State<VowelListenSheet> with SingleTickerProviderStateMixin
                     scale: _playBtnPressed ? 0.9 : 1.0,
                     duration: const Duration(milliseconds: 120),
                     child: Container(
-                      width: 72, height: 72,
+                      width: 72.w, height: 72.w,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: AppColors.listenGradient,
                         boxShadow: [BoxShadow(
                           color: AppColors.tertiary.withValues(alpha: 0.4),
-                          blurRadius: 20, offset: const Offset(0, 8))]),
+                          blurRadius: 20.r, offset: Offset(0, 8.h))]),
                       child: Icon(_isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                        color: Colors.white, size: 36)),
+                        color: Colors.white, size: 36.sp)),
                   ),
                 ),
-                const SizedBox(width: 16),
-                // Right bars (mirrored)
+                SizedBox(width: 16.w),
+                // Right bars
                 ...List.generate(7, (i) {
                   final h = _isPlaying
                     ? 14.0 + 22 * (((6 - i) % 4 + 1) / 4) * (0.3 + 0.7 * _waveCtrl.value)
                     : 8.0 + ((6 - i) % 3) * 5.0;
-                  return Container(width: 4, height: h,
-                    margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                  return Container(width: 4.w, height: h,
+                    margin: EdgeInsets.symmetric(horizontal: 2.5.w),
                     decoration: BoxDecoration(
                       color: AppColors.tertiary.withValues(alpha: _isPlaying ? 0.8 : 0.25),
-                      borderRadius: BorderRadius.circular(2)));
+                      borderRadius: BorderRadius.circular(2.r)));
                 }),
               ]),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12.h),
             // Status text
             Text(
               _isPlaying ? 'Đang phát âm...'
                 : _playCount > 0 ? 'Đã nghe $_playCount lần • Nhấn nghe lại'
                 : 'Nhấn nút để nghe phát âm',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-            const SizedBox(height: 24),
+                fontSize: 13.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+            SizedBox(height: 24.h),
 
             // ── Speed chips ──
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               Text('Tốc độ:', style: GoogleFonts.plusJakartaSans(
-                fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textHint)),
-              const SizedBox(width: 10),
+                fontSize: 13.sp, fontWeight: FontWeight.w600, color: AppColors.textHint)),
+              SizedBox(width: 10.w),
               _speedChip('🐢 Chậm', 0),
-              const SizedBox(width: 8),
+              SizedBox(width: 8.w),
               _speedChip('🔊 Vừa', 1),
-              const SizedBox(width: 8),
+              SizedBox(width: 8.w),
               _speedChip('🐇 Nhanh', 2),
             ]),
           ]),
@@ -218,16 +220,16 @@ class _State extends State<VowelListenSheet> with SingleTickerProviderStateMixin
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
         decoration: BoxDecoration(
           color: active ? AppColors.tertiary : AppColors.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20.r),
           border: active ? null : Border.all(color: AppColors.surfaceContainerHighest),
           boxShadow: active ? [BoxShadow(
             color: AppColors.tertiary.withValues(alpha: 0.3),
-            blurRadius: 8, offset: const Offset(0, 3))] : null),
+            blurRadius: 8.r, offset: Offset(0, 3.h))] : null),
         child: Text(label, style: GoogleFonts.plusJakartaSans(
-          fontSize: 12, fontWeight: FontWeight.w700,
+          fontSize: 12.sp, fontWeight: FontWeight.w700,
           color: active ? Colors.white : AppColors.textSecondary)),
       ),
     );

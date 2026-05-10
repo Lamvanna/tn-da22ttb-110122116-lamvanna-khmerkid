@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../services/storage_service.dart';
 import '../../../services/score_service.dart';
+import '../../../constants/app_colors.dart';
 
 /// Header trang chủ — Gradient xanh nhạt + avatar + stats card trắng
 class HomeHeader extends StatefulWidget {
@@ -62,10 +63,7 @@ class _HomeHeaderState extends State<HomeHeader> {
       Container(
         clipBehavior: Clip.none,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment(-0.5, -1),
-            end: Alignment(0.5, 1),
-            colors: [Color(0xFF1976D2), Color(0xFF64B5F6)]),
+          gradient: AppColors.appGradient,
           borderRadius: BorderRadius.only(
             bottomLeft: Radius.circular(24.r),
             bottomRight: Radius.circular(24.r)),
@@ -113,7 +111,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                         SizedBox(height: 3.h),
                         Row(children: [
                           Icon(_getLevelIcon(_level),
-                            color: const Color(0xFF66BB6A), size: 16.sp),
+                            color: AppColors.successLight, size: 16.sp),
                           SizedBox(width: 5.w),
                           Text('Cấp $_level: ${_getLevelTitle(_level)}',
                             style: GoogleFonts.plusJakartaSans(
@@ -151,7 +149,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                 SizedBox(width: 5.w),
                 Text('$_streak ngày', style: GoogleFonts.plusJakartaSans(
                   fontSize: 16.sp, fontWeight: FontWeight.w800,
-                  color: const Color(0xFF2C3345))),
+                  color: AppColors.onBackground)),
               ]),
               SizedBox(height: 3.h),
               Text('Chuỗi ngày', style: GoogleFonts.plusJakartaSans(
@@ -167,7 +165,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                 SizedBox(width: 5.w),
                 Text('$_totalStars sao', style: GoogleFonts.plusJakartaSans(
                   fontSize: 16.sp, fontWeight: FontWeight.w800,
-                  color: const Color(0xFF2C3345))),
+                  color: AppColors.onBackground)),
               ]),
               SizedBox(height: 3.h),
               Text('Điểm thưởng', style: GoogleFonts.plusJakartaSans(
@@ -183,7 +181,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   Text('Lv.$_level', style: GoogleFonts.plusJakartaSans(
                     fontSize: 16.sp, fontWeight: FontWeight.w800,
-                    color: const Color(0xFF2C3345))),
+                    color: AppColors.onBackground)),
                   SizedBox(width: 8.w),
                   SizedBox(
                     width: 40.w,
@@ -193,7 +191,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                         value: _score?.levelProgress ?? 0,
                         minHeight: 6.h,
                         backgroundColor: const Color(0xFFEEF1F8),
-                        valueColor: const AlwaysStoppedAnimation(Color(0xFF1976D2))))),
+                        valueColor: const AlwaysStoppedAnimation(AppColors.headerMid)))),
                 ]),
                 SizedBox(height: 3.h),
                 Text('Cấp độ hiện tại', style: GoogleFonts.plusJakartaSans(

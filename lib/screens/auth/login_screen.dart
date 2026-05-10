@@ -19,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passCtrl = TextEditingController();
   bool _remember = false;
   bool _obscure = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -37,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
           gradient: LinearGradient(
             begin: Alignment(-0.7, -0.7), 
             end: Alignment(0.7, 0.7),
-            colors: [Color(0xFF1565C0), Color(0xFF42A5F5)]),
+            colors: [AppColors.headerDark, AppColors.headerAccent]),
         ),
         child: Stack(children: [
           // ── Radial glow overlays ──
@@ -184,8 +185,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                       boxShadow: [BoxShadow(
                                         color: Colors.white.withValues(alpha: 0.30),
                                         blurRadius: 20.r, offset: Offset(0, 8.h))]),
-                                    child: Center(child: Text('Đăng nhập', style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 18.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1976D2)))),
+                                    child: Center(child: _isLoading
+                                      ? SizedBox(width: 24.w, height: 24.w, child: CircularProgressIndicator(
+                                          strokeWidth: 2.5, color: AppColors.headerMid))
+                                      : Text('Đăng nhập', style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 18.sp, fontWeight: FontWeight.w700, color: AppColors.headerMid))),
                                   ),
                                 ),
 
@@ -303,6 +307,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleLogin() {
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainScreen()));
+    // Chưa cần validate — cho đăng nhập trực tiếp
+    setState(() => _isLoading = true);
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (!mounted) return;
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainScreen()));
+    });
   }
 }

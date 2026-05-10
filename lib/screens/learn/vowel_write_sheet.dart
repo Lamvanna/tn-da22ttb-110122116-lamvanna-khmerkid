@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../constants/app_colors.dart';
 import '../../models/khmer_vowel.dart';
 
+/// Sheet tập viết nguyên âm — RESPONSIVE + Plus Jakarta Sans
 class VowelWriteSheet extends StatefulWidget {
   final KhmerVowel vowel;
   final VoidCallback onComplete;
@@ -32,56 +35,62 @@ class _State extends State<VowelWriteSheet> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.78,
-      decoration: const BoxDecoration(color: Color(0xFFFFF8E1), borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      decoration: BoxDecoration(
+        color: AppColors.sheetWarm,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28.r))),
       child: Column(children: [
-        Container(width: 40, height: 4, margin: const EdgeInsets.only(top: 12),
-          decoration: BoxDecoration(color: const Color(0xFFD7CCC8), borderRadius: BorderRadius.circular(2))),
-        const SizedBox(height: 8),
+        // ── Drag Handle ──
+        Container(width: 48.w, height: 5.h, margin: EdgeInsets.only(top: 12.h),
+          decoration: BoxDecoration(color: AppColors.sheetWarmBorder, borderRadius: BorderRadius.circular(3.r))),
+        SizedBox(height: 8.h),
         if (_passed != true) ...[
-          Text('✍️ Tập viết chữ ${widget.vowel.character}', style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w800, color: const Color(0xFF5D4037))),
-          const SizedBox(height: 2),
-          Text('Quan sát mẫu rồi viết theo', style: GoogleFonts.nunito(fontSize: 13, color: const Color(0xFF8D6E63))),
-          const SizedBox(height: 8),
+          Text('✍️ Tập viết chữ ${widget.vowel.character}',
+            style: GoogleFonts.plusJakartaSans(fontSize: 20.sp, fontWeight: FontWeight.w800, color: AppColors.sheetBrown)),
+          SizedBox(height: 2.h),
+          Text('Quan sát mẫu rồi viết theo',
+            style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w500, color: AppColors.sheetBrownLight)),
+          SizedBox(height: 8.h),
           // Model Card
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            margin: EdgeInsets.symmetric(horizontal: 20.w),
+            padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
             decoration: BoxDecoration(
               gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFFFFECB3), Color(0xFFFFE082)]),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(20.r),
               border: Border.all(color: const Color(0xFFFFCC02), width: 2.5),
-              boxShadow: [BoxShadow(color: const Color(0xFFFFD54F).withValues(alpha: 0.4), blurRadius: 12, offset: const Offset(0, 4)), const BoxShadow(color: Color(0x11000000), blurRadius: 4, offset: Offset(0, 2))]),
+              boxShadow: [BoxShadow(color: const Color(0xFFFFD54F).withValues(alpha: 0.4), blurRadius: 12.r, offset: Offset(0, 4.h)),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4.r, offset: Offset(0, 2.h))]),
             child: Stack(children: [
-              Positioned(left: 0, top: 0, child: Container(padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(color: Colors.white54, borderRadius: BorderRadius.circular(8)),
-                child: const Text('✏️', style: TextStyle(fontSize: 16)))),
+              Positioned(left: 0, top: 0, child: Container(padding: EdgeInsets.all(4.w),
+                decoration: BoxDecoration(color: Colors.white54, borderRadius: BorderRadius.circular(8.r)),
+                child: Text('✏️', style: TextStyle(fontSize: 16.sp)))),
               Positioned(right: 0, top: 0, child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(color: const Color(0xFF8D6E63), borderRadius: BorderRadius.circular(10)),
-                child: Text('Mẫu', style: GoogleFonts.nunito(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)))),
-              Center(child: Padding(padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Text(widget.vowel.character, style: GoogleFonts.battambang(fontSize: 90, fontWeight: FontWeight.w700, color: const Color(0xFF3E2723), height: 1.15)))),
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                decoration: BoxDecoration(color: AppColors.sheetBrownLight, borderRadius: BorderRadius.circular(10.r)),
+                child: Text('Mẫu', style: GoogleFonts.plusJakartaSans(fontSize: 10.sp, fontWeight: FontWeight.w700, color: Colors.white)))),
+              Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 4.h),
+                child: Text(widget.vowel.character, style: GoogleFonts.battambang(fontSize: 90.sp, fontWeight: FontWeight.w700, color: AppColors.sheetBrown, height: 1.15)))),
             ]),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6.h),
           // Feedback
           if (_feedback != null && _passed == false)
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(color: const Color(0xFFFFEBEE), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFEF9A9A))),
+            Padding(padding: EdgeInsets.symmetric(horizontal: 20.w),
+              child: Container(padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                decoration: BoxDecoration(color: const Color(0xFFFFEBEE), borderRadius: BorderRadius.circular(14.r), border: Border.all(color: const Color(0xFFEF9A9A))),
                 child: Row(children: [
-                  const Text('😅', style: TextStyle(fontSize: 18)), const SizedBox(width: 8),
-                  Expanded(child: Text(_feedback!, style: GoogleFonts.nunito(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFFC62828)))),
+                  Text('😅', style: TextStyle(fontSize: 18.sp)), SizedBox(width: 8.w),
+                  Expanded(child: Text(_feedback!, style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w600, color: AppColors.errorDark))),
                 ]))),
           // Canvas
           Expanded(child: Container(
-            margin: const EdgeInsets.fromLTRB(20, 6, 20, 0),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _passed == null ? const Color(0xFFD7CCC8) : _passed! ? const Color(0xFF4CAF50) : const Color(0xFFEF5350), width: 2)),
-            child: ClipRRect(borderRadius: BorderRadius.circular(14),
+            margin: EdgeInsets.fromLTRB(20.w, 6.h, 20.w, 0),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16.r),
+              border: Border.all(color: _passed == null ? AppColors.sheetWarmBorder : _passed! ? AppColors.successGreen : AppColors.errorRed, width: 2)),
+            child: ClipRRect(borderRadius: BorderRadius.circular(14.r),
               child: Stack(children: [
                 CustomPaint(size: Size.infinite, painter: _GridPainter()),
-                Center(child: Text(widget.vowel.character, style: GoogleFonts.battambang(fontSize: 180, fontWeight: FontWeight.w300, color: const Color(0xFFE0D5C5).withValues(alpha: 0.45)))),
+                Center(child: Text(widget.vowel.character, style: GoogleFonts.battambang(fontSize: 180.sp, fontWeight: FontWeight.w300, color: AppColors.sheetWarmBorder.withValues(alpha: 0.45)))),
                 GestureDetector(
                   onPanStart: (d) => setState(() { _current = [d.localPosition]; _passed = null; _feedback = null; }),
                   onPanUpdate: (d) => setState(() => _current.add(d.localPosition)),
@@ -89,69 +98,69 @@ class _State extends State<VowelWriteSheet> {
                   child: CustomPaint(size: Size.infinite, painter: _StrokePainter(_strokes, _current))),
               ])),
           )),
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h),
           // Toolbar
-          Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-            child: Container(padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFE0D5C5)),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))]),
+          Padding(padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 14.h),
+            child: Container(padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20.r), border: Border.all(color: AppColors.sheetWarmBorder),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6.r, offset: Offset(0, 2.h))]),
               child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
                 _toolBtn(icon: Icons.check_circle_outline_rounded, label: 'Kiểm tra',
-                  color: _strokes.isNotEmpty ? const Color(0xFF43A047) : const Color(0xFFBDBDBD),
+                  color: _strokes.isNotEmpty ? AppColors.successGreen : AppColors.textHint,
                   onTap: _strokes.isNotEmpty ? _check : null),
                 _toolBtn(icon: Icons.auto_fix_high_rounded, label: 'Cục tẩy',
-                  color: _strokes.isNotEmpty ? const Color(0xFFFFA726) : const Color(0xFFBDBDBD),
+                  color: _strokes.isNotEmpty ? AppColors.secondary : AppColors.textHint,
                   onTap: _strokes.isNotEmpty ? () => setState(() { _strokes.removeLast(); _passed = null; _feedback = null; }) : null),
-                _toolBtn(icon: Icons.refresh_rounded, label: 'Làm lại', color: const Color(0xFFEF5350),
+                _toolBtn(icon: Icons.refresh_rounded, label: 'Làm lại', color: AppColors.errorRed,
                   onTap: () => setState(() { _strokes.clear(); _current.clear(); _passed = null; _feedback = null; })),
               ]))),
         ],
-        // Success
+        // ── Success ──
         if (_passed == true)
-          Expanded(child: Center(child: Padding(padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(28),
-                boxShadow: [BoxShadow(color: const Color(0xFF4CAF50).withValues(alpha: 0.12), blurRadius: 20, offset: const Offset(0, 6)),
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))]),
+          Expanded(child: Center(child: Padding(padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 20.h),
+            child: Container(width: double.infinity, padding: EdgeInsets.symmetric(vertical: 32.h, horizontal: 24.w),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(28.r),
+                boxShadow: [BoxShadow(color: AppColors.successGreen.withValues(alpha: 0.12), blurRadius: 20.r, offset: Offset(0, 6.h)),
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8.r, offset: Offset(0, 2.h))]),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Container(width: 100, height: 100,
+                Container(width: 100.w, height: 100.w,
                   decoration: BoxDecoration(shape: BoxShape.circle,
-                    gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF81C784), Color(0xFF43A047)]),
-                    boxShadow: [BoxShadow(color: const Color(0xFF4CAF50).withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))]),
-                  child: Center(child: Text(widget.vowel.character, style: GoogleFonts.battambang(fontSize: 52, fontWeight: FontWeight.w700, color: Colors.white, height: 1.1)))),
-                const SizedBox(height: 16),
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(3, (i) => const Padding(padding: EdgeInsets.symmetric(horizontal: 4), child: Icon(Icons.star_rounded, size: 36, color: Color(0xFFFFC107))))),
-                const SizedBox(height: 12),
-                Text('Viết tuyệt vời!', style: GoogleFonts.nunito(fontSize: 26, fontWeight: FontWeight.w800, color: const Color(0xFF2E7D32))),
-                const SizedBox(height: 4),
-                Text('Bé viết rất đẹp! 🎉', style: GoogleFonts.nunito(fontSize: 15, color: const Color(0xFF8D6E63))),
-                const SizedBox(height: 14),
-                Container(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  decoration: BoxDecoration(color: const Color(0xFFFFF3E0), borderRadius: BorderRadius.circular(16)),
-                  child: Text('+10 XP ⭐', style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w800, color: const Color(0xFFFFA726)))),
-                const SizedBox(height: 20),
+                    gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppColors.successLighter, AppColors.successGreen]),
+                    boxShadow: [BoxShadow(color: AppColors.successGreen.withValues(alpha: 0.3), blurRadius: 16.r, offset: Offset(0, 6.h))]),
+                  child: Center(child: Text(widget.vowel.character, style: GoogleFonts.battambang(fontSize: 52.sp, fontWeight: FontWeight.w700, color: Colors.white, height: 1.1)))),
+                SizedBox(height: 16.h),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(3, (i) => Padding(padding: EdgeInsets.symmetric(horizontal: 4.w), child: Icon(Icons.star_rounded, size: 36.sp, color: AppColors.secondary)))),
+                SizedBox(height: 12.h),
+                Text('Viết tuyệt vời!', style: GoogleFonts.plusJakartaSans(fontSize: 26.sp, fontWeight: FontWeight.w800, color: const Color(0xFF2E7D32))),
+                SizedBox(height: 4.h),
+                Text('Bé viết rất đẹp! 🎉', style: GoogleFonts.plusJakartaSans(fontSize: 15.sp, fontWeight: FontWeight.w500, color: AppColors.sheetBrownLight)),
+                SizedBox(height: 14.h),
+                Container(padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+                  decoration: BoxDecoration(color: const Color(0xFFFFF3E0), borderRadius: BorderRadius.circular(16.r)),
+                  child: Text('+10 XP ⭐', style: GoogleFonts.plusJakartaSans(fontSize: 20.sp, fontWeight: FontWeight.w800, color: AppColors.secondary))),
+                SizedBox(height: 20.h),
                 Row(children: [
                   Expanded(child: GestureDetector(
                     onTap: () => setState(() { _strokes.clear(); _current.clear(); _passed = null; _feedback = null; }),
-                    child: Container(padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(color: const Color(0xFFFFF3E0), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFFFA726))),
-                      child: Center(child: Text('Viết lại', style: GoogleFonts.nunito(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFFFFA726))))))),
-                  const SizedBox(width: 12),
+                    child: Container(padding: EdgeInsets.symmetric(vertical: 14.h),
+                      decoration: BoxDecoration(color: const Color(0xFFFFF3E0), borderRadius: BorderRadius.circular(16.r), border: Border.all(color: AppColors.secondary)),
+                      child: Center(child: Text('Viết lại', style: GoogleFonts.plusJakartaSans(fontSize: 15.sp, fontWeight: FontWeight.w700, color: AppColors.secondary)))))),
+                  SizedBox(width: 12.w),
                   Expanded(child: GestureDetector(
                     onTap: () {
                       final m = ScaffoldMessenger.of(context);
                       Navigator.pop(context);
                       m.showSnackBar(SnackBar(
-                        content: Text('🎉 Viết tuyệt vời! +10 XP', style: GoogleFonts.nunito(fontWeight: FontWeight.w700, fontSize: 14)),
-                        backgroundColor: const Color(0xFF4CAF50), behavior: SnackBarBehavior.floating, margin: const EdgeInsets.all(16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), duration: const Duration(seconds: 2)));
+                        content: Text('🎉 Viết tuyệt vời! +10 XP', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14.sp)),
+                        backgroundColor: AppColors.successGreen, behavior: SnackBarBehavior.floating, margin: EdgeInsets.all(16.w),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)), duration: const Duration(seconds: 2)));
                     },
-                    child: Container(padding: const EdgeInsets.symmetric(vertical: 14),
+                    child: Container(padding: EdgeInsets.symmetric(vertical: 14.h),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [Color(0xFF66BB6A), Color(0xFF43A047)]),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [BoxShadow(color: const Color(0xFF4CAF50).withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 3))]),
-                      child: Center(child: Text('Hoàn thành ✅', style: GoogleFonts.nunito(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)))))),
+                        gradient: LinearGradient(colors: [AppColors.successLight, AppColors.successGreen]),
+                        borderRadius: BorderRadius.circular(16.r),
+                        boxShadow: [BoxShadow(color: AppColors.successGreen.withValues(alpha: 0.3), blurRadius: 8.r, offset: Offset(0, 3.h))]),
+                      child: Center(child: Text('Hoàn thành ✅', style: GoogleFonts.plusJakartaSans(fontSize: 15.sp, fontWeight: FontWeight.w700, color: Colors.white)))))),
                 ]),
               ]))))),
       ]),
@@ -160,11 +169,11 @@ class _State extends State<VowelWriteSheet> {
 
   Widget _toolBtn({required IconData icon, required String label, required Color color, VoidCallback? onTap}) {
     return GestureDetector(onTap: onTap, child: Column(mainAxisSize: MainAxisSize.min, children: [
-      Container(width: 44, height: 44,
-        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(14)),
-        child: Icon(icon, color: color, size: 22)),
-      const SizedBox(height: 4),
-      Text(label, style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
+      Container(width: 48.w, height: 48.w,
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(14.r)),
+        child: Icon(icon, color: color, size: 22.sp)),
+      SizedBox(height: 4.h),
+      Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 11.sp, fontWeight: FontWeight.w700, color: color)),
     ]));
   }
 }
@@ -190,9 +199,9 @@ class _StrokePainter extends CustomPainter {
   _StrokePainter(this.strokes, this.current);
   @override
   void paint(Canvas canvas, Size size) {
-    final p = Paint()..color = const Color(0xFF5D4037)..strokeWidth = 5..strokeCap = StrokeCap.round..strokeJoin = StrokeJoin.round..style = PaintingStyle.stroke;
+    final p = Paint()..color = AppColors.sheetBrown..strokeWidth = 5..strokeCap = StrokeCap.round..strokeJoin = StrokeJoin.round..style = PaintingStyle.stroke;
     for (final s in strokes) { if (s.length < 2) continue; final path = Path()..moveTo(s[0].dx, s[0].dy); for (int i = 1; i < s.length; i++) path.lineTo(s[i].dx, s[i].dy); canvas.drawPath(path, p); }
-    if (current.length >= 2) { final ap = Paint()..color = const Color(0xFF8D6E63)..strokeWidth = 5..strokeCap = StrokeCap.round..style = PaintingStyle.stroke; final path = Path()..moveTo(current[0].dx, current[0].dy); for (int i = 1; i < current.length; i++) path.lineTo(current[i].dx, current[i].dy); canvas.drawPath(path, ap); }
+    if (current.length >= 2) { final ap = Paint()..color = AppColors.sheetBrownLight..strokeWidth = 5..strokeCap = StrokeCap.round..style = PaintingStyle.stroke; final path = Path()..moveTo(current[0].dx, current[0].dy); for (int i = 1; i < current.length; i++) path.lineTo(current[i].dx, current[i].dy); canvas.drawPath(path, ap); }
   }
   @override
   bool shouldRepaint(covariant _StrokePainter old) => true;

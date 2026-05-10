@@ -69,7 +69,7 @@ class CongratsBanner extends StatelessWidget {
                       Text('0/5 nhiệm vụ',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11.sp, fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1565C0))),
+                          color: AppColors.headerDark)),
                     ]),
                   ),
                 ],
@@ -79,10 +79,10 @@ class CongratsBanner extends StatelessWidget {
             Container(
               width: 38.w, height: 38.w,
               decoration: BoxDecoration(
-                color: const Color(0xFF1976D2).withValues(alpha: 0.85),
+                color: AppColors.headerMid.withValues(alpha: 0.85),
                 shape: BoxShape.circle,
                 boxShadow: [BoxShadow(
-                  color: const Color(0xFF1976D2).withValues(alpha: 0.25),
+                  color: AppColors.headerMid.withValues(alpha: 0.25),
                   blurRadius: 8.r, offset: Offset(0, 3.h))]),
               child: Icon(Icons.arrow_forward_rounded,
                 color: Colors.white, size: 19.sp),

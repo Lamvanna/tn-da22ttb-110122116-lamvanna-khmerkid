@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
 
-/// Widget thẻ loại bài kiểm tra (Kiểm tra nói, nghe, viết, tổng hợp)
-/// Sử dụng trên màn hình Học (Learn Screen)
+/// Widget thẻ loại bài kiểm tra — RESPONSIVE
 class TestCategoryCard extends StatelessWidget {
   final String title;
   final String description;
@@ -29,36 +29,36 @@ class TestCategoryCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        margin: EdgeInsets.only(bottom: 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
               color: color.withValues(alpha: 0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              blurRadius: 8.r,
+              offset: Offset(0, 4.h),
             ),
           ],
         ),
         child: Row(
           children: [
-            // Icon container
+            // Icon container — 48x48 min touch target
             Container(
-              width: 48,
-              height: 48,
+              width: 48.w,
+              height: 48.w,
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(14.r),
               ),
               child: Icon(
                 icon,
-                size: 28,
+                size: 28.sp,
                 color: AppColors.textWhite,
               ),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14.w),
             // Text content
             Expanded(
               child: Column(
@@ -68,7 +68,7 @@ class TestCategoryCard extends StatelessWidget {
                     title,
                     style: AppTextStyles.cardTitleWhite,
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2.h),
                   Text(
                     description,
                     style: AppTextStyles.bodySmall.copyWith(
@@ -78,7 +78,7 @@ class TestCategoryCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   if (starRating > 0 || difficulty.isNotEmpty) ...[
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6.h),
                     Row(
                       children: [
                         // Star rating
@@ -87,21 +87,21 @@ class TestCategoryCard extends StatelessWidget {
                             index < starRating
                                 ? Icons.star_rounded
                                 : Icons.star_border_rounded,
-                            size: 14,
+                            size: 14.sp,
                             color: AppColors.accentYellow,
                           )),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8.w),
                         ],
                         // Difficulty badge
                         if (difficulty.isNotEmpty)
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8.w,
+                              vertical: 2.h,
                             ),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.25),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(8.r),
                             ),
                             child: Text(
                               difficulty,
@@ -115,10 +115,10 @@ class TestCategoryCard extends StatelessWidget {
               ),
             ),
             // Arrow icon
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
               color: AppColors.textWhite,
-              size: 28,
+              size: 28.sp,
             ),
           ],
         ),

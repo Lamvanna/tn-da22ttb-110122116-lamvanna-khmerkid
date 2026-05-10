@@ -126,8 +126,39 @@ class AppColors {
   static const Color difficultyHard = coral;
 
   // ═══════════════════════════════════════════════════════════════════
+  // 🎨 APP-WIDE SEMANTIC COLORS (thay thế hardcoded values)
+  // ═══════════════════════════════════════════════════════════════════
+  static const Color headerDark = Color(0xFF1565C0);
+  static const Color headerMid  = Color(0xFF1976D2);
+  static const Color headerEnd  = Color(0xFF64B5F6);
+  static const Color headerAccent = Color(0xFF42A5F5);
+  static const Color headerSky  = Color(0xFF29B6F6);
+
+  // Action step colors (Nghe/Nói/Viết)
+  static const Color stepListen = Color(0xFF00C853);
+  static const Color stepSpeak  = Color(0xFFFF6D00);
+  static const Color stepWrite  = Color(0xFF2979FF);
+
+  // Sheet backgrounds
+  static const Color sheetWarm  = Color(0xFFFFF8E1);
+  static const Color sheetWarmBorder = Color(0xFFD7CCC8);
+  static const Color sheetBrown = Color(0xFF5D4037);
+  static const Color sheetBrownLight = Color(0xFF8D6E63);
+
+  // Success / Error
+  static const Color successGreen = Color(0xFF43A047);
+  static const Color successLight = Color(0xFF66BB6A);
+  static const Color successLighter = Color(0xFF81C784);
+  static const Color errorRed   = Color(0xFFEF5350);
+  static const Color errorDark  = Color(0xFFC62828);
+
+  // ═══════════════════════════════════════════════════════════════════
   // 🌈 GRADIENTS
   // ═══════════════════════════════════════════════════════════════════
+  static const LinearGradient appGradient = LinearGradient(
+    begin: Alignment(-0.5, -1), end: Alignment(0.5, 1),
+    colors: [headerMid, headerEnd],
+  );
   static const LinearGradient headerGradient = LinearGradient(
     begin: Alignment.topLeft, end: Alignment.bottomRight,
     colors: [primary, primaryLight],

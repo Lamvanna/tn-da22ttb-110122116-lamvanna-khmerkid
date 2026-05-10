@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../main_screen.dart';
+import '../../constants/app_colors.dart';
 import '../library/library_screen.dart';
 import '../leaderboard/leaderboard_screen.dart';
 import '../achievements/achievements_screen.dart';
@@ -16,7 +17,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEEF2FB),
+      backgroundColor: AppColors.background,
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(

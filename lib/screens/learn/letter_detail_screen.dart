@@ -92,54 +92,54 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
       context: context,
       barrierDismissible: false,
       builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24.w),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('🎉', style: TextStyle(fontSize: 48)),
-              const SizedBox(height: 12),
+              Text('🎉', style: TextStyle(fontSize: 48.sp)),
+              SizedBox(height: 12.h),
               Text(
                 'Chúc mừng!',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 24,
+                  fontSize: 24.sp,
                   fontWeight: FontWeight.w800,
                   color: AppColors.tertiary,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8.h),
               Text(
                 'Bạn đã hoàn thành chữ "${_letter.character}"',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16,
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                 ),
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: 6.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
                   3,
                   (i) => Icon(
                     Icons.star_rounded,
-                    size: 28,
+                    size: 28.w,
                     color: AppColors.secondary,
                   ),
                 ),
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: 6.h),
               Text(
                 '+30 XP ⭐',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 22,
+                  fontSize: 22.sp,
                   fontWeight: FontWeight.w800,
                   color: AppColors.secondary,
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20.h),
               if (hasNext) ...[
                 SizedBox(
                   width: double.infinity,
@@ -150,22 +150,22 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.tertiary,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(14.r),
                       ),
                     ),
                     child: Text(
                       'Học chữ tiếp theo →',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 16,
+                        fontSize: 16.sp,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
               ],
               SizedBox(
                 width: double.infinity,
@@ -175,16 +175,16 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                     Navigator.pop(context);
                   },
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(14.r),
                     ),
                     side: BorderSide(color: AppColors.violet),
                   ),
                   child: Text(
                     'Quay về bản đồ',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
+                      fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
                       color: AppColors.violet,
                     ),
@@ -220,7 +220,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                     _buildLetterCard(),
                     SizedBox(height: 8.h),
                     _buildActionRow(),
-                    SizedBox(height: 8.h),
+                    SizedBox(height: 16.h),
                     _buildNavButtons(),
                   ],
                 ),
@@ -249,8 +249,8 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF1565C0).withValues(alpha: 0.35),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+            blurRadius: 24.r,
+            offset: Offset(0, 8.h),
           ),
         ],
       ),
@@ -258,11 +258,11 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
         children: [
           // Decorative circles
           Positioned(
-            right: -20,
-            top: -20,
+            right: -20.w,
+            top: -20.h,
             child: Container(
-              width: 100,
-              height: 100,
+              width: 100.w,
+              height: 100.w,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white.withValues(alpha: 0.06),
@@ -270,11 +270,11 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
             ),
           ),
           Positioned(
-            left: -30,
-            bottom: -10,
+            left: -30.w,
+            bottom: -10.h,
             child: Container(
-              width: 70,
-              height: 70,
+              width: 70.w,
+              height: 70.w,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white.withValues(alpha: 0.04),
@@ -400,7 +400,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                     ),
                     // Mascot - responsive
                     Transform.translate(
-                      offset: Offset(-5.w, -5),
+                      offset: Offset(-5.w, -5.h),
                       child: SizedBox(
                         width: 130.w,
                         height: 75.h,
@@ -482,23 +482,16 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.white,
-            const Color(0xFF1E88E5).withValues(alpha: 0.04),
-          ],
-        ),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(28.r),
         border: Border.all(
-          color: const Color(0xFF1E88E5).withValues(alpha: 0.08),
+          color: const Color(0xFFE0E0E0).withValues(alpha: 0.5),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1E88E5).withValues(alpha: 0.12),
-            blurRadius: 24,
-            offset: Offset(0, 8.h),
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 20.r,
+            offset: Offset(0, 6.h),
           ),
         ],
       ),
@@ -570,10 +563,18 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
           // ── Bottom: info row ──
           Container(
             margin: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 30.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0F7FF).withValues(alpha: 0.5),
+              color: const Color(0xFFEEF4FC),
               borderRadius: BorderRadius.circular(18.r),
+              border: Border.all(color: const Color(0xFF1E88E5).withValues(alpha: 0.15)),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF1E88E5).withValues(alpha: 0.08),
+                  blurRadius: 10.r,
+                  offset: Offset(0, 3.h),
+                ),
+              ],
             ),
             child: Row(
               children: [
@@ -584,52 +585,31 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                       Row(
                         children: [
                           Text(
-                            _letter.character,
+                            _getKhmerWord(),
                             style: GoogleFonts.battambang(
-                              fontSize: 22.sp,
+                              fontSize: 26.sp,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1E88E5),
-                            ),
-                          ),
-                          SizedBox(width: 6.w),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 8.w,
-                              vertical: 2.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF1E88E5,
-                              ).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            child: Text(
-                              '"${_letter.romanized}"',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF1E88E5),
-                              ),
+                              color: const Color(0xFF1565C0),
                             ),
                           ),
                         ],
                       ),
-                      SizedBox(height: 4.h),
+                      SizedBox(height: 6.h),
                       Row(
                         children: [
                           Icon(
                             Icons.volume_up_rounded,
-                            size: 14.w,
-                            color: AppColors.textHint,
+                            size: 16.w,
+                            color: const Color(0xFF1E88E5),
                           ),
-                          SizedBox(width: 4.w),
+                          SizedBox(width: 6.w),
                           Text(
                             _letter.meaning.isNotEmpty
                                 ? _letter.meaning
                                 : _letter.pronunciation,
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w700,
                               color: AppColors.textSecondary,
                             ),
                           ),
@@ -639,7 +619,18 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                   ),
                 ),
                 SizedBox(width: 12.w),
-                Text(_getEmoji(), style: TextStyle(fontSize: 64.sp)),
+                SizedBox(
+                  width: 80.w,
+                  height: 80.w,
+                  child: Transform.translate(
+                    offset: Offset(-10.w, 0),
+                    child: OverflowBox(
+                      maxWidth: 110.w,
+                      maxHeight: 110.w,
+                      child: _buildIllustration(),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -653,39 +644,42 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
     return Row(
       children: [
         Expanded(
-          flex: 1,
           child: GestureDetector(
             onTap: _showListenSheet,
-            child: _actionButton(
-              icon: Icons.headphones_rounded,
+            child: _actionCard(
+              imagePath: 'image/Nghe.png',
               label: 'Nghe',
-              color: const Color(0xFF00C853),
+              sub: 'Nghe phát âm',
+              bgColor: const Color(0xFFE8F5E9),
+              accentColor: const Color(0xFF43A047),
               stepIdx: 0,
             ),
           ),
         ),
         SizedBox(width: 10.w),
         Expanded(
-          flex: 1,
           child: GestureDetector(
             onTap: _showSpeakSheet,
-            child: _actionButton(
-              icon: Icons.mic_rounded,
+            child: _actionCard(
+              imagePath: 'image/Mic.png',
               label: 'Nói',
-              color: const Color(0xFFFF6D00),
+              sub: 'Luyện phát âm',
+              bgColor: const Color(0xFFFFF3E0),
+              accentColor: const Color(0xFFF57C00),
               stepIdx: 1,
             ),
           ),
         ),
         SizedBox(width: 10.w),
         Expanded(
-          flex: 1,
           child: GestureDetector(
             onTap: _showWriteSheet,
-            child: _actionButton(
-              icon: Icons.edit_rounded,
+            child: _actionCard(
+              imagePath: 'image/Viết.png',
               label: 'Viết',
-              color: const Color(0xFF2979FF),
+              sub: 'Tập viết chữ',
+              bgColor: const Color(0xFFEDE7F6),
+              accentColor: const Color(0xFF5E35B1),
               stepIdx: 2,
             ),
           ),
@@ -694,71 +688,51 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
     );
   }
 
-  Widget _actionButton({
-    required IconData icon,
+  Widget _actionCard({
+    required String imagePath,
     required String label,
-    required Color color,
+    required String sub,
+    required Color bgColor,
+    required Color accentColor,
     required int stepIdx,
   }) {
     final done = _isStepComplete(stepIdx);
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 38.h),
+      padding: EdgeInsets.symmetric(vertical: 18.h, horizontal: 10.w),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [color, Color.lerp(color, Colors.black, 0.12)!],
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(
+          color: done ? accentColor.withValues(alpha: 0.5) : accentColor.withValues(alpha: 0.18),
+          width: done ? 2.5 : 1.5,
         ),
-        borderRadius: BorderRadius.circular(18.r),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.30),
-            blurRadius: 10,
-            offset: Offset(0, 4.h),
+            color: accentColor.withValues(alpha: 0.15),
+            blurRadius: 16.r,
+            offset: Offset(0, 6.h),
+          ),
+          BoxShadow(
+            color: accentColor.withValues(alpha: 0.06),
+            blurRadius: 4.r,
+            offset: Offset(0, 2.h),
           ),
         ],
       ),
       child: Column(
         children: [
-          Stack(
-            alignment: Alignment.topRight,
-            children: [
-              Container(
-                width: 38.w,
-                height: 38.w,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.20),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Icon(icon, color: Colors.white, size: 20.w),
-              ),
-              if (done)
-                Container(
-                  width: 16.w,
-                  height: 16.w,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 4,
-                      ),
-                    ],
-                  ),
-                  child: Icon(Icons.check_rounded, size: 10.w, color: color),
-                ),
-            ],
-          ),
-          SizedBox(height: 6.h),
-          Text(
-            label,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
-          ),
+          Image.asset(imagePath, width: 70.w, height: 70.w, fit: BoxFit.contain),
+          SizedBox(height: 10.h),
+          Text(label, style: GoogleFonts.plusJakartaSans(
+            fontSize: 18.sp, fontWeight: FontWeight.w800, color: accentColor)),
+          SizedBox(height: 3.h),
+          Text(sub, style: GoogleFonts.plusJakartaSans(
+            fontSize: 11.sp, fontWeight: FontWeight.w600,
+            color: accentColor.withValues(alpha: 0.65))),
+          if (done) ...[
+            SizedBox(height: 6.h),
+            Icon(Icons.check_circle_rounded, color: accentColor, size: 20.sp),
+          ],
         ],
       ),
     );
@@ -780,7 +754,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
               color: Colors.white,
               borderRadius: BorderRadius.circular(16.r),
               border: Border.all(color: const Color(0xFF1E88E5).withValues(alpha: 0.12)),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: Offset(0, 2.h))],
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6.r, offset: Offset(0, 2.h))],
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.chevron_left_rounded, color: canPrev ? const Color(0xFF1E88E5) : AppColors.textHint, size: 18.w),
@@ -793,8 +767,8 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
           if (i.isOdd) {
             final prevDone = _isStepComplete(i ~/ 2);
             return Row(mainAxisSize: MainAxisSize.min, children: List.generate(3, (_) => Container(
-              width: 4.w, height: 2.5, margin: EdgeInsets.symmetric(horizontal: 1.5.w),
-              decoration: BoxDecoration(color: prevDone ? stepColors[i ~/ 2].withValues(alpha: 0.5) : const Color(0xFFE0E0E0), borderRadius: BorderRadius.circular(1)),
+              width: 4.w, height: 2.5.h, margin: EdgeInsets.symmetric(horizontal: 1.5.w),
+              decoration: BoxDecoration(color: prevDone ? stepColors[i ~/ 2].withValues(alpha: 0.5) : const Color(0xFFE0E0E0), borderRadius: BorderRadius.circular(1.r)),
             )));
           }
           final stepI = i ~/ 2;
@@ -804,7 +778,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
               shape: BoxShape.circle,
               gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
                 colors: done ? [stepColors[stepI], stepColors[stepI].withValues(alpha: 0.7)] : [const Color(0xFFE8E8E8), const Color(0xFFD8D8D8)]),
-              boxShadow: done ? [BoxShadow(color: stepColors[stepI].withValues(alpha: 0.35), blurRadius: 6, offset: Offset(0, 2.h))] : null,
+              boxShadow: done ? [BoxShadow(color: stepColors[stepI].withValues(alpha: 0.35), blurRadius: 6.r, offset: Offset(0, 2.h))] : null,
             ), child: Center(child: done
               ? Icon(Icons.check_rounded, size: 14.w, color: Colors.white)
               : Text('${stepI + 1}', style: GoogleFonts.plusJakartaSans(fontSize: 12.sp, fontWeight: FontWeight.w800, color: Colors.white)))),
@@ -821,7 +795,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
               gradient: canNext ? const LinearGradient(colors: [Color(0xFF42A5F5), Color(0xFF1E88E5)]) : null,
               color: canNext ? null : AppColors.surfaceContainerLow,
               borderRadius: BorderRadius.circular(20.r),
-              boxShadow: canNext ? [BoxShadow(color: const Color(0xFF1E88E5).withValues(alpha: 0.35), blurRadius: 10, offset: Offset(0, 3.h))] : null,
+              boxShadow: canNext ? [BoxShadow(color: const Color(0xFF1E88E5).withValues(alpha: 0.35), blurRadius: 10.r, offset: Offset(0, 3.h))] : null,
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Text(canNext ? 'Tiếp theo' : 'Khóa', style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: canNext ? Colors.white : AppColors.textHint)),
@@ -863,6 +837,38 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
       builder: (_) =>
           _WriteSheet(letter: _letter, onComplete: () => _markStepComplete(2)),
     );
+  }
+
+  Widget _buildIllustration() {
+    final img = _getImage();
+    if (img != null) {
+      return Image.asset(img, width: 110.w, height: 110.w, fit: BoxFit.contain);
+    }
+    return Text(_getEmoji(), style: TextStyle(fontSize: 90.sp));
+  }
+
+  String _getKhmerWord() {
+    switch (_letter.character) {
+      case 'ក': return 'កុក';
+      case 'ខ': return 'ខ្លា';
+      case 'គ': return 'គោ';
+      case 'ឃ': return 'ឃ្មុំ';
+      case 'ង': return 'ង៉ាន';
+      case 'ច': return 'ចាន';
+      case 'ឆ': return 'ឆ្មា';
+      case 'ជ': return 'ជ្រូក';
+      case 'ឈ': return 'ឈូស';
+      case 'ញ': return 'ញៀម';
+      default: return _letter.character;
+    }
+  }
+
+  String? _getImage() {
+    switch (_letter.meaning) {
+      case 'con cò': return 'image/Con cò.png';
+      case 'con hổ': return 'image/con hổ.png';
+      default: return null;
+    }
   }
 
   String _getEmoji() {
@@ -1063,9 +1069,9 @@ class _ListenSheetState extends State<_ListenSheet>
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1073,36 +1079,36 @@ class _ListenSheetState extends State<_ListenSheet>
           // ── Gradient Header ──
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
+            padding: EdgeInsets.fromLTRB(20.w, 14.h, 20.w, 20.h),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [AppColors.tertiary, AppColors.tertiaryDark],
               ),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
             ),
             child: Column(
               children: [
                 Container(
-                  width: 36,
-                  height: 4,
+                  width: 36.w,
+                  height: 4.h,
                   decoration: BoxDecoration(
                     color: Colors.white38,
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(2.r),
                   ),
                 ),
-                const SizedBox(height: 12),
-                const Icon(
+                SizedBox(height: 12.h),
+                Icon(
                   Icons.headphones_rounded,
                   color: Colors.white,
-                  size: 28,
+                  size: 28.w,
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6.h),
                 Text(
                   'Nghe phát âm',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 20,
+                    fontSize: 20.sp,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                   ),
@@ -1110,7 +1116,7 @@ class _ListenSheetState extends State<_ListenSheet>
                 Text(
                   'Lắng nghe và ghi nhớ cách đọc',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
+                    fontSize: 12.sp,
                     color: Colors.white70,
                   ),
                 ),
@@ -1119,39 +1125,39 @@ class _ListenSheetState extends State<_ListenSheet>
           ),
 
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 24.h),
             child: Column(
               children: [
                 // ── Character ──
                 Text(
                   widget.letter.character,
                   style: GoogleFonts.battambang(
-                    fontSize: 80,
+                    fontSize: 80.sp,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF1E88E5),
                     height: 1.1,
                   ),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6.h),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 5,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 5.h,
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.violetSurface,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(20.r),
                   ),
                   child: Text(
                     'Phát âm: "${widget.letter.romanized}"',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w700,
                       color: AppColors.violet,
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24.h),
 
                 // ── Wave Bars + Play Button ──
                 AnimatedBuilder(
@@ -1161,29 +1167,29 @@ class _ListenSheetState extends State<_ListenSheet>
                     children: [
                       ...List.generate(8, (i) {
                         final h = _isPlaying
-                            ? 12.0 +
-                                  20 *
+                            ? 12.0.h +
+                                  20.h *
                                       ((i % 4 + 1) / 4) *
                                       (0.4 + 0.6 * _waveCtrl.value)
-                            : 8.0 + (i % 3) * 4.0;
+                            : 8.0.h + (i % 3) * 4.0.h;
                         return Container(
-                          width: 4,
+                          width: 4.w,
                           height: h,
-                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          margin: EdgeInsets.symmetric(horizontal: 2.w),
                           decoration: BoxDecoration(
                             color: AppColors.tertiary.withValues(
                               alpha: _isPlaying ? 0.8 : 0.25,
                             ),
-                            borderRadius: BorderRadius.circular(2),
+                            borderRadius: BorderRadius.circular(2.r),
                           ),
                         );
                       }),
-                      const SizedBox(width: 14),
+                      SizedBox(width: 14.w),
                       GestureDetector(
                         onTap: _ttsReady ? _play : null,
                         child: Container(
-                          width: 68,
-                          height: 68,
+                          width: 68.w,
+                          height: 68.w,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: const LinearGradient(
@@ -1199,8 +1205,8 @@ class _ListenSheetState extends State<_ListenSheet>
                                 color: AppColors.tertiary.withValues(
                                   alpha: 0.4,
                                 ),
-                                blurRadius: 16,
-                                offset: const Offset(0, 6),
+                                blurRadius: 16.r,
+                                offset: Offset(0, 6.h),
                               ),
                             ],
                           ),
@@ -1209,34 +1215,34 @@ class _ListenSheetState extends State<_ListenSheet>
                                 ? Icons.pause_rounded
                                 : Icons.play_arrow_rounded,
                             color: Colors.white,
-                            size: 36,
+                            size: 36.w,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      SizedBox(width: 14.w),
                       ...List.generate(8, (i) {
                         final h = _isPlaying
-                            ? 12.0 +
-                                  20 *
+                            ? 12.0.h +
+                                  20.h *
                                       (((7 - i) % 4 + 1) / 4) *
                                       (0.4 + 0.6 * _waveCtrl.value)
-                            : 8.0 + ((7 - i) % 3) * 4.0;
+                            : 8.0.h + ((7 - i) % 3) * 4.0.h;
                         return Container(
-                          width: 4,
+                          width: 4.w,
                           height: h,
-                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          margin: EdgeInsets.symmetric(horizontal: 2.w),
                           decoration: BoxDecoration(
                             color: AppColors.tertiary.withValues(
                               alpha: _isPlaying ? 0.8 : 0.25,
                             ),
-                            borderRadius: BorderRadius.circular(2),
+                            borderRadius: BorderRadius.circular(2.r),
                           ),
                         );
                       }),
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: 10.h),
                 Text(
                   _isPlaying
                       ? 'Đang phát âm...'
@@ -1244,12 +1250,12 @@ class _ListenSheetState extends State<_ListenSheet>
                       ? 'Đã nghe $_playCount lần • Nhấn nghe lại'
                       : 'Nhấn nút để nghe phát âm',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
+                    fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textHint,
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20.h),
 
                 // ── Speed ──
                 Row(
@@ -1258,16 +1264,16 @@ class _ListenSheetState extends State<_ListenSheet>
                     Text(
                       'Tốc độ: ',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
+                        fontSize: 13.sp,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textHint,
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    SizedBox(width: 6.w),
                     _speedChip('🐢 Chậm', 0),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8.w),
                     _speedChip('🔊 Vừa', 1),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8.w),
                     _speedChip('🐇 Nhanh', 2),
                   ],
                 ),
@@ -1284,10 +1290,10 @@ class _ListenSheetState extends State<_ListenSheet>
     return GestureDetector(
       onTap: () => setState(() => _speed = val),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
         decoration: BoxDecoration(
           color: active ? AppColors.tertiary : AppColors.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20.r),
           border: active
               ? null
               : Border.all(color: AppColors.surfaceContainerHighest),
@@ -1295,7 +1301,7 @@ class _ListenSheetState extends State<_ListenSheet>
         child: Text(
           label,
           style: GoogleFonts.plusJakartaSans(
-            fontSize: 12,
+            fontSize: 12.sp,
             fontWeight: FontWeight.w700,
             color: active ? Colors.white : AppColors.textSecondary,
           ),
@@ -1556,33 +1562,33 @@ class _SpeakSheetState extends State<_SpeakSheet>
       context: context,
       barrierDismissible: false,
       builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24.w),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(_isCorrect ? '🎉' : '😅', style: TextStyle(fontSize: 48)),
-              const SizedBox(height: 12),
+              Text(_isCorrect ? '🎉' : '😅', style: TextStyle(fontSize: 48.sp)),
+              SizedBox(height: 12.h),
               Text(
                 _isCorrect ? 'Tuyệt vời!' : 'Chưa chính xác',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 24,
+                  fontSize: 24.sp,
                   fontWeight: FontWeight.w800,
                   color: _isCorrect ? AppColors.tertiary : AppColors.coral,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8.h),
               Text(
                 _isCorrect ? 'Phát âm rất tốt!' : 'Hãy thử lại nhé!',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16,
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                 ),
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: 6.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
@@ -1591,7 +1597,7 @@ class _SpeakSheetState extends State<_SpeakSheet>
                     i < _score ~/ 2
                         ? Icons.star_rounded
                         : Icons.star_outline_rounded,
-                    size: 28,
+                    size: 28.w,
                     color: i < _score ~/ 2
                         ? AppColors.secondary
                         : AppColors.surfaceContainerHighest,
@@ -1599,27 +1605,27 @@ class _SpeakSheetState extends State<_SpeakSheet>
                 ),
               ),
               if (_recognized.isNotEmpty) ...[
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
                 Text(
                   'Nghe được: "$_recognized"',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
+                    fontSize: 14.sp,
                     color: AppColors.textSecondary,
                   ),
                 ),
               ],
               if (_isCorrect) ...[
-                const SizedBox(height: 6),
+                SizedBox(height: 6.h),
                 Text(
                   '+10 XP ⭐',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 22,
+                    fontSize: 22.sp,
                     fontWeight: FontWeight.w800,
                     color: AppColors.secondary,
                   ),
                 ),
               ],
-              const SizedBox(height: 20),
+              SizedBox(height: 20.h),
               if (_isCorrect) ...[
                 SizedBox(
                   width: double.infinity,
@@ -1630,22 +1636,22 @@ class _SpeakSheetState extends State<_SpeakSheet>
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.tertiary,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(14.r),
                       ),
                     ),
                     child: Text(
                       'Hoàn thành ✅',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 16,
+                        fontSize: 16.sp,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
               ],
               SizedBox(
                 width: double.infinity,
@@ -1660,16 +1666,16 @@ class _SpeakSheetState extends State<_SpeakSheet>
                     });
                   },
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(14.r),
                     ),
                     side: BorderSide(color: AppColors.violet),
                   ),
                   child: Text(
                     'Thử lại',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
+                      fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
                       color: AppColors.violet,
                     ),
@@ -1717,21 +1723,21 @@ class _SpeakSheetState extends State<_SpeakSheet>
       builder: (_, ctrl) => Container(
         decoration: BoxDecoration(
           color: AppColors.background,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
         ),
         child: ListView(
           controller: ctrl,
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 24.h),
           children: [
             // Handle
             Center(
               child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 14),
+                width: 40.w,
+                height: 4.h,
+                margin: EdgeInsets.only(bottom: 14.h),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
             ),
@@ -1741,21 +1747,21 @@ class _SpeakSheetState extends State<_SpeakSheet>
               child: Text(
                 'Tập nói phát âm',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 22,
+                  fontSize: 22.sp,
                   fontWeight: FontWeight.w800,
                   color: AppColors.onBackground,
                 ),
               ),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14.h),
 
             // ── Khi chưa có kết quả: hiện character + mic ──
             if (!_hasResult) ...[
               // Character in blue circle
               Center(
                 child: Container(
-                  width: 110,
-                  height: 110,
+                  width: 110.w,
+                  height: 110.w,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: const LinearGradient(
@@ -1766,8 +1772,8 @@ class _SpeakSheetState extends State<_SpeakSheet>
                     boxShadow: [
                       BoxShadow(
                         color: const Color(0xFF42A5F5).withValues(alpha: 0.3),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
+                        blurRadius: 16.r,
+                        offset: Offset(0, 6.h),
                       ),
                     ],
                   ),
@@ -1775,7 +1781,7 @@ class _SpeakSheetState extends State<_SpeakSheet>
                     child: Text(
                       widget.letter.character,
                       style: GoogleFonts.battambang(
-                        fontSize: 56,
+                        fontSize: 56.sp,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                         height: 1.1,
@@ -1784,36 +1790,36 @@ class _SpeakSheetState extends State<_SpeakSheet>
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8.h),
               Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 6,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20.w,
+                    vertical: 6.h,
                   ),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(20.r),
                     border: Border.all(color: const Color(0xFFE0D5C5)),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+                        blurRadius: 4.r,
+                        offset: Offset(0, 2.h),
                       ),
                     ],
                   ),
                   child: Text(
                     widget.letter.romanized,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 20,
+                      fontSize: 20.sp,
                       fontWeight: FontWeight.w800,
                       color: AppColors.onBackground,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: 14.h),
 
               // Stars placeholder
               Row(
@@ -1822,17 +1828,17 @@ class _SpeakSheetState extends State<_SpeakSheet>
                   ...List.generate(
                     3,
                     (i) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 3),
+                      padding: EdgeInsets.symmetric(horizontal: 3.w),
                       child: Icon(
                         Icons.star_outline_rounded,
-                        size: 30,
+                        size: 30.w,
                         color: AppColors.surfaceContainerHighest,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: 14.h),
 
               // Listen example pill
               Center(
@@ -1841,13 +1847,13 @@ class _SpeakSheetState extends State<_SpeakSheet>
                       ? _playExample
                       : null,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 8,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 18.w,
+                      vertical: 8.h,
                     ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF0F4FF),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(20.r),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -1857,13 +1863,13 @@ class _SpeakSheetState extends State<_SpeakSheet>
                               ? Icons.volume_up_rounded
                               : Icons.headphones_rounded,
                           color: const Color(0xFF7E57C2),
-                          size: 18,
+                          size: 18.w,
                         ),
-                        const SizedBox(width: 6),
+                        SizedBox(width: 6.w),
                         Text(
                           _isPlayingExample ? 'Đang phát...' : 'Nghe mẫu trước',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
+                            fontSize: 13.sp,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF7E57C2),
                           ),
@@ -1873,7 +1879,7 @@ class _SpeakSheetState extends State<_SpeakSheet>
                   ),
                 ),
               ),
-              const SizedBox(height: 18),
+              SizedBox(height: 18.h),
 
               // Mic button with wave bars
               Center(
@@ -1882,22 +1888,22 @@ class _SpeakSheetState extends State<_SpeakSheet>
                   child: AnimatedBuilder(
                     animation: _pulseCtrl,
                     builder: (context, child) => SizedBox(
-                      width: 200,
-                      height: 100,
+                      width: 200.w,
+                      height: 100.h,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           ...List.generate(4, (i) {
                             final h = _isListening
-                                ? 12.0 +
-                                      (20 + i * 6) *
+                                ? 12.0.h +
+                                      (20.h + i * 6.h) *
                                           (0.4 + 0.6 * _pulseCtrl.value)
-                                : 8.0 + i * 3.0;
+                                : 8.0.h + i * 3.0.h;
                             return Container(
-                              width: 4,
+                              width: 4.w,
                               height: h,
-                              margin: const EdgeInsets.symmetric(horizontal: 2),
+                              margin: EdgeInsets.symmetric(horizontal: 2.w),
                               decoration: BoxDecoration(
                                 color: _isListening
                                     ? Color.lerp(
@@ -1906,18 +1912,18 @@ class _SpeakSheetState extends State<_SpeakSheet>
                                         i / 3.0,
                                       )!
                                     : AppColors.surfaceContainerHighest,
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(4.r),
                               ),
                             );
                           }).reversed.toList(),
-                          const SizedBox(width: 6),
+                          SizedBox(width: 6.w),
                           Container(
                             width: _isListening
-                                ? 80 + 8 * _pulseCtrl.value
-                                : 76,
+                                ? 80.w + 8.w * _pulseCtrl.value
+                                : 76.w,
                             height: _isListening
-                                ? 80 + 8 * _pulseCtrl.value
-                                : 76,
+                                ? 80.w + 8.w * _pulseCtrl.value
+                                : 76.w,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
@@ -1946,8 +1952,8 @@ class _SpeakSheetState extends State<_SpeakSheet>
                                                 ? const Color(0xFFEF5350)
                                                 : const Color(0xFF4CAF50))
                                             .withValues(alpha: 0.4),
-                                    blurRadius: 18,
-                                    offset: const Offset(0, 6),
+                                      blurRadius: 18.r,
+                                    offset: Offset(0, 6.h),
                                   ),
                               ],
                             ),
@@ -1956,20 +1962,20 @@ class _SpeakSheetState extends State<_SpeakSheet>
                                   ? Icons.mic_rounded
                                   : Icons.mic_none_rounded,
                               color: Colors.white,
-                              size: 36,
+                              size: 36.w,
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          SizedBox(width: 6.w),
                           ...List.generate(4, (i) {
                             final h = _isListening
-                                ? 12.0 +
-                                      (20 + i * 6) *
+                                ? 12.0.h +
+                                      (20.h + i * 6.h) *
                                           (0.4 + 0.6 * _pulseCtrl.value)
-                                : 8.0 + i * 3.0;
+                                : 8.0.h + i * 3.0.h;
                             return Container(
-                              width: 4,
+                              width: 4.w,
                               height: h,
-                              margin: const EdgeInsets.symmetric(horizontal: 2),
+                              margin: EdgeInsets.symmetric(horizontal: 2.w),
                               decoration: BoxDecoration(
                                 color: _isListening
                                     ? Color.lerp(
@@ -1978,7 +1984,7 @@ class _SpeakSheetState extends State<_SpeakSheet>
                                         i / 3.0,
                                       )!
                                     : AppColors.surfaceContainerHighest,
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(4.r),
                               ),
                             );
                           }),
@@ -1988,7 +1994,7 @@ class _SpeakSheetState extends State<_SpeakSheet>
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8.h),
               Center(
                 child: Text(
                   !_sttReady
@@ -2011,18 +2017,18 @@ class _SpeakSheetState extends State<_SpeakSheet>
                 ),
               ),
               if (_statusMsg.contains('Không') && !_isListening) ...[
-                const SizedBox(height: 10),
+                SizedBox(height: 10.h),
                 Center(
                   child: GestureDetector(
                     onTap: () => setState(() => _statusMsg = ''),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20.w,
+                        vertical: 10.h,
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.secondary,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(20.r),
                       ),
                       child: Text(
                         'Thử lại',
@@ -2110,54 +2116,54 @@ class _WriteSheetState extends State<_WriteSheet> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24.w),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('🎉', style: TextStyle(fontSize: 48)),
-              const SizedBox(height: 12),
+              Text('🎉', style: TextStyle(fontSize: 48.sp)),
+              SizedBox(height: 12.h),
               Text(
                 'Viết tuyệt vời!',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 24,
+                  fontSize: 24.sp,
                   fontWeight: FontWeight.w800,
                   color: AppColors.tertiary,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8.h),
               Text(
                 'Bé viết chữ "${widget.letter.character}" rất đẹp!',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16,
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                 ),
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: 6.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
                   3,
                   (i) => Icon(
                     Icons.star_rounded,
-                    size: 28,
+                    size: 28.w,
                     color: AppColors.secondary,
                   ),
                 ),
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: 6.h),
               Text(
                 '+10 XP ⭐',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 22,
+                  fontSize: 22.sp,
                   fontWeight: FontWeight.w800,
                   color: AppColors.secondary,
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20.h),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -2167,22 +2173,22 @@ class _WriteSheetState extends State<_WriteSheet> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.tertiary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(14.r),
                     ),
                   ),
                   child: Text(
                     'Hoàn thành ✅',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
+                      fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8.h),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
@@ -2196,16 +2202,16 @@ class _WriteSheetState extends State<_WriteSheet> {
                     });
                   },
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(14.r),
                     ),
                     side: BorderSide(color: AppColors.violet),
                   ),
                   child: Text(
                     'Viết lại',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
+                      fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
                       color: AppColors.violet,
                     ),
@@ -2230,15 +2236,15 @@ class _WriteSheetState extends State<_WriteSheet> {
       child: Column(
         children: [
           Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.only(top: 12),
+            width: 40.w,
+            height: 4.h,
+            margin: EdgeInsets.only(top: 12.h),
             decoration: BoxDecoration(
               color: AppColors.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(2.r),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h),
           // Title (ẩn khi có kết quả)
           if (_passed != true) ...[
             Text(
@@ -2249,22 +2255,22 @@ class _WriteSheetState extends State<_WriteSheet> {
                 color: AppColors.onBackground,
               ),
             ),
-            const SizedBox(height: 2),
+            SizedBox(height: 2.h),
             Text(
               'Quan sát mẫu rồi viết theo',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
+                fontSize: 13.sp,
                 color: AppColors.textSecondary,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
           ],
           // ── Khi chưa viết đúng ──
           if (_passed != true) ...[
             // Model Character Card
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+              margin: EdgeInsets.symmetric(horizontal: 20.w),
+              padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -2274,18 +2280,18 @@ class _WriteSheetState extends State<_WriteSheet> {
                     AppColors.secondaryLight,
                   ],
                 ),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.secondary, width: 2.5),
+                borderRadius: BorderRadius.circular(20.r),
+                border: Border.all(color: AppColors.secondary, width: 2.5.w),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.secondary.withValues(alpha: 0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+                    blurRadius: 12.r,
+                    offset: Offset(0, 4.h),
                   ),
-                  const BoxShadow(
-                    color: Color(0x11000000),
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
+                  BoxShadow(
+                    color: const Color(0x11000000),
+                    blurRadius: 4.r,
+                    offset: Offset(0, 2.h),
                   ),
                 ],
               ),
@@ -2295,25 +2301,25 @@ class _WriteSheetState extends State<_WriteSheet> {
                     left: 0,
                     top: 0,
                     child: Container(
-                      padding: const EdgeInsets.all(4),
+                      padding: EdgeInsets.all(4.w),
                       decoration: BoxDecoration(
                         color: Colors.white54,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(8.r),
                       ),
-                      child: const Text('✏️', style: TextStyle(fontSize: 16)),
+                      child: Text('✏️', style: TextStyle(fontSize: 16.sp)),
                     ),
                   ),
                   Positioned(
                     right: 0,
                     top: 0,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 2.h,
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.onBackground,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(10.r),
                       ),
                       child: Text(
                         'Mẫu',
@@ -2327,11 +2333,11 @@ class _WriteSheetState extends State<_WriteSheet> {
                   ),
                   Center(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      padding: EdgeInsets.symmetric(vertical: 4.h),
                       child: Text(
                         widget.letter.character,
                         style: GoogleFonts.battambang(
-                          fontSize: 90,
+                          fontSize: 90.sp,
                           fontWeight: FontWeight.w700,
                           color: AppColors.onBackground,
                           height: 1.15,
@@ -2342,30 +2348,30 @@ class _WriteSheetState extends State<_WriteSheet> {
                 ],
               ),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6.h),
             // Feedback banner (chỉ hiện khi sai)
             if (_feedback != null && _passed == false)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 8.h,
                   ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFEBEE),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(14.r),
                     border: Border.all(color: const Color(0xFFEF9A9A)),
                   ),
                   child: Row(
                     children: [
-                      const Text('😅', style: TextStyle(fontSize: 18)),
-                      const SizedBox(width: 8),
+                      Text('😅', style: TextStyle(fontSize: 18.sp)),
+                      SizedBox(width: 8.w),
                       Expanded(
                         child: Text(
                           _feedback!,
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
+                            fontSize: 13.sp,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFFC62828),
                           ),
@@ -2378,21 +2384,21 @@ class _WriteSheetState extends State<_WriteSheet> {
             // Canvas
             Expanded(
               child: Container(
-                margin: const EdgeInsets.fromLTRB(20, 6, 20, 0),
+                margin: EdgeInsets.fromLTRB(20.w, 6.h, 20.w, 0),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(16.r),
                   border: Border.all(
                     color: _passed == null
                         ? const Color(0xFFD7CCC8)
                         : _passed!
                         ? const Color(0xFF4CAF50)
                         : const Color(0xFFEF5350),
-                    width: 2,
+                    width: 2.w,
                   ),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(14.r),
                   child: Stack(
                     children: [
                       CustomPaint(size: Size.infinite, painter: _GridPainter()),
@@ -2400,7 +2406,7 @@ class _WriteSheetState extends State<_WriteSheet> {
                         child: Text(
                           widget.letter.character,
                           style: GoogleFonts.battambang(
-                            fontSize: 180,
+                            fontSize: 180.sp,
                             fontWeight: FontWeight.w300,
                             color: const Color(
                               0xFFE0D5C5,
@@ -2430,21 +2436,21 @@ class _WriteSheetState extends State<_WriteSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
             // Toolbar
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+              padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 14.h),
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(20.r),
                   border: Border.all(color: const Color(0xFFE0D5C5)),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
+                      blurRadius: 6.r,
+                      offset: Offset(0, 2.h),
                     ),
                   ],
                 ),
@@ -2506,19 +2512,19 @@ class _WriteSheetState extends State<_WriteSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 44.w,
+            height: 44.w,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(14.r),
             ),
-            child: Icon(icon, color: color, size: 22),
+            child: Icon(icon, color: color, size: 22.w),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4.h),
           Text(
             label,
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 11,
+              fontSize: 11.sp,
               fontWeight: FontWeight.w700,
               color: color,
             ),

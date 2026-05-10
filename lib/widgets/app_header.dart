@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Header thống nhất cho toàn bộ app KhmerKid.
+/// Header thống nhất cho toàn bộ app KhmerKid — RESPONSIVE
 /// Dùng cho mọi screen: học, chơi, cài đặt, ...
 class AppHeader extends StatelessWidget {
   final String title;
@@ -29,43 +30,43 @@ class AppHeader extends StatelessWidget {
           begin: const Alignment(-0.5, -1),
           end: const Alignment(0.5, 1),
           colors: colors),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(16),
-          bottomRight: Radius.circular(16)),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(16.r),
+          bottomRight: Radius.circular(16.r)),
         boxShadow: [BoxShadow(
           color: colors.first.withValues(alpha: 0.18),
-          blurRadius: 12, offset: const Offset(0, 4))],
+          blurRadius: 12.r, offset: Offset(0, 4.h))],
       ),
       child: Stack(children: [
         // Decorative circles
-        Positioned(right: -30, top: -25,
-          child: Container(width: 100, height: 100,
+        Positioned(right: -30.w, top: -25.h,
+          child: Container(width: 100.w, height: 100.w,
             decoration: BoxDecoration(shape: BoxShape.circle,
               color: Colors.white.withValues(alpha: 0.06)))),
-        Positioned(left: -20, bottom: -15,
-          child: Container(width: 60, height: 60,
+        Positioned(left: -20.w, bottom: -15.h,
+          child: Container(width: 60.w, height: 60.w,
             decoration: BoxDecoration(shape: BoxShape.circle,
               color: Colors.white.withValues(alpha: 0.04)))),
         // Content
         SafeArea(
           bottom: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+            padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 14.h),
             child: Row(children: [
-              // Back button
+              // Back button — min 44x44 touch target
               GestureDetector(
                 onTap: onBack,
                 child: Container(
-                  width: 38, height: 38,
+                  width: 44.w, height: 44.w,
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14.r),
                     border: Border.all(
                       color: Colors.white.withValues(alpha: 0.10))),
-                  child: const Icon(Icons.arrow_back_rounded,
-                    color: Colors.white, size: 20)),
+                  child: Icon(Icons.arrow_back_rounded,
+                    color: Colors.white, size: 20.sp)),
               ),
-              const SizedBox(width: 14),
+              SizedBox(width: 14.w),
               // Title + subtitle
               Expanded(child: subtitle != null
                 ? Column(
@@ -74,17 +75,17 @@ class AppHeader extends StatelessWidget {
                     children: [
                       Text(title,
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 19, fontWeight: FontWeight.w800,
+                          fontSize: 19.sp, fontWeight: FontWeight.w800,
                           color: Colors.white)),
-                      const SizedBox(height: 1),
+                      SizedBox(height: 1.h),
                       Text(subtitle!,
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12, fontWeight: FontWeight.w500,
+                          fontSize: 12.sp, fontWeight: FontWeight.w500,
                           color: Colors.white.withValues(alpha: 0.75))),
                     ])
                 : Text(title,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 19, fontWeight: FontWeight.w800,
+                      fontSize: 19.sp, fontWeight: FontWeight.w800,
                       color: Colors.white))),
               // Trailing widget
               ?trailing,

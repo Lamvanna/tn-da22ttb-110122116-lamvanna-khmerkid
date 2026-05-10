@@ -45,8 +45,8 @@ class _SplashScreenState extends State<SplashScreen>
       if (mounted) _fadeCtrl.forward();
     });
 
-    // Navigate after 5 seconds
-    Future.delayed(const Duration(milliseconds: 5000), () {
+    // Navigate after 2.5 seconds
+    Future.delayed(const Duration(milliseconds: 2500), () {
       if (!mounted) return;
       _navigateToLogin();
     });

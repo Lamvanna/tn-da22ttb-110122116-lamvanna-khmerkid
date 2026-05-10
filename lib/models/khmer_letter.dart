@@ -31,7 +31,7 @@ class KhmerLetterData {
   static final List<KhmerLetter> consonants = [
     // ══════ NHÓM 1: Bài 1-5 (đã học) ══════
     KhmerLetter(character: 'ក', romanized: 'ko', pronunciation: 'ka', meaning: 'con cò', starRating: 5, isLearned: true),
-    KhmerLetter(character: 'ខ', romanized: 'kho', pronunciation: 'kha', meaning: 'con khỉ', starRating: 4, isLearned: true),
+    KhmerLetter(character: 'ខ', romanized: 'kho', pronunciation: 'kha', meaning: 'con hổ', starRating: 4, isLearned: true),
     KhmerLetter(character: 'គ', romanized: 'ko', pronunciation: 'kô', meaning: 'con gà', starRating: 3, isLearned: true),
     KhmerLetter(character: 'ឃ', romanized: 'kho', pronunciation: 'khô', meaning: 'con bò', starRating: 5, isLearned: true),
     KhmerLetter(character: 'ង', romanized: 'ngo', pronunciation: 'ngô', meaning: 'con ngỗng', starRating: 4, isLearned: true),

@@ -134,6 +134,10 @@ class AppColors {
   static const Color headerAccent = Color(0xFF42A5F5);
   static const Color headerSky  = Color(0xFF29B6F6);
 
+  // Learn screen semantic colors
+  static const Color learnBackground = Color(0xFFF0F4FF);
+  static const Color letterAccent = Color(0xFF1E88E5);
+
   // Action step colors (Nghe/Nói/Viết)
   static const Color stepListen = Color(0xFF00C853);
   static const Color stepSpeak  = Color(0xFFFF6D00);
@@ -169,6 +173,10 @@ class AppColors {
     colors: [violet, violetLight],
   );
   static const LinearGradient purpleGradient = consonantGradient;
+  static const LinearGradient learnHeaderGradient = LinearGradient(
+    begin: Alignment(-0.5, -1), end: Alignment(0.5, 1),
+    colors: [headerDark, headerAccent, headerSky],
+  );
 
   static const LinearGradient listenGradient = LinearGradient(
     begin: Alignment.topLeft, end: Alignment.bottomRight,

@@ -210,7 +210,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4FF),
+      backgroundColor: AppColors.learnBackground,
       body: Column(
         children: [
           _buildHeader(),
@@ -250,18 +250,14 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment(-0.5, -1),
-          end: Alignment(0.5, 1),
-          colors: [Color(0xFF1565C0), Color(0xFF42A5F5), Color(0xFF29B6F6)],
-        ),
+        gradient: AppColors.learnHeaderGradient,
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(24.r),
           bottomRight: Radius.circular(24.r),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1565C0).withValues(alpha: 0.35),
+            color: AppColors.headerDark.withValues(alpha: 0.35),
             blurRadius: 24.r,
             offset: Offset(0, 8.h),
           ),
@@ -694,18 +690,22 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                   ),
               ],
             ),
-            // Close button
+            // Close button — 44×44 minimum touch target
             Positioned(
-              top: 10.h, right: 10.w,
+              top: 8.h, right: 8.w,
               child: GestureDetector(
                 onTap: () => setState(() => _activeSheet = 0),
+                behavior: HitTestBehavior.opaque,
                 child: Container(
-                  width: 30.w, height: 30.w,
-                  decoration: const BoxDecoration(
+                  width: 44.w, height: 44.w,
+                  decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 8.r, offset: Offset(0, 2.h))],
                   ),
-                  child: Icon(Icons.close_rounded, size: 16.sp, color: AppColors.textSecondary),
+                  child: Icon(Icons.close_rounded, size: 20.sp, color: AppColors.textSecondary),
                 ),
               ),
             ),

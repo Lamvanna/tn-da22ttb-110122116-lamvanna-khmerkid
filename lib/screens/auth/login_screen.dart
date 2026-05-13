@@ -20,6 +20,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _remember = false;
   bool _obscure = true;
   bool _isLoading = false;
+  String? _userError;
+  String? _passError;
 
   @override
   void dispose() {
@@ -127,12 +129,36 @@ class _LoginScreenState extends State<LoginScreen> {
                                 _glassInput(controller: _userCtrl,
                                   hint: 'Tên đăng nhập hoặc SĐT',
                                   icon: Icons.person_outline_rounded),
+                                if (_userError != null)
+                                  Padding(
+                                    padding: EdgeInsets.only(left: 8.w, top: 6.h),
+                                    child: Row(children: [
+                                      Icon(Icons.error_outline_rounded, size: 14.sp,
+                                        color: const Color(0xFFFF8A80)),
+                                      SizedBox(width: 4.w),
+                                      Text(_userError!, style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 12.sp, fontWeight: FontWeight.w500,
+                                        color: const Color(0xFFFF8A80))),
+                                    ]),
+                                  ),
                                 SizedBox(height: 14.h),
 
                                 _glassInput(controller: _passCtrl,
                                   hint: 'Mật khẩu',
                                   icon: Icons.lock_outline_rounded,
                                   isPassword: true),
+                                if (_passError != null)
+                                  Padding(
+                                    padding: EdgeInsets.only(left: 8.w, top: 6.h),
+                                    child: Row(children: [
+                                      Icon(Icons.error_outline_rounded, size: 14.sp,
+                                        color: const Color(0xFFFF8A80)),
+                                      SizedBox(width: 4.w),
+                                      Text(_passError!, style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 12.sp, fontWeight: FontWeight.w500,
+                                        color: const Color(0xFFFF8A80))),
+                                    ]),
+                                  ),
                                 SizedBox(height: 8.h),
 
                                 // Remember + Forgot
@@ -144,29 +170,36 @@ class _LoginScreenState extends State<LoginScreen> {
                                       Flexible(
                                         child: GestureDetector(
                                           onTap: () => setState(() => _remember = !_remember),
-                                          child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                            SizedBox(width: 18.w, height: 18.w, child: Checkbox(
-                                              value: _remember,
-                                              onChanged: (v) => setState(() => _remember = v ?? false),
-                                              activeColor: AppColors.primaryContainer,
-                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.r)),
-                                              side: BorderSide(color: Colors.white.withValues(alpha: 0.8), width: 1.5.w),
-                                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                              visualDensity: VisualDensity.compact)),
-                                            SizedBox(width: 6.w),
-                                            Flexible(child: Text('Ghi nhớ', style: GoogleFonts.plusJakartaSans(
-                                              fontSize: 13.sp, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9)),
-                                              overflow: TextOverflow.ellipsis)),
-                                          ]),
+                                          behavior: HitTestBehavior.opaque,
+                                          child: Padding(
+                                            padding: EdgeInsets.symmetric(vertical: 8.h),
+                                            child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                              SizedBox(width: 22.w, height: 22.w, child: Checkbox(
+                                                value: _remember,
+                                                onChanged: (v) => setState(() => _remember = v ?? false),
+                                                activeColor: AppColors.primaryContainer,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.r)),
+                                                side: BorderSide(color: Colors.white.withValues(alpha: 0.8), width: 1.5.w),
+                                                materialTapTargetSize: MaterialTapTargetSize.padded,
+                                                visualDensity: VisualDensity.compact)),
+                                              SizedBox(width: 6.w),
+                                              Flexible(child: Text('Ghi nhớ', style: GoogleFonts.plusJakartaSans(
+                                                fontSize: 13.sp, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9)),
+                                                overflow: TextOverflow.ellipsis)),
+                                            ]),
+                                          ),
                                         ),
                                       ),
                                       GestureDetector(
                                         onTap: () => Navigator.push(context,
                                           MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
-                                        child: Text('Quên mật khẩu?', style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 13.sp, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9),
-                                          decoration: TextDecoration.underline,
-                                          decorationColor: Colors.white.withValues(alpha: 0.5)))),
+                                        behavior: HitTestBehavior.opaque,
+                                        child: Padding(
+                                          padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
+                                          child: Text('Quên mật khẩu?', style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 13.sp, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9),
+                                            decoration: TextDecoration.underline,
+                                            decorationColor: Colors.white.withValues(alpha: 0.5))))),
                                     ],
                                   ),
                                 ),
@@ -209,11 +242,34 @@ class _LoginScreenState extends State<LoginScreen> {
                                   GestureDetector(
                                     onTap: () => Navigator.push(context,
                                       MaterialPageRoute(builder: (_) => const RegisterScreen())),
-                                    child: Text('Đăng ký ngay', style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 15.sp, fontWeight: FontWeight.w700, color: Colors.white,
-                                      decoration: TextDecoration.underline,
-                                      decorationColor: Colors.white.withValues(alpha: 0.5)))),
+                                    behavior: HitTestBehavior.opaque,
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 8.h),
+                                      child: Text('Đăng ký ngay', style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 15.sp, fontWeight: FontWeight.w700, color: Colors.white,
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: Colors.white.withValues(alpha: 0.5))))),
                                 ]),
+
+                                SizedBox(height: 20.h),
+
+                                // Skip button — Dùng thử
+                                GestureDetector(
+                                  onTap: () => Navigator.pushReplacement(context,
+                                    MaterialPageRoute(builder: (_) => const MainScreen())),
+                                  behavior: HitTestBehavior.opaque,
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
+                                      borderRadius: BorderRadius.circular(50.r)),
+                                    child: Center(child: Text('Dùng thử không đăng nhập',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 14.sp, fontWeight: FontWeight.w500,
+                                        color: Colors.white.withValues(alpha: 0.8)))),
+                                  ),
+                                ),
                               ]),
                             ),
                           ),
@@ -270,7 +326,7 @@ class _LoginScreenState extends State<LoginScreen> {
         style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w500, color: Colors.white),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w400, color: Colors.white.withValues(alpha: 0.6)),
+          hintStyle: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w400, color: Colors.white.withValues(alpha: 0.7)),
           prefixIcon: Icon(icon, color: Colors.white.withValues(alpha: 0.7), size: 22.sp),
           suffixIcon: isPassword
             ? IconButton(
@@ -307,7 +363,26 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleLogin() {
-    // Chưa cần validate — cho đăng nhập trực tiếp
+    // Validate inputs
+    String? userErr;
+    String? passErr;
+
+    if (_userCtrl.text.trim().isEmpty) {
+      userErr = 'Vui lòng nhập tên đăng nhập';
+    }
+    if (_passCtrl.text.isEmpty) {
+      passErr = 'Vui lòng nhập mật khẩu';
+    } else if (_passCtrl.text.length < 4) {
+      passErr = 'Mật khẩu phải có ít nhất 4 ký tự';
+    }
+
+    setState(() {
+      _userError = userErr;
+      _passError = passErr;
+    });
+
+    if (userErr != null || passErr != null) return;
+
     setState(() => _isLoading = true);
     Future.delayed(const Duration(milliseconds: 800), () {
       if (!mounted) return;

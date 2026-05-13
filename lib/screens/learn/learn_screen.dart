@@ -9,6 +9,7 @@ import 'reading_screen.dart';
 import 'vowel_screen.dart';
 import 'vocabulary_screen.dart';
 import '../../services/score_service.dart';
+import '../../widgets/app_page_route.dart';
 
 /// Màn hình Học - Lộ trình học tập Khmer (dạng danh sách) - RESPONSIVE
 class LearnScreen extends StatefulWidget {
@@ -59,23 +60,23 @@ class _LearnScreenState extends State<LearnScreen> {
       _Zone(n: 3, title: 'Đánh vần', sub: 'Ghép âm thành tiếng và từ',
         icon: Icons.spellcheck_rounded, img: 'image/Đánh vần.png', prog: 0, total: 30, done: 0,
         color: const Color(0xFFAA00FF), stars: 15, btn: 'Bắt đầu học',
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SpellingMapScreen()))),
+        onTap: () => Navigator.push(context, AppPageRoute(page: const SpellingMapScreen()))),
       _Zone(n: 4, title: 'Tập đọc', sub: 'Làm quen và đọc câu đơn giản',
         icon: Icons.auto_stories_rounded, img: 'image/Tập đọc.png', prog: 0, total: 28, done: 0,
         color: const Color(0xFF00B0FF), stars: 15, btn: 'Bắt đầu học',
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReadingScreen()))),
+        onTap: () => Navigator.push(context, AppPageRoute(page: const ReadingScreen()))),
       _Zone(n: 5, title: 'Luyện viết', sub: 'Tập viết chữ Khmer đúng nét',
         icon: Icons.draw_rounded, img: 'image/Tập viết.png', prog: 0, total: 30, done: 0,
         color: const Color(0xFFFF9100), stars: 15, btn: 'Bắt đầu học',
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WritingMapScreen()))),
+        onTap: () => Navigator.push(context, AppPageRoute(page: const WritingMapScreen()))),
       _Zone(n: 6, title: 'Đọc hiểu', sub: 'Hiểu nội dung và trả lời câu hỏi',
         icon: Icons.menu_book_rounded, img: 'image/Đọc hiểu.png', prog: 0, total: 25, done: 0,
-        color: const Color(0xFFFF4081), stars: 20, btn: 'Bắt đầu học',
-        onTap: () {}),
+        color: const Color(0xFFFF4081), stars: 20, btn: 'Sắp ra mắt', isComingSoon: true,
+        onTap: () => _showComingSoon(context)),
       _Zone(n: 7, title: 'Khám phá văn hóa', sub: 'Tìm hiểu văn hóa Khmer',
         icon: Icons.temple_buddhist_rounded, img: 'image/Khám phá văn hóa.png', prog: 0, total: 20, done: 0,
-        color: const Color(0xFF536DFE), stars: 20, btn: 'Bắt đầu học',
-        onTap: () {}),
+        color: const Color(0xFF536DFE), stars: 20, btn: 'Sắp ra mắt', isComingSoon: true,
+        onTap: () => _showComingSoon(context)),
     ];
   }
 
@@ -84,7 +85,7 @@ class _LearnScreenState extends State<LearnScreen> {
     final cont = zones.firstWhere((z) => z.prog < 1.0, orElse: () => zones.first);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppColors.learnBackground,
       body: Column(children: [
         _buildHeader(),
         Expanded(child: SingleChildScrollView(
@@ -103,11 +104,28 @@ class _LearnScreenState extends State<LearnScreen> {
     );
   }
 
+  void _showComingSoon(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Row(children: [
+        Icon(Icons.construction_rounded, color: Colors.white, size: 20.sp),
+        SizedBox(width: 10.w),
+        Text('Tính năng này sắp ra mắt! 🚀',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 14.sp, fontWeight: FontWeight.w600, color: Colors.white)),
+      ]),
+      backgroundColor: AppColors.headerMid,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      duration: const Duration(seconds: 2),
+    ));
+  }
+
   // ── Header ──
   Widget _buildHeader() {
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFF1976D2), Color(0xFF64B5F6)]),
+        gradient: const LinearGradient(colors: [AppColors.headerMid, AppColors.headerEnd]),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(20.r), bottomRight: Radius.circular(20.r))),
       child: SafeArea(bottom: false, child: Padding(
@@ -128,7 +146,7 @@ class _LearnScreenState extends State<LearnScreen> {
                 SizedBox(width: 5.w),
                 Text('${_score?.totalStars ?? 0}',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16.sp, fontWeight: FontWeight.w800, color: const Color(0xFF2C3345))),
+                    fontSize: 16.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
               ]),
               SizedBox(height: 2.h),
               Text('Điểm của bạn', style: GoogleFonts.plusJakartaSans(
@@ -154,11 +172,11 @@ class _LearnScreenState extends State<LearnScreen> {
                 SizedBox(width: 5.w),
                 Text('${_score?.streak ?? 0}',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16.sp, fontWeight: FontWeight.w800, color: const Color(0xFF2C3345))),
+                    fontSize: 16.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
               ]),
               SizedBox(height: 2.h),
               Text('Chuỗi ngày', style: GoogleFonts.plusJakartaSans(
-                fontSize: 10.sp, fontWeight: FontWeight.w600, color: const Color(0xFF616161))),
+                fontSize: 10.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
             ]),
           ),
         ]),
@@ -194,21 +212,26 @@ class _LearnScreenState extends State<LearnScreen> {
               SizedBox(height: 8.h),
               Row(children: [
                 SizedBox(width: 65.w, height: 65.w,
-                  child: Stack(alignment: Alignment.center, children: [
-                    SizedBox(width: 65.w, height: 65.w, child: CircularProgressIndicator(
-                      value: 1.0, strokeWidth: 5.w,
-                      color: const Color(0xFFFFA726).withValues(alpha: 0.15))),
-                    SizedBox(width: 65.w, height: 65.w, child: CircularProgressIndicator(
-                      value: zone.prog.clamp(0, 1), strokeWidth: 5.w,
-                      color: const Color(0xFFFFA726), strokeCap: StrokeCap.round)),
-                    Column(mainAxisSize: MainAxisSize.min, children: [
-                      Text('${(zone.prog.clamp(0, 1) * 100).toInt()}%',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 17.sp, fontWeight: FontWeight.w900, color: const Color(0xFF2C3345))),
-                      Text('${zone.done}/${zone.total} bài', style: GoogleFonts.plusJakartaSans(
-                        fontSize: 8.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: zone.prog.clamp(0, 1).toDouble()),
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, _) => Stack(alignment: Alignment.center, children: [
+                      SizedBox(width: 65.w, height: 65.w, child: CircularProgressIndicator(
+                        value: 1.0, strokeWidth: 5.w,
+                        color: const Color(0xFFFFA726).withValues(alpha: 0.15))),
+                      SizedBox(width: 65.w, height: 65.w, child: CircularProgressIndicator(
+                        value: value, strokeWidth: 5.w,
+                        color: const Color(0xFFFFA726), strokeCap: StrokeCap.round)),
+                      Column(mainAxisSize: MainAxisSize.min, children: [
+                        Text('${(value * 100).toInt()}%',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 17.sp, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+                        Text('${zone.done}/${zone.total} bài', style: GoogleFonts.plusJakartaSans(
+                          fontSize: 8.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                      ]),
                     ]),
-                  ]),
+                  ),
                 ),
                 const Spacer(),
                 Container(
@@ -363,15 +386,21 @@ class _LearnScreenState extends State<LearnScreen> {
                     GestureDetector(
                       onTap: zone.onTap,
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
+                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
                         decoration: BoxDecoration(
-                          color: zone.color,
+                          color: zone.isComingSoon ? zone.color.withValues(alpha: 0.4) : zone.color,
                           borderRadius: BorderRadius.circular(10.r)),
-                        child: Text(zone.btn, 
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 10.sp, 
-                            fontWeight: FontWeight.w700, 
-                            color: Colors.white)),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          if (zone.isComingSoon)
+                            Padding(
+                              padding: EdgeInsets.only(right: 4.w),
+                              child: Icon(Icons.lock_rounded, size: 12.sp, color: Colors.white)),
+                          Text(zone.btn, 
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.sp, 
+                              fontWeight: FontWeight.w700, 
+                              color: Colors.white)),
+                        ]),
                       ),
                     ),
                   ]),
@@ -427,13 +456,14 @@ class _Zone {
   final double prog;
   final Color color;
   final VoidCallback? onTap;
+  final bool isComingSoon;
 
   _Zone({
     required this.n, required this.title, required this.sub,
     required this.icon, this.img, required this.prog,
     required this.total, required this.done,
     required this.color, required this.btn, required this.stars,
-    this.onTap,
+    this.onTap, this.isComingSoon = false,
   });
 }
 

@@ -19,6 +19,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
   bool _obPass = true, _obConfirm = true;
+  String? _nameError, _phoneError, _passError, _confirmError;
 
   @override
   void dispose() {
@@ -34,9 +35,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         width: 1.sw,
         height: 1.sh,
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
+          gradient: const LinearGradient(
             begin: Alignment(-0.7, -0.7), end: Alignment(0.7, 0.7),
-            colors: [Color(0xFF1565C0), Color(0xFF42A5F5)]),
+            colors: [AppColors.headerDark, AppColors.headerAccent]),
         ),
         child: Stack(children: [
           // ── Blurred background shapes ──
@@ -101,23 +102,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                                   _glassInput(controller: _nameCtrl, hint: 'Họ và tên',
                                     icon: Icons.person_outline_rounded),
+                                  if (_nameError != null) _errorText(_nameError!),
                                   SizedBox(height: 14.h),
 
                                   _glassInput(controller: _phoneCtrl, hint: 'Số điện thoại',
                                     icon: Icons.phone_android_rounded,
                                     keyboard: TextInputType.phone),
+                                  if (_phoneError != null) _errorText(_phoneError!),
                                   SizedBox(height: 14.h),
 
                                   _glassInput(controller: _passCtrl, hint: 'Mật khẩu',
                                     icon: Icons.lock_outline_rounded,
                                     isPassword: true, obscure: _obPass,
                                     onToggle: () => setState(() => _obPass = !_obPass)),
+                                  if (_passError != null) _errorText(_passError!),
                                   SizedBox(height: 14.h),
 
                                   _glassInput(controller: _confirmCtrl, hint: 'Xác nhận mật khẩu',
                                     icon: Icons.lock_outline_rounded,
                                     isPassword: true, obscure: _obConfirm,
                                     onToggle: () => setState(() => _obConfirm = !_obConfirm)),
+                                  if (_confirmError != null) _errorText(_confirmError!),
 
                                   SizedBox(height: 20.h),
 
@@ -134,7 +139,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           color: Colors.white.withValues(alpha: 0.30),
                                           blurRadius: 20.r, offset: Offset(0, 8.h))]),
                                       child: Center(child: Text('Đăng ký', style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 18.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1976D2)))),
+                                        fontSize: 18.sp, fontWeight: FontWeight.w700, color: AppColors.headerMid))),
                                     ),
                                   ),
 
@@ -154,10 +159,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     GestureDetector(
                                       onTap: () => Navigator.pushReplacement(context,
                                         MaterialPageRoute(builder: (_) => const LoginScreen())),
-                                      child: Text('Đăng nhập', style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 14.sp, fontWeight: FontWeight.w600, color: Colors.white,
-                                        decoration: TextDecoration.underline,
-                                        decorationColor: Colors.white.withValues(alpha: 0.5)))),
+                                      behavior: HitTestBehavior.opaque,
+                                      child: Padding(
+                                        padding: EdgeInsets.symmetric(vertical: 8.h),
+                                        child: Text('Đăng nhập', style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 14.sp, fontWeight: FontWeight.w600, color: Colors.white,
+                                          decoration: TextDecoration.underline,
+                                          decorationColor: Colors.white.withValues(alpha: 0.5))))),
                                   ]),
                                 ]),
                               ),
@@ -221,7 +229,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: GoogleFonts.plusJakartaSans(fontSize: 15.sp, fontWeight: FontWeight.w400,
-            color: Colors.white.withValues(alpha: 0.5)),
+            color: Colors.white.withValues(alpha: 0.7)),
           prefixIcon: Icon(icon, color: Colors.white.withValues(alpha: 0.7), size: 22.sp),
           suffixIcon: isPassword
             ? IconButton(onPressed: onToggle,
@@ -256,7 +264,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  Widget _errorText(String msg) {
+    return Padding(
+      padding: EdgeInsets.only(left: 8.w, top: 6.h),
+      child: Row(children: [
+        Icon(Icons.error_outline_rounded, size: 14.sp,
+          color: const Color(0xFFFF8A80)),
+        SizedBox(width: 4.w),
+        Expanded(child: Text(msg, style: GoogleFonts.plusJakartaSans(
+          fontSize: 12.sp, fontWeight: FontWeight.w500,
+          color: const Color(0xFFFF8A80)))),
+      ]),
+    );
+  }
+
   void _handleRegister() {
+    String? nameErr, phoneErr, passErr, confirmErr;
+
+    if (_nameCtrl.text.trim().isEmpty) nameErr = 'Vui lòng nhập họ và tên';
+    if (_phoneCtrl.text.trim().isEmpty) {
+      phoneErr = 'Vui lòng nhập số điện thoại';
+    } else if (_phoneCtrl.text.trim().length < 10) {
+      phoneErr = 'Số điện thoại phải có ít nhất 10 số';
+    }
+    if (_passCtrl.text.isEmpty) {
+      passErr = 'Vui lòng nhập mật khẩu';
+    } else if (_passCtrl.text.length < 4) {
+      passErr = 'Mật khẩu phải có ít nhất 4 ký tự';
+    }
+    if (_confirmCtrl.text != _passCtrl.text) {
+      confirmErr = 'Mật khẩu xác nhận không khớp';
+    }
+
+    setState(() {
+      _nameError = nameErr;
+      _phoneError = phoneErr;
+      _passError = passErr;
+      _confirmError = confirmErr;
+    });
+
+    if (nameErr != null || phoneErr != null || passErr != null || confirmErr != null) return;
     _showSuccess();
   }
 
@@ -280,7 +327,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           SizedBox(width: double.infinity, height: 50.h, child: ElevatedButton(
             onPressed: () { Navigator.pop(ctx); Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen())); },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1976D2),
+              backgroundColor: AppColors.headerMid,
               shape: const StadiumBorder()),
             child: Text('Đăng nhập ngay', style: GoogleFonts.plusJakartaSans(
               fontSize: 16.sp, fontWeight: FontWeight.w700, color: Colors.white)))),

@@ -18,6 +18,13 @@ class MainScreen extends StatefulWidget {
 class MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
+  final List<Widget> _screens = const [
+    HomeScreen(),
+    LearnScreen(),
+    PlayScreen(),
+    ProfileScreen(),
+  ];
+
   /// Cho phép chuyển tab từ bên ngoài (ví dụ: HomeScreen)
   void switchTab(int index) {
     if (index >= 0 && index < 4) {
@@ -33,14 +40,15 @@ class MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: const [
-          HomeScreen(),
-          LearnScreen(),
-          PlayScreen(),
-          ProfileScreen(),
-        ],
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        transitionBuilder: (child, animation) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        child: KeyedSubtree(
+          key: ValueKey<int>(_currentIndex),
+          child: _screens[_currentIndex],
+        ),
       ),
       extendBody: true,
       bottomNavigationBar: Container(
@@ -73,37 +81,37 @@ class MainScreenState extends State<MainScreen> {
               items: [
                 BottomNavigationBarItem(
                   icon: Padding(
-                    padding: EdgeInsets.only(bottom: 2.h),
+                    padding: EdgeInsets.only(bottom: 4.h),
                     child: Icon(Icons.home_outlined, size: 26.sp)),
                   activeIcon: Padding(
-                    padding: EdgeInsets.only(bottom: 2.h),
+                    padding: EdgeInsets.only(bottom: 4.h),
                     child: Icon(Icons.home_rounded, size: 26.sp)),
                   label: 'Trang chủ',
                 ),
                 BottomNavigationBarItem(
                   icon: Padding(
-                    padding: EdgeInsets.only(bottom: 2.h),
+                    padding: EdgeInsets.only(bottom: 4.h),
                     child: Icon(Icons.school_outlined, size: 26.sp)),
                   activeIcon: Padding(
-                    padding: EdgeInsets.only(bottom: 2.h),
+                    padding: EdgeInsets.only(bottom: 4.h),
                     child: Icon(Icons.school_rounded, size: 26.sp)),
                   label: 'Học',
                 ),
                 BottomNavigationBarItem(
                   icon: Padding(
-                    padding: EdgeInsets.only(bottom: 2.h),
+                    padding: EdgeInsets.only(bottom: 4.h),
                     child: Icon(Icons.sports_esports_outlined, size: 26.sp)),
                   activeIcon: Padding(
-                    padding: EdgeInsets.only(bottom: 2.h),
+                    padding: EdgeInsets.only(bottom: 4.h),
                     child: Icon(Icons.sports_esports_rounded, size: 26.sp)),
                   label: 'Chơi',
                 ),
                 BottomNavigationBarItem(
                   icon: Padding(
-                    padding: EdgeInsets.only(bottom: 2.h),
+                    padding: EdgeInsets.only(bottom: 4.h),
                     child: Icon(Icons.person_outline_rounded, size: 26.sp)),
                   activeIcon: Padding(
-                    padding: EdgeInsets.only(bottom: 2.h),
+                    padding: EdgeInsets.only(bottom: 4.h),
                     child: Icon(Icons.person_rounded, size: 26.sp)),
                   label: 'Hồ sơ',
                 ),

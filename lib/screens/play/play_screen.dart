@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
-import '../../constants/app_text_styles.dart';
+import '../../widgets/app_gradient_header.dart';
 import 'matching_game_screen.dart';
 import 'sorting_game_screen.dart';
 import 'letter_find_game_screen.dart';
 import 'quiz_game_screen.dart';
+import '../../widgets/app_page_route.dart';
 
 /// Màn hình Chơi - Play Screen
 /// Hiển thị các trò chơi mini: Ghép hình, Xếp hình, Trò chơi chữ, Đố vui
@@ -19,42 +22,27 @@ class PlayScreen extends StatelessWidget {
         physics: const BouncingScrollPhysics(),
         slivers: [
           // ── Header ──
-          SliverToBoxAdapter(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: AppColors.headerGradient,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
-              ),
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-                  child: Text(
-                    'Chơi',
-                    style: AppTextStyles.screenTitle,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-            ),
+          const SliverToBoxAdapter(
+            child: AppGradientHeader(title: 'Chơi'),
           ),
 
           // ── Game cards ──
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8.h),
                   Text(
                     'Trò chơi',
-                    style: AppTextStyles.sectionTitle,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
 
                   // Game grid - 2 columns
                   Row(
@@ -66,13 +54,13 @@ class PlayScreen extends StatelessWidget {
                           icon: Icons.extension_rounded,
                           color: const Color(0xFFFF6B6B),
                           onTap: () {
-                            Navigator.push(context, MaterialPageRoute(
-                              builder: (_) => const MatchingGameScreen(),
+                            Navigator.push(context, AppPageRoute(
+                              page: const MatchingGameScreen(),
                             ));
                           },
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12.w),
                       Expanded(
                         child: _buildGameCard(
                           title: 'Xếp hình',
@@ -80,8 +68,8 @@ class PlayScreen extends StatelessWidget {
                           icon: Icons.grid_view_rounded,
                           color: const Color(0xFF42A5F5),
                           onTap: () {
-                            Navigator.push(context, MaterialPageRoute(
-                              builder: (_) => const SortingGameScreen(),
+                            Navigator.push(context, AppPageRoute(
+                              page: const SortingGameScreen(),
                             ));
                           },
                         ),
@@ -89,7 +77,7 @@ class PlayScreen extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12.h),
 
                   Row(
                     children: [
@@ -100,13 +88,13 @@ class PlayScreen extends StatelessWidget {
                           icon: Icons.abc_rounded,
                           color: const Color(0xFF66BB6A),
                           onTap: () {
-                            Navigator.push(context, MaterialPageRoute(
-                              builder: (_) => const LetterFindGameScreen(),
+                            Navigator.push(context, AppPageRoute(
+                              page: const LetterFindGameScreen(),
                             ));
                           },
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12.w),
                       Expanded(
                         child: _buildGameCard(
                           title: 'Đố vui',
@@ -114,8 +102,8 @@ class PlayScreen extends StatelessWidget {
                           icon: Icons.quiz_rounded,
                           color: const Color(0xFFFFCA28),
                           onTap: () {
-                            Navigator.push(context, MaterialPageRoute(
-                              builder: (_) => const QuizGameScreen(),
+                            Navigator.push(context, AppPageRoute(
+                              page: const QuizGameScreen(),
                             ));
                           },
                         ),
@@ -123,14 +111,18 @@ class PlayScreen extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24.h),
 
                   // ── Thành tích ──
                   Text(
                     'Thành tích',
-                    style: AppTextStyles.sectionTitle,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12.h),
 
                   _buildAchievementCard(
                     title: 'Người chơi giỏi',
@@ -140,7 +132,7 @@ class PlayScreen extends StatelessWidget {
                     current: 7,
                     total: 10,
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10.h),
                   _buildAchievementCard(
                     title: 'Tốc độ ánh sáng',
                     description: 'Hoàn thành trong 30 giây',
@@ -150,7 +142,7 @@ class PlayScreen extends StatelessWidget {
                     total: 10,
                   ),
 
-                  const SizedBox(height: 20),
+                  SizedBox(height: 90.h),
                 ],
               ),
             ),
@@ -169,39 +161,56 @@ class PlayScreen extends StatelessWidget {
   }) {
     return Material(
       color: AppColors.cardWhite,
-      borderRadius: BorderRadius.circular(24),
-      elevation: 3,
-      shadowColor: AppColors.cardShadow.withValues(alpha: 0.15),
+      borderRadius: BorderRadius.circular(24.r),
+      elevation: 0,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(24.r),
         splashColor: color.withValues(alpha: 0.15),
         highlightColor: color.withValues(alpha: 0.08),
         child: Container(
-          padding: const EdgeInsets.all(16),
-          height: 160,
+          padding: EdgeInsets.all(16.w),
+          height: 160.h,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24.r),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.cardShadow.withValues(alpha: 0.08),
+                blurRadius: 16.r,
+                offset: Offset(0, 4.h),
+              ),
+            ],
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 52,
-                height: 52,
+                width: 52.w,
+                height: 52.w,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(16.r),
                 ),
-                child: Icon(icon, size: 28, color: color),
+                child: Icon(icon, size: 28.sp, color: color),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12.h),
               Text(
                 title,
-                style: AppTextStyles.cardTitle.copyWith(fontSize: 15),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4.h),
               Text(
                 description,
-                style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textSecondary,
+                ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -222,46 +231,54 @@ class PlayScreen extends StatelessWidget {
     required int total,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: AppColors.cardWhite,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
             color: AppColors.cardShadow.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
+            blurRadius: 12.r,
+            offset: Offset(0, 3.h),
           ),
         ],
       ),
       child: Row(
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 44.w,
+            height: 44.w,
             decoration: BoxDecoration(
               color: AppColors.accentYellow.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(12.r),
             ),
-            child: Icon(icon, color: AppColors.accentYellow, size: 24),
+            child: Icon(icon, color: AppColors.accentYellow, size: 24.sp),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTextStyles.bodyLarge),
-                const SizedBox(height: 2),
-                Text(description, style: AppTextStyles.bodySmall),
-                const SizedBox(height: 6),
+                Text(title, style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                )),
+                SizedBox(height: 2.h),
+                Text(description, style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textSecondary,
+                )),
+                SizedBox(height: 6.h),
                 Row(
                   children: [
                     Expanded(
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(4.r),
                         child: LinearProgressIndicator(
                           value: progress,
-                          minHeight: 6,
+                          minHeight: 6.h,
                           backgroundColor: AppColors.progressBackground,
                           valueColor: const AlwaysStoppedAnimation<Color>(
                             AppColors.accentYellow,
@@ -269,11 +286,13 @@ class PlayScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8.w),
                     Text(
                       '$current/$total',
-                      style: AppTextStyles.bodySmall.copyWith(
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],

@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../constants/app_colors.dart';
 import '../daily_quest_screen.dart';
+import '../../../widgets/app_page_route.dart';
 
 /// Banner "Nhiệm vụ hôm nay" — nền trắng, tiến trình
 class CongratsBanner extends StatelessWidget {
@@ -19,7 +20,7 @@ class CongratsBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => Navigator.push(context,
-        MaterialPageRoute(builder: (_) => const DailyQuestScreen())),
+        AppPageRoute(page: const DailyQuestScreen())),
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 16.w),
         padding: EdgeInsets.all(14.w),

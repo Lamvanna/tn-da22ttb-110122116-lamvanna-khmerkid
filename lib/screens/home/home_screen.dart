@@ -9,6 +9,7 @@ import 'widgets/home_header.dart';
 import 'widgets/greeting_card.dart';
 import 'widgets/category_card.dart';
 import 'widgets/congrats_banner.dart';
+import '../../widgets/app_page_route.dart';
 
 /// Màn hình Trang chủ — Màu tươi sáng theo mẫu
 class HomeScreen extends StatelessWidget {
@@ -23,12 +24,10 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           children: [
             const HomeHeader(),
-            Transform.translate(
-              offset: Offset(0, -18.h),
-              child: const GreetingCard()),
-            Transform.translate(
-              offset: Offset(0, -6.h),
-              child: _buildCategoryRow1(context)),
+            SizedBox(height: 12.h),
+            const GreetingCard(),
+            SizedBox(height: 8.h),
+            _buildCategoryRow1(context),
             SizedBox(height: 10.h),
             _buildCategoryRow2(context),
             SizedBox(height: 12.h),
@@ -81,7 +80,7 @@ class HomeScreen extends StatelessWidget {
               color: const Color(0xFF3AA09A), // Teal
               height: 120.h,
               onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const LibraryScreen())),
+                AppPageRoute(page: const LibraryScreen())),
             ),
           ),
           SizedBox(width: 12.w),
@@ -92,7 +91,7 @@ class HomeScreen extends StatelessWidget {
               color: const Color(0xFFF0A030), // Vàng cam ấm
               height: 120.h,
               onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const LeaderboardScreen())),
+                AppPageRoute(page: const LeaderboardScreen())),
             ),
           ),
           SizedBox(width: 12.w),
@@ -103,7 +102,7 @@ class HomeScreen extends StatelessWidget {
               color: const Color(0xFF9070CF), // Tím mềm
               height: 120.h,
               onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const AchievementsScreen())),
+                AppPageRoute(page: const AchievementsScreen())),
             ),
           ),
         ],

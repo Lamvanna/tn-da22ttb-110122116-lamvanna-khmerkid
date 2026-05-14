@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/score_service.dart';
-import '../../widgets/app_header.dart';
+import '../../constants/app_colors.dart';
+import '../main_screen.dart';
 
-/// Màn hình Thành tích — Hiển thị huy chương, badge, cột mốc
+/// Màn hình Thành tích — Grid badge tròn
 class AchievementsScreen extends StatefulWidget {
   const AchievementsScreen({super.key});
   @override
@@ -17,84 +19,143 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   static final List<_Achievement> _achievements = [
     _Achievement(
       title: 'Bước đầu tiên',
-      desc: 'Hoàn thành bài học đầu tiên',
-      emoji: '🎓',
+      icon: Icons.rocket_launch_rounded,
       done: true,
-      progress: 1.0,
-      current: 1, total: 1,
       color: const Color(0xFF4CAF50),
+      bgColor: const Color(0xFFE8F5E9),
     ),
     _Achievement(
-      title: 'Người chơi giỏi',
-      desc: 'Hoàn thành 10 trò chơi',
-      emoji: '🎮',
-      done: false,
-      progress: 0.7,
-      current: 7, total: 10,
-      color: const Color(0xFFE91E63),
-    ),
-    _Achievement(
-      title: '5 ngày liên tiếp',
-      desc: 'Học 5 ngày liên tiếp',
-      emoji: '🔥',
+      title: 'Đã vẽ đẹp',
+      icon: Icons.draw_rounded,
       done: true,
-      progress: 1.0,
-      current: 5, total: 5,
-      color: const Color(0xFFFF9800),
+      color: const Color(0xFFE91E63),
+      bgColor: const Color(0xFFFCE4EC),
     ),
     _Achievement(
-      title: 'Bạn đọc chăm chỉ',
-      desc: 'Hoàn thành 20 bài tập đọc',
-      emoji: '📖',
-      done: false,
-      progress: 0.35,
-      current: 7, total: 20,
-      color: const Color(0xFF5B9CF5),
+      title: 'Đọc chăm chỉ',
+      icon: Icons.menu_book_rounded,
+      done: true,
+      color: const Color(0xFF2196F3),
+      bgColor: const Color(0xFFE3F2FD),
     ),
     _Achievement(
-      title: 'Nhà vô địch',
-      desc: 'Đạt 100% trong bài kiểm tra',
-      emoji: '🏆',
-      done: false,
-      progress: 0.0,
-      current: 0, total: 1,
+      title: 'Ngôi sao\nsáng',
+      icon: Icons.star_rounded,
+      done: true,
       color: const Color(0xFFFFCA28),
+      bgColor: const Color(0xFFFFF8E1),
     ),
     _Achievement(
-      title: 'Tốc độ ánh sáng',
-      desc: 'Trả lời đúng trong 3 giây',
-      emoji: '⚡',
-      done: false,
-      progress: 0.4,
-      current: 4, total: 10,
-      color: const Color(0xFFAB47BC),
+      title: 'Khám phá\nthế giới',
+      icon: Icons.public_rounded,
+      done: true,
+      color: const Color(0xFF00BCD4),
+      bgColor: const Color(0xFFE0F7FA),
     ),
     _Achievement(
-      title: 'Bộ sưu tập đầy đủ',
-      desc: 'Học hết 33 phụ âm',
-      emoji: '🔤',
-      done: false,
-      progress: 0.24,
-      current: 8, total: 33,
-      color: const Color(0xFF7E57C2),
+      title: 'Vui học\nToán',
+      icon: Icons.calculate_rounded,
+      done: true,
+      color: const Color(0xFF9C27B0),
+      bgColor: const Color(0xFFF3E5F5),
     ),
     _Achievement(
-      title: 'Viết đẹp',
-      desc: 'Hoàn thành 15 bài tập viết',
-      emoji: '✍️',
-      done: false,
-      progress: 0.53,
-      current: 8, total: 15,
-      color: const Color(0xFF00897B),
+      title: 'Ngoan\nlễ phép',
+      icon: Icons.emoji_people_rounded,
+      done: true,
+      color: const Color(0xFF4CAF50),
+      bgColor: const Color(0xFFE8F5E9),
     ),
     _Achievement(
-      title: 'Nuôi thú vui',
-      desc: 'Cho thú cưng ăn 30 lần',
-      emoji: '🐱',
+      title: 'Chăm chỉ\nhọc',
+      icon: Icons.abc_rounded,
+      done: true,
+      color: const Color(0xFF42A5F5),
+      bgColor: const Color(0xFFE3F2FD),
+    ),
+    _Achievement(
+      title: 'Nghệ sĩ nhí',
+      icon: Icons.palette_rounded,
+      done: true,
+      color: const Color(0xFFFF5722),
+      bgColor: const Color(0xFFFBE9E7),
+    ),
+    _Achievement(
+      title: 'Siêu nhắn\ntài xíu',
+      icon: Icons.shield_rounded,
+      done: true,
+      color: const Color(0xFFFF9800),
+      bgColor: const Color(0xFFFFF3E0),
+    ),
+    _Achievement(
+      title: 'Học mỗi\nngày',
+      icon: Icons.calendar_today_rounded,
+      done: true,
+      color: const Color(0xFF3F51B5),
+      bgColor: const Color(0xFFE8EAF6),
+    ),
+    _Achievement(
+      title: 'Đồng hành',
+      icon: Icons.volunteer_activism_rounded,
+      done: true,
+      color: const Color(0xFFFF9800),
+      bgColor: const Color(0xFFFFF3E0),
+    ),
+    _Achievement(
+      title: 'Nhà bác học',
+      icon: Icons.biotech_rounded,
       done: false,
-      progress: 0.2,
-      current: 6, total: 30,
-      color: const Color(0xFFEF5350),
+      color: const Color(0xFF607D8B),
+      bgColor: const Color(0xFFECEFF1),
+    ),
+    _Achievement(
+      title: 'Tiến độ\nthần tốc',
+      icon: Icons.speed_rounded,
+      done: false,
+      color: const Color(0xFF795548),
+      bgColor: const Color(0xFFEFEBE9),
+    ),
+    _Achievement(
+      title: 'Diễn đạt tốt',
+      icon: Icons.record_voice_over_rounded,
+      done: false,
+      color: const Color(0xFF009688),
+      bgColor: const Color(0xFFE0F2F1),
+    ),
+    _Achievement(
+      title: 'Đạt mốc lớn',
+      icon: Icons.flag_rounded,
+      done: false,
+      color: const Color(0xFFE53935),
+      bgColor: const Color(0xFFFFEBEE),
+    ),
+    _Achievement(
+      title: 'Nghỉ xả hơi',
+      icon: Icons.self_improvement_rounded,
+      done: false,
+      color: const Color(0xFF8BC34A),
+      bgColor: const Color(0xFFF1F8E9),
+    ),
+    _Achievement(
+      title: 'Siêu nhẫn\nkiên trì',
+      icon: Icons.timer_rounded,
+      done: false,
+      color: const Color(0xFF757575),
+      bgColor: const Color(0xFFF5F5F5),
+    ),
+    _Achievement(
+      title: 'Học hỏi\nmỗi ngày',
+      icon: Icons.auto_stories_rounded,
+      done: false,
+      color: const Color(0xFF5D4037),
+      bgColor: const Color(0xFFEFEBE9),
+    ),
+    _Achievement(
+      title: 'Đồng lòng',
+      icon: Icons.handshake_rounded,
+      done: false,
+      color: const Color(0xFF455A64),
+      bgColor: const Color(0xFFECEFF1),
     ),
   ];
 
@@ -108,21 +169,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _score = await ScoreService.getInstance();
     if (mounted) {
       setState(() {
-        // Update with real data
         _achievements[0] = _achievements[0].copyWith(
           done: _score!.lettersLearned >= 1,
-          progress: _score!.lettersLearned >= 1 ? 1.0 : 0.0,
-          current: _score!.lettersLearned >= 1 ? 1 : 0,
-        );
-        _achievements[2] = _achievements[2].copyWith(
-          done: _score!.streak >= 5,
-          progress: (_score!.streak / 5).clamp(0.0, 1.0),
-          current: _score!.streak.clamp(0, 5),
-        );
-        _achievements[6] = _achievements[6].copyWith(
-          done: _score!.lettersLearned >= 33,
-          progress: (_score!.lettersLearned / 33).clamp(0.0, 1.0),
-          current: _score!.lettersLearned.clamp(0, 33),
         );
         _loading = false;
       });
@@ -132,172 +180,465 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        backgroundColor: Color(0xFFF5F5FA),
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        backgroundColor: const Color(0xFFD6E9F8),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
     final done = _achievements.where((a) => a.done).length;
     final total = _achievements.length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5FA),
+      backgroundColor: const Color(0xFFD6E9F8),
       body: Column(
         children: [
-          _buildHeader(context, done, total),
+          // ═══ GRADIENT HEADER ═══
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: AppColors.appGradient,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(28.r),
+                bottomRight: Radius.circular(28.r),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                  blurRadius: 16.r,
+                  offset: Offset(0, 4.h),
+                ),
+              ],
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            width: 40.w,
+                            height: 40.w,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.15),
+                            ),
+                            child: Icon(
+                              Icons.arrow_back_rounded,
+                              color: Colors.white,
+                              size: 20.sp,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 14.w),
+                        Expanded(
+                          child: Text(
+                            ' Thành tích',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Hình Voi tràn ra ngoài
+                Positioned(
+                  right: 20.w,
+                  bottom: -6.h,
+                  child: Image.asset(
+                    'image/Voi thành tích.png',
+                    width: 105.w,
+                    height: 105.w,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ═══ TROPHY CARD ═══
+          _buildTrophyHeader(done, total),
+
+          // ═══ BADGE GRID ═══
           Expanded(
-            child: ListView.builder(
+            child: GridView.builder(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 24.h),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                crossAxisSpacing: 10.w,
+                mainAxisSpacing: 14.h,
+                childAspectRatio: 0.7,
+              ),
               itemCount: _achievements.length,
               itemBuilder: (context, index) {
-                return _buildCard(_achievements[index]);
+                return _buildBadge(_achievements[index]);
               },
             ),
           ),
         ],
       ),
+      // ═══ BOTTOM NAV BAR ═══
+      extendBody: false,
+      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
-  Widget _buildHeader(BuildContext context, int done, int total) {
-    return AppHeader(
-      title: '🏆 Thành tích',
-      subtitle: '$done/$total hoàn thành',
-      onBack: () => Navigator.pop(context),
-      gradientColors: const [Color(0xFFF5A623), Color(0xFFFF8F00)],
-      trailing: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(12)),
-        child: Text('$done/$total', style: GoogleFonts.plusJakartaSans(
-          fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white))),
-    );
-  }
-
-  Widget _buildCard(_Achievement a) {
+  // ══════════════════════════════════════════════════════════════
+  // TROPHY HEADER
+  // ══════════════════════════════════════════════════════════════
+  Widget _buildTrophyHeader(int done, int total) {
+    final remaining = total - done;
+    final progress = done / total;
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 4.h),
+      padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: a.done
-            ? Border.all(color: a.color.withValues(alpha: 0.5), width: 1.5)
-            : null,
+        borderRadius: BorderRadius.circular(22.r),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2)),
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 20.r,
+            offset: Offset(0, 4.h),
+          ),
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.05),
+            blurRadius: 30.r,
+            offset: Offset(0, 8.h),
+          ),
         ],
       ),
       child: Row(
         children: [
-          // Emoji badge
+          // Medal
           Container(
-            width: 50, height: 50,
+            width: 42.w,
+            height: 42.w,
             decoration: BoxDecoration(
-              color: a.done
-                  ? a.color.withValues(alpha: 0.15)
-                  : const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(14),
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFFFE082), Color(0xFFFFA726)],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFFA726).withValues(alpha: 0.25),
+                  blurRadius: 8.r,
+                  offset: Offset(0, 3.h),
+                ),
+              ],
             ),
-            child: Center(
-              child: a.done
-                  ? Text(a.emoji, style: const TextStyle(fontSize: 28))
-                  : ColorFiltered(
-                      colorFilter: const ColorFilter.mode(
-                          Color(0xFFBDBDBD), BlendMode.srcATop),
-                      child: Text(a.emoji,
-                          style: const TextStyle(fontSize: 28)),
-                    ),
+            padding: EdgeInsets.all(3.w),
+            child: Container(
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+              child: Image.asset(
+                'image/Thành tích.png',
+                fit: BoxFit.contain,
+              ),
             ),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 12.w),
+          // Progress info
           Expanded(
+            flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(a.title,
-                          style: GoogleFonts.plusJakartaSans(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: a.done
-                                  ? const Color(0xFF37474F)
-                                  : const Color(0xFF9E9E9E))),
-                    ),
-                    if (a.done)
-                      const Icon(Icons.check_circle_rounded,
-                          color: Color(0xFF4CAF50), size: 20),
-                  ],
+                Text('Tiến độ của bạn',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF94A3B8),
+                  ),
                 ),
-                const SizedBox(height: 2),
-                Text(a.desc,
-                    style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF9E9E9E))),
-                const SizedBox(height: 6),
+                SizedBox(height: 2.h),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: a.progress,
-                          minHeight: 6,
-                          backgroundColor: const Color(0xFFEEEEEE),
-                          valueColor: AlwaysStoppedAnimation(
-                              a.done ? a.color : a.color.withValues(alpha: 0.5)),
+                    Text('$done',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 24.sp,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primary,
+                        height: 1,
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 2.h),
+                      child: Text('/$total',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFCBD5E1),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text('${a.current}/${a.total}',
-                        style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF757575))),
+                  ],
+                ),
+                SizedBox(height: 4.h),
+                // Progress bar
+                Stack(
+                  children: [
+                    Container(
+                      height: 6.h,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEDF1F7),
+                        borderRadius: BorderRadius.circular(3.r),
+                      ),
+                    ),
+                    FractionallySizedBox(
+                      widthFactor: progress,
+                      child: Container(
+                        height: 6.h,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppColors.primary, AppColors.secondary],
+                          ),
+                          borderRadius: BorderRadius.circular(3.r),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ],
             ),
           ),
+          SizedBox(width: 12.w),
+          // Motivation text
+          Expanded(
+            flex: 2,
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 10.w),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0F5FF),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF64748B),
+                    height: 1.3,
+                  ),
+                  children: [
+                    const TextSpan(text: 'Còn '),
+                    TextSpan(
+                      text: '$remaining',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const TextSpan(text: ' thành tích nữa để hoàn thành!'),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // BADGE ITEM
+  // ══════════════════════════════════════════════════════════════
+  Widget _buildBadge(_Achievement a) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Circular badge
+        Container(
+          width: 72.w,
+          height: 72.w,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: a.done
+                ? const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFFFFD54F), Color(0xFFFFA000)],
+                  )
+                : const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFFC0C0C0), Color(0xFF9E9E9E)],
+                  ),
+            boxShadow: [
+              BoxShadow(
+                color: a.done
+                    ? const Color(0xFFFFA000).withValues(alpha: 0.35)
+                    : Colors.black.withValues(alpha: 0.1),
+                blurRadius: 8.r,
+                offset: Offset(0, 3.h),
+              ),
+            ],
+          ),
+          padding: EdgeInsets.all(4.w),
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: a.done ? a.bgColor : const Color(0xFFE0E0E0),
+              border: Border.all(
+                color: a.done
+                    ? Colors.white.withValues(alpha: 0.6)
+                    : Colors.white.withValues(alpha: 0.3),
+                width: 2.w,
+              ),
+            ),
+            child: a.done
+                ? Icon(a.icon, size: 30.sp, color: a.color)
+                : Icon(
+                    Icons.lock_rounded,
+                    size: 22.sp,
+                    color: const Color(0xFFB0B0B0),
+                  ),
+          ),
+        ),
+        SizedBox(height: 6.h),
+        // Label
+        Text(
+          a.title,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 10.sp,
+            fontWeight: FontWeight.w600,
+            color: a.done ? const Color(0xFF37474F) : const Color(0xFF9E9E9E),
+            height: 1.2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // BOTTOM NAV
+  // ══════════════════════════════════════════════════════════════
+  Widget _buildBottomNav() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 16.r,
+            offset: Offset(0, -2.h),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: BottomNavigationBar(
+          currentIndex: 0,
+          onTap: (index) {
+            Navigator.pop(context);
+            final mainState = MainScreenState.of(context);
+            if (mainState != null) mainState.switchTab(index);
+          },
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          selectedItemColor: AppColors.primary,
+          unselectedItemColor: AppColors.navInactive,
+          selectedFontSize: 12.sp,
+          unselectedFontSize: 12.sp,
+          selectedLabelStyle: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w700,
+          ),
+          unselectedLabelStyle: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w500,
+          ),
+          elevation: 0,
+          items: [
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.h),
+                child: Icon(Icons.home_outlined, size: 26.sp),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.h),
+                child: Icon(Icons.home_rounded, size: 26.sp),
+              ),
+              label: 'Trang chủ',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.h),
+                child: Icon(Icons.school_outlined, size: 26.sp),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.h),
+                child: Icon(Icons.school_rounded, size: 26.sp),
+              ),
+              label: 'Học',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.h),
+                child: Icon(Icons.sports_esports_outlined, size: 26.sp),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.h),
+                child: Icon(Icons.sports_esports_rounded, size: 26.sp),
+              ),
+              label: 'Chơi',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.h),
+                child: Icon(Icons.person_outline_rounded, size: 26.sp),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.h),
+                child: Icon(Icons.person_rounded, size: 26.sp),
+              ),
+              label: 'Hồ sơ',
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _Achievement {
-  final String title, desc, emoji;
+  final String title;
+  final IconData icon;
   final bool done;
-  final double progress;
-  final int current, total;
   final Color color;
+  final Color bgColor;
 
   const _Achievement({
     required this.title,
-    required this.desc,
-    required this.emoji,
+    required this.icon,
     required this.done,
-    required this.progress,
-    required this.current,
-    required this.total,
     required this.color,
+    required this.bgColor,
   });
 
-  _Achievement copyWith({bool? done, double? progress, int? current}) {
+  _Achievement copyWith({bool? done}) {
     return _Achievement(
-      title: title, desc: desc, emoji: emoji, color: color, total: total,
+      title: title,
+      icon: icon,
+      color: color,
+      bgColor: bgColor,
       done: done ?? this.done,
-      progress: progress ?? this.progress,
-      current: current ?? this.current,
     );
   }
 }

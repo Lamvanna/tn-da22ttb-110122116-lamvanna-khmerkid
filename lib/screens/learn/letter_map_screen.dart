@@ -192,7 +192,7 @@ class _LetterMapViewState extends State<LetterMapView>
           // Mascot elephant
           Positioned(
             right: 10.w,
-            bottom: -15.h,
+            bottom: -10.h,
             child: Image.asset(
               'image/Voi nguyên âm.png',
               width: 115.w,

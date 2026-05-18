@@ -1,7 +1,68 @@
 {
-  // Tự động Hot Reload khi lưu file
-  "dart.flutterHotReloadOnSave": "always",
-  
-  // Tự động lưu file khi chuyển tab hoặc click ra ngoài
-  "files.autoSave": "onFocusChange"
+  // ─── Loại trừ khỏi Explorer (ẩn cho gọn) ──────────────────────
+  "files.exclude": {
+    "**/.dart_tool": true,
+    "**/build": true,
+    "**/.flutter-plugins": true,
+    "**/.flutter-plugins-dependencies": true,
+    "**/.packages": true,
+    "**/.pub-cache": true,
+    "**/.pub": true,
+    "**/.idea": true,
+    "**/ios/Pods": true,
+    "**/android/.gradle": true,
+    "**/android/app/build": true,
+    "**/android/build": true,
+    "**/.fvm": true
+  },
+
+  // ─── Loại trừ khỏi tìm kiếm (Ctrl+Shift+F nhanh hơn) ──────────
+  "search.exclude": {
+    "**/.dart_tool": true,
+    "**/build": true,
+    "**/ios/Pods": true,
+    "**/android/.gradle": true,
+    "**/android/app/build": true,
+    "**/.fvm": true,
+    "**/image": true,
+    "**/*.lock": true,
+    "**/*.dill": true
+  },
+
+  // ─── KHÔNG watch các folder này (giảm CPU/RAM nhiều nhất) ──────
+  "files.watcherExclude": {
+    "**/.dart_tool/**": true,
+    "**/build/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/ios/Pods/**": true,
+    "**/android/.gradle/**": true,
+    "**/android/app/build/**": true,
+    "**/.fvm/**": true,
+    "**/.dart_tool/flutter_build/**": true,
+    "**/.dart_tool/hooks_runner/**": true
+  },
+
+  // ─── Dart / Flutter optimization ─────────────────────────────
+  "dart.analysisExcludedFolders": [
+    "build",
+    ".dart_tool",
+    ".fvm",
+    "ios/Pods",
+    "android/.gradle"
+  ],
+  "dart.previewFlutterUiGuides": false,
+  "dart.previewFlutterUiGuidesCustomTracking": false,
+  "dart.runPubGetOnPubspecChanges": "prompt",
+
+  // ─── Editor (giảm tải render) ─────────────────────────────────
+  "editor.minimap.enabled": false,
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": false,
+  "editor.semanticHighlighting.enabled": true,
+  "editor.suggestOnTriggerCharacters": true,
+
+  // ─── Tắt telemetry / extension auto-update khi đang code ──────
+  "telemetry.telemetryLevel": "off",
+  "extensions.autoUpdate": false
 }

@@ -20,82 +20,33 @@ class KhmerSpelling {
   });
 }
 
-/// 20 bài đánh vần cơ bản
+/// 100 bài đánh vần — 10 phụ âm × 10 nguyên âm
+/// 10 phụ âm phổ biến: ក ខ គ ច ដ ត ន ប ម រ
+/// 10 nguyên âm: ា, ិ, ី, ុ, ូ, ួ, ើ, ឿ, ៀ, េ
 class KhmerSpellingData {
   KhmerSpellingData._();
 
   static final List<KhmerSpelling> lessons = [
-    // ══ Nhóm 1: Nguyên âm អា (aa) ══
-    KhmerSpelling(
-      consonant: 'ក', vowelSign: 'ា', combined: 'កា',
-      romanized: 'kaa', meaning: 'quạ',
-      starRating: 3, isLearned: true),
-    KhmerSpelling(
-      consonant: 'ខ', vowelSign: 'ា', combined: 'ខា',
-      romanized: 'khaa', meaning: 'gió',
-      starRating: 3, isLearned: true),
-    KhmerSpelling(
-      consonant: 'គ', vowelSign: 'ា', combined: 'គា',
-      romanized: 'koo', meaning: 'bò',
-      starRating: 2, isLearned: true),
-    KhmerSpelling(
-      consonant: 'ច', vowelSign: 'ា', combined: 'ចា',
-      romanized: 'chaa', meaning: 'già'),
-    KhmerSpelling(
-      consonant: 'ដ', vowelSign: 'ា', combined: 'ដា',
-      romanized: 'daa', meaning: 'đặt'),
-
-    // ══ Nhóm 2: Nguyên âm អិ (i) ══
-    KhmerSpelling(
-      consonant: 'ក', vowelSign: 'ិ', combined: 'កិ',
-      romanized: 'ke', meaning: 'công việc'),
-    KhmerSpelling(
-      consonant: 'ម', vowelSign: 'ិ', combined: 'មិ',
-      romanized: 'mi', meaning: 'không'),
-    KhmerSpelling(
-      consonant: 'ន', vowelSign: 'ិ', combined: 'និ',
-      romanized: 'ni', meaning: 'và'),
-    KhmerSpelling(
-      consonant: 'ស', vowelSign: 'ិ', combined: 'សិ',
-      romanized: 'se', meaning: 'học'),
-
-    // ══ Nhóm 3: Nguyên âm អី (ii) ══
-    KhmerSpelling(
-      consonant: 'ក', vowelSign: 'ី', combined: 'កី',
-      romanized: 'kei', meaning: 'bẩn'),
-    KhmerSpelling(
-      consonant: 'ម', vowelSign: 'ី', combined: 'មី',
-      romanized: 'mei', meaning: 'mì'),
-    KhmerSpelling(
-      consonant: 'ដ', vowelSign: 'ី', combined: 'ដី',
-      romanized: 'dei', meaning: 'đất'),
-
-    // ══ Nhóm 4: Nguyên âm អុ (u) ══
-    KhmerSpelling(
-      consonant: 'ក', vowelSign: 'ុ', combined: 'កុ',
-      romanized: 'ko', meaning: 'cò'),
-    KhmerSpelling(
-      consonant: 'ម', vowelSign: 'ុ', combined: 'មុ',
-      romanized: 'mo', meaning: 'trước'),
-    KhmerSpelling(
-      consonant: 'រ', vowelSign: 'ុ', combined: 'រុ',
-      romanized: 'ro', meaning: 'mùa'),
-
-    // ══ Nhóm 5: Nguyên âm អូ (uu) ══
-    KhmerSpelling(
-      consonant: 'ក', vowelSign: 'ូ', combined: 'កូ',
-      romanized: 'kou', meaning: 'con'),
-    KhmerSpelling(
-      consonant: 'ម', vowelSign: 'ូ', combined: 'មូ',
-      romanized: 'mou', meaning: 'chuột'),
-    KhmerSpelling(
-      consonant: 'គ', vowelSign: 'ូ', combined: 'គូ',
-      romanized: 'kou', meaning: 'đôi'),
-    KhmerSpelling(
-      consonant: 'ប', vowelSign: 'ូ', combined: 'បូ',
-      romanized: 'bou', meaning: 'cộng'),
-    KhmerSpelling(
-      consonant: 'ល', vowelSign: 'ូ', combined: 'លូ',
-      romanized: 'lou', meaning: 'nuốt'),
+    for (var c in [
+      // 33 Phụ âm tiếng Khmer
+      'ក', 'ខ', 'គ', 'ឃ', 'ង', // Nhóm 1
+      'ច', 'ឆ', 'ជ', 'ឈ', 'ញ', // Nhóm 2
+      'ដ', 'ឋ', 'ឌ', 'ឍ', 'ណ', // Nhóm 3
+      'ត', 'ថ', 'ទ', 'ធ', 'ន', // Nhóm 4
+      'ប', 'ផ', 'ព', 'ភ', 'ម', // Nhóm 5
+      'យ', 'រ', 'ល', 'វ',      // Nhóm 6
+      'ស', 'ហ', 'ឡ', 'អ'       // Nhóm 7
+    ]) ...[
+      KhmerSpelling(consonant: c, vowelSign: 'ា', combined: '$cា', romanized: '...', starRating: 3, isLearned: true),
+      KhmerSpelling(consonant: c, vowelSign: 'ិ', combined: '$cិ', romanized: '...', starRating: 2, isLearned: true),
+      KhmerSpelling(consonant: c, vowelSign: 'ី', combined: '$cី', romanized: '...', starRating: 3, isLearned: true),
+      KhmerSpelling(consonant: c, vowelSign: 'ុ', combined: '$cុ', romanized: '...', starRating: 1, isLearned: true),
+      KhmerSpelling(consonant: c, vowelSign: 'ូ', combined: '$cូ', romanized: '...', starRating: 2, isLearned: true),
+      KhmerSpelling(consonant: c, vowelSign: 'ួ', combined: '$cួ', romanized: '...', starRating: 3, isLearned: true),
+      KhmerSpelling(consonant: c, vowelSign: 'ើ', combined: '$cើ', romanized: '...', starRating: 2, isLearned: true),
+      KhmerSpelling(consonant: c, vowelSign: 'ឿ', combined: '$cឿ', romanized: '...', starRating: 0, isLearned: false),
+      KhmerSpelling(consonant: c, vowelSign: 'ៀ', combined: '$cៀ', romanized: '...', starRating: 0, isLearned: false),
+      KhmerSpelling(consonant: c, vowelSign: 'េ', combined: '$cេ', romanized: '...', starRating: 0, isLearned: false),
+    ]
   ];
 }

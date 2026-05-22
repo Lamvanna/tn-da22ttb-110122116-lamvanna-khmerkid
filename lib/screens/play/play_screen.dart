@@ -480,205 +480,155 @@ class _PlayScreenState extends State<PlayScreen> {
   Widget _buildGameRow(_GameZone game, {bool isLast = false}) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: IntrinsicHeight(
+      child: Container(
+        margin: EdgeInsets.only(bottom: 14.h),
+        padding: EdgeInsets.all(14.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 12.r,
+              offset: Offset(0, 4.h),
+            ),
+          ],
+        ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Dotted Timeline Node
-            SizedBox(
-              width: 36.w,
+            // Game thumbnail
+            Container(
+              width: 85.w,
+              height: 90.h,
+              decoration: BoxDecoration(
+                color: game.color.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(18.r),
+              ),
+              child: game.img != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(18.r),
+                      child: Padding(
+                        padding: EdgeInsets.all(8.w),
+                        child: Image.asset(game.img!, fit: BoxFit.contain),
+                      ),
+                    )
+                  : Icon(game.icon, color: game.color, size: 36.sp),
+            ),
+            SizedBox(width: 12.w),
+            // Detail content
+            Expanded(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 34.w,
-                    height: 34.w,
-                    decoration: BoxDecoration(
-                      color: game.color,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: game.color.withValues(alpha: 0.3),
-                          blurRadius: 6.r,
-                          offset: Offset(0, 2.h),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${game.n}',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          game.title,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF8E1),
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Image.asset('image/sao.png', width: 14.w, height: 14.h),
+                            SizedBox(width: 3.w),
+                            Text(
+                              '+${game.stars}',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFFF0A030),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 3.h),
+                  Text(
+                    game.sub,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textSecondary,
                     ),
                   ),
-                  if (!isLast)
-                    Expanded(
-                      child: CustomPaint(
-                        painter: _DottedLinePainter(color: game.color.withValues(alpha: 0.3)),
+                  SizedBox(height: 8.h),
+                  // Progress indicators
+                  Row(
+                    children: [
+                      Text(
+                        '${(game.prog * 100).toInt()}%',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w700,
+                          color: game.color,
+                        ),
                       ),
-                    ),
-                ],
-              ),
-            ),
-            SizedBox(width: 10.w),
-            // Game Card
-            Expanded(
-              child: Container(
-                margin: EdgeInsets.only(bottom: 14.h),
-                padding: EdgeInsets.all(14.w),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 12.r,
-                      offset: Offset(0, 4.h),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Game thumbnail
-                    Container(
-                      width: 85.w,
-                      height: 90.h,
-                      decoration: BoxDecoration(
-                        color: game.color.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(18.r),
+                      SizedBox(width: 6.w),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(5.r),
+                          child: LinearProgressIndicator(
+                            value: game.prog,
+                            minHeight: 5.h,
+                            backgroundColor: game.color.withValues(alpha: 0.12),
+                            color: game.color,
+                          ),
+                        ),
                       ),
-                      child: game.img != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(18.r),
-                              child: Padding(
-                                padding: EdgeInsets.all(8.w),
-                                child: Image.asset(game.img!, fit: BoxFit.contain),
-                              ),
-                            )
-                          : Icon(game.icon, color: game.color, size: 36.sp),
-                    ),
-                    SizedBox(width: 12.w),
-                    // Detail content
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
+                      SizedBox(width: 14.w),
+                      GestureDetector(
+                        onTap: () => _showGameIntroDialog(context, game),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                          decoration: BoxDecoration(
+                            color: game.targetScreen == null
+                                ? game.color.withValues(alpha: 0.4)
+                                : game.color,
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Expanded(
-                                child: Text(
-                                  game.title,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 15.sp,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.textPrimary,
+                              if (game.targetScreen == null)
+                                Padding(
+                                  padding: EdgeInsets.only(right: 4.w),
+                                  child: Icon(
+                                    Icons.lock_rounded,
+                                    size: 12.sp,
+                                    color: Colors.white,
                                   ),
                                 ),
-                              ),
-                              Container(
-                                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFF8E1),
-                                  borderRadius: BorderRadius.circular(10.r),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Image.asset('image/sao.png', width: 14.w, height: 14.h),
-                                    SizedBox(width: 3.w),
-                                    Text(
-                                      '+${game.stars}',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFFF0A030),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 3.h),
-                          Text(
-                            game.sub,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          SizedBox(height: 8.h),
-                          // Progress indicators
-                          Row(
-                            children: [
                               Text(
-                                '${(game.prog * 100).toInt()}%',
+                                game.targetScreen == null ? 'Sắp ra mắt' : game.btn,
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11.sp,
                                   fontWeight: FontWeight.w700,
-                                  color: game.color,
-                                ),
-                              ),
-                              SizedBox(width: 6.w),
-                              Expanded(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(5.r),
-                                  child: LinearProgressIndicator(
-                                    value: game.prog,
-                                    minHeight: 5.h,
-                                    backgroundColor: game.color.withValues(alpha: 0.12),
-                                    color: game.color,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 14.w),
-                              GestureDetector(
-                                onTap: () => _showGameIntroDialog(context, game),
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                                  decoration: BoxDecoration(
-                                    color: game.isComingSoon && game.targetScreen == null
-                                        ? game.color.withValues(alpha: 0.4)
-                                        : game.color,
-                                    borderRadius: BorderRadius.circular(10.r),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (game.isComingSoon && game.targetScreen == null)
-                                        Padding(
-                                          padding: EdgeInsets.only(right: 4.w),
-                                          child: Icon(
-                                            Icons.lock_rounded,
-                                            size: 12.sp,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      Text(
-                                        game.isComingSoon && game.targetScreen == null ? 'Sắp ra mắt' : game.btn,
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 11.sp,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                  color: Colors.white,
                                 ),
                               ),
                             ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
@@ -828,12 +778,12 @@ class _PlayScreenState extends State<PlayScreen> {
                               child: Container(
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
-                                    colors: game.isComingSoon && game.targetScreen == null
+                                    colors: game.targetScreen == null
                                         ? [Colors.grey.shade400, Colors.grey.shade500]
                                         : [game.color, game.color.withValues(alpha: 0.85)],
                                   ),
                                   borderRadius: BorderRadius.circular(14.r),
-                                  boxShadow: game.isComingSoon && game.targetScreen == null
+                                  boxShadow: game.targetScreen == null
                                       ? []
                                       : [
                                           BoxShadow(
@@ -854,7 +804,7 @@ class _PlayScreenState extends State<PlayScreen> {
                                   ),
                                   onPressed: () {
                                     Navigator.pop(context);
-                                    if (game.isComingSoon && game.targetScreen == null) {
+                                    if (game.targetScreen == null) {
                                       _showComingSoon(context);
                                     } else if (game.targetScreen != null) {
                                       Navigator.push(
@@ -864,7 +814,7 @@ class _PlayScreenState extends State<PlayScreen> {
                                     }
                                   },
                                   child: Text(
-                                    game.isComingSoon && game.targetScreen == null ? 'Sắp ra mắt' : 'Bắt đầu chơi',
+                                    game.targetScreen == null ? 'Sắp ra mắt' : 'Bắt đầu chơi',
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 14.sp,
                                       fontWeight: FontWeight.w800,
@@ -1001,7 +951,6 @@ class _GameZone {
   final IconData icon;
   final double prog;
   final Color color;
-  final bool isComingSoon;
 
   // New fields for rich educational descriptions
   final String objective;
@@ -1019,7 +968,6 @@ class _GameZone {
     required this.color,
     required this.btn,
     required this.stars,
-    this.isComingSoon = false,
     required this.objective,
     required this.gameplay,
     required this.importance,
@@ -1027,24 +975,4 @@ class _GameZone {
   });
 }
 
-class _DottedLinePainter extends CustomPainter {
-  final Color color;
-  _DottedLinePainter({required this.color});
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 2.5.w
-      ..strokeCap = StrokeCap.round;
-    final cx = size.width / 2;
-    double y = 6.h;
-    while (y < size.height) {
-      canvas.drawCircle(Offset(cx, y), 1.5.r, paint);
-      y += 8.h;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}

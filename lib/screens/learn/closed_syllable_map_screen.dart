@@ -2,31 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../../models/khmer_spelling.dart';
+import '../../models/khmer_closed_syllable.dart';
 import '../../constants/app_colors.dart';
-import 'spelling_screen.dart';
+import 'closed_syllable_screen.dart';
 
-/// Bản đồ ghép vần — Timeline cards nhóm theo nguyên âm
-/// Thiết kế: Timeline dots + Stars bên trái, Cards bên phải
-/// Mỗi card = 1 nguyên âm, hiển thị các chữ ghép trong circles
-class SpellingMapScreen extends StatefulWidget {
-  const SpellingMapScreen({super.key});
+/// Bản đồ vần đóng — Timeline cards nhóm theo phụ âm đầu
+class ClosedSyllableMapScreen extends StatefulWidget {
+  const ClosedSyllableMapScreen({super.key});
   @override
-  State<SpellingMapScreen> createState() => _SpellingMapScreenState();
+  State<ClosedSyllableMapScreen> createState() => _ClosedSyllableMapScreenState();
 }
 
-class _SpellingMapScreenState extends State<SpellingMapScreen>
+class _ClosedSyllableMapScreenState extends State<ClosedSyllableMapScreen>
     with TickerProviderStateMixin {
   late AnimationController _pulseCtrl;
   late AnimationController _staggerCtrl;
 
-  final List<KhmerSpelling> _lessons = KhmerSpellingData.lessons;
+  final List<KhmerClosedSyllable> _lessons = KhmerClosedSyllableData.lessons;
 
-  // Nhóm bài theo phụ âm
   List<_ConsonantGroup> get _groups {
     final map = <String, List<_IndexedLesson>>{};
     for (int i = 0; i < _lessons.length; i++) {
-      final key = _lessons[i].consonant;
+      final key = _lessons[i].initialConsonant;
       map.putIfAbsent(key, () => []);
       map[key]!.add(_IndexedLesson(index: i, lesson: _lessons[i]));
     }
@@ -83,7 +80,6 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
             padding: EdgeInsets.fromLTRB(10.w, 18.h, 16.w, 100.h),
             child: Column(
               children: List.generate(groups.length, (i) {
-                // Staggered fade-in cho mỗi card
                 final delay = (i * 0.15).clamp(0.0, 1.0);
                 final end = (delay + 0.4).clamp(0.0, 1.0);
                 final anim = CurvedAnimation(
@@ -99,7 +95,7 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
                       child: child,
                     ),
                   ),
-                  child: _ConsonantGroupCard(
+                  child: _GroupCard(
                     group: groups[i],
                     isLast: i == groups.length - 1,
                     pulseCtrl: _pulseCtrl,
@@ -114,7 +110,6 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
     );
   }
 
-  // ─── HEADER ───
   Widget _buildHeader() {
     final progress = _lessons.isNotEmpty ? _totalDone / _lessons.length : 0.0;
     final pct = (progress * 100).toInt();
@@ -123,12 +118,12 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment(-0.5, -1), end: Alignment(0.5, 1),
-          colors: [Color(0xFF1565C0), Color(0xFF42A5F5), Color(0xFF29B6F6)]),
+          colors: [Color(0xFF0D47A1), Color(0xFF1E88E5), Color(0xFF42A5F5)]),
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(24),
           bottomRight: Radius.circular(24)),
         boxShadow: [BoxShadow(
-          color: const Color(0xFF1565C0).withValues(alpha: 0.35),
+          color: const Color(0xFF0D47A1).withValues(alpha: 0.35),
           blurRadius: 24, offset: const Offset(0, 8))]),
       child: Stack(children: [
         Positioned(right: -40.w, top: -30.h,
@@ -139,14 +134,11 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
           child: Container(width: 80.w, height: 80.w,
             decoration: BoxDecoration(shape: BoxShape.circle,
               color: Colors.white.withValues(alpha: 0.04)))),
-        // Mascot elephant
         Positioned(
-          right: 10.w,
-          bottom: -10.h,
+          right: 10.w, bottom: -10.h,
           child: Image.asset(
             'assets/images/elephant_mascot.png',
-            width: 95.w,
-            height: 95.w,
+            width: 95.w, height: 95.w,
             fit: BoxFit.contain,
             errorBuilder: (_, __, ___) => const SizedBox.shrink(),
           ),
@@ -166,8 +158,7 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
                       child: GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: Container(
-                          width: 36.w,
-                          height: 36.w,
+                          width: 36.w, height: 36.w,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: Colors.white.withValues(alpha: 0.15),
@@ -177,7 +168,7 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
                     ),
                     SizedBox(width: 12.w),
                     Flexible(
-                      child: Text('Ghép vần',
+                      child: Text('Vần đóng ់',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.plusJakartaSans(
@@ -186,13 +177,12 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
                   ]),
                   Padding(
                     padding: EdgeInsets.only(left: 48.w),
-                    child: Text('$_totalDone/${_lessons.length} đã hoàn thành',
+                    child: Text('Chọn loại ghép vần để học',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13.sp, fontWeight: FontWeight.w600,
                         color: Colors.white.withValues(alpha: 0.85))),
                   ),
                   SizedBox(height: 4.h),
-                  // Progress bar
                   Padding(
                     padding: EdgeInsets.only(left: 48.w, right: 20.w),
                     child: Row(children: [
@@ -234,7 +224,7 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
   void _openLesson(int idx) {
     HapticFeedback.lightImpact();
     Navigator.push(context,
-      MaterialPageRoute(builder: (_) => SpellingScreen(initialIndex: idx)),
+      MaterialPageRoute(builder: (_) => ClosedSyllableScreen(initialIndex: idx)),
     ).then((_) {
       if (mounted) setState(() {});
     });
@@ -247,7 +237,7 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
 
 class _IndexedLesson {
   final int index;
-  final KhmerSpelling lesson;
+  final KhmerClosedSyllable lesson;
   const _IndexedLesson({required this.index, required this.lesson});
 }
 
@@ -280,35 +270,29 @@ class _ConsonantGroup {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  CONSONANT GROUP CARD — Timeline row: circle + stars | card
+//  GROUP CARD
 // ════════════════════════════════════════════════════════════════
 
-class _ConsonantGroupCard extends StatelessWidget {
+class _GroupCard extends StatelessWidget {
   final _ConsonantGroup group;
   final bool isLast;
   final AnimationController pulseCtrl;
   final void Function(int) onOpenLesson;
 
-  const _ConsonantGroupCard({
+  const _GroupCard({
     required this.group,
     required this.isLast,
     required this.pulseCtrl,
     required this.onOpenLesson,
   });
 
-  // Màu tím gradient theme cho ghép vần
-  static const _purple = Color(0xFF7C4DFF);
-  static const _purpleDark = Color(0xFF651FFF);
-  static const _purpleLight = Color(0xFFB388FF);
-  static const _purpleBg = Color(0xFFF3EEFF);
-
   Color get _groupColor {
     const colors = [
-      Color(0xFF7C4DFF), // Tím
-      Color(0xFF2979FF), // Xanh dương
-      Color(0xFF00BFA5), // Xanh lá
-      Color(0xFFFF6D00), // Cam
-      Color(0xFFD500F9), // Hồng tím
+      Color(0xFF1E88E5),
+      Color(0xFF0277BD),
+      Color(0xFF00838F),
+      Color(0xFF1565C0),
+      Color(0xFF0097A7),
     ];
     return colors[(group.number - 1) % colors.length];
   }
@@ -318,25 +302,19 @@ class _ConsonantGroupCard extends StatelessWidget {
     final color = _groupColor;
     final pct = (group.progress * 100).toInt();
     final isCurrent = group.hasStarted && !group.isCompleted;
-    // Xác định trạng thái mở khóa: nhóm đầu tiên luôn mở, 
-    // các nhóm tiếp theo mở nếu nhóm trước đã bắt đầu
     final isLocked = !group.hasStarted && group.number > 1;
 
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Timeline: Circle number + Stars + Dotted line ──
           SizedBox(
             width: 52.w,
             child: Column(children: [
               SizedBox(height: 14.h),
-              // Number circle
               _buildNumberCircle(color, isCurrent, isLocked),
               SizedBox(height: 6.h),
-              // Stars
               _buildStars(color, isLocked),
-              // Dotted line
               if (!isLast)
                 Expanded(child: CustomPaint(
                   painter: _DottedLinePainter(
@@ -346,12 +324,9 @@ class _ConsonantGroupCard extends StatelessWidget {
                 )),
             ]),
           ),
-
-          // ── Card ──
           Expanded(
             child: GestureDetector(
               onTap: isLocked ? null : () {
-                // Mở bài đầu tiên chưa hoàn thành trong nhóm
                 final firstUndone = group.items.firstWhere(
                   (il) => !il.lesson.isLearned,
                   orElse: () => group.items.first,
@@ -362,199 +337,105 @@ class _ConsonantGroupCard extends StatelessWidget {
                 margin: EdgeInsets.only(bottom: 18.h),
                 padding: EdgeInsets.all(14.w),
                 decoration: BoxDecoration(
-                  color: isLocked
-                      ? Colors.white.withValues(alpha: 0.7)
-                      : Colors.white,
+                  color: isLocked ? Colors.white.withValues(alpha: 0.7) : Colors.white,
                   borderRadius: BorderRadius.circular(22.r),
                   border: Border.all(
-                    color: isLocked
-                        ? const Color(0xFFE0E5F0)
-                        : isCurrent
-                            ? color.withValues(alpha: 0.35)
-                            : color.withValues(alpha: 0.15),
+                    color: isLocked ? const Color(0xFFE0E5F0)
+                        : isCurrent ? color.withValues(alpha: 0.35)
+                        : color.withValues(alpha: 0.15),
                     width: isCurrent ? 2.0 : 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: isLocked
-                          ? Colors.black.withValues(alpha: 0.03)
+                      color: isLocked ? Colors.black.withValues(alpha: 0.03)
                           : color.withValues(alpha: 0.10),
-                      blurRadius: 16.r,
-                      offset: Offset(0, 6.h),
-                    ),
-                    // Glow cho card đang học
+                      blurRadius: 16.r, offset: Offset(0, 6.h)),
                     if (isCurrent) BoxShadow(
                       color: color.withValues(alpha: 0.12),
-                      blurRadius: 20.r,
-                      spreadRadius: 1,
-                    ),
+                      blurRadius: 20.r, spreadRadius: 1),
                   ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Row 1: Badge + Title + Completion ──
-                    Row(
-                      children: [
-                        // "Bài N" badge
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 10.w, vertical: 4.h),
-                          decoration: BoxDecoration(
-                            color: isLocked
-                                ? const Color(0xFFE8EDF5)
-                                : color.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                          child: Text(
-                            'Bài ${group.number}',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w800,
-                              color: isLocked
-                                  ? const Color(0xFFB0B8C8)
-                                  : color,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        // Title: "Phụ âm ក"
-                        Expanded(
-                          child: Text(
-                            'Phụ âm ${group.consonant}',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w800,
-                              color: isLocked
-                                  ? const Color(0xFFB0B8C8)
-                                  : AppColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                        // Completion badge
-                        if (group.isCompleted)
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 8.w, vertical: 4.h),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE8F5E9),
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            child: Text(
-                              'Hoàn thành',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF2E7D32),
-                              ),
-                            ),
-                          )
-                        else if (!isLocked)
-                          Text(
-                            '$pct%',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w800,
-                              color: color,
-                            ),
-                          ),
-                      ],
-                    ),
-                    SizedBox(height: 4.h),
-
-                    // ── Subtitle ──
-                    Text(
-                      'Ghép phụ âm ${group.consonant} với các nguyên âm',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w500,
-                        color: isLocked
-                            ? const Color(0xFFC0C8D8)
-                            : AppColors.textSecondary,
+                    Row(children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                        decoration: BoxDecoration(
+                          color: isLocked ? const Color(0xFFE8EDF5) : color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10.r)),
+                        child: Text('Bài ${group.number}',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11.sp, fontWeight: FontWeight.w800,
+                            color: isLocked ? const Color(0xFFB0B8C8) : color)),
                       ),
-                    ),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: Text('Phụ âm ${group.consonant} + ់',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 16.sp, fontWeight: FontWeight.w800,
+                            color: isLocked ? const Color(0xFFB0B8C8) : AppColors.textPrimary)),
+                      ),
+                      if (group.isCompleted)
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F5E9),
+                            borderRadius: BorderRadius.circular(8.r)),
+                          child: Text('Hoàn thành',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10.sp, fontWeight: FontWeight.w700,
+                              color: const Color(0xFF2E7D32))),
+                        )
+                      else if (!isLocked)
+                        Text('$pct%',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 15.sp, fontWeight: FontWeight.w800, color: color)),
+                    ]),
+                    SizedBox(height: 4.h),
+                    Text('Ghép ${group.consonant} với phụ âm cuối + dấu ់',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.sp, fontWeight: FontWeight.w500,
+                        color: isLocked ? const Color(0xFFC0C8D8) : AppColors.textSecondary)),
                     SizedBox(height: 12.h),
-
-                    // ── Row 2: Character circles ──
                     _buildCharacterCircles(color, isLocked),
                     SizedBox(height: 12.h),
-
-                    // ── Row 3: Progress bar + count + arrow ──
-                    Row(
-                      children: [
-                        // Progress bar
-                        Expanded(
-                          child: Container(
-                            height: 7.h,
-                            decoration: BoxDecoration(
-                              color: isLocked
-                                  ? const Color(0xFFE8EDF5)
-                                  : color.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(4.r),
-                            ),
-                            child: Stack(children: [
-                              FractionallySizedBox(
-                                alignment: Alignment.centerLeft,
-                                widthFactor: group.progress.clamp(0.0, 1.0),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        color.withValues(alpha: 0.7),
-                                        color,
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(4.r),
-                                  ),
-                                ),
-                              ),
-                            ]),
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        // Count
-                        Text(
-                          '${group.doneCount}/${group.totalCount} chữ',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w700,
-                            color: isLocked
-                                ? const Color(0xFFC0C8D8)
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                        SizedBox(width: 8.w),
-                        // Arrow button
-                        Container(
-                          width: 34.w,
-                          height: 34.w,
+                    Row(children: [
+                      Expanded(
+                        child: Container(
+                          height: 7.h,
                           decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: isLocked
-                                ? const Color(0xFFE8EDF5)
-                                : color,
-                            boxShadow: isLocked
-                                ? []
-                                : [
-                                    BoxShadow(
-                                      color: color.withValues(alpha: 0.35),
-                                      blurRadius: 8.r,
-                                      offset: Offset(0, 3.h),
-                                    ),
-                                  ],
-                          ),
-                          child: Icon(
-                            isLocked
-                                ? Icons.lock_rounded
-                                : Icons.chevron_right_rounded,
-                            color: isLocked
-                                ? const Color(0xFFB0B8C8)
-                                : Colors.white,
-                            size: isLocked ? 16.sp : 22.sp,
-                          ),
+                            color: isLocked ? const Color(0xFFE8EDF5) : color.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(4.r)),
+                          child: Stack(children: [
+                            FractionallySizedBox(
+                              alignment: Alignment.centerLeft,
+                              widthFactor: group.progress.clamp(0.0, 1.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(colors: [color.withValues(alpha: 0.7), color]),
+                                  borderRadius: BorderRadius.circular(4.r))))]),
                         ),
-                      ],
-                    ),
+                      ),
+                      SizedBox(width: 10.w),
+                      Text('${group.doneCount}/${group.totalCount} chữ',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.sp, fontWeight: FontWeight.w700,
+                          color: isLocked ? const Color(0xFFC0C8D8) : AppColors.textSecondary)),
+                      SizedBox(width: 8.w),
+                      Container(
+                        width: 34.w, height: 34.w,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isLocked ? const Color(0xFFE8EDF5) : color,
+                          boxShadow: isLocked ? [] : [
+                            BoxShadow(color: color.withValues(alpha: 0.35), blurRadius: 8.r, offset: Offset(0, 3.h))]),
+                        child: Icon(
+                          isLocked ? Icons.lock_rounded : Icons.chevron_right_rounded,
+                          color: isLocked ? const Color(0xFFB0B8C8) : Colors.white,
+                          size: isLocked ? 16.sp : 22.sp),
+                      ),
+                    ]),
                   ],
                 ),
               ),
@@ -565,7 +446,6 @@ class _ConsonantGroupCard extends StatelessWidget {
     );
   }
 
-  // ── Number circle ──
   Widget _buildNumberCircle(Color color, bool isCurrent, bool isLocked) {
     if (isLocked) {
       return Container(
@@ -573,14 +453,12 @@ class _ConsonantGroupCard extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: const Color(0xFFE0E5F0),
-          border: Border.all(color: const Color(0xFFD0D5E0), width: 3.w),
-        ),
+          border: Border.all(color: const Color(0xFFD0D5E0), width: 3.w)),
         child: Center(
           child: Text('${group.number}',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 16.sp, fontWeight: FontWeight.w800,
-              color: const Color(0xFFB0B8C8))),
-        ),
+              color: const Color(0xFFB0B8C8)))),
       );
     }
 
@@ -590,36 +468,18 @@ class _ConsonantGroupCard extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: LinearGradient(
           begin: Alignment.topLeft, end: Alignment.bottomRight,
-          colors: [
-            Color.lerp(color, Colors.white, 0.2)!,
-            color,
-          ],
-        ),
-        border: Border.all(
-          color: Color.lerp(color, Colors.white, 0.4)!,
-          width: 3.w,
-        ),
+          colors: [Color.lerp(color, Colors.white, 0.2)!, color]),
+        border: Border.all(color: Color.lerp(color, Colors.white, 0.4)!, width: 3.w),
         boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.35),
-            blurRadius: 10.r,
-            offset: Offset(0, 3.h),
-          ),
-          if (isCurrent) BoxShadow(
-            color: color.withValues(alpha: 0.3),
-            blurRadius: 16.r,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
+          BoxShadow(color: color.withValues(alpha: 0.35), blurRadius: 10.r, offset: Offset(0, 3.h)),
+          if (isCurrent) BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 16.r, spreadRadius: 2),
+        ]),
       child: Center(
         child: group.isCompleted
             ? Icon(Icons.check_rounded, color: Colors.white, size: 22.sp)
             : Text('${group.number}',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16.sp, fontWeight: FontWeight.w800,
-                  color: Colors.white)),
-      ),
+                  fontSize: 16.sp, fontWeight: FontWeight.w800, color: Colors.white))),
     );
 
     if (isCurrent) {
@@ -635,24 +495,17 @@ class _ConsonantGroupCard extends StatelessWidget {
     return circle;
   }
 
-  // ── Stars row ──
   Widget _buildStars(Color color, bool isLocked) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: List.generate(3, (i) => Icon(
-        Icons.star_rounded,
-        size: 14.w,
-        color: isLocked
-            ? const Color(0xFFE0E5F0)
-            : (i < group.starCount
-                ? const Color(0xFFFFB300)
-                : const Color(0xFFE0E0E0)),
-      )),
+        Icons.star_rounded, size: 14.w,
+        color: isLocked ? const Color(0xFFE0E5F0)
+            : (i < group.starCount ? const Color(0xFFFFB300) : const Color(0xFFE0E0E0)))),
     );
   }
 
-  // ── Character circles row — kéo ngang để xem tất cả ──
   Widget _buildCharacterCircles(Color color, bool isLocked) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -663,7 +516,6 @@ class _ConsonantGroupCard extends StatelessWidget {
           children: List.generate(group.items.length, (i) {
             final il = group.items[i];
             final done = il.lesson.isLearned;
-
             return Padding(
               padding: EdgeInsets.only(right: 8.w),
               child: _CharCircle(
@@ -682,7 +534,7 @@ class _ConsonantGroupCard extends StatelessWidget {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  CHARACTER TILE — Khmer character with tap animation
+//  CHAR CIRCLE
 // ════════════════════════════════════════════════════════════════
 
 class _CharCircle extends StatefulWidget {
@@ -712,17 +564,13 @@ class _CharCircleState extends State<_CharCircle>
   @override
   void initState() {
     super.initState();
-    _tapCtrl = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 120));
+    _tapCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 120));
     _scaleAnim = Tween<double>(begin: 1.0, end: 0.9).animate(
       CurvedAnimation(parent: _tapCtrl, curve: Curves.easeInOut));
   }
 
   @override
-  void dispose() {
-    _tapCtrl.dispose();
-    super.dispose();
-  }
+  void dispose() { _tapCtrl.dispose(); super.dispose(); }
 
   void _handleTap() {
     if (widget.onTap == null) return;
@@ -739,84 +587,52 @@ class _CharCircleState extends State<_CharCircle>
       onTap: _handleTap,
       child: AnimatedBuilder(
         animation: _scaleAnim,
-        builder: (_, child) => Transform.scale(
-          scale: _scaleAnim.value, child: child),
+        builder: (_, child) => Transform.scale(scale: _scaleAnim.value, child: child),
         child: SizedBox(
           width: 48.w, height: 48.w,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              // Rounded square background
               Container(
                 width: 48.w, height: 48.w,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12.r),
-                  color: widget.isLocked
-                      ? const Color(0xFFF0F2F8)
-                      : widget.isDone
-                          ? widget.color.withValues(alpha: 0.10)
-                          : const Color(0xFFF5F7FC),
+                  color: widget.isLocked ? const Color(0xFFF0F2F8)
+                      : widget.isDone ? widget.color.withValues(alpha: 0.10)
+                      : const Color(0xFFF5F7FC),
                   border: Border.all(
-                    color: widget.isLocked
-                        ? const Color(0xFFE0E5F0)
-                        : widget.isDone
-                            ? widget.color.withValues(alpha: 0.30)
-                            : const Color(0xFFD8DDE8),
-                    width: 2.w,
-                  ),
-                ),
+                    color: widget.isLocked ? const Color(0xFFE0E5F0)
+                        : widget.isDone ? widget.color.withValues(alpha: 0.30)
+                        : const Color(0xFFD8DDE8),
+                    width: 2.w)),
                 child: Center(
                   child: widget.isLocked
-                      ? Icon(Icons.lock_rounded,
-                          color: const Color(0xFFB8C0D0), size: 18.sp)
-                      : Text(
-                          widget.character,
+                      ? Icon(Icons.lock_rounded, color: const Color(0xFFB8C0D0), size: 18.sp)
+                      : Text(widget.character,
                           style: GoogleFonts.battambang(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w700,
-                            height: 1.2,
-                            color: widget.isDone
-                                ? widget.color
-                                : const Color(0xFF64748B),
-                          ),
-                        ),
-                ),
+                            fontSize: 16.sp, fontWeight: FontWeight.w700, height: 1.2,
+                            color: widget.isDone ? widget.color : const Color(0xFF64748B)))),
               ),
-
-              // Checkmark badge
               if (widget.isDone)
                 Positioned(
                   top: -4.h, right: -4.w,
                   child: Container(
                     width: 18.w, height: 18.w,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: widget.color,
+                      shape: BoxShape.circle, color: widget.color,
                       border: Border.all(color: Colors.white, width: 2.w),
-                      boxShadow: [BoxShadow(
-                        color: widget.color.withValues(alpha: 0.3),
-                        blurRadius: 4.r,
-                      )],
-                    ),
-                    child: Icon(Icons.check_rounded,
-                        color: Colors.white, size: 10.sp),
-                  ),
+                      boxShadow: [BoxShadow(color: widget.color.withValues(alpha: 0.3), blurRadius: 4.r)]),
+                    child: Icon(Icons.check_rounded, color: Colors.white, size: 10.sp)),
                 ),
-
-              // Lock badge
               if (widget.isLocked)
                 Positioned(
                   top: -4.h, right: -4.w,
                   child: Container(
                     width: 18.w, height: 18.w,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFFD0D5E0),
-                      border: Border.all(color: Colors.white, width: 2.w),
-                    ),
-                    child: Icon(Icons.lock_rounded,
-                        color: Colors.white, size: 9.sp),
-                  ),
+                      shape: BoxShape.circle, color: const Color(0xFFD0D5E0),
+                      border: Border.all(color: Colors.white, width: 2.w)),
+                    child: Icon(Icons.lock_rounded, color: Colors.white, size: 9.sp)),
                 ),
             ],
           ),

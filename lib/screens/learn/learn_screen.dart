@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import 'letter_map_screen.dart';
-import 'spelling_map_screen.dart';
+import 'spelling_hub_screen.dart';
 import 'writing_map_screen.dart';
 import 'reading_screen.dart';
 import 'vowel_screen.dart';
@@ -57,10 +57,10 @@ class _LearnScreenState extends State<LearnScreen> {
         icon: Icons.record_voice_over_rounded, img: 'image/Nguyên âm.png', prog: vp, total: 18, done: _score?.vowelsLearned ?? 0,
         color: const Color(0xFFFF1744), stars: 10, btn: 'Bắt đầu học',
         onTap: () => setState(() => _showVowels = true)),
-      _Zone(n: 3, title: 'Đánh vần', sub: 'Ghép âm thành tiếng và từ',
+      _Zone(n: 3, title: 'Ghép vần', sub: 'Ghép âm thành tiếng và từ',
         icon: Icons.spellcheck_rounded, img: 'image/Đánh vần.png', prog: 0, total: 30, done: 0,
         color: const Color(0xFFAA00FF), stars: 15, btn: 'Bắt đầu học',
-        onTap: () => Navigator.push(context, AppPageRoute(page: const SpellingMapScreen()))),
+        onTap: () => Navigator.push(context, AppPageRoute(page: const SpellingHubScreen()))),
       _Zone(n: 4, title: 'Tập đọc', sub: 'Làm quen và đọc câu đơn giản',
         icon: Icons.auto_stories_rounded, img: 'image/Tập đọc.png', prog: 0, total: 28, done: 0,
         color: const Color(0xFF00B0FF), stars: 15, btn: 'Bắt đầu học',

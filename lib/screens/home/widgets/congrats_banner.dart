@@ -67,7 +67,7 @@ class CongratsBanner extends StatelessWidget {
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                       Icon(Icons.star_rounded, color: const Color(0xFFFFA726), size: 14.sp),
                       SizedBox(width: 4.w),
-                      Text('0/5 nhiệm vụ',
+                      Text('1/3 nhiệm vụ',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11.sp, fontWeight: FontWeight.w700,
                           color: AppColors.headerDark)),

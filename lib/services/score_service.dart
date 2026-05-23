@@ -21,8 +21,18 @@ class ScoreService {
   int get streak => _storage.getStreak();
   int get level => (totalXp / 100).floor() + 1;
   double get levelProgress => (totalXp % 100) / 100.0;
+  
+  Set<String> get purchasedItems => _storage.getPurchasedItems();
 
-  // ─── EARN REWARDS ────────────────────────────────────────────
+  // ─── EARN & SPEND REWARDS ────────────────────────────────────
+  
+  Future<bool> spendStars(int amount) async {
+    return await _storage.spendStars(amount);
+  }
+
+  Future<void> addPurchasedItem(String itemKey) async {
+    await _storage.addPurchasedItem(itemKey);
+  }
 
   /// Hoàn thành bài học chữ cái
   Future<Map<String, int>> completeLetterLesson(int letterIndex, int stars) async {

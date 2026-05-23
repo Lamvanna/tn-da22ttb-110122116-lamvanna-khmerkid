@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../constants/app_colors.dart';
-import '../../constants/app_strings.dart';
-import '../../constants/app_text_styles.dart';
-import '../../widgets/app_header.dart';
+import '../../services/score_service.dart';
 
-/// Màn hình Cửa hàng - Shop Screen
-/// 3 tab: Đồ ăn, Vật phẩm, Trang trí
-/// Mua vật phẩm bằng sao, hiệu ứng mua thành công
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
 
@@ -15,29 +11,29 @@ class ShopScreen extends StatefulWidget {
   State<ShopScreen> createState() => _ShopScreenState();
 }
 
-class _ShopScreenState extends State<ShopScreen> {
+class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateMixin {
   int _selectedTab = 0;
-  int _starBalance = 1000;
-  final Set<String> _purchasedItems = {};
+  int _starBalance = 0;
+  Set<String> _purchasedItems = {};
+  bool _isLoading = true;
+  late ScoreService _scoreService;
 
   final List<_ShopTab> _tabs = [
     _ShopTab(
-      label: AppStrings.shopFood,
+      label: 'Đồ ăn',
       icon: Icons.restaurant_rounded,
-      color: AppColors.shopFood,
+      color: const Color(0xFFF06292),
       items: [
         _ShopItem(name: 'Táo', description: 'Táo tươi', price: 15, emoji: '🍎'),
-        _ShopItem(name: 'Cá tươi', description: 'Cá hồi', price: 30, emoji: '🐟'),
         _ShopItem(name: 'Burger', description: 'Hamburger', price: 45, emoji: '🍔'),
         _ShopItem(name: 'Bánh ngọt', description: 'Bánh kem', price: 50, emoji: '🎂'),
-        _ShopItem(name: 'Sữa', description: 'Sữa tươi', price: 20, emoji: '🥛'),
         _ShopItem(name: 'Kẹo', description: 'Kẹo ngọt', price: 10, emoji: '🍬'),
       ],
     ),
     _ShopTab(
-      label: AppStrings.shopItems,
+      label: 'Vật phẩm',
       icon: Icons.shopping_bag_rounded,
-      color: AppColors.primaryPurple,
+      color: const Color(0xFF7E57C2),
       items: [
         _ShopItem(name: 'Bóng', description: 'Bóng đá', price: 50, emoji: '⚽'),
         _ShopItem(name: 'Nón', description: 'Nón xinh', price: 80, emoji: '🧢'),
@@ -46,127 +42,154 @@ class _ShopScreenState extends State<ShopScreen> {
       ],
     ),
     _ShopTab(
-      label: AppStrings.shopDecor,
+      label: 'Trang trí',
       icon: Icons.home_rounded,
-      color: AppColors.accentOrange,
+      color: const Color(0xFFFF9800),
       items: [
-        _ShopItem(name: 'Nhà cấp 2', description: 'Cao cấp', price: 200, emoji: '🏠'),
+        _ShopItem(name: 'Nhà cấp 2', description: 'Nhà ngói', price: 200, emoji: '🏠'),
         _ShopItem(name: 'Cây cảnh', description: 'Trang trí', price: 40, emoji: '🌳'),
-        _ShopItem(name: 'Đèn', description: 'Đèn ngủ', price: 35, emoji: '💡'),
-        _ShopItem(name: 'Thảm', description: 'Thảm mềm', price: 55, emoji: '🧶'),
+        _ShopItem(name: 'Lều', description: 'Cắm trại', price: 80, emoji: '⛺'),
+        _ShopItem(name: 'Đài phun nước', description: 'Sang trọng', price: 150, emoji: '⛲'),
       ],
     ),
   ];
 
-  void _buyItem(_ShopItem item) {
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    _scoreService = await ScoreService.getInstance();
+    setState(() {
+      _starBalance = _scoreService.totalStars;
+      _purchasedItems = _scoreService.purchasedItems;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _buyItem(_ShopItem item) async {
     final itemKey = '${_selectedTab}_${item.name}';
     if (_purchasedItems.contains(itemKey)) {
-      _showSnack('Bạn đã mua ${item.name} rồi! ✅');
+      _showSnack('Bạn đã sở hữu ${item.name} rồi! ✅');
       return;
     }
     if (_starBalance < item.price) {
-      _showSnack('Không đủ sao! Cần ${item.price}⭐');
+      _showSnack('Chưa đủ sao! Bạn cần thêm ${item.price - _starBalance}⭐');
       return;
     }
 
-    // Hiện dialog xác nhận
-    showDialog(
+    // Xác nhận mua
+    final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Mua ${item.name}?',
-            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(item.emoji, style: const TextStyle(fontSize: 48)),
-            const SizedBox(height: 8),
-            Text('Giá: ${item.price} ⭐',
-                style: GoogleFonts.plusJakartaSans(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.accentOrange)),
-            const SizedBox(height: 4),
-            Text('Còn lại: ${_starBalance - item.price} ⭐',
-                style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    color: const Color(0xFF757575))),
-          ],
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(item.emoji, style: TextStyle(fontSize: 64.sp)),
+              SizedBox(height: 16.h),
+              Text('Mua ${item.name}?',
+                  style: GoogleFonts.plusJakartaSans(fontSize: 20.sp, fontWeight: FontWeight.w800, color: const Color(0xFF2D3142))),
+              SizedBox(height: 8.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Giá: ', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, color: const Color(0xFF9098A9))),
+                  Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 20.sp),
+                  Text('${item.price}', style: GoogleFonts.plusJakartaSans(fontSize: 18.sp, fontWeight: FontWeight.w800, color: const Color(0xFFFFB300))),
+                ],
+              ),
+              SizedBox(height: 24.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 14.h),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+                      ),
+                      child: Text('Hủy', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w700, color: const Color(0xFF9098A9))),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E88E5),
+                        padding: EdgeInsets.symmetric(vertical: 14.h),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+                        elevation: 0,
+                      ),
+                      child: Text('Mua ngay', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w700, color: Colors.white)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Hủy',
-                style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF757575))),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              setState(() {
-                _starBalance -= item.price;
-                _purchasedItems.add(itemKey);
-              });
-              _showPurchaseSuccess(item);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.accentGreen,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-            child: Text('Mua',
-                style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.w700, color: Colors.white)),
-          ),
-        ],
       ),
     );
+
+    if (confirm == true) {
+      final success = await _scoreService.spendStars(item.price);
+      if (success) {
+        await _scoreService.addPurchasedItem(itemKey);
+        setState(() {
+          _starBalance -= item.price;
+          _purchasedItems.add(itemKey);
+        });
+        if (mounted) _showPurchaseSuccess(item);
+      } else {
+        _showSnack('Có lỗi xảy ra khi mua hàng!');
+      }
+    }
   }
 
   void _showPurchaseSuccess(_ShopItem item) {
     showDialog(
       context: context,
-      barrierDismissible: true,
       builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+        child: Container(
+          padding: EdgeInsets.all(28.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24.r),
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('🎉', style: TextStyle(fontSize: 48)),
-              const SizedBox(height: 12),
+              Container(
+                padding: EdgeInsets.all(20.w),
+                decoration: BoxDecoration(color: const Color(0xFFE8F5E9), shape: BoxShape.circle),
+                child: Text('🎉', style: TextStyle(fontSize: 48.sp)),
+              ),
+              SizedBox(height: 20.h),
               Text('Mua thành công!',
-                  style: GoogleFonts.plusJakartaSans(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF2E7D32))),
-              const SizedBox(height: 8),
-              Text('${item.emoji} ${item.name}',
-                  style: GoogleFonts.plusJakartaSans(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF616161))),
-              const SizedBox(height: 4),
-              Text('Đã thêm vào kho đồ!',
-                  style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      color: const Color(0xFF9E9E9E))),
-              const SizedBox(height: 16),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 22.sp, fontWeight: FontWeight.w800, color: const Color(0xFF43A047))),
+              SizedBox(height: 8.h),
+              Text('Bạn đã sở hữu ${item.name} ${item.emoji}',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w600, color: const Color(0xFF9098A9))),
+              SizedBox(height: 28.h),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(ctx),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.accentGreen,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
+                    backgroundColor: const Color(0xFF43A047),
+                    padding: EdgeInsets.symmetric(vertical: 16.h),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+                    elevation: 0,
                   ),
-                  child: Text('Tuyệt vời!',
-                      style: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.w700, color: Colors.white)),
+                  child: Text('Tuyệt vời!', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w800, color: Colors.white)),
                 ),
               ),
             ],
@@ -179,26 +202,30 @@ class _ShopScreenState extends State<ShopScreen> {
   void _showSnack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg,
-            style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.w600, color: Colors.white)),
-        backgroundColor: const Color(0xFF7E57C2),
+        content: Text(msg, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+        backgroundColor: const Color(0xFF2D3142),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF4F7F9),
+        body: Center(child: CircularProgressIndicator(color: Color(0xFF1E88E5))),
+      );
+    }
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: const Color(0xFFF4F7F9),
       body: Column(
         children: [
           _buildHeader(context),
-          const SizedBox(height: 8),
+          SizedBox(height: 16.h),
           _buildTabBar(),
-          const SizedBox(height: 16),
+          SizedBox(height: 20.h),
           Expanded(child: _buildItemGrid()),
         ],
       ),
@@ -206,77 +233,92 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return AppHeader(
-      title: '🛒 Cửa hàng',
-      onBack: () => Navigator.pop(context),
-      gradientColors: const [Color(0xFFD4A430), Color(0xFFE8BE55)],
-      trailing: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(12)),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.star_rounded, color: Colors.white, size: 18),
-          const SizedBox(width: 4),
-          Text('$_starBalance', style: GoogleFonts.plusJakartaSans(
-            fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white)),
-        ]),
+    return Container(
+      padding: EdgeInsets.fromLTRB(20.w, MediaQuery.of(context).padding.top + 20.h, 20.w, 20.h),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF5C6BC0), Color(0xFF3F51B5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(32.r),
+          bottomRight: Radius.circular(32.r),
+        ),
+        boxShadow: [
+          BoxShadow(color: const Color(0xFF3F51B5).withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 8)),
+        ],
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: EdgeInsets.all(10.w),
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
+              child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 24.sp),
+            ),
+          ),
+          SizedBox(width: 16.w),
+          Expanded(
+            child: Text('Cửa hàng',
+                style: GoogleFonts.plusJakartaSans(fontSize: 24.sp, fontWeight: FontWeight.w800, color: Colors.white)),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(20.r),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('$_starBalance', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w800, color: Colors.white)),
+                SizedBox(width: 4.w),
+                Icon(Icons.star_rounded, color: const Color(0xFFFFD54F), size: 18.sp),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildTabBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
       child: Row(
         children: List.generate(_tabs.length, (index) {
           final tab = _tabs[index];
           final isSelected = _selectedTab == index;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _selectedTab = index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: EdgeInsets.only(
-                  left: index == 0 ? 0 : 4,
-                  right: index == _tabs.length - 1 ? 0 : 4,
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: isSelected ? tab.color : AppColors.cardWhite,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isSelected
-                        ? tab.color
-                        : AppColors.textHint.withValues(alpha: 0.2),
-                  ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: tab.color.withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(tab.icon,
-                        size: 18,
-                        color: isSelected
-                            ? AppColors.textWhite
-                            : AppColors.textSecondary),
-                    const SizedBox(width: 6),
-                    Text(tab.label,
-                        style: AppTextStyles.buttonTextSmall.copyWith(
-                          color: isSelected
-                              ? AppColors.textWhite
-                              : AppColors.textSecondary,
-                        )),
-                  ],
-                ),
+          return GestureDetector(
+            onTap: () => setState(() => _selectedTab = index),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              margin: EdgeInsets.only(right: 12.w),
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: isSelected ? tab.color : Colors.white,
+                borderRadius: BorderRadius.circular(20.r),
+                boxShadow: isSelected
+                    ? [BoxShadow(color: tab.color.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))]
+                    : [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+              ),
+              child: Row(
+                children: [
+                  Icon(tab.icon, size: 20.sp, color: isSelected ? Colors.white : const Color(0xFF9098A9)),
+                  SizedBox(width: 8.w),
+                  Text(tab.label,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14.sp,
+                        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                        color: isSelected ? Colors.white : const Color(0xFF9098A9),
+                      )),
+                ],
               ),
             ),
           );
@@ -288,13 +330,13 @@ class _ShopScreenState extends State<ShopScreen> {
   Widget _buildItemGrid() {
     final items = _tabs[_selectedTab].items;
     return GridView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 40.h),
       physics: const BouncingScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.78,
+        crossAxisSpacing: 16.w,
+        mainAxisSpacing: 16.h,
+        childAspectRatio: 0.75,
       ),
       itemCount: items.length,
       itemBuilder: (context, index) => _buildShopItem(items[index]),
@@ -310,64 +352,67 @@ class _ShopScreenState extends State<ShopScreen> {
       onTap: () => _buyItem(item),
       child: Container(
         decoration: BoxDecoration(
-          color: purchased
-              ? const Color(0xFFE8F5E9)
-              : AppColors.cardWhite,
-          borderRadius: BorderRadius.circular(24),
-          border: purchased
-              ? Border.all(
-                  color: const Color(0xFF4CAF50).withValues(alpha: 0.3),
-                  width: 1.5)
-              : null,
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24.r),
+          border: Border.all(
+            color: purchased ? const Color(0xFF81C784).withValues(alpha: 0.5) : Colors.transparent,
+            width: 2,
+          ),
           boxShadow: [
-            BoxShadow(
-              color: AppColors.cardShadow.withValues(alpha: 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
-            ),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 6)),
           ],
         ),
         child: Stack(
+          alignment: Alignment.center,
           children: [
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(item.emoji, style: const TextStyle(fontSize: 42)),
-                const SizedBox(height: 10),
-                Text(item.name,
-                    style: AppTextStyles.cardTitle.copyWith(fontSize: 15)),
-                const SizedBox(height: 2),
-                Text(item.description, style: AppTextStyles.bodySmall),
-                const SizedBox(height: 8),
+                // Icon Background
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  width: 80.w, height: 80.w,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF4F7F9),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(child: Text(item.emoji, style: TextStyle(fontSize: 42.sp))),
+                ),
+                SizedBox(height: 12.h),
+                Text(item.name,
+                    style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w800, color: const Color(0xFF2D3142))),
+                SizedBox(height: 2.h),
+                Text(item.description,
+                    style: GoogleFonts.plusJakartaSans(fontSize: 12.sp, fontWeight: FontWeight.w600, color: const Color(0xFF9098A9))),
+                SizedBox(height: 12.h),
+                // Price Tag
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
                   decoration: BoxDecoration(
                     color: purchased
-                        ? const Color(0xFF4CAF50).withValues(alpha: 0.1)
+                        ? const Color(0xFFE8F5E9)
                         : canAfford
-                            ? AppColors.accentYellow.withValues(alpha: 0.12)
-                            : const Color(0xFFEF5350).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                            ? const Color(0xFFFFF8E1)
+                            : const Color(0xFFFFEBEE),
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (purchased)
-                        const Icon(Icons.check_circle_rounded,
-                            size: 16, color: Color(0xFF4CAF50))
+                        Icon(Icons.check_circle_rounded, size: 16.sp, color: const Color(0xFF43A047))
                       else
-                        const Icon(Icons.star_rounded,
-                            size: 16, color: AppColors.accentYellow),
-                      const SizedBox(width: 4),
+                        Icon(Icons.star_rounded, size: 16.sp, color: const Color(0xFFFFB300)),
+                      SizedBox(width: 4.w),
                       Text(
                         purchased ? 'Đã mua' : '${item.price}',
-                        style: AppTextStyles.bodyLarge.copyWith(
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w800,
                           color: purchased
-                              ? const Color(0xFF4CAF50)
+                              ? const Color(0xFF43A047)
                               : canAfford
-                                  ? AppColors.accentOrange
-                                  : const Color(0xFFEF5350),
-                          fontWeight: FontWeight.w700,
+                                  ? const Color(0xFFF57C00)
+                                  : const Color(0xFFE53935),
                         ),
                       ),
                     ],
@@ -376,11 +421,14 @@ class _ShopScreenState extends State<ShopScreen> {
               ],
             ),
             if (purchased)
-              const Positioned(
-                top: 8,
-                right: 8,
-                child: Icon(Icons.check_circle_rounded,
-                    color: Color(0xFF4CAF50), size: 22),
+              Positioned(
+                top: 12.h,
+                right: 12.w,
+                child: Container(
+                  padding: EdgeInsets.all(4.w),
+                  decoration: const BoxDecoration(color: Color(0xFF43A047), shape: BoxShape.circle),
+                  child: Icon(Icons.check_rounded, color: Colors.white, size: 14.sp),
+                ),
               ),
           ],
         ),
@@ -394,12 +442,7 @@ class _ShopTab {
   final IconData icon;
   final Color color;
   final List<_ShopItem> items;
-  const _ShopTab({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.items,
-  });
+  const _ShopTab({required this.label, required this.icon, required this.color, required this.items});
 }
 
 class _ShopItem {
@@ -407,10 +450,5 @@ class _ShopItem {
   final String description;
   final int price;
   final String emoji;
-  const _ShopItem({
-    required this.name,
-    required this.description,
-    required this.price,
-    required this.emoji,
-  });
+  const _ShopItem({required this.name, required this.description, required this.price, required this.emoji});
 }

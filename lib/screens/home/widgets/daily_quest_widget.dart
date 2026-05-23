@@ -33,85 +33,90 @@ class DailyQuestWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: Spacing.s4),
-      child: KkCard(
-        variant: KkCardVariant.raised,
-        onTap: () => Navigator.push(context,
-          AppPageRoute(page: const DailyQuestScreen())),
-        padding: EdgeInsets.all(Spacing.s4),
-        radius: Radii.md,
-        background: KkColors.moduleRewardBg,
-        border: Border.all(
-          color: KkColors.moduleReward.withValues(alpha: 0.20), width: 1),
-        child: Column(
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Icon
-                Container(
-                  width: 44.w, height: 44.w,
-                  decoration: BoxDecoration(
-                    color: KkColors.moduleReward,
-                    borderRadius: BorderRadius.circular(Radii.md),
-                  ),
-                  child: Icon(Icons.flag_circle_rounded,
-                    color: Colors.white, size: 24.sp),
+      child: GestureDetector(
+        onTap: () => Navigator.push(context, AppPageRoute(page: const DailyQuestScreen())),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEBF4FF),
+            borderRadius: BorderRadius.circular(24.r),
+            border: Border.all(color: const Color(0xFFD6E9F8)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Icon
+              Container(
+                width: 60.w, height: 60.w,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD6E9F8),
+                  borderRadius: BorderRadius.circular(16.r),
                 ),
-                SizedBox(width: Spacing.s3),
-                // Title + subtitle
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                child: Center(
+                  child: Text('📋', style: TextStyle(fontSize: 32.sp)),
+                ),
+              ),
+              SizedBox(width: 14.w),
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Nhiệm vụ hôm nay',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF2C3E50),
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text('Hoàn thành nhiệm vụ để nhận thưởng',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF7F8C8D),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 8.h),
+                    // Progress Chip
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD6E9F8),
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Flexible(child: Text('Nhiệm vụ hôm nay',
-                            style: KkType.h4,
-                            maxLines: 1, overflow: TextOverflow.ellipsis)),
-                          SizedBox(width: Spacing.s2),
-                          KkChip.counter(
-                            label: '+$rewardStars',
-                            icon: Icons.star_rounded,
-                            color: KkColors.moduleReward,
+                          Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 14.sp),
+                          SizedBox(width: 4.w),
+                          Text('$completed/$total nhiệm vụ',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1E88E5),
+                            ),
                           ),
                         ],
                       ),
-                      SizedBox(height: 2.h),
-                      Text('Hoàn thành để nhận thưởng',
-                        style: KkType.bodyS.secondary,
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                SizedBox(width: Spacing.s2),
-                // Arrow
-                Container(
-                  width: 36.w, height: 36.w,
-                  decoration: const BoxDecoration(
-                    color: KkColors.moduleReward,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.arrow_forward_rounded,
-                    color: Colors.white, size: 18.sp),
+              ),
+              SizedBox(width: 10.w),
+              // Arrow Button
+              Container(
+                width: 42.w, height: 42.w,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF3498DB),
+                  shape: BoxShape.circle,
                 ),
-              ],
-            ),
-            SizedBox(height: Spacing.v3),
-            Row(
-              children: [
-                Expanded(child: KkLinearProgress(
-                  value: _progress,
-                  color: KkColors.moduleReward,
-                  height: 6,
-                )),
-                SizedBox(width: Spacing.s2),
-                Text('$completed/$total',
-                  style: KkType.labelM.copyWith(
-                    color: KkColors.moduleReward,
-                    fontWeight: FontWeight.w700)),
-              ],
-            ),
-          ],
+                child: Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20.sp),
+              ),
+            ],
+          ),
         ),
       ),
     );

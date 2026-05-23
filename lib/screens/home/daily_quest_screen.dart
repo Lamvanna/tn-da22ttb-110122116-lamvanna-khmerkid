@@ -4,6 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:async';
 import '../../constants/app_colors.dart';
+import '../achievements/achievements_screen.dart';
+import '../shop/shop_screen.dart';
 
 /// Màn hình Nhiệm vụ — Header gradient + Điểm + Daily/Weekly + Thành tích
 class DailyQuestScreen extends StatefulWidget {
@@ -42,7 +44,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
 
   final List<_WeeklyQuest> _weeklyQuests = [
     _WeeklyQuest(
-      icon: '🏆', title: 'Hoàn thành 10 bài học',
+      icon: '🏆', title: 'Hoàn thành 10 bài',
       current: 0, total: 10, reward: 100,
       gradient: const [Color(0xFFFFB300), Color(0xFFFF8F00)],
     ),
@@ -120,16 +122,16 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildPointsCard(),
-                  SizedBox(height: 24.h),
+                  SizedBox(height: 14.h),
                   _buildSectionHeader('Nhiệm vụ hằng ngày', '⏱ ${_formatDuration(_dailyRemaining)}'),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: 10.h),
                   ...List.generate(_dailyQuests.length, (i) => Padding(
                     padding: EdgeInsets.only(bottom: 12.h),
                     child: _buildDailyCard(_dailyQuests[i]),
                   )),
-                  SizedBox(height: 24.h),
+                  SizedBox(height: 0),
                   _buildSectionHeader('Nhiệm vụ hằng tuần', '⏱ ${_formatWeekly(_weeklyRemaining)}'),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: 14.h),
                   _buildWeeklyRow(),
                   SizedBox(height: 28.h),
                   _buildAchievementsSection(),
@@ -160,55 +162,74 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
           begin: Alignment(-0.5, -1), end: Alignment(0.5, 1),
           colors: [Color(0xFF1565C0), Color(0xFF42A5F5), Color(0xFF29B6F6)]),
         borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(28), bottomRight: Radius.circular(28)),
+          bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
         boxShadow: [BoxShadow(
-          color: const Color(0xFF1565C0).withValues(alpha: 0.35),
-          blurRadius: 24, offset: const Offset(0, 8))]),
+          color: const Color(0xFF1565C0).withValues(alpha: 0.30),
+          blurRadius: 16, offset: const Offset(0, 6))]),
       child: Stack(
         children: [
           // Decorative circles
-          Positioned(right: -40.w, top: -30.h,
-            child: Container(width: 120.w, height: 120.w,
+          Positioned(right: -30.w, top: -20.h,
+            child: Container(width: 100.w, height: 100.w,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.08)))),
+          Positioned(left: -15.w, bottom: -10.h,
+            child: Container(width: 60.w, height: 60.w,
               decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.06)))),
-          Positioned(left: -25.w, bottom: -20.h,
-            child: Container(width: 80.w, height: 80.w,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.04)))),
-          // Mascot
-          Positioned(right: 10.w, bottom: -8.h,
-            child: Image.asset('assets/images/elephant_mascot.png',
-              width: 95.w, height: 95.w, fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => const SizedBox.shrink())),
+          
           // Content
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16.w, 4.h, 100.w, 18.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
+              child: Row(
                 children: [
-                  Row(children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 36.w, height: 36.w,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.15),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.12))),
-                        child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w)),
-                    ),
-                    SizedBox(width: 12.w),
-                    Text('Nhiệm vụ',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 24.sp, fontWeight: FontWeight.w800, color: Colors.white)),
-                  ]),
-                  SizedBox(height: 4.h),
-                  Padding(
-                    padding: EdgeInsets.only(left: 48.w),
-                    child: Text('Hoàn thành nhiệm vụ để nhận thưởng ⭐',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13.sp, fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.85))),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 36.w, height: 36.w,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.15),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.2))),
+                      child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w)),
+                  ),
+                  SizedBox(width: 12.w),
+                  Text('Nhiệm vụ',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 22.sp, fontWeight: FontWeight.w800, color: Colors.white)),
+                  const Spacer(),
+                  
+                  // Streak Badge
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.3))),
+                    child: Row(children: [
+                      Text('🔥', style: TextStyle(fontSize: 14.sp)),
+                      SizedBox(width: 4.w),
+                      Text('3',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.sp, fontWeight: FontWeight.w800, color: Colors.white)),
+                    ]),
+                  ),
+                  SizedBox(width: 8.w),
+                  
+                  // Star Badge
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.3))),
+                    child: Row(children: [
+                      Icon(Icons.star_rounded, color: const Color(0xFFFFD54F), size: 16.sp),
+                      SizedBox(width: 4.w),
+                      Text('450',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.sp, fontWeight: FontWeight.w800, color: Colors.white)),
+                    ]),
                   ),
                 ],
               ),
@@ -223,7 +244,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
   Widget _buildPointsCard() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 22.h),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft, end: Alignment.bottomRight,
@@ -288,15 +309,8 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Tính năng đổi thưởng sắp ra mắt!',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-            backgroundColor: const Color(0xFF2E3849),
-          ),
-        );
+        Navigator.push(context, MaterialPageRoute(
+          builder: (_) => const ShopScreen()));
       },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
@@ -350,100 +364,141 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
     return Row(children: [
       Text(title,
         style: GoogleFonts.plusJakartaSans(
-          fontSize: 17.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          fontSize: 17.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary, height: 1.0)),
       const Spacer(),
       Text(trailing,
         style: GoogleFonts.plusJakartaSans(
-          fontSize: 12.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+          fontSize: 12.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary, height: 1.0)),
     ]);
   }
 
   // ═══════════════════ DAILY QUEST CARD ═══════════════════
   Widget _buildDailyCard(_DailyQuest quest) {
     final progress = quest.total > 0 ? quest.current / quest.total : 0.0;
+    final barColor = quest.done ? const Color(0xFF43A047) : quest.accentColor;
     return Container(
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.zero,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(22.r),
         border: Border.all(
           color: quest.done
-              ? const Color(0xFF43A047).withValues(alpha: 0.25)
-              : quest.accentColor.withValues(alpha: 0.10)),
-        boxShadow: [BoxShadow(
-          color: Colors.black.withValues(alpha: 0.04),
-          blurRadius: 12.r, offset: Offset(0, 3.h))]),
-      child: Row(
-        children: [
-          // Emoji icon
-          Container(
-            width: 52.w, height: 52.w,
-            decoration: BoxDecoration(
-              color: quest.accentColor.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(16.r)),
-            child: Center(child: Text(quest.icon, style: TextStyle(fontSize: 24.sp))),
-          ),
-          SizedBox(width: 12.w),
-          // Title + subtitle + progress
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(quest.title,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 15.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-                SizedBox(height: 2.h),
-                Text(quest.subtitle,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11.sp, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
-                SizedBox(height: 8.h),
-                Row(children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6.r),
-                      child: LinearProgressIndicator(
-                        value: progress, minHeight: 7.h,
-                        backgroundColor: quest.accentColor.withValues(alpha: 0.10),
-                        valueColor: AlwaysStoppedAnimation(
-                          quest.done ? const Color(0xFF43A047) : quest.accentColor))),
-                  ),
-                  SizedBox(width: 10.w),
-                  Text('${quest.current} / ${quest.total}',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12.sp, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
-                ]),
-              ],
+              ? const Color(0xFF43A047).withValues(alpha: 0.20)
+              : Colors.grey.withValues(alpha: 0.10),
+          width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: quest.accentColor.withValues(alpha: 0.06),
+            blurRadius: 18.r, offset: Offset(0, 6.h)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6.r, offset: Offset(0, 2.h)),
+        ]),
+      child: Padding(
+        padding: EdgeInsets.all(14.w),
+        child: Row(
+          children: [
+            // Emoji icon with gradient bg
+            Container(
+              width: 54.w, height: 54.w,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                  colors: [
+                    quest.accentColor.withValues(alpha: 0.12),
+                    quest.accentColor.withValues(alpha: 0.04),
+                  ]),
+                borderRadius: BorderRadius.circular(16.r),
+                border: Border.all(color: quest.accentColor.withValues(alpha: 0.10))),
+              child: Center(child: Text(quest.icon, style: TextStyle(fontSize: 26.sp))),
             ),
-          ),
-          SizedBox(width: 10.w),
-          // Reward badge
-          quest.done
-              ? Container(
-                  width: 44.w, height: 44.w,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF43A047).withValues(alpha: 0.10),
-                    shape: BoxShape.circle),
-                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Icon(Icons.check_circle_rounded, color: const Color(0xFF43A047), size: 20.sp),
-                    Text('+${quest.reward}',
+            SizedBox(width: 12.w),
+            // Title + subtitle + progress
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(quest.title,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 15.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                  SizedBox(height: 3.h),
+                  Text(quest.subtitle,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.sp, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
+                  SizedBox(height: 16.h),
+                  // Custom progress bar
+                  Row(children: [
+                    Expanded(
+                      child: Container(
+                        height: 8.h,
+                        decoration: BoxDecoration(
+                          color: barColor.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(4.r)),
+                        child: FractionallySizedBox(
+                          alignment: Alignment.centerLeft,
+                          widthFactor: progress.clamp(0.0, 1.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: quest.done
+                                    ? [const Color(0xFF66BB6A), const Color(0xFF43A047)]
+                                    : [barColor.withValues(alpha: 0.65), barColor]),
+                              borderRadius: BorderRadius.circular(4.r),
+                              boxShadow: [BoxShadow(
+                                color: barColor.withValues(alpha: 0.30),
+                                blurRadius: 4.r, offset: Offset(0, 1.h))]),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 10.w),
+                    Text('${quest.current} / ${quest.total}',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 9.sp, fontWeight: FontWeight.w800, color: const Color(0xFF43A047))),
+                        fontSize: 12.sp, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
                   ]),
-                )
-              : Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF8E1),
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: const Color(0xFFFFB300).withValues(alpha: 0.3))),
-                  child: Column(children: [
-                    Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 20.sp),
-                    Text('+${quest.reward}',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10.sp, fontWeight: FontWeight.w800, color: const Color(0xFFFF8F00))),
-                  ]),
-                ),
-        ],
+                ],
+              ),
+            ),
+            SizedBox(width: 10.w),
+            // Reward badge
+            quest.done
+                ? Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft, end: Alignment.bottomRight,
+                        colors: [const Color(0xFF66BB6A).withValues(alpha: 0.15), const Color(0xFF43A047).withValues(alpha: 0.08)]),
+                      borderRadius: BorderRadius.circular(14.r),
+                      border: Border.all(color: const Color(0xFF43A047).withValues(alpha: 0.18))),
+                    child: Column(children: [
+                      Icon(Icons.check_circle_rounded, color: const Color(0xFF43A047), size: 22.sp),
+                      SizedBox(height: 1.h),
+                      Text('+${quest.reward}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.sp, fontWeight: FontWeight.w800, color: const Color(0xFF43A047))),
+                    ]),
+                  )
+                : Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft, end: Alignment.bottomRight,
+                        colors: [Color(0xFFFFF8E1), Color(0xFFFFF3CD)]),
+                      borderRadius: BorderRadius.circular(14.r),
+                      border: Border.all(color: const Color(0xFFFFB300).withValues(alpha: 0.25)),
+                      boxShadow: [BoxShadow(
+                        color: const Color(0xFFFFB300).withValues(alpha: 0.10),
+                        blurRadius: 6.r, offset: Offset(0, 2.h))]),
+                    child: Column(children: [
+                      Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 22.sp),
+                      SizedBox(height: 1.h),
+                      Text('+${quest.reward}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.sp, fontWeight: FontWeight.w800, color: const Color(0xFFFF8F00))),
+                    ]),
+                  ),
+          ],
+        ),
       ),
     );
   }
@@ -451,12 +506,12 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
   // ═══════════════════ WEEKLY QUEST ROW ═══════════════════
   Widget _buildWeeklyRow() {
     return SizedBox(
-      height: 190.h,
+      height: 195.h,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         itemCount: _weeklyQuests.length,
-        separatorBuilder: (_, __) => SizedBox(width: 12.w),
+        separatorBuilder: (_, __) => SizedBox(width: 14.w),
         itemBuilder: (_, i) => _buildWeeklyCard(_weeklyQuests[i]),
       ),
     );
@@ -466,53 +521,80 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
     final progress = quest.total > 0 ? quest.current / quest.total : 0.0;
     final done = quest.current >= quest.total;
     return Container(
-      width: 140.w,
+      width: 145.w,
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22.r),
-        border: Border.all(color: quest.gradient[0].withValues(alpha: 0.15)),
-        boxShadow: [BoxShadow(
-          color: quest.gradient[0].withValues(alpha: 0.10),
-          blurRadius: 14.r, offset: Offset(0, 4.h))]),
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(
+          color: done
+              ? const Color(0xFF43A047).withValues(alpha: 0.3)
+              : quest.gradient[0].withValues(alpha: 0.15)),
+        boxShadow: [
+          BoxShadow(
+            color: quest.gradient[0].withValues(alpha: 0.06),
+            blurRadius: 16.r, offset: Offset(0, 6.h)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6.r, offset: Offset(0, 2.h)),
+        ]),
       child: Column(
         children: [
           // Icon
           Container(
-            width: 56.w, height: 56.w,
+            width: 58.w, height: 58.w,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft, end: Alignment.bottomRight,
                 colors: quest.gradient),
-              borderRadius: BorderRadius.circular(18.r),
+              borderRadius: BorderRadius.circular(20.r),
               boxShadow: [BoxShadow(
-                color: quest.gradient[1].withValues(alpha: 0.3),
-                blurRadius: 10.r, offset: Offset(0, 4.h))]),
-            child: Center(child: Text(quest.icon, style: TextStyle(fontSize: 26.sp))),
+                color: quest.gradient[1].withValues(alpha: 0.35),
+                blurRadius: 12.r, offset: Offset(0, 6.h))]),
+            child: Center(child: Text(quest.icon, style: TextStyle(fontSize: 28.sp))),
           ),
-          SizedBox(height: 10.h),
+          SizedBox(height: 20.h),
           // Title
           Text(quest.title,
             textAlign: TextAlign.center,
             maxLines: 2, overflow: TextOverflow.ellipsis,
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 11.sp, fontWeight: FontWeight.w700, color: AppColors.textPrimary, height: 1.3)),
-          SizedBox(height: 6.h),
-          // Progress
+              fontSize: 11.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary, height: 1.25)),
+          SizedBox(height: 8.h),
+          // Progress text & bar
           Text('${quest.current} / ${quest.total}',
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 12.sp, fontWeight: FontWeight.w800,
+              fontSize: 11.sp, fontWeight: FontWeight.w700,
               color: done ? const Color(0xFF43A047) : AppColors.textSecondary)),
+          SizedBox(height: 4.h),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4.r),
+            child: LinearProgressIndicator(
+              value: progress, minHeight: 4.h,
+              backgroundColor: quest.gradient[0].withValues(alpha: 0.1),
+              valueColor: AlwaysStoppedAnimation(
+                done ? const Color(0xFF43A047) : quest.gradient[0]),
+            ),
+          ),
           const Spacer(),
-          // Reward
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 16.sp),
-            SizedBox(width: 2.w),
-            Text('+${quest.reward}',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13.sp, fontWeight: FontWeight.w800,
-                color: done ? const Color(0xFF43A047) : const Color(0xFFFF8F00))),
-          ]),
+          // Reward pill
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              color: done ? const Color(0xFF43A047).withValues(alpha: 0.1) : const Color(0xFFFFF8E1),
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(
+                color: done ? const Color(0xFF43A047).withValues(alpha: 0.2) : const Color(0xFFFFB300).withValues(alpha: 0.3))),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(done ? Icons.check_circle_rounded : Icons.star_rounded,
+                color: done ? const Color(0xFF43A047) : const Color(0xFFFFB300), size: 14.sp),
+              SizedBox(width: 4.w),
+              Text('+${quest.reward}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11.sp, fontWeight: FontWeight.w800,
+                  color: done ? const Color(0xFF43A047) : const Color(0xFFFF8F00))),
+            ]),
+          ),
         ],
       ),
     );
@@ -528,7 +610,11 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
               fontSize: 17.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
           const Spacer(),
           GestureDetector(
-            onTap: () => HapticFeedback.lightImpact(),
+            onTap: () {
+              HapticFeedback.lightImpact();
+              Navigator.push(context, MaterialPageRoute(
+                builder: (_) => const AchievementsScreen()));
+            },
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
               decoration: BoxDecoration(
@@ -546,13 +632,18 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
           ),
         ]),
         SizedBox(height: 14.h),
-        Row(
-          children: List.generate(_achievements.length, (i) {
-            if (i > 0) return Expanded(child: Padding(
-              padding: EdgeInsets.only(left: 8.w),
-              child: _buildAchievementTile(_achievements[i])));
-            return Expanded(child: _buildAchievementTile(_achievements[i]));
-          }),
+        SizedBox(
+          height: 145.h,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: _achievements.length,
+            separatorBuilder: (_, __) => SizedBox(width: 12.w),
+            itemBuilder: (_, i) => SizedBox(
+              width: 110.w,
+              child: _buildAchievementTile(_achievements[i]),
+            ),
+          ),
         ),
       ],
     );
@@ -560,55 +651,62 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
 
   Widget _buildAchievementTile(_Achievement ach) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 6.w),
+      padding: EdgeInsets.fromLTRB(6.w, 16.h, 6.w, 14.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(color: ach.color.withValues(alpha: 0.12)),
-        boxShadow: [BoxShadow(
-          color: Colors.black.withValues(alpha: 0.03),
-          blurRadius: 8.r, offset: Offset(0, 2.h))]),
+        borderRadius: BorderRadius.circular(22.r),
+        border: Border.all(color: ach.color.withValues(alpha: 0.15)),
+        boxShadow: [
+          BoxShadow(
+            color: ach.color.withValues(alpha: 0.05),
+            blurRadius: 12.r, offset: Offset(0, 4.h)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 4.r, offset: Offset(0, 2.h)),
+        ]),
       child: Column(
         children: [
-          // Shield badge
+          // Icon box with badge
           Stack(
+            clipBehavior: Clip.none,
             alignment: Alignment.center,
             children: [
               Container(
-                width: 48.w, height: 48.w,
+                width: 52.w, height: 52.w,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft, end: Alignment.bottomRight,
-                    colors: [ach.color.withValues(alpha: 0.15), ach.color.withValues(alpha: 0.05)]),
-                  borderRadius: BorderRadius.circular(14.r),
-                  border: Border.all(color: ach.color.withValues(alpha: 0.2))),
-                child: Center(child: Text(ach.icon, style: TextStyle(fontSize: 22.sp))),
+                  color: ach.color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16.r),
+                  border: Border.all(color: ach.color.withValues(alpha: 0.15))),
+                child: Center(child: Text(ach.icon, style: TextStyle(fontSize: 24.sp))),
               ),
               Positioned(
-                bottom: 0, right: 0,
+                bottom: -4.w, right: -4.w,
                 child: Container(
-                  width: 20.w, height: 20.w,
+                  width: 22.w, height: 22.w,
                   decoration: BoxDecoration(
                     color: ach.color,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2.w)),
+                    border: Border.all(color: Colors.white, width: 2.5.w),
+                    boxShadow: [BoxShadow(
+                      color: ach.color.withValues(alpha: 0.3),
+                      blurRadius: 4.r, offset: Offset(0, 2.h))]),
                   child: Center(child: Text('${ach.value}',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 8.sp, fontWeight: FontWeight.w900, color: Colors.white))),
+                      fontSize: 9.sp, fontWeight: FontWeight.w900, color: Colors.white))),
                 ),
               ),
             ],
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: 14.h),
           Text(ach.title,
             textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 10.sp, fontWeight: FontWeight.w700, color: AppColors.textPrimary, height: 1.2)),
-          SizedBox(height: 2.h),
+              fontSize: 10.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary, height: 1.25)),
+          SizedBox(height: 4.h),
           Text(ach.subtitle,
             textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis,
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 8.sp, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
+              fontSize: 8.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
         ],
       ),
     );

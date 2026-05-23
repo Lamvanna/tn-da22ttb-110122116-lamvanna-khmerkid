@@ -26,6 +26,15 @@ class StorageService {
     await setStars(current + amount);
   }
 
+  Future<bool> spendStars(int amount) async {
+    final current = getStars();
+    if (current >= amount) {
+      await setStars(current - amount);
+      return true;
+    }
+    return false;
+  }
+
   int getXp() => _prefs?.getInt(_keyXp) ?? 0;
   Future<void> addXp(int amount) async {
     final current = getXp();
@@ -151,6 +160,19 @@ class StorageService {
     final current = scores[gameName] ?? 0;
     if (score > current) scores[gameName] = score;
     await _prefs?.setString(_keyGameScores, jsonEncode(scores));
+  }
+
+  // ─── SHOP ITEMS ──────────────────────────────────────────────
+  static const _keyPurchasedItems = 'purchased_items';
+
+  Set<String> getPurchasedItems() {
+    return _prefs?.getStringList(_keyPurchasedItems)?.toSet() ?? {};
+  }
+
+  Future<void> addPurchasedItem(String itemKey) async {
+    final set = getPurchasedItems();
+    set.add(itemKey);
+    await _prefs?.setStringList(_keyPurchasedItems, set.toList());
   }
 
   // ─── SETTINGS ────────────────────────────────────────────────

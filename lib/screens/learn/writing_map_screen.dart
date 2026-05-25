@@ -139,47 +139,47 @@ class _WritingMapScreenState extends State<WritingMapScreen>
         SafeArea(
           bottom: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 6, 16, 18),
+            padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
             child: Column(children: [
               Row(children: [
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Container(
-                    width: 40, height: 40,
+                    width: 36, height: 36,
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(13),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.white.withValues(alpha: 0.12))),
-                    child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20)),
+                    child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 18)),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
                 Expanded(child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Tập viết Khmer',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
-                    const SizedBox(height: 2),
+                        fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
+                    const SizedBox(height: 1),
                     Text('$_doneCount/${_lessons.length} đã hoàn thành',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12, fontWeight: FontWeight.w600,
+                        fontSize: 11, fontWeight: FontWeight.w600,
                         color: Colors.white.withValues(alpha: 0.8))),
                   ],
                 )),
                 Container(
-                  width: 46, height: 46,
+                  width: 38, height: 38,
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(14)),
-                  child: const Center(child: Text('✍️', style: TextStyle(fontSize: 24)))),
+                    borderRadius: BorderRadius.circular(12)),
+                  child: const Center(child: Text('✍️', style: TextStyle(fontSize: 20)))),
               ]),
-              const SizedBox(height: 14),
+              const SizedBox(height: 8),
               Row(children: [
                 Expanded(child: Container(
-                  height: 10,
+                  height: 6,
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(6)),
+                    borderRadius: BorderRadius.circular(4)),
                   child: Stack(children: [
                     FractionallySizedBox(
                       alignment: Alignment.centerLeft,
@@ -188,20 +188,20 @@ class _WritingMapScreenState extends State<WritingMapScreen>
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             colors: [Colors.white, Color(0xFFE0F0E0)]),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(4),
                           boxShadow: [BoxShadow(
                             color: Colors.white.withValues(alpha: 0.5),
-                            blurRadius: 8)])))]),
+                            blurRadius: 6)])))]),
                 )),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8)),
+                    borderRadius: BorderRadius.circular(6)),
                   child: Text('$pct%',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white))),
+                      fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white))),
               ]),
             ]),
           ),

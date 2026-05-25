@@ -191,46 +191,42 @@ class _LetterMapViewState extends State<LetterMapView>
           ),
           // Mascot elephant
           Positioned(
-            right: 10.w,
-            bottom: -10.h,
+            right: 0,
+            bottom: -2.h,
             child: Image.asset(
               'image/Voi nguyên âm.png',
-              width: 115.w,
-              height: 115.w,
+              width: 100.w,
+              height: 100.w,
               fit: BoxFit.contain,
             ),
           ),
           SafeArea(
             bottom: false,
-            child: Transform.translate(
-              offset: Offset(0, -5.h),
-              child: Padding(
-              padding: EdgeInsets.fromLTRB(16.w, 0, 105.w, 2.h),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16.w, 2.h, 105.w, 4.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Row: Back + Title
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Padding(
-                        padding: EdgeInsets.only(top: 8.h),
-                        child: GestureDetector(
-                          onTap: widget.onBack,
-                          child: Container(
-                            width: 36.w,
-                            height: 36.w,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withValues(alpha: 0.15),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.12),
-                              ),
+                      GestureDetector(
+                        onTap: widget.onBack,
+                        child: Container(
+                          width: 36.w,
+                          height: 36.w,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.15),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.12),
                             ),
-                            child: Icon(
-                              Icons.arrow_back_rounded,
-                              color: Colors.white,
-                              size: 20.w,
-                            ),
+                          ),
+                          child: Icon(
+                            Icons.arrow_back_rounded,
+                            color: Colors.white,
+                            size: 20.w,
                           ),
                         ),
                       ),
@@ -241,7 +237,7 @@ class _LetterMapViewState extends State<LetterMapView>
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 24.sp,
+                            fontSize: 20.sp,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
                           ),
@@ -251,7 +247,7 @@ class _LetterMapViewState extends State<LetterMapView>
                   ),
                   SizedBox(height: 0.h),
                   Padding(
-                    padding: EdgeInsets.only(left: 52.w),
+                    padding: EdgeInsets.only(left: 48.w),
                     child: Text(
                       '$_doneCount/$_totalLessons đã hoàn thành',
                       style: GoogleFonts.plusJakartaSans(
@@ -261,63 +257,62 @@ class _LetterMapViewState extends State<LetterMapView>
                       ),
                     ),
                   ),
-                  SizedBox(height: 6.h),
+                  SizedBox(height: 4.h),
                   // Progress bar
                   Padding(
-                    padding: EdgeInsets.only(left: 52.w, right: 80.w),
+                    padding: EdgeInsets.only(left: 48.w),
                     child: Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: 10.h,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.18),
-                            borderRadius: BorderRadius.circular(6.r),
-                          ),
-                          child: Stack(
-                            children: [
-                              FractionallySizedBox(
-                                alignment: Alignment.centerLeft,
-                                widthFactor: progress.clamp(0.0, 1.0),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFF66BB6A),
-                                        Color(0xFF43A047),
+                      children: [
+                        Expanded(
+                          child: Container(
+                            height: 6.h,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(4.r),
+                            ),
+                            child: Stack(
+                              children: [
+                                FractionallySizedBox(
+                                  alignment: Alignment.centerLeft,
+                                  widthFactor: progress.clamp(0.0, 1.0),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          Color(0xFF66BB6A),
+                                          Color(0xFF43A047),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(4.r),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(
+                                            0xFF43A047,
+                                          ).withValues(alpha: 0.5),
+                                          blurRadius: 6,
+                                        ),
                                       ],
                                     ),
-                                    borderRadius: BorderRadius.circular(6.r),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(
-                                          0xFF43A047,
-                                        ).withValues(alpha: 0.5),
-                                        blurRadius: 8,
-                                      ),
-                                    ],
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      SizedBox(width: 10.w),
-                      Text(
-                        '$pct%',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
+                        SizedBox(width: 8.w),
+                        Text(
+                          '$pct%',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
             ),
           ),
         ],

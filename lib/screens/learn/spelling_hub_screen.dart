@@ -10,12 +10,36 @@ import 'spelling_map_screen.dart';
 import 'closed_syllable_map_screen.dart';
 import 'coeng_map_screen.dart';
 
+import '../../services/score_service.dart';
+
 /// Màn trung gian — chọn loại Ghép vần.
 ///   1. Phụ âm + Nguyên âm     → SpellingMapScreen
 ///   2. Phụ âm + Phụ âm + dấu ់  → ClosedSyllableMapScreen
 ///   3. Phụ âm có chân (coeng ្) → CoengMapScreen
-class SpellingHubScreen extends StatelessWidget {
+class SpellingHubScreen extends StatefulWidget {
   const SpellingHubScreen({super.key});
+
+  @override
+  State<SpellingHubScreen> createState() => _SpellingHubScreenState();
+}
+
+class _SpellingHubScreenState extends State<SpellingHubScreen> {
+  ScoreService? _score;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadScore();
+  }
+
+  Future<void> _loadScore() async {
+    final s = await ScoreService.getInstance();
+    if (mounted) {
+      setState(() {
+        _score = s;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,9 +49,9 @@ class SpellingHubScreen extends StatelessWidget {
         title: 'Phụ âm + Nguyên âm',
         subtitle: 'Ghép phụ âm với nguyên âm cơ bản',
         example: 'ក + ា = កា',
-        icon: Icons.spellcheck_rounded,
-        color: const Color(0xFFAA00FF),
-        gradient: const [Color(0xFFB833FF), Color(0xFF7C00CC)],
+        imagePath: 'image/Học phụ âm và nguyên âm.png',
+        color: const Color(0xFF7F39FB),
+        gradient: const [Color(0xFF9F6BFF), Color(0xFF6B21A8)],
         ready: true,
         onTap: () => Navigator.push(
             context, AppPageRoute(page: const SpellingMapScreen())),
@@ -36,10 +60,10 @@ class SpellingHubScreen extends StatelessWidget {
         index: 2,
         title: 'Phụ âm + Phụ âm + dấu ់',
         subtitle: 'Ghép vần đóng với dấu chặt cụt ់',
-        example: 'ក + ត់ = កត់',
-        icon: Icons.merge_type_rounded,
-        color: const Color(0xFF1E88E5),
-        gradient: const [Color(0xFF42A5F5), Color(0xFF1565C0)],
+        example: 'ក + ន + ់ = កន់',
+        imagePath: 'image/Phụ âm va phụ âm.png',
+        color: const Color(0xFF0084FF),
+        gradient: const [Color(0xFF339CFF), Color(0xFF0056B3)],
         ready: true,
         onTap: () => Navigator.push(
             context, AppPageRoute(page: const ClosedSyllableMapScreen())),
@@ -48,10 +72,10 @@ class SpellingHubScreen extends StatelessWidget {
         index: 3,
         title: 'Phụ âm có chân ្',
         subtitle: 'Ghép vần với phụ âm chân (coeng)',
-        example: 'ផ្ + កា = ផ្កា',
-        icon: Icons.account_tree_rounded,
-        color: const Color(0xFFFF6D00),
-        gradient: const [Color(0xFFFFB300), Color(0xFFE65100)],
+        example: 'ក + ្ក = ក្ក',
+        imagePath: 'image/phụ âm có chân.png',
+        color: const Color(0xFFF97316),
+        gradient: const [Color(0xFFFB923C), Color(0xFFC2410C)],
         ready: true,
         onTap: () => Navigator.push(
             context, AppPageRoute(page: const CoengMapScreen())),
@@ -170,26 +194,16 @@ class SpellingHubScreen extends StatelessWidget {
             ),
           ),
 
-          // ─── Mascot elephant ──
-          Positioned(
-            right: 10.w, bottom: -10.h,
-            child: Image.asset(
-              'assets/images/elephant_mascot.png',
-              width: 95.w, height: 95.w,
-              fit: BoxFit.contain,
-              errorBuilder: (_, _, _) => const SizedBox.shrink(),
-            ),
-          ),
-
           // ─── Content ──
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16.w, 8.h, 95.w, 18.h),
+              padding: EdgeInsets.fromLTRB(16.w, 18.h, 80.w, 18.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       // Back button — chuẩn của app
                       GestureDetector(
@@ -225,24 +239,87 @@ class SpellingHubScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  SizedBox(height: 4.h),
-                  Padding(
-                    padding: EdgeInsets.only(left: 48.w),
-                    child: Text(
-                      'Chọn loại ghép vần để học',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.85),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
           ),
+
+          // Stats positioned beautifully at top right of the header!
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 2.h,
+            right: 16.w,
+            child: _buildHeaderStats(),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildHeaderStats() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // Stars
+        Container(
+          width: 60.w,
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.08),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('⭐', style: TextStyle(fontSize: 12.sp)),
+              SizedBox(width: 4.w),
+              Text(
+                '1000',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  height: 1.0,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 5.h),
+        // Streak
+        Container(
+          width: 60.w,
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.08),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('🔥', style: TextStyle(fontSize: 12.sp)),
+              SizedBox(width: 4.w),
+              Text(
+                '${_score?.streak ?? 0}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  height: 1.0,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -288,7 +365,7 @@ class _SpellingMode {
   final String title;
   final String subtitle;
   final String example;
-  final IconData icon;
+  final String imagePath;
   final Color color;
   final List<Color> gradient;
   final bool ready;
@@ -299,7 +376,7 @@ class _SpellingMode {
     required this.title,
     required this.subtitle,
     required this.example,
-    required this.icon,
+    required this.imagePath,
     required this.color,
     required this.gradient,
     required this.ready,
@@ -331,28 +408,36 @@ class _ModeCard extends StatelessWidget {
             // ─── Card body ─────────────────────────────────────
             Ink(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: mode.index == 1
+                    ? const Color(0xFFFAF7FF)
+                    : mode.index == 2
+                        ? const Color(0xFFF2F8FF)
+                        : const Color(0xFFFFF9F2),
                 borderRadius: BorderRadius.circular(22.r),
                 border: Border.all(
-                  color: mode.color.withValues(alpha: ready ? 0.20 : 0.10),
-                  width: 1,
+                  color: mode.index == 1
+                      ? const Color(0xFFEAD8FF)
+                      : mode.index == 2
+                          ? const Color(0xFFD0E3FF)
+                          : const Color(0xFFFFE3C6),
+                  width: 1.5.w,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: mode.color.withValues(alpha: ready ? 0.14 : 0.06),
-                    blurRadius: 20.r,
-                    offset: Offset(0, 8.h),
+                    color: mode.color.withValues(alpha: ready ? 0.08 : 0.04),
+                    blurRadius: 16.r,
+                    offset: Offset(0, 6.h),
                   ),
                 ],
               ),
               child: Padding(
-                padding: EdgeInsets.fromLTRB(16.w, 22.h, 16.w, 22.h),
+                padding: EdgeInsets.fromLTRB(10.w, 16.h, 10.w, 16.h),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // ─── Icon tile (gradient) ──
                     _buildIconTile(ready),
-                    SizedBox(width: 16.w),
+                    SizedBox(width: 10.w),
 
                     // ─── Text content ──
                     Expanded(
@@ -363,16 +448,16 @@ class _ModeCard extends StatelessWidget {
                           Padding(
                             // chừa chỗ cho badge "Sắp có" ở góc trên phải
                             padding: EdgeInsets.only(
-                                right: ready ? 0 : 70.w),
+                                right: ready ? 0 : 30.w),
                             child: Text(
                               mode.title,
-                              maxLines: 2,
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.plusJakartaSans(
-                                fontSize: 15.sp,
+                                fontSize: 13.5.sp,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textPrimary,
-                                letterSpacing: -0.2,
+                                letterSpacing: -0.4,
                                 height: 1.2,
                               ),
                             ),
@@ -384,7 +469,7 @@ class _ModeCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12.sp,
+                              fontSize: 11.5.sp,
                               fontWeight: FontWeight.w500,
                               color: AppColors.textSecondary,
                               height: 1.4,
@@ -394,21 +479,20 @@ class _ModeCard extends StatelessWidget {
                           // Example chip
                           Container(
                             padding: EdgeInsets.symmetric(
-                                horizontal: 12.w, vertical: 7.h),
+                                horizontal: 10.w, vertical: 6.h),
                             decoration: BoxDecoration(
-                              color: mode.color.withValues(
-                                  alpha: ready ? 0.10 : 0.06),
-                              borderRadius: BorderRadius.circular(12.r),
-                              border: Border.all(
                                 color: mode.color.withValues(
-                                    alpha: ready ? 0.18 : 0.08),
-                                width: 1,
-                              ),
-                            ),
+                                    alpha: ready ? 0.12 : 0.06),
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(
+                                  color: mode.color.withValues(
+                                      alpha: ready ? 0.28 : 0.10),
+                                  width: 1,
+                                )),
                             child: Text(
                               mode.example,
                               style: GoogleFonts.battambang(
-                                fontSize: 14.sp,
+                                fontSize: 13.5.sp,
                                 fontWeight: FontWeight.w700,
                                 color: ready
                                     ? mode.color
@@ -420,24 +504,38 @@ class _ModeCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    SizedBox(width: 8.w),
+                    SizedBox(width: 6.w),
 
                     // ─── Chevron / Lock ──
                     Container(
-                      width: 38.w, height: 38.w,
+                      width: 32.w,
+                      height: 32.w,
                       decoration: BoxDecoration(
-                        color: ready
-                            ? mode.color.withValues(alpha: 0.12)
-                            : const Color(0xFFEEF1F8),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: ready
+                              ? mode.gradient
+                              : [const Color(0xFFB0B7C5), const Color(0xFF8390A8)],
+                        ),
                         shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: (ready ? mode.color : const Color(0xFF8390A8))
+                                .withValues(alpha: 0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                        border: Border.all(color: Colors.white, width: 2),
                       ),
                       alignment: Alignment.center,
                       child: Icon(
                         ready
                             ? Icons.chevron_right_rounded
                             : Icons.lock_rounded,
-                        color: ready ? mode.color : const Color(0xFF8390A8),
-                        size: ready ? 24.sp : 18.sp,
+                        color: Colors.white,
+                        size: ready ? 18.sp : 14.sp,
                       ),
                     ),
                   ],
@@ -492,7 +590,7 @@ class _ModeCard extends StatelessWidget {
 
   Widget _buildIconTile(bool ready) {
     return Container(
-      width: 76.w, height: 76.w,
+      width: 120.w, height: 100.h,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -505,7 +603,7 @@ class _ModeCard extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: (ready ? mode.color : const Color(0xFF8390A8))
-                .withValues(alpha: 0.30),
+                .withValues(alpha: 0.25),
             blurRadius: 14.r,
             offset: Offset(0, 6.h),
           ),
@@ -514,21 +612,40 @@ class _ModeCard extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Icon(mode.icon, color: Colors.white, size: 36.sp),
+          Padding(
+            padding: EdgeInsets.fromLTRB(6.w, 5.h, 6.w, 5.h),
+            child: Image.asset(
+              mode.imagePath,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Icon(
+                Icons.image_not_supported_rounded,
+                color: Colors.white,
+                size: 30.sp,
+              ),
+            ),
+          ),
           // Badge số thứ tự
           Positioned(
-            top: 5.h, left: 5.w,
+            top: 6.h, left: 6.w,
             child: Container(
-              width: 20.w, height: 20.w,
-              decoration: const BoxDecoration(
+              width: 24.w, height: 24.w,
+              decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
+                border: Border.all(color: mode.color.withValues(alpha: 0.3), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
               ),
               alignment: Alignment.center,
               child: Text(
                 '${mode.index}',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w900,
                   color: ready ? mode.color : const Color(0xFF8390A8),
                   height: 1.0,

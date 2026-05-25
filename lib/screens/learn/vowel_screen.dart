@@ -162,56 +162,56 @@ class _VowelScreenState extends State<VowelScreen>
               color: Colors.white.withValues(alpha: 0.04)))),
         // Mascot elephant
         Positioned(
-          right: 0, bottom: -15.h,
+          right: 0, bottom: -2.h,
           child: Image.asset('image/Voi nguyên âm.png',
             width: 100.w, height: 100.w, fit: BoxFit.contain)),
         // Content
         SafeArea(
           bottom: false,
           child: Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 0, 105.w, 6.h),
+            padding: EdgeInsets.fromLTRB(16.w, 2.h, 105.w, 4.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Row: Back + Title
-                Row(children: [
-                  Padding(
-                    padding: EdgeInsets.only(top: 8.h),
-                    child: GestureDetector(
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    GestureDetector(
                       onTap: widget.onBack,
                       child: Container(
-                        width: 40.w, height: 40.w,
+                        width: 36.w, height: 36.w,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.white.withValues(alpha: 0.15),
                           border: Border.all(color: Colors.white.withValues(alpha: 0.12))),
                         child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w)),
                     ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Flexible(child: Text('Học nguyên âm Khmer',
-                    maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 20.sp, fontWeight: FontWeight.w800, color: Colors.white))),
-                ]),
+                    SizedBox(width: 12.w),
+                    Flexible(child: Text('Học nguyên âm Khmer',
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 20.sp, fontWeight: FontWeight.w800, color: Colors.white))),
+                  ],
+                ),
                 SizedBox(height: 0.h),
                 Padding(
-                  padding: EdgeInsets.only(left: 52.w),
+                  padding: EdgeInsets.only(left: 48.w),
                   child: Text('$_doneCount/${_vowels.length} đã hoàn thành',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13.sp, fontWeight: FontWeight.w600,
                       color: Colors.white.withValues(alpha: 0.85))),
                 ),
-                SizedBox(height: 6.h),
+                SizedBox(height: 4.h),
                 // Progress bar
                 Padding(
-                  padding: EdgeInsets.only(left: 52.w),
+                  padding: EdgeInsets.only(left: 48.w),
                   child: Row(children: [
                     Expanded(child: Container(
-                      height: 10.h,
+                      height: 6.h,
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(6.r)),
+                        borderRadius: BorderRadius.circular(4.r)),
                       child: Stack(children: [
                         FractionallySizedBox(
                           alignment: Alignment.centerLeft,
@@ -220,15 +220,15 @@ class _VowelScreenState extends State<VowelScreen>
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: [Color(0xFF66BB6A), Color(0xFF43A047)]),
-                              borderRadius: BorderRadius.circular(6.r),
+                              borderRadius: BorderRadius.circular(4.r),
                               boxShadow: [BoxShadow(
                                 color: const Color(0xFF43A047).withValues(alpha: 0.5),
-                                blurRadius: 8)])))]),
+                                blurRadius: 6)])))]),
                     )),
-                    SizedBox(width: 10.w),
+                    SizedBox(width: 8.w),
                     Text('$pct%',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14.sp, fontWeight: FontWeight.w800, color: Colors.white)),
+                        fontSize: 13.sp, fontWeight: FontWeight.w800, color: Colors.white)),
                   ]),
                 ),
               ],

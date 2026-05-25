@@ -8,6 +8,9 @@ import 'writing_map_screen.dart';
 import 'reading_screen.dart';
 import 'vowel_screen.dart';
 import 'vocabulary_screen.dart';
+import 'consonant_series_screen.dart';
+import 'number_map_screen.dart';
+import 'diacritical_map_screen.dart';
 import '../../services/score_service.dart';
 import '../../widgets/app_page_route.dart';
 
@@ -21,6 +24,9 @@ class LearnScreen extends StatefulWidget {
 class _LearnScreenState extends State<LearnScreen> {
   bool _showLetterMap = false;
   bool _showVowels = false;
+  bool _showConsonantSeries = false;
+  bool _showNumbers = false;
+  bool _showDiacriticals = false;
   ScoreService? _score;
 
   @override
@@ -42,6 +48,15 @@ class _LearnScreenState extends State<LearnScreen> {
     if (_showVowels) {
       return VowelScreen(onBack: () => setState(() => _showVowels = false));
     }
+    if (_showConsonantSeries) {
+      return ConsonantSeriesScreen(onBack: () => setState(() => _showConsonantSeries = false));
+    }
+    if (_showNumbers) {
+      return NumberMapScreen(onBack: () => setState(() => _showNumbers = false));
+    }
+    if (_showDiacriticals) {
+      return DiacriticalMapScreen(onBack: () => setState(() => _showDiacriticals = false));
+    }
     return _buildOverview(context);
   }
 
@@ -57,23 +72,35 @@ class _LearnScreenState extends State<LearnScreen> {
         icon: Icons.record_voice_over_rounded, img: 'image/Nguyên âm.png', prog: vp, total: 18, done: _score?.vowelsLearned ?? 0,
         color: const Color(0xFFFF1744), stars: 10, btn: 'Bắt đầu học',
         onTap: () => setState(() => _showVowels = true)),
-      _Zone(n: 3, title: 'Ghép vần', sub: 'Ghép âm thành tiếng và từ',
+      _Zone(n: 3, title: 'Học phụ âm o-ô', sub: 'Phân biệt 2 nhóm phụ âm hàng o và hàng ô',
+        icon: Icons.text_fields_rounded, img: 'image/Học phụ âm o và ô.png', prog: 0, total: 33, done: 0,
+        color: const Color(0xFF43A047), stars: 10, btn: 'Bắt đầu học',
+        onTap: () => setState(() => _showConsonantSeries = true)),
+      _Zone(n: 4, title: 'Học số Khmer', sub: 'Học chữ số Khmer từ ០ đến ៩',
+        icon: Icons.calculate_rounded, img: 'image/Học số.png', prog: 0, total: 10, done: 0,
+        color: const Color(0xFF00ACC1), stars: 10, btn: 'Bắt đầu học',
+        onTap: () => setState(() => _showNumbers = true)),
+      _Zone(n: 5, title: 'Ghép vần', sub: 'Ghép âm thành tiếng và từ',
         icon: Icons.spellcheck_rounded, img: 'image/Đánh vần.png', prog: 0, total: 30, done: 0,
         color: const Color(0xFFAA00FF), stars: 15, btn: 'Bắt đầu học',
         onTap: () => Navigator.push(context, AppPageRoute(page: const SpellingHubScreen()))),
-      _Zone(n: 4, title: 'Tập đọc', sub: 'Làm quen và đọc câu đơn giản',
+      _Zone(n: 6, title: 'Học dấu', sub: 'Học các dấu Khmer ់ ំ ះ ៈ và các dấu thường dùng',
+        icon: Icons.format_shapes_rounded, img: 'image/Học dấu.png', prog: 0, total: 12, done: 0,
+        color: const Color(0xFFFFD600), stars: 10, btn: 'Bắt đầu học',
+        onTap: () => setState(() => _showDiacriticals = true)),
+      _Zone(n: 7, title: 'Tập đọc', sub: 'Làm quen và đọc câu đơn giản',
         icon: Icons.auto_stories_rounded, img: 'image/Tập đọc.png', prog: 0, total: 28, done: 0,
         color: const Color(0xFF00B0FF), stars: 15, btn: 'Bắt đầu học',
         onTap: () => Navigator.push(context, AppPageRoute(page: const ReadingScreen()))),
-      _Zone(n: 5, title: 'Luyện viết', sub: 'Tập viết chữ Khmer đúng nét',
+      _Zone(n: 8, title: 'Luyện viết', sub: 'Tập viết chữ Khmer đúng nét',
         icon: Icons.draw_rounded, img: 'image/Tập viết.png', prog: 0, total: 30, done: 0,
         color: const Color(0xFFFF9100), stars: 15, btn: 'Bắt đầu học',
         onTap: () => Navigator.push(context, AppPageRoute(page: const WritingMapScreen()))),
-      _Zone(n: 6, title: 'Đọc hiểu', sub: 'Hiểu nội dung và trả lời câu hỏi',
+      _Zone(n: 9, title: 'Đọc hiểu', sub: 'Hiểu nội dung và trả lời câu hỏi',
         icon: Icons.menu_book_rounded, img: 'image/Đọc hiểu.png', prog: 0, total: 25, done: 0,
         color: const Color(0xFFFF4081), stars: 20, btn: 'Sắp ra mắt', isComingSoon: true,
         onTap: () => _showComingSoon(context)),
-      _Zone(n: 7, title: 'Khám phá văn hóa', sub: 'Tìm hiểu văn hóa Khmer',
+      _Zone(n: 10, title: 'Khám phá văn hóa', sub: 'Tìm hiểu văn hóa Khmer',
         icon: Icons.temple_buddhist_rounded, img: 'image/Khám phá văn hóa.png', prog: 0, total: 20, done: 0,
         color: const Color(0xFF536DFE), stars: 20, btn: 'Sắp ra mắt', isComingSoon: true,
         onTap: () => _showComingSoon(context)),
@@ -125,62 +152,159 @@ class _LearnScreenState extends State<LearnScreen> {
   Widget _buildHeader() {
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [AppColors.headerMid, AppColors.headerEnd]),
+        gradient: const LinearGradient(
+          begin: Alignment(-0.5, -1),
+          end: Alignment(0.5, 1),
+          colors: [
+            Color(0xFF1565C0),
+            Color(0xFF42A5F5),
+            Color(0xFF29B6F6),
+          ],
+        ),
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(20.r), bottomRight: Radius.circular(20.r))),
-      child: SafeArea(bottom: false, child: Padding(
-        padding: EdgeInsets.fromLTRB(16.w, 6.h, 16.w, 12.h),
-        child: Row(children: [
-          // Stars badge - white card
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16.r),
-              boxShadow: [BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 8.r, offset: Offset(0, 2.h))]),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                Image.asset('image/sao.png', width: 18.w, height: 18.h),
-                SizedBox(width: 5.w),
-                Text('${_score?.totalStars ?? 0}',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-              ]),
-              SizedBox(height: 2.h),
-              Text('Điểm của bạn', style: GoogleFonts.plusJakartaSans(
-                fontSize: 10.sp, fontWeight: FontWeight.w600, color: const Color(0xFF616161))),
-            ]),
+          bottomLeft: Radius.circular(24.r),
+          bottomRight: Radius.circular(24.r),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1565C0).withValues(alpha: 0.35),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
-          const Spacer(),
-          Text('Lộ trình học', style: GoogleFonts.plusJakartaSans(
-            fontSize: 22.sp, fontWeight: FontWeight.w900, color: Colors.white)),
-          const Spacer(),
-          // Streak badge - white card
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16.r),
-              boxShadow: [BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 8.r, offset: Offset(0, 2.h))]),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                Image.asset('image/Lửa chuổi.png', width: 18.w, height: 18.h),
-                SizedBox(width: 5.w),
-                Text('${_score?.streak ?? 0}',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-              ]),
-              SizedBox(height: 2.h),
-              Text('Chuỗi ngày', style: GoogleFonts.plusJakartaSans(
-                fontSize: 10.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-            ]),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // ─── Decorative circles ──
+          Positioned(
+            right: -40.w, top: -30.h,
+            child: Container(
+              width: 120.w, height: 120.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.06),
+              ),
+            ),
           ),
-        ]),
-      )),
+          Positioned(
+            left: -25.w, bottom: -20.h,
+            child: Container(
+              width: 80.w, height: 80.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.04),
+              ),
+            ),
+          ),
+
+          // ─── Content ──
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(80.w, 6.h, 80.w, 34.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          'Lộ trình học',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 22.sp,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Stats positioned beautifully at top right of the header!
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 2.h,
+            right: 16.w,
+            child: _buildHeaderStats(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderStats() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // Stars
+        Container(
+          width: 60.w,
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.08),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('⭐', style: TextStyle(fontSize: 12.sp)),
+              SizedBox(width: 4.w),
+              Text(
+                '1000',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  height: 1.0,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 5.h),
+        // Streak
+        Container(
+          width: 60.w,
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.08),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('🔥', style: TextStyle(fontSize: 12.sp)),
+              SizedBox(width: 4.w),
+              Text(
+                '${_score?.streak ?? 0}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  height: 1.0,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

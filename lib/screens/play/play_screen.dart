@@ -10,6 +10,8 @@ import 'sentence_builder_game_screen.dart';
 import 'math_garden_game_screen.dart';
 import 'sub_consonant_game_screen.dart';
 import 'board_game_screen.dart';
+import 'letter_catch_game_screen.dart';
+import 'elephant_run_game_screen.dart';
 
 /// Màn hình Chơi - Lộ trình thế giới trò chơi tiểu học (đồng bộ hoàn hảo với trang Học)
 class PlayScreen extends StatefulWidget {
@@ -51,9 +53,6 @@ class _PlayScreenState extends State<PlayScreen> {
               child: Column(
                 children: [
                   SizedBox(height: 16.h),
-                  // Thẻ làm nổi bật Game tiếp theo cần chinh phục
-                  _buildContinueCard(nextGame),
-                  SizedBox(height: 20.h),
                   // Danh sách game dưới dạng Timeline uốn lượn liên kết
                   ...games.map((g) => _buildGameRow(g, isLast: g.n == games.length)),
                   SizedBox(height: 8.h),
@@ -72,11 +71,26 @@ class _PlayScreenState extends State<PlayScreen> {
     return [
       _GameZone(
         n: 1,
+        title: 'Bắt chữ Khmer',
+        sub: 'Khmer Letter Catch',
+        icon: Icons.catching_pokemon_rounded,
+        img: 'image/Bắt chữ Khmer.png',
+        prog: 0.0,
+        color: const Color(0xFF1A237E),
+        stars: 10,
+        btn: 'Chơi ngay',
+        objective: 'Ôn tập cả phụ âm và nguyên âm Khmer bằng cách ghép chúng thành từ có nghĩa trong thời gian giới hạn.',
+        gameplay: 'Một từ tiếng Việt (nghĩa) hiện lên, bé phải chọn đúng phụ âm (bong bóng xanh) và nguyên âm (đỏ) để ghép thành từ Khmer. Ghép đúng liên tiếp tạo Combo nhân điểm, sai mất mạng!',
+        importance: 'Giúp trẻ hệ thống hóa kiến thức về cả phụ âm và nguyên âm, rèn phản xạ nhanh và kỹ năng ghép vần cơ bản.',
+        targetScreen: const LetterCatchGameScreen(),
+      ),
+      _GameZone(
+        n: 2,
         title: 'Giải cứu thú rừng',
         sub: 'Khmer Word Search & Rescue',
         icon: Icons.forest_rounded,
-        img: 'image/Trò chơi.png',
-        prog: 0.7, // Demo progress
+        img: 'image/Giải cứu thú rừng.png',
+        prog: 0.7,
         color: const Color(0xFF2E7D32),
         stars: 10,
         btn: 'Chơi ngay',
@@ -86,27 +100,27 @@ class _PlayScreenState extends State<PlayScreen> {
         targetScreen: const WordSearchGameScreen(),
       ),
       _GameZone(
-        n: 2,
+        n: 3,
         title: 'Đảo quốc Ngữ pháp',
         sub: 'Khmer Sentence Builder Island',
         icon: Icons.explore_rounded,
-        img: 'image/Thư viện.png',
-        prog: 0.4, // Demo progress
+        img: 'image/Đảo quốc Ngữ pháp.png',
+        prog: 0.4,
         color: const Color(0xFF0288D1),
         stars: 15,
         btn: 'Chơi ngay',
         objective: 'Học cấu trúc câu, ngữ pháp tiếng Khmer cơ bản (Chủ ngữ - Động từ - Tân ngữ) và cách sử dụng từ loại.',
-        gameplay: 'Bé hóa thân thành thuyền trưởng phiêu lưu qua các đảo giải mã mật thư đá cổ. Sắp xếp câu tiếng Khmer bị xáo trộn vị trí các từ (ví dụ: Configs: ខ្ញុំ [Tôi] / ទៅ [đi] / សាលារៀន [trường học]) bằng cách kéo thả đá chữ vào đúng vị trí để hoàn thành câu.',
+        gameplay: 'Bé hóa thân thành thuyền trưởng phiêu lưu qua các đảo giải mã mật thư đá cổ. Sắp xếp câu tiếng Khmer bị xáo trộn vị trí các từ bằng cách kéo thả đá chữ vào đúng vị trí để hoàn thành câu.',
         importance: 'Giai đoạn tiểu học bắt đầu viết câu ngắn. Trò chơi này rèn luyện tư duy logic về ngữ pháp, giúp trẻ hiểu rõ vị trí của các từ loại trong câu.',
         targetScreen: const SentenceBuilderGameScreen(),
       ),
       _GameZone(
-        n: 3,
+        n: 4,
         title: 'Khu vườn Toán học',
         sub: 'Khmer Math & Number Garden',
         icon: Icons.calculate_rounded,
-        img: 'image/Học.png',
-        prog: 0.2, // Demo progress
+        img: 'image/Khu vườn Toán học.png',
+        prog: 0.2,
         color: const Color(0xFFF57C00),
         stars: 12,
         btn: 'Chơi ngay',
@@ -116,11 +130,11 @@ class _PlayScreenState extends State<PlayScreen> {
         targetScreen: const MathGardenGameScreen(),
       ),
       _GameZone(
-        n: 4,
+        n: 5,
         title: 'Cờ tỷ phú Khmer kỳ thú',
         sub: 'Khmer Adventure Board Game',
         icon: Icons.casino_rounded,
-        img: 'image/Xếp hạng.png',
+        img: 'image/Cờ tỷ phú Khmer kỳ thú.png',
         prog: 0.0,
         color: const Color(0xFFD32F2F),
         stars: 15,
@@ -131,19 +145,34 @@ class _PlayScreenState extends State<PlayScreen> {
         targetScreen: const BoardGameScreen(),
       ),
       _GameZone(
-        n: 5,
+        n: 6,
         title: 'Nhà khảo cổ nhí',
         sub: 'Khmer Sub-consonant Detective',
         icon: Icons.auto_awesome_rounded,
-        img: 'image/Thành tích.png',
+        img: 'image/Nhà khảo cổ nhí.png',
         prog: 0.0,
         color: const Color(0xFF7B1FA2),
         stars: 20,
         btn: 'Chơi ngay',
         objective: 'Ghi nhớ và viết đúng các Chân chữ (Châng) - phần khó nhất và dễ viết sai nhất trong tiếng Khmer cấp độ tiểu học.',
-        gameplay: 'Bé đóng vai nhà khảo cổ đi tìm cổ vật chữ chôn giấu dưới các khối đá. Hệ thống đưa ra từ vựng bị khuyết chân chữ (ví dụ: từ អក្សរ bị mất chân chữ ្ស). Bé dùng kính lúp tìm kiếm và búa gõ khai quật chân chữ đúng.',
+        gameplay: 'Bé đóng vai nhà khảo cổ đi tìm cổ vật chữ chôn giấu dưới các khối đá. Hệ thống đưa ra từ vựng bị khuyết chân chữ. Bé dùng kính lúp tìm kiếm và búa gõ khai quật chân chữ đúng.',
         importance: 'Lên lớp 2, lớp 3 bắt đầu viết từ ghép phức tạp có chân chữ. Trò chơi thám hiểm đầy kịch tính này giúp trẻ ghi nhớ chân chữ vô cùng dễ dàng.',
         targetScreen: const SubConsonantGameScreen(),
+      ),
+      _GameZone(
+        n: 7,
+        title: 'Voi con vượt ải',
+        sub: 'Khmer Consonant Series Runner',
+        icon: Icons.pets_rounded,
+        img: 'image/Voi con vượt ải.png',
+        prog: 0.0,
+        color: const Color(0xFF00ACC1),
+        stars: 15,
+        btn: 'Chơi ngay',
+        objective: 'Luyện phản xạ phân biệt nhanh 33 phụ âm thuộc hai hàng giọng cực kỳ dễ nhầm lẫn: Giọng O (អ hàng 1) và Giọng Ô (អូ hàng 2).',
+        gameplay: 'Voi con thám hiểm vượt cổng rừng xanh. Phụ âm cổ xuất hiện kèm phát âm mẫu. Bé chạm chọn đúng cổng Giọng O (អ) hoặc Giọng Ô (អូ) để Voi con phóng qua an toàn.',
+        importance: 'Phân biệt hàng giọng O và Ô là bước ngoặt quyết định của việc ghép vần tiếng Khmer. Trò chơi giúp hình thành phản xạ thính giác và thị giác vô cùng nhạy bén.',
+        targetScreen: const ElephantRunGameScreen(),
       ),
     ];
   }
@@ -179,120 +208,159 @@ class _PlayScreenState extends State<PlayScreen> {
   Widget _buildHeader() {
     return Container(
       decoration: BoxDecoration(
-        gradient: AppColors.appGradient,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(20.r),
-          bottomRight: Radius.circular(20.r),
+        gradient: const LinearGradient(
+          begin: Alignment(-0.5, -1),
+          end: Alignment(0.5, 1),
+          colors: [
+            Color(0xFF1565C0),
+            Color(0xFF42A5F5),
+            Color(0xFF29B6F6),
+          ],
         ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24.r),
+          bottomRight: Radius.circular(24.r),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1565C0).withValues(alpha: 0.35),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(16.w, 6.h, 16.w, 12.h),
+      child: Stack(
+        children: [
+          // ─── Decorative circles ──
+          Positioned(
+            right: -40.w, top: -30.h,
+            child: Container(
+              width: 120.w, height: 120.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.06),
+              ),
+            ),
+          ),
+          Positioned(
+            left: -25.w, bottom: -20.h,
+            child: Container(
+              width: 80.w, height: 80.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.04),
+              ),
+            ),
+          ),
+
+          // ─── Content ──
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(80.w, 6.h, 80.w, 34.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          'Thế giới trò chơi',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 22.sp,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Stats positioned beautifully at top right of the header!
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 2.h,
+            right: 16.w,
+            child: _buildHeaderStats(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderStats() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // Stars
+        Container(
+          width: 60.w,
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.08),
+              width: 1,
+            ),
+          ),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Stars badge
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 8.r,
-                      offset: Offset(0, 2.h),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Image.asset('image/sao.png', width: 18.w, height: 18.h),
-                        SizedBox(width: 5.w),
-                        Text(
-                          '${_score?.totalStars ?? 0}',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      'Điểm của bạn',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF616161),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
+              Text('⭐', style: TextStyle(fontSize: 12.sp)),
+              SizedBox(width: 4.w),
               Text(
-                'Thế giới trò chơi',
+                '1000', // Temporarily hardcoded for testing!
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 21.sp,
-                  fontWeight: FontWeight.w900,
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w800,
                   color: Colors.white,
-                ),
-              ),
-              const Spacer(),
-              // Streak badge
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 8.r,
-                      offset: Offset(0, 2.h),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Image.asset('image/Lửa chuổi.png', width: 18.w, height: 18.h),
-                        SizedBox(width: 5.w),
-                        Text(
-                          '${_score?.streak ?? 0}',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      'Chuỗi ngày',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                  height: 1.0,
                 ),
               ),
             ],
           ),
         ),
-      ),
+        SizedBox(height: 5.h),
+        // Streak
+        Container(
+          width: 60.w,
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.08),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('🔥', style: TextStyle(fontSize: 12.sp)),
+              SizedBox(width: 4.w),
+              Text(
+                '${_score?.streak ?? 0}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  height: 1.0,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -497,23 +565,25 @@ class _PlayScreenState extends State<PlayScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Game thumbnail
+            // Game thumbnail without frame, larger size
             Container(
-              width: 85.w,
-              height: 90.h,
+              width: 110.w,
+              height: 80.h,
               decoration: BoxDecoration(
-                color: game.color.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(18.r),
+                borderRadius: BorderRadius.circular(14.r),
               ),
               child: game.img != null
                   ? ClipRRect(
-                      borderRadius: BorderRadius.circular(18.r),
-                      child: Padding(
-                        padding: EdgeInsets.all(8.w),
-                        child: Image.asset(game.img!, fit: BoxFit.contain),
-                      ),
+                      borderRadius: BorderRadius.circular(14.r),
+                      child: Image.asset(game.img!, fit: BoxFit.cover),
                     )
-                  : Icon(game.icon, color: game.color, size: 36.sp),
+                  : Container(
+                      decoration: BoxDecoration(
+                        color: game.color.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                      child: Icon(game.icon, color: game.color, size: 36.sp),
+                    ),
             ),
             SizedBox(width: 12.w),
             // Detail content
@@ -522,41 +592,13 @@ class _PlayScreenState extends State<PlayScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          game.title,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF8E1),
-                          borderRadius: BorderRadius.circular(10.r),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Image.asset('image/sao.png', width: 14.w, height: 14.h),
-                            SizedBox(width: 3.w),
-                            Text(
-                              '+${game.stars}',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFFF0A030),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  Text(
+                    game.title,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   SizedBox(height: 3.h),
                   Text(
@@ -568,30 +610,49 @@ class _PlayScreenState extends State<PlayScreen> {
                     ),
                   ),
                   SizedBox(height: 8.h),
-                  // Progress indicators
+                  // Clean borderless Status Row!
                   Row(
                     children: [
-                      Text(
-                        '${(game.prog * 100).toInt()}%',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w700,
-                          color: game.color,
-                        ),
-                      ),
-                      SizedBox(width: 6.w),
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(5.r),
-                          child: LinearProgressIndicator(
-                            value: game.prog,
-                            minHeight: 5.h,
-                            backgroundColor: game.color.withValues(alpha: 0.12),
-                            color: game.color,
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 14.w),
+                      () {
+                        final isComingSoon = game.targetScreen == null;
+                        final isNotStarted = game.prog == 0.0;
+                        final isCompleted = game.prog >= 1.0;
+
+                        String text = 'Đang chinh phục';
+                        Color textColor = const Color(0xFFF57C00);
+                        IconData icon = Icons.trending_up_rounded;
+
+                        if (isComingSoon) {
+                          text = 'Sắp ra mắt';
+                          textColor = Colors.grey.shade500;
+                          icon = Icons.lock_outline_rounded;
+                        } else if (isNotStarted) {
+                          text = 'Chưa chơi';
+                          textColor = Colors.grey.shade500;
+                          icon = Icons.play_circle_outline_rounded;
+                        } else if (isCompleted) {
+                          text = 'Đã hoàn thành';
+                          textColor = const Color(0xFF43A047);
+                          icon = Icons.check_circle_outline_rounded;
+                        }
+
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(icon, size: 14.sp, color: textColor),
+                            SizedBox(width: 4.w),
+                            Text(
+                              text,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5.sp,
+                                fontWeight: FontWeight.w700,
+                                color: textColor,
+                              ),
+                            ),
+                          ],
+                        );
+                      }(),
+                      const Spacer(),
                       GestureDetector(
                         onTap: () => _showGameIntroDialog(context, game),
                         child: Container(

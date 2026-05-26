@@ -22,11 +22,6 @@ class LearnScreen extends StatefulWidget {
 }
 
 class _LearnScreenState extends State<LearnScreen> {
-  bool _showLetterMap = false;
-  bool _showVowels = false;
-  bool _showConsonantSeries = false;
-  bool _showNumbers = false;
-  bool _showDiacriticals = false;
   ScoreService? _score;
 
   @override
@@ -40,62 +35,58 @@ class _LearnScreenState extends State<LearnScreen> {
     if (mounted) setState(() {});
   }
 
+  void _navigateTo(Widget screen) {
+    Navigator.push(
+      context,
+      AppPageRoute(page: screen),
+    ).then((_) {
+      if (mounted) {
+        _loadScore();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_showLetterMap) {
-      return LetterMapView(onBack: () => setState(() => _showLetterMap = false));
-    }
-    if (_showVowels) {
-      return VowelScreen(onBack: () => setState(() => _showVowels = false));
-    }
-    if (_showConsonantSeries) {
-      return ConsonantSeriesScreen(onBack: () => setState(() => _showConsonantSeries = false));
-    }
-    if (_showNumbers) {
-      return NumberMapScreen(onBack: () => setState(() => _showNumbers = false));
-    }
-    if (_showDiacriticals) {
-      return DiacriticalMapScreen(onBack: () => setState(() => _showDiacriticals = false));
-    }
     return _buildOverview(context);
   }
 
   List<_Zone> _getZones() {
     final lp = (_score?.lettersLearned ?? 0) / 33;
-    final vp = (_score?.vowelsLearned ?? 0) / 18;
+    final vp = (_score?.vowelsLearned ?? 0) / 24;
     return [
       _Zone(n: 1, title: 'Học phụ âm', sub: 'Nhận biết 33 phụ âm Khmer',
         icon: Icons.abc_rounded, img: 'image/Phụ âm.png', prog: lp, total: 33, done: _score?.lettersLearned ?? 0,
         color: const Color(0xFF2979FF), stars: 10, btn: 'Bắt đầu học',
-        onTap: () => setState(() => _showLetterMap = true)),
-      _Zone(n: 2, title: 'Học nguyên âm', sub: 'Học 18 nguyên âm Khmer',
-        icon: Icons.record_voice_over_rounded, img: 'image/Nguyên âm.png', prog: vp, total: 18, done: _score?.vowelsLearned ?? 0,
+        onTap: () => _navigateTo(LetterMapView(onBack: () => Navigator.pop(context)))),
+      _Zone(n: 2, title: 'Học nguyên âm', sub: 'Học 24 nguyên âm Khmer',
+        icon: Icons.record_voice_over_rounded, img: 'image/Nguyên âm.png', prog: vp, total: 24, done: _score?.vowelsLearned ?? 0,
         color: const Color(0xFFFF1744), stars: 10, btn: 'Bắt đầu học',
-        onTap: () => setState(() => _showVowels = true)),
+        onTap: () => _navigateTo(VowelScreen(onBack: () => Navigator.pop(context)))),
       _Zone(n: 3, title: 'Học phụ âm o-ô', sub: 'Phân biệt 2 nhóm phụ âm hàng o và hàng ô',
         icon: Icons.text_fields_rounded, img: 'image/Học phụ âm o và ô.png', prog: 0, total: 33, done: 0,
         color: const Color(0xFF43A047), stars: 10, btn: 'Bắt đầu học',
-        onTap: () => setState(() => _showConsonantSeries = true)),
+        onTap: () => _navigateTo(ConsonantSeriesScreen(onBack: () => Navigator.pop(context)))),
       _Zone(n: 4, title: 'Học số Khmer', sub: 'Học chữ số Khmer từ ០ đến ៩',
         icon: Icons.calculate_rounded, img: 'image/Học số.png', prog: 0, total: 10, done: 0,
         color: const Color(0xFF00ACC1), stars: 10, btn: 'Bắt đầu học',
-        onTap: () => setState(() => _showNumbers = true)),
+        onTap: () => _navigateTo(NumberMapScreen(onBack: () => Navigator.pop(context)))),
       _Zone(n: 5, title: 'Ghép vần', sub: 'Ghép âm thành tiếng và từ',
         icon: Icons.spellcheck_rounded, img: 'image/Đánh vần.png', prog: 0, total: 30, done: 0,
-        color: const Color(0xFFAA00FF), stars: 15, btn: 'Bắt đầu học',
-        onTap: () => Navigator.push(context, AppPageRoute(page: const SpellingHubScreen()))),
+        color: const Color(0xFFF57C00), stars: 15, btn: 'Bắt đầu học',
+        onTap: () => _navigateTo(const SpellingHubScreen())),
       _Zone(n: 6, title: 'Học dấu', sub: 'Học các dấu Khmer ់ ំ ះ ៈ và các dấu thường dùng',
         icon: Icons.format_shapes_rounded, img: 'image/Học dấu.png', prog: 0, total: 12, done: 0,
         color: const Color(0xFFFFD600), stars: 10, btn: 'Bắt đầu học',
-        onTap: () => setState(() => _showDiacriticals = true)),
+        onTap: () => _navigateTo(DiacriticalMapScreen(onBack: () => Navigator.pop(context)))),
       _Zone(n: 7, title: 'Tập đọc', sub: 'Làm quen và đọc câu đơn giản',
         icon: Icons.auto_stories_rounded, img: 'image/Tập đọc.png', prog: 0, total: 28, done: 0,
         color: const Color(0xFF00B0FF), stars: 15, btn: 'Bắt đầu học',
-        onTap: () => Navigator.push(context, AppPageRoute(page: const ReadingScreen()))),
+        onTap: () => _navigateTo(const ReadingScreen())),
       _Zone(n: 8, title: 'Luyện viết', sub: 'Tập viết chữ Khmer đúng nét',
         icon: Icons.draw_rounded, img: 'image/Tập viết.png', prog: 0, total: 30, done: 0,
         color: const Color(0xFFFF9100), stars: 15, btn: 'Bắt đầu học',
-        onTap: () => Navigator.push(context, AppPageRoute(page: const WritingMapScreen()))),
+        onTap: () => _navigateTo(const WritingMapScreen())),
       _Zone(n: 9, title: 'Đọc hiểu', sub: 'Hiểu nội dung và trả lời câu hỏi',
         icon: Icons.menu_book_rounded, img: 'image/Đọc hiểu.png', prog: 0, total: 25, done: 0,
         color: const Color(0xFFFF4081), stars: 20, btn: 'Sắp ra mắt', isComingSoon: true,
@@ -201,7 +192,7 @@ class _LearnScreenState extends State<LearnScreen> {
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(80.w, 6.h, 80.w, 34.h),
+              padding: EdgeInsets.fromLTRB(80.w, 4.h, 80.w, 40.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [

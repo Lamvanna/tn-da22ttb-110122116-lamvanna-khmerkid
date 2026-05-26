@@ -25,7 +25,7 @@ class _LetterMapViewState extends State<LetterMapView>
 
   // Responsive constants — sử dụng getter thay vì static const
   double get _nodeSpacingY => 140.h;
-  double get _topPadding => 60.h;
+  double get _topPadding => 80.h;
   double get _nodeSize => 78.w;
 
   int get _currentIdx {
@@ -203,7 +203,7 @@ class _LetterMapViewState extends State<LetterMapView>
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16.w, 2.h, 105.w, 4.h),
+              padding: EdgeInsets.fromLTRB(16.w, 4.h, 105.w, 5.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

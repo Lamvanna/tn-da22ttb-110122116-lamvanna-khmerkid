@@ -22,7 +22,7 @@ class _DiacriticalMapScreenState extends State<DiacriticalMapScreen>
   final List<KhmerDiacritical> _items = KhmerDiacriticalData.diacriticals;
 
   double get _nodeSpacingY => 140.h;
-  double get _topPadding => 60.h;
+  double get _topPadding => 80.h;
   double get _nodeSize => 78.w;
 
   int get _currentIdx {
@@ -126,7 +126,7 @@ class _DiacriticalMapScreenState extends State<DiacriticalMapScreen>
           color: const Color(0xFFE65100).withValues(alpha: 0.35),
           blurRadius: 24, offset: const Offset(0, 8))]),
       child: SafeArea(bottom: false, child: Padding(
-        padding: EdgeInsets.fromLTRB(16.w, 2.h, 16.w, 4.h),
+        padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 5.h),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,

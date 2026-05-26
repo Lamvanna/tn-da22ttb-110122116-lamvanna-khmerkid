@@ -25,7 +25,7 @@ class _VowelScreenState extends State<VowelScreen>
 
   // Responsive constants — giống phụ âm
   double get _nodeSpacingY => 140.h;
-  double get _topPadding => 60.h;
+  double get _topPadding => 80.h;
   double get _nodeSize => 78.w;
 
   int get _currentIdx {
@@ -169,7 +169,7 @@ class _VowelScreenState extends State<VowelScreen>
         SafeArea(
           bottom: false,
           child: Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 2.h, 105.w, 4.h),
+            padding: EdgeInsets.fromLTRB(16.w, 4.h, 105.w, 5.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -299,9 +299,9 @@ class _VowelScreenState extends State<VowelScreen>
                       color: locked ? const Color(0xFFB0BEC5) : color)),
                 ),
                 SizedBox(height: 4.h),
-                Text(vowel.character,
+                Text(vowel.character.replaceFirst('អ', ''),
                   style: GoogleFonts.battambang(
-                    fontSize: 26.sp, fontWeight: FontWeight.w700, height: 1.2,
+                    fontSize: 36.sp, fontWeight: FontWeight.w700, height: 1.2,
                     color: locked ? const Color(0xFFB0BEC5) : const Color(0xFF1A202C))),
                 Text(vowel.romanized.isNotEmpty
                     ? vowel.romanized[0].toUpperCase() + vowel.romanized.substring(1) : '',
@@ -415,10 +415,10 @@ class _VowelScreenState extends State<VowelScreen>
             blurRadius: 18, spreadRadius: 2),
         ]),
       child: Center(
-        child: Text(vowel.character,
+        child: Text(vowel.character.replaceFirst('អ', ''),
           style: GoogleFonts.battambang(
-            fontSize: 25.sp, fontWeight: FontWeight.w700,
-            color: Colors.white, height: 1.2,
+            fontSize: 40.sp, fontWeight: FontWeight.w700,
+            color: Colors.white, height: 1.0,
             shadows: [Shadow(
               color: Colors.black.withValues(alpha: 0.20),
               blurRadius: 2, offset: const Offset(0, 1))]))),

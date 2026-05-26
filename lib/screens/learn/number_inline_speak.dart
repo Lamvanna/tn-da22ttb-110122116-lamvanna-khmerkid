@@ -5,17 +5,17 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
 import '../../constants/app_colors.dart';
-import '../../models/khmer_vowel.dart';
+import '../../models/khmer_number.dart';
 
-class VowelInlineSpeakContent extends StatefulWidget {
-  final KhmerVowel vowel;
+class NumberInlineSpeakContent extends StatefulWidget {
+  final KhmerNumber number;
   final VoidCallback onComplete;
-  const VowelInlineSpeakContent({super.key, required this.vowel, required this.onComplete});
+  const NumberInlineSpeakContent({super.key, required this.number, required this.onComplete});
   @override
-  State<VowelInlineSpeakContent> createState() => _S();
+  State<NumberInlineSpeakContent> createState() => _S();
 }
 
-class _S extends State<VowelInlineSpeakContent> with SingleTickerProviderStateMixin {
+class _S extends State<NumberInlineSpeakContent> with SingleTickerProviderStateMixin {
   final stt.SpeechToText _speech = stt.SpeechToText();
   final FlutterTts _tts = FlutterTts();
   late AnimationController _pulseCtrl;
@@ -74,7 +74,7 @@ class _S extends State<VowelInlineSpeakContent> with SingleTickerProviderStateMi
     if (spoken.isEmpty) { setState(() => _statusMsg = 'Không nhận diện được. Nói to hơn!'); return; }
     String n(String s) => s.toLowerCase().trim().replaceAll(RegExp(r'\s+'), '');
     final sn = n(spoken);
-    final targets = [widget.vowel.romanized, widget.vowel.pronunciation, widget.vowel.character].where((t) => t.isNotEmpty).map(n).toList();
+    final targets = [widget.number.romanized, widget.number.pronunciation, widget.number.character, widget.number.value].where((t) => t.isNotEmpty).map(n).toList();
     bool exact = targets.any((t) => sn.contains(t) || t.contains(sn));
     if (exact) { _accuracy = 100; _isCorrect = true; } else {
       double best = 0;
@@ -92,7 +92,7 @@ class _S extends State<VowelInlineSpeakContent> with SingleTickerProviderStateMi
     for (int i = 1; i <= m; i++) for (int j = 1; j <= nn; j++) { final c = a[i-1] == b[j-1] ? 0 : 1; d[i][j] = [d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+c].reduce((a,b) => a<b?a:b); }
     return 1.0 - (d[m][nn] / mx); }
 
-  Future<void> _playExample() async { final t = widget.vowel.pronunciation.isNotEmpty ? widget.vowel.pronunciation : widget.vowel.romanized; await _tts.speak(t); }
+  Future<void> _playExample() async { final t = widget.number.pronunciation.isNotEmpty ? widget.number.pronunciation : widget.number.romanized; await _tts.speak(t); }
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +108,7 @@ class _S extends State<VowelInlineSpeakContent> with SingleTickerProviderStateMi
             Container(width: 120.w, height: 120.w,
               decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.coralSurface,
                 boxShadow: [BoxShadow(color: AppColors.coral.withValues(alpha: 0.12), blurRadius: 24.r, spreadRadius: 4)]),
-              child: Center(child: Text(widget.vowel.displayCharacter, style: GoogleFonts.battambang(
+              child: Center(child: Text(widget.number.character, style: GoogleFonts.battambang(
                 fontSize: 64.sp, fontWeight: FontWeight.w700, color: AppColors.primaryDark, height: 1.1)))),
             SizedBox(height: 10.h),
             GestureDetector(onTap: _playExample,
@@ -117,7 +117,7 @@ class _S extends State<VowelInlineSpeakContent> with SingleTickerProviderStateMi
                   border: Border.all(color: AppColors.coral.withValues(alpha: 0.2))),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.volume_up_rounded, size: 14.sp, color: AppColors.coral), SizedBox(width: 6.w),
-                  Text('Phát âm: "${widget.vowel.pronunciation}"', style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: AppColors.coralDark)),
+                  Text('Phát âm: "${widget.number.pronunciation}"', style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: AppColors.coralDark)),
                 ]))),
             SizedBox(height: 18.h),
             GestureDetector(
@@ -148,7 +148,7 @@ class _S extends State<VowelInlineSpeakContent> with SingleTickerProviderStateMi
             SizedBox(height: 8.h),
             if (_hasResult)
               Container(padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                decoration: BoxDecoration(color: _isCorrect ? AppColors.tertiarySurface : AppColors.coralSurface, borderRadius: BorderRadius.circular(14.r)),
+                decoration: BoxDecoration(color: AppColors.tertiarySurface, borderRadius: BorderRadius.circular(14.r)),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Text(_isCorrect ? '🎉' : '😅', style: TextStyle(fontSize: 16.sp)), SizedBox(width: 6.w),
                   Text('$_accuracy%', style: GoogleFonts.plusJakartaSans(fontSize: 18.sp, fontWeight: FontWeight.w800, color: _isCorrect ? AppColors.tertiaryDark : AppColors.coralDark)),
@@ -156,7 +156,7 @@ class _S extends State<VowelInlineSpeakContent> with SingleTickerProviderStateMi
                   Text(_isCorrect ? 'Chính xác!' : 'Thử lại!', style: GoogleFonts.plusJakartaSans(fontSize: 12.sp, fontWeight: FontWeight.w600, color: _isCorrect ? AppColors.tertiaryDark : AppColors.coralDark)),
                 ]))
             else
-              Text(_isListening ? 'Đang thu âm... Bỏ tay để kết thúc' : _statusMsg.isNotEmpty ? _statusMsg : !_sttReady ? 'Đang khởi tạo...' : 'Nhấn giữ mic và đọc "${widget.vowel.pronunciation}"',
+              Text(_isListening ? 'Đang thu âm... Bỏ tay để kết thúc' : _statusMsg.isNotEmpty ? _statusMsg : !_sttReady ? 'Đang khởi tạo...' : 'Nhấn giữ mic và đọc "${widget.number.pronunciation}"',
                 style: GoogleFonts.plusJakartaSans(fontSize: 12.sp, fontWeight: FontWeight.w600, color: _isListening ? AppColors.coral : AppColors.textHint)),
             SizedBox(height: 14.h),
           ])))),

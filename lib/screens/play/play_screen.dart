@@ -257,7 +257,7 @@ class _PlayScreenState extends State<PlayScreen> {
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(80.w, 6.h, 80.w, 34.h),
+              padding: EdgeInsets.fromLTRB(80.w, 4.h, 80.w, 40.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [

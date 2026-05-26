@@ -630,7 +630,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final writing = _hasRealData ? 0 : 8;
     final reading = _hasRealData ? 0 : 14;
 
-    final totalProg = ((letters / 33 + _vowelsLearned / 18) / 2 * 100)
+    final totalProg = ((letters / 33 + _vowelsLearned / 24) / 2 * 100)
         .clamp(0, 100)
         .toInt();
 

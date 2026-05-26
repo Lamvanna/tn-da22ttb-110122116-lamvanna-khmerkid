@@ -198,7 +198,7 @@ class _SpellingHubScreenState extends State<SpellingHubScreen> {
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16.w, 18.h, 80.w, 18.h),
+              padding: EdgeInsets.fromLTRB(16.w, 6.h, 105.w, 32.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -231,7 +231,7 @@ class _SpellingHubScreenState extends State<SpellingHubScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 22.sp,
+                            fontSize: 20.sp,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
                           ),
@@ -278,7 +278,7 @@ class _SpellingHubScreenState extends State<SpellingHubScreen> {
               Text('⭐', style: TextStyle(fontSize: 12.sp)),
               SizedBox(width: 4.w),
               Text(
-                '1000',
+                '${_score?.totalStars ?? 0}',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w800,

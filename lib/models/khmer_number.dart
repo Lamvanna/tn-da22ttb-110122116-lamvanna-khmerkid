@@ -5,10 +5,10 @@ class KhmerNumber {
   final String khmerWord;     // Từ Khmer (e.g., "សូន្យ")
   final String romanized;     // Phiên âm Latin (e.g., "soun")
   final String pronunciation; // Phát âm tiếng Việt
-  final int starRating;       // Số sao (0-5)
-  final bool isLearned;
+  int starRating;       // Số sao (0-5)
+  bool isLearned;
 
-  const KhmerNumber({
+  KhmerNumber({
     required this.character,
     required this.value,
     this.khmerWord = '',
@@ -23,7 +23,7 @@ class KhmerNumber {
 class KhmerNumberData {
   KhmerNumberData._();
 
-  static const List<KhmerNumber> numbers = [
+  static final List<KhmerNumber> numbers = [
     KhmerNumber(character: '០', value: '0', khmerWord: 'សូន្យ', romanized: 'soun', pronunciation: 'soun', starRating: 5, isLearned: true),
     KhmerNumber(character: '១', value: '1', khmerWord: 'មួយ', romanized: 'muoy', pronunciation: 'muôi', starRating: 4, isLearned: true),
     KhmerNumber(character: '២', value: '2', khmerWord: 'ពីរ', romanized: 'pii', pronunciation: 'pi', starRating: 3, isLearned: true),

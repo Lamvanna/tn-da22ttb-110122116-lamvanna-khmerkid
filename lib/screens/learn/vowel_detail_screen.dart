@@ -93,7 +93,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
             Text('Chúc mừng!', style: GoogleFonts.plusJakartaSans(
               fontSize: 24.sp, fontWeight: FontWeight.w800, color: AppColors.tertiary)),
             SizedBox(height: 8.h),
-            Text('Bạn đã hoàn thành nguyên âm "${_v.character}"',
+            Text('Bạn đã hoàn thành nguyên âm "${_v.displayCharacter}"',
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w600,
                 color: AppColors.textSecondary)),
@@ -233,7 +233,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
                           SizedBox(width: 6.w),
                           Expanded(child: Text('Nguyên âm ${_idx + 1}/${_vowels.length}',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 24.sp, fontWeight: FontWeight.w800, color: Colors.white))),
+                              fontSize: 20.sp, fontWeight: FontWeight.w800, color: Colors.white))),
                         ]),
                         Padding(
                           padding: EdgeInsets.only(left: 54.w, top: 8.h),
@@ -304,81 +304,31 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
           color: Colors.black.withValues(alpha: 0.06),
           blurRadius: 20.r, offset: Offset(0, 6.h))],
       ),
-      child: Column(children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(20.w, 50.h, 20.w, 0),
-          child: Center(child: Column(children: [
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             Container(
-              padding: EdgeInsets.all(36.w),
+              padding: EdgeInsets.all(48.w),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: const Color(0xFF1E88E5).withValues(alpha: 0.06)),
-              child: Text(_v.character, style: GoogleFonts.battambang(
-                fontSize: 100.sp, fontWeight: FontWeight.w400,
+              child: Text(_v.displayCharacter, style: GoogleFonts.battambang(
+                fontSize: 130.sp, fontWeight: FontWeight.w400,
                 color: const Color(0xFF1E88E5), height: 1.1)),
             ),
-            SizedBox(height: 10.h),
+            SizedBox(height: 24.h),
             Container(
-              width: 80.w, height: 3.h,
+              width: 100.w, height: 3.h,
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors: [
                   const Color(0xFF1E88E5).withValues(alpha: 0.1),
                   const Color(0xFF1E88E5),
                   const Color(0xFF1E88E5).withValues(alpha: 0.1)]),
                 borderRadius: BorderRadius.circular(2.r))),
-          ])),
+          ],
         ),
-        SizedBox(height: 80.h),
-        // Info row
-        Container(
-          margin: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 34.h),
-          decoration: BoxDecoration(
-            color: const Color(0xFFEEF4FC),
-            borderRadius: BorderRadius.circular(18.r),
-            border: Border.all(color: const Color(0xFF1E88E5).withValues(alpha: 0.15))),
-          child: Row(children: [
-            Expanded(child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8.r)),
-                  child: Text(_v.character, style: GoogleFonts.battambang(
-                    fontSize: 20.sp, fontWeight: FontWeight.w500, color: AppColors.primary)),
-                ),
-                SizedBox(height: 6.h),
-                Row(children: [
-                  Icon(Icons.volume_up_rounded, size: 16.w, color: const Color(0xFF1E88E5)),
-                  SizedBox(width: 6.w),
-                  Text('Phát âm: "${_v.romanized}"',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14.sp, fontWeight: FontWeight.w700,
-                      color: AppColors.textSecondary)),
-                ]),
-              ],
-            )),
-            if (_v.dependent.isNotEmpty) ...[
-              SizedBox(width: 12.w),
-              Column(children: [
-                Text('Phụ thuộc', style: GoogleFonts.plusJakartaSans(
-                  fontSize: 10.sp, fontWeight: FontWeight.w600, color: AppColors.textHint)),
-                SizedBox(height: 2.h),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
-                  decoration: BoxDecoration(
-                    color: AppColors.tertiary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(10.r)),
-                  child: Text(_v.dependent, style: GoogleFonts.battambang(
-                    fontSize: 22.sp, color: AppColors.tertiary)),
-                ),
-              ]),
-            ],
-          ]),
-        ),
-      ]),
+      ),
     );
   }
 

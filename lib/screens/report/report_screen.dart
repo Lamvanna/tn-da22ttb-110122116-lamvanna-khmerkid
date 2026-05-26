@@ -134,7 +134,7 @@ class _ReportScreenState extends State<ReportScreen> {
         const SizedBox(height: 16),
         _progressBar('Phụ âm', letterProg, 33, AppColors.primary),
         const SizedBox(height: 12),
-        _progressBar('Nguyên âm', vowelProg, 18, AppColors.accentPink),
+        _progressBar('Nguyên âm', vowelProg, 24, AppColors.accentPink),
         const SizedBox(height: 12),
         _progressBar('Từ vựng', vocabProg, 38, AppColors.consonantAccent),
         const SizedBox(height: 12),

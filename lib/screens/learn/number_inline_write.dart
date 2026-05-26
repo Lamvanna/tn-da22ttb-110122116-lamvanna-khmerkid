@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
-import '../../models/khmer_vowel.dart';
+import '../../models/khmer_number.dart';
 
-class VowelInlineWriteContent extends StatefulWidget {
-  final KhmerVowel vowel;
+class NumberInlineWriteContent extends StatefulWidget {
+  final KhmerNumber number;
   final VoidCallback onComplete;
-  const VowelInlineWriteContent({super.key, required this.vowel, required this.onComplete});
+  const NumberInlineWriteContent({super.key, required this.number, required this.onComplete});
   @override
-  State<VowelInlineWriteContent> createState() => _S();
+  State<NumberInlineWriteContent> createState() => _S();
 }
 
-class _S extends State<VowelInlineWriteContent> {
+class _S extends State<NumberInlineWriteContent> {
   final List<List<Offset>> _strokes = [];
   List<Offset> _current = [];
   bool? _passed;
@@ -64,7 +64,7 @@ class _S extends State<VowelInlineWriteContent> {
           child: Stack(children: [
             CustomPaint(size: Size.infinite, painter: _GuideLinePainter()),
             Center(child: Padding(padding: EdgeInsets.only(bottom: 20.h),
-              child: Text(widget.vowel.displayCharacter, style: GoogleFonts.battambang(
+              child: Text(widget.number.character, style: GoogleFonts.battambang(
                 fontSize: 180.sp, fontWeight: FontWeight.w700, color: AppColors.tertiary.withValues(alpha: 0.65))))),
           ]))));
   }
@@ -77,8 +77,8 @@ class _S extends State<VowelInlineWriteContent> {
         child: ClipRRect(borderRadius: BorderRadius.circular(14.r),
           child: Stack(children: [
             CustomPaint(size: Size.infinite, painter: _GuideLinePainter()),
-            Center(child: Padding(padding: EdgeInsets.only(bottom: 20.h),
-              child: Text(widget.vowel.displayCharacter, style: GoogleFonts.battambang(
+            Center(child: Padding(padding: EdgeInsets.only(bottom: 40.h),
+              child: Text(widget.number.character, style: GoogleFonts.battambang(
                 fontSize: 180.sp, fontWeight: FontWeight.w300, color: const Color(0xFFD7CCC8).withValues(alpha: 0.45))))),
             GestureDetector(
               onPanStart: (d) => setState(() { _current = [d.localPosition]; _passed = null; }),
@@ -106,9 +106,7 @@ class _GuideLinePainter extends CustomPainter {
     const cols = 8; final cw = size.width / cols; final rows = (size.height / cw).ceil();
     for (int i = 0; i <= cols; i++) canvas.drawLine(Offset(i * cw, 0), Offset(i * cw, size.height), p);
     for (int j = 0; j <= rows; j++) canvas.drawLine(Offset(0, j * cw), Offset(size.width, j * cw), p);
-    final cp = Paint()..color = const Color(0xFFD7CCC8).withValues(alpha: 0.5)..strokeWidth = 1.2;
-    canvas.drawLine(Offset(size.width / 2, 0), Offset(size.width / 2, size.height), cp);
-    canvas.drawLine(Offset(0, size.height / 2), Offset(size.width, size.height / 2), cp);
+
   }
   @override
   bool shouldRepaint(covariant CustomPainter old) => false;

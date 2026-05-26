@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/khmer_number.dart';
+import '../../services/score_service.dart';
 import 'number_detail_screen.dart';
 
 /// Bản đồ số Khmer — Premium learning path
@@ -19,6 +20,7 @@ class _NumberMapScreenState extends State<NumberMapScreen>
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
   late ScrollController _scrollCtrl;
+  ScoreService? _score;
 
   final List<KhmerNumber> _items = KhmerNumberData.numbers;
 
@@ -42,7 +44,13 @@ class _NumberMapScreenState extends State<NumberMapScreen>
     _pulseAnim = Tween<double>(begin: 1.0, end: 1.08).animate(
       CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
     _scrollCtrl = ScrollController();
+    _loadScore();
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrent());
+  }
+
+  Future<void> _loadScore() async {
+    _score = await ScoreService.getInstance();
+    if (mounted) setState(() {});
   }
 
   void _scrollToCurrent() {
@@ -113,77 +121,128 @@ class _NumberMapScreenState extends State<NumberMapScreen>
   }
 
   Widget _buildHeader() {
-    final progress = _items.isEmpty ? 0.0 : _doneCount / _items.length;
-    final pct = (progress * 100).toInt();
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment(-0.5, -1), end: Alignment(0.5, 1),
-          colors: [Color(0xFF006064), Color(0xFF00838F), Color(0xFF00ACC1)]),
+          colors: [Color(0xFF1565C0), Color(0xFF42A5F5), Color(0xFF29B6F6)]),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(24.r), bottomRight: Radius.circular(24.r)),
         boxShadow: [BoxShadow(
-          color: const Color(0xFF006064).withValues(alpha: 0.35),
+          color: const Color(0xFF1565C0).withValues(alpha: 0.35),
           blurRadius: 24, offset: const Offset(0, 8))]),
-      child: SafeArea(bottom: false, child: Padding(
-        padding: EdgeInsets.fromLTRB(16.w, 2.h, 16.w, 4.h),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+      child: Stack(
+        children: [
+          Positioned(right: -40.w, top: -30.h,
+            child: Container(width: 120.w, height: 120.w,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.06)))),
+          Positioned(left: -25.w, bottom: -20.h,
+            child: Container(width: 80.w, height: 80.w,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.04)))),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16.w, 6.h, 105.w, 32.h),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: widget.onBack,
+                      child: Container(
+                        width: 36.w, height: 36.w,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.15),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.12))),
+                        child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w)),
+                    ),
+                    SizedBox(width: 12.w),
+                    Flexible(child: Text('Học số Khmer',
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 20.sp, fontWeight: FontWeight.w800, color: Colors.white))),
+                  ],
+                ),
+              ]),
+            ),
+          ),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 4.h,
+            right: 16.w,
+            child: _buildHeaderStats(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderStats() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // Stars
+        Container(
+          width: 60.w,
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.08),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              GestureDetector(
-                onTap: widget.onBack,
-                child: Container(
-                  width: 36.w, height: 36.w,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.15),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.12))),
-                  child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w)),
-              ),
-              SizedBox(width: 12.w),
-              Flexible(child: Text('Học số Khmer',
-                maxLines: 1, overflow: TextOverflow.ellipsis,
+              Text('⭐', style: TextStyle(fontSize: 12.sp)),
+              SizedBox(width: 4.w),
+              Text(
+                '${_score?.totalStars ?? 0}',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 20.sp, fontWeight: FontWeight.w800, color: Colors.white))),
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  height: 1.0,
+                ),
+              ),
             ],
           ),
-          SizedBox(height: 0.h),
-          Padding(
-            padding: EdgeInsets.only(left: 48.w),
-            child: Text('$_doneCount/${_items.length} đã hoàn thành',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13.sp, fontWeight: FontWeight.w600,
-                color: Colors.white.withValues(alpha: 0.85)))),
-          SizedBox(height: 4.h),
-          Padding(
-            padding: EdgeInsets.only(left: 48.w),
-            child: Row(children: [
-              Expanded(child: Container(
-                height: 6.h,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(4.r)),
-                child: Stack(children: [
-                  FractionallySizedBox(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: progress.clamp(0.0, 1.0),
-                    child: Container(decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF66BB6A), Color(0xFF43A047)]),
-                      borderRadius: BorderRadius.circular(4.r),
-                      boxShadow: [BoxShadow(
-                        color: const Color(0xFF43A047).withValues(alpha: 0.5),
-                        blurRadius: 6)])))]),
-              )),
-              SizedBox(width: 8.w),
-              Text('$pct%', style: GoogleFonts.plusJakartaSans(
-                fontSize: 13.sp, fontWeight: FontWeight.w800, color: Colors.white)),
-            ]),
+        ),
+        SizedBox(height: 5.h),
+        // Streak
+        Container(
+          width: 60.w,
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.08),
+              width: 1,
+            ),
           ),
-        ]),
-      )),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('🔥', style: TextStyle(fontSize: 12.sp)),
+              SizedBox(width: 4.w),
+              Text(
+                '${_score?.streak ?? 0}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  height: 1.0,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../models/khmer_closed_syllable.dart';
 import '../../constants/app_colors.dart';
+import '../../services/score_service.dart';
 import 'closed_syllable_screen.dart';
 
 /// Bản đồ vần đóng — Timeline cards nhóm theo phụ âm đầu
@@ -19,6 +20,7 @@ class _ClosedSyllableMapScreenState extends State<ClosedSyllableMapScreen>
   late AnimationController _staggerCtrl;
 
   final List<KhmerClosedSyllable> _lessons = KhmerClosedSyllableData.lessons;
+  ScoreService? _score;
 
   List<_ConsonantGroup> get _groups {
     final map = <String, List<_IndexedLesson>>{};
@@ -47,8 +49,6 @@ class _ClosedSyllableMapScreenState extends State<ClosedSyllableMapScreen>
     }).toList();
   }
 
-  int get _totalDone => _lessons.where((l) => l.isLearned).length;
-
   @override
   void initState() {
     super.initState();
@@ -58,6 +58,12 @@ class _ClosedSyllableMapScreenState extends State<ClosedSyllableMapScreen>
     _staggerCtrl = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 800))
       ..forward();
+    _loadScore();
+  }
+
+  Future<void> _loadScore() async {
+    _score = await ScoreService.getInstance();
+    if (mounted) setState(() {});
   }
 
   @override
@@ -111,19 +117,15 @@ class _ClosedSyllableMapScreenState extends State<ClosedSyllableMapScreen>
   }
 
   Widget _buildHeader() {
-    final progress = _lessons.isNotEmpty ? _totalDone / _lessons.length : 0.0;
-    final pct = (progress * 100).toInt();
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment(-0.5, -1), end: Alignment(0.5, 1),
-          colors: [Color(0xFF0D47A1), Color(0xFF1E88E5), Color(0xFF42A5F5)]),
+        gradient: AppColors.learnHeaderGradient,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(24),
           bottomRight: Radius.circular(24)),
         boxShadow: [BoxShadow(
-          color: const Color(0xFF0D47A1).withValues(alpha: 0.35),
+          color: AppColors.headerDark.withValues(alpha: 0.35),
           blurRadius: 24, offset: const Offset(0, 8))]),
       child: Stack(children: [
         Positioned(right: -40.w, top: -30.h,
@@ -134,19 +136,11 @@ class _ClosedSyllableMapScreenState extends State<ClosedSyllableMapScreen>
           child: Container(width: 80.w, height: 80.w,
             decoration: BoxDecoration(shape: BoxShape.circle,
               color: Colors.white.withValues(alpha: 0.04)))),
-        Positioned(
-          right: 0, bottom: -2.h,
-          child: Image.asset(
-            'assets/images/elephant_mascot.png',
-            width: 100.w, height: 100.w,
-            fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-          ),
-        ),
+
         SafeArea(
           bottom: false,
           child: Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 2.h, 105.w, 4.h),
+            padding: EdgeInsets.fromLTRB(16.w, 6.h, 105.w, 32.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -173,49 +167,66 @@ class _ClosedSyllableMapScreenState extends State<ClosedSyllableMapScreen>
                     ),
                   ],
                 ),
-                SizedBox(height: 0.h),
-                Padding(
-                  padding: EdgeInsets.only(left: 48.w),
-                  child: Text('Chọn loại ghép vần để học',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13.sp, fontWeight: FontWeight.w600,
-                      color: Colors.white.withValues(alpha: 0.85))),
-                ),
-                SizedBox(height: 4.h),
-                Padding(
-                  padding: EdgeInsets.only(left: 48.w),
-                  child: Row(children: [
-                    Expanded(
-                      child: Container(
-                        height: 6.h,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(4.r)),
-                        child: Stack(children: [
-                          FractionallySizedBox(
-                            alignment: Alignment.centerLeft,
-                            widthFactor: progress.clamp(0.0, 1.0),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFF66BB6A), Color(0xFF43A047)]),
-                                borderRadius: BorderRadius.circular(4.r),
-                                boxShadow: [BoxShadow(
-                                  color: const Color(0xFF43A047).withValues(alpha: 0.5),
-                                  blurRadius: 6)])))]),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Text('$pct%',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13.sp, fontWeight: FontWeight.w800, color: Colors.white)),
-                  ]),
-                ),
               ],
             ),
           ),
         ),
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 4.h,
+          right: 16.w,
+          child: _buildHeaderStats(),
+        ),
       ]),
+    );
+  }
+
+  Widget _buildHeaderStats() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Container(
+          width: 60.w,
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('⭐', style: TextStyle(fontSize: 12.sp)),
+              SizedBox(width: 4.w),
+              Text('${_score?.totalStars ?? 0}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp, fontWeight: FontWeight.w800,
+                  color: Colors.white, height: 1.0)),
+            ],
+          ),
+        ),
+        SizedBox(height: 5.h),
+        Container(
+          width: 60.w,
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('🔥', style: TextStyle(fontSize: 12.sp)),
+              SizedBox(width: 4.w),
+              Text('${_score?.streak ?? 0}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp, fontWeight: FontWeight.w800,
+                  color: Colors.white, height: 1.0)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -338,10 +349,10 @@ class _GroupCard extends StatelessWidget {
                   color: isLocked ? Colors.white.withValues(alpha: 0.7) : Colors.white,
                   borderRadius: BorderRadius.circular(22.r),
                   border: Border.all(
-                    color: isLocked ? const Color(0xFFE0E5F0)
-                        : isCurrent ? color.withValues(alpha: 0.35)
-                        : color.withValues(alpha: 0.15),
-                    width: isCurrent ? 2.0 : 1.5,
+                    color: isLocked
+                        ? const Color(0xFFE0E5F0)
+                        : const Color(0xFFE8ECF2),
+                    width: 1.0,
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -608,7 +619,7 @@ class _CharCircleState extends State<_CharCircle>
                       ? Icon(Icons.lock_rounded, color: const Color(0xFFB8C0D0), size: 18.sp)
                       : Text(widget.character,
                           style: GoogleFonts.battambang(
-                            fontSize: 16.sp, fontWeight: FontWeight.w700, height: 1.2,
+                            fontSize: 18.sp, fontWeight: FontWeight.w700, height: 1.2,
                             color: widget.isDone ? widget.color : const Color(0xFF64748B)))),
               ),
               if (widget.isDone)

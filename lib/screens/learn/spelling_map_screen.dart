@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../models/khmer_spelling.dart';
 import '../../constants/app_colors.dart';
+import '../../services/score_service.dart';
 import 'spelling_screen.dart';
 
 /// Bản đồ ghép vần — Timeline cards nhóm theo nguyên âm
@@ -21,6 +22,7 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
   late AnimationController _staggerCtrl;
 
   final List<KhmerSpelling> _lessons = KhmerSpellingData.lessons;
+  ScoreService? _score;
 
   // Nhóm bài theo phụ âm
   List<_ConsonantGroup> get _groups {
@@ -61,7 +63,14 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
     _staggerCtrl = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 800))
       ..forward();
+    _loadScore();
   }
+
+  Future<void> _loadScore() async {
+    _score = await ScoreService.getInstance();
+    if (mounted) setState(() {});
+  }
+
 
   @override
   void dispose() {
@@ -121,14 +130,12 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment(-0.5, -1), end: Alignment(0.5, 1),
-          colors: [Color(0xFF1565C0), Color(0xFF42A5F5), Color(0xFF29B6F6)]),
+        gradient: AppColors.learnHeaderGradient,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(24),
           bottomRight: Radius.circular(24)),
         boxShadow: [BoxShadow(
-          color: const Color(0xFF1565C0).withValues(alpha: 0.35),
+          color: AppColors.headerDark.withValues(alpha: 0.35),
           blurRadius: 24, offset: const Offset(0, 8))]),
       child: Stack(children: [
         Positioned(right: -40.w, top: -30.h,
@@ -139,22 +146,11 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
           child: Container(width: 80.w, height: 80.w,
             decoration: BoxDecoration(shape: BoxShape.circle,
               color: Colors.white.withValues(alpha: 0.04)))),
-        // Mascot elephant
-        Positioned(
-          right: 0,
-          bottom: -2.h,
-          child: Image.asset(
-            'assets/images/elephant_mascot.png',
-            width: 100.w,
-            height: 100.w,
-            fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-          ),
-        ),
+
         SafeArea(
           bottom: false,
           child: Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 2.h, 105.w, 4.h),
+            padding: EdgeInsets.fromLTRB(16.w, 6.h, 105.w, 32.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -182,50 +178,66 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
                     ),
                   ],
                 ),
-                SizedBox(height: 0.h),
-                Padding(
-                  padding: EdgeInsets.only(left: 48.w),
-                  child: Text('$_totalDone/${_lessons.length} đã hoàn thành',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13.sp, fontWeight: FontWeight.w600,
-                      color: Colors.white.withValues(alpha: 0.85))),
-                ),
-                SizedBox(height: 4.h),
-                // Progress bar
-                Padding(
-                  padding: EdgeInsets.only(left: 48.w),
-                  child: Row(children: [
-                    Expanded(
-                      child: Container(
-                        height: 6.h,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(4.r)),
-                        child: Stack(children: [
-                          FractionallySizedBox(
-                            alignment: Alignment.centerLeft,
-                            widthFactor: progress.clamp(0.0, 1.0),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFF66BB6A), Color(0xFF43A047)]),
-                                borderRadius: BorderRadius.circular(4.r),
-                                boxShadow: [BoxShadow(
-                                  color: const Color(0xFF43A047).withValues(alpha: 0.5),
-                                  blurRadius: 6)])))]),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Text('$pct%',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13.sp, fontWeight: FontWeight.w800, color: Colors.white)),
-                  ]),
-                ),
               ],
             ),
           ),
         ),
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 4.h,
+          right: 16.w,
+          child: _buildHeaderStats(),
+        ),
       ]),
+    );
+  }
+
+  Widget _buildHeaderStats() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Container(
+          width: 60.w,
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('⭐', style: TextStyle(fontSize: 12.sp)),
+              SizedBox(width: 4.w),
+              Text('${_score?.totalStars ?? 0}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp, fontWeight: FontWeight.w800,
+                  color: Colors.white, height: 1.0)),
+            ],
+          ),
+        ),
+        SizedBox(height: 5.h),
+        Container(
+          width: 60.w,
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('🔥', style: TextStyle(fontSize: 12.sp)),
+              SizedBox(width: 4.w),
+              Text('${_score?.streak ?? 0}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp, fontWeight: FontWeight.w800,
+                  color: Colors.white, height: 1.0)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -301,14 +313,7 @@ class _ConsonantGroupCard extends StatelessWidget {
   static const _purpleBg = Color(0xFFF3EEFF);
 
   Color get _groupColor {
-    const colors = [
-      Color(0xFF7C4DFF), // Tím
-      Color(0xFF2979FF), // Xanh dương
-      Color(0xFF00BFA5), // Xanh lá
-      Color(0xFFFF6D00), // Cam
-      Color(0xFFD500F9), // Hồng tím
-    ];
-    return colors[(group.number - 1) % colors.length];
+    return const Color(0xFF6C3FC7);
   }
 
   @override
@@ -367,10 +372,8 @@ class _ConsonantGroupCard extends StatelessWidget {
                   border: Border.all(
                     color: isLocked
                         ? const Color(0xFFE0E5F0)
-                        : isCurrent
-                            ? color.withValues(alpha: 0.35)
-                            : color.withValues(alpha: 0.15),
-                    width: isCurrent ? 2.0 : 1.5,
+                        : const Color(0xFFE8ECF2),
+                    width: 1.0,
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -755,12 +758,8 @@ class _CharCircleState extends State<_CharCircle>
                           ? widget.color.withValues(alpha: 0.10)
                           : const Color(0xFFF5F7FC),
                   border: Border.all(
-                    color: widget.isLocked
-                        ? const Color(0xFFE0E5F0)
-                        : widget.isDone
-                            ? widget.color.withValues(alpha: 0.30)
-                            : const Color(0xFFD8DDE8),
-                    width: 2.w,
+                    color: const Color(0xFFE0E5F0),
+                    width: 1.5.w,
                   ),
                 ),
                 child: Center(

@@ -78,6 +78,21 @@ class _ReadingScreenState extends State<ReadingScreen>
 
   Future<void> _initSTT() async {
     try {
+      final status = await Permission.microphone.status;
+      if (status.isPermanentlyDenied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Quyền Micro bị từ chối vĩnh viễn. Bé hãy mở cài đặt để cấp quyền!'),
+              action: SnackBarAction(
+                label: 'Cài đặt',
+                onPressed: () => openAppSettings(),
+              ),
+            ),
+          );
+        }
+        return;
+      }
       final mic = await Permission.microphone.request();
       if (!mic.isGranted) return;
       
@@ -97,20 +112,25 @@ class _ReadingScreenState extends State<ReadingScreen>
       );
       
       if (_sttReady) {
-        final locs = await _speech.locales();
-        bool foundKhmer = false;
-        for (final l in locs) {
-          if (l.localeId.toLowerCase().startsWith('km')) {
-            _selectedLocaleId = l.localeId;
-            foundKhmer = true;
-            break;
+        try {
+          final locs = await _speech.locales();
+          bool foundKhmer = false;
+          for (final l in locs) {
+            if (l.localeId.toLowerCase().startsWith('km')) {
+              _selectedLocaleId = l.localeId;
+              foundKhmer = true;
+              break;
+            }
           }
-        }
-        if (!foundKhmer) {
-          final systemLoc = await _speech.systemLocale();
-          if (systemLoc != null) {
-            _selectedLocaleId = systemLoc.localeId;
+          if (!foundKhmer) {
+            final systemLoc = await _speech.systemLocale();
+            if (systemLoc != null) {
+              _selectedLocaleId = systemLoc.localeId;
+            }
           }
+        } catch (localeErr) {
+          debugPrint('STT Locales query error: $localeErr');
+          _selectedLocaleId = 'km-KH';
         }
         debugPrint("[STT] Selected locale: $_selectedLocaleId");
       }
@@ -299,6 +319,7 @@ class _ReadingScreenState extends State<ReadingScreen>
     
     // Start speech recognition
     try {
+      await _speech.stop();
       await _speech.listen(
         onResult: (r) {
           if (mounted) {

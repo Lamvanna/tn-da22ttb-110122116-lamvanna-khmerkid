@@ -714,6 +714,11 @@ class _InlineSpeakContentState extends State<_InlineSpeakContent>
   }
 
   Future<void> _initSTT() async {
+    final status = await Permission.microphone.status;
+    if (status.isPermanentlyDenied) {
+      if (mounted) setState(() => _statusMsg = 'Quyền Mic bị chặn. Bé hãy bấm vào đây để mở Cài đặt!');
+      return;
+    }
     final micStatus = await Permission.microphone.request();
     if (!micStatus.isGranted) {
       if (mounted) {
@@ -724,6 +729,7 @@ class _InlineSpeakContentState extends State<_InlineSpeakContent>
     try {
       _sttReady = await _speech.initialize(
         onError: (err) {
+          debugPrint('[STT Error] $err');
           if (mounted && _isListening) {
             _pulseCtrl.stop();
             setState(() {
@@ -744,15 +750,35 @@ class _InlineSpeakContentState extends State<_InlineSpeakContent>
           }
         });
       if (_sttReady) {
-        final locales = await _speech.locales();
-        for (final l in locales) {
-          if (l.localeId.toLowerCase().startsWith('km')) {
-            _selectedLocaleId = l.localeId;
-            break;
+        try {
+          final systemLocale = await _speech.systemLocale();
+          if (systemLocale != null) {
+            _selectedLocaleId = systemLocale.localeId;
           }
+          final locales = await _speech.locales();
+          bool foundKhmer = false;
+          for (final l in locales) {
+            if (l.localeId.toLowerCase().startsWith('km')) {
+              _selectedLocaleId = l.localeId;
+              foundKhmer = true;
+              break;
+            }
+          }
+          if (!foundKhmer) {
+            for (final l in locales) {
+              if (l.localeId.toLowerCase().startsWith('vi')) {
+                _selectedLocaleId = l.localeId;
+                break;
+              }
+            }
+          }
+        } catch (localeErr) {
+          debugPrint('STT Locales error: $localeErr');
+          _selectedLocaleId = 'km-KH';
         }
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('STT Init error: $e');
       _sttReady = false;
     }
     if (mounted) setState(() {});
@@ -766,6 +792,7 @@ class _InlineSpeakContentState extends State<_InlineSpeakContent>
     setState(() { _recognized = ''; _statusMsg = ''; _hasResult = false; _isListening = true; });
     _pulseCtrl.repeat(reverse: true);
     try {
+      await _speech.stop();
       await _speech.listen(
         onResult: (result) { if (mounted) { setState(() => _recognized = result.recognizedWords); if (result.finalResult) { _pulseCtrl.stop(); setState(() => _isListening = false); _evaluate(); } } },
         listenFor: const Duration(seconds: 10),
@@ -781,6 +808,43 @@ class _InlineSpeakContentState extends State<_InlineSpeakContent>
     if (mounted) {
       setState(() => _isListening = false);
       _evaluate();
+    }
+  }
+
+  Future<void> _toggleListening() async {
+    if (!_sttReady) {
+      final status = await Permission.microphone.status;
+      if (status.isPermanentlyDenied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Quyền Micro bị từ chối vĩnh viễn. Bé hãy mở cài đặt để cấp quyền!'),
+              action: SnackBarAction(
+                label: 'Cài đặt',
+                onPressed: () => openAppSettings(),
+              ),
+            ),
+          );
+        }
+        return;
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đang khởi tạo lại bộ ghi âm giọng nói...')),
+        );
+      }
+      await _initSTT();
+      if (!_sttReady && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Thiết bị chưa sẵn sàng cho Google Speech. Vui lòng thử lại!')),
+        );
+      }
+      return;
+    }
+    if (_isListening) {
+      await _stopListening();
+    } else {
+      await _startListening();
     }
   }
 
@@ -865,8 +929,7 @@ class _InlineSpeakContentState extends State<_InlineSpeakContent>
                 ]))),
             SizedBox(height: 18.h),
             GestureDetector(
-              onLongPressStart: _sttReady && !_isListening ? (_) => _startListening() : null,
-              onLongPressEnd: _isListening ? (_) => _stopListening() : null,
+              onTap: _toggleListening,
               child: AnimatedBuilder(animation: _pulseCtrl, builder: (_, child) => Column(children: [
                 Container(width: 140.w, height: 140.w,
                   decoration: BoxDecoration(shape: BoxShape.circle,
@@ -900,7 +963,7 @@ class _InlineSpeakContentState extends State<_InlineSpeakContent>
                   Text(_isCorrect ? 'Chính xác!' : 'Thử lại!', style: GoogleFonts.plusJakartaSans(fontSize: 12.sp, fontWeight: FontWeight.w600, color: _isCorrect ? AppColors.tertiaryDark : AppColors.coralDark)),
                 ]))
             else
-              Text(_isListening ? 'Đang thu âm... Bỏ tay để kết thúc' : _statusMsg.isNotEmpty ? _statusMsg : !_sttReady ? 'Đang khởi tạo...' : 'Nhấn giữ mic và đọc "${widget.lesson.romanized}"',
+              Text(_isListening ? 'Đang thu âm... Chạm để dừng' : _statusMsg.isNotEmpty ? _statusMsg : !_sttReady ? 'Đang khởi tạo...' : 'Chạm mic và đọc "${widget.lesson.romanized}"',
                 style: GoogleFonts.plusJakartaSans(fontSize: 12.sp, fontWeight: FontWeight.w600, color: _isListening ? AppColors.coral : AppColors.textHint)),
           ]))),
         ),

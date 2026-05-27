@@ -36,6 +36,7 @@ class StorageService {
   }
 
   int getXp() => _prefs?.getInt(_keyXp) ?? 0;
+  Future<void> setXp(int val) async => await _prefs?.setInt(_keyXp, val);
   Future<void> addXp(int amount) async {
     final current = getXp();
     await _prefs?.setInt(_keyXp, current + amount);
@@ -46,6 +47,7 @@ class StorageService {
   static const _keyLastStudy = 'last_study_date';
 
   int getStreak() => _prefs?.getInt(_keyStreak) ?? 0;
+  Future<void> setStreak(int val) async => await _prefs?.setInt(_keyStreak, val);
 
   Future<void> updateStreak() async {
     final now = DateTime.now();
@@ -207,6 +209,7 @@ class StorageService {
   // ─── PROFILE ─────────────────────────────────────────────────
   static const _keyUsername = 'username';
   static const _keyAvatar = 'avatar_index';
+  static const _keyAvatarUrl = 'avatar_url';
 
   String getUsername() => _prefs?.getString(_keyUsername) ?? 'Bé học giỏi';
   Future<void> setUsername(String name) async =>
@@ -215,6 +218,10 @@ class StorageService {
   int getAvatarIndex() => _prefs?.getInt(_keyAvatar) ?? 0;
   Future<void> setAvatarIndex(int idx) async =>
       await _prefs?.setInt(_keyAvatar, idx);
+
+  String getAvatarUrl() => _prefs?.getString(_keyAvatarUrl) ?? '';
+  Future<void> setAvatarUrl(String url) async =>
+      await _prefs?.setString(_keyAvatarUrl, url);
 
   // ─── STUDY TIME ──────────────────────────────────────────────
   static const _keyTotalStudyMinutes = 'total_study_minutes';

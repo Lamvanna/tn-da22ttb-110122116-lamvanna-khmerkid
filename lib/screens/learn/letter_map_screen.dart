@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_letter.dart';
 import 'letter_detail_screen.dart';
+import '../../services/storage_service.dart';
 
 /// Bản đồ chữ cái Khmer — Premium learning path
 class LetterMapView extends StatefulWidget {
@@ -48,7 +49,28 @@ class _LetterMapViewState extends State<LetterMapView>
       end: 1.08,
     ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
     _scrollCtrl = ScrollController();
+    _loadScore();
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrent());
+  }
+
+  Future<void> _loadScore() async {
+    final storage = await StorageService.getInstance();
+    final progress = storage.getLetterProgress(); // Map<int, int>
+    
+    // Đồng bộ hóa tiến trình thực tế từ bộ nhớ vào danh sách _letters tĩnh
+    for (int i = 0; i < _letters.length; i++) {
+      if (!_letters[i].isTest) {
+        if (progress.containsKey(i)) {
+          _letters[i].isLearned = true;
+          _letters[i].starRating = progress[i]!;
+        } else {
+          _letters[i].isLearned = false;
+          _letters[i].starRating = 0;
+        }
+      }
+    }
+    
+    if (mounted) setState(() {});
   }
 
   void _scrollToCurrent() {

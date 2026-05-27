@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
+import '../../services/storage_service.dart';
 import '../settings/settings_screen.dart';
 import '../report/report_screen.dart';
 import '../achievements/achievements_screen.dart';
@@ -19,6 +22,8 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   ScoreService? _score;
+  String _username = 'Bé Na';
+  String _avatarUrl = '';
 
   @override
   void initState() {
@@ -28,19 +33,433 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadData() async {
     final s = await ScoreService.getInstance();
-    if (mounted) setState(() => _score = s);
+    final storage = await StorageService.getInstance();
+    if (mounted) {
+      setState(() {
+        _score = s;
+        _username = storage.getUsername();
+        _avatarUrl = storage.getAvatarUrl();
+      });
+    }
   }
 
-  int get _xp => _hasRealData ? _score!.totalXp : 1250;
-  int get _level => _hasRealData ? _score!.level : 5;
-  int get _stars => _hasRealData ? _score!.totalStars : 250;
-  int get _streak => _hasRealData ? _score!.streak : 7;
-  int get _medals => _hasRealData ? _score!.totalMedals : 12;
-  int get _lettersLearned => _hasRealData ? _score!.lettersLearned : 18;
-  int get _vowelsLearned => _hasRealData ? _score!.vowelsLearned : 8;
+  Future<void> _pickImage(ImageSource source) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+      );
+      if (image == null) return;
 
-  /// Có dữ liệu thật khi user đã học (XP > 0)
-  bool get _hasRealData => _score != null && _score!.totalXp > 0;
+      final path = image.path;
+      final storage = await StorageService.getInstance();
+      await storage.setAvatarUrl(path);
+
+      if (!mounted) return;
+      setState(() {
+        _avatarUrl = path;
+      });
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: const Text('🎉 Đã cập nhật ảnh đại diện mới thành công!'),
+          backgroundColor: const Color(0xFF4CAF50),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error picking avatar image: $e');
+      messenger.showSnackBar(
+        SnackBar(
+          content: const Text('⚠️ Không thể mở ảnh. Vui lòng kiểm tra quyền truy cập!'),
+          backgroundColor: const Color(0xFFFF5252),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showRenameDialog() {
+    final controller = TextEditingController(text: _username);
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24.r),
+        ),
+        child: Container(
+          padding: EdgeInsets.all(24.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24.r),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Đổi tên của bé ✏️',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF1A237E),
+                ),
+              ),
+              SizedBox(height: 6.h),
+              Text(
+                'Nhập biệt danh đáng yêu mới cho bé nhé:',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                maxLength: 15,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  counterText: '',
+                  hintText: 'Nhập tên...',
+                  hintStyle: GoogleFonts.plusJakartaSans(
+                    fontSize: 14.sp,
+                    color: AppColors.textHint,
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFF1F5F9),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFFF9800),
+                      width: 2,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 20.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                        ),
+                        side: const BorderSide(color: Color(0xFFCBD5E1)),
+                      ),
+                      child: Text(
+                        'Hủy',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final newName = controller.text.trim();
+                        if (newName.isEmpty) return;
+                        final messenger = ScaffoldMessenger.of(context);
+                        final navigator = Navigator.of(context);
+                        final storage = await StorageService.getInstance();
+                        await storage.setUsername(newName);
+                        if (!mounted) return;
+                        setState(() {
+                          _username = newName;
+                        });
+                        navigator.pop();
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text('🎉 Đã đổi tên thành "$newName" thành công!'),
+                            backgroundColor: const Color(0xFF4CAF50),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF9800),
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                        ),
+                      ),
+                      child: Text(
+                        'Lưu',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAvatarPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(28.r),
+            topRight: Radius.circular(28.r),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 20.r,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        padding: EdgeInsets.fromLTRB(24.w, 20.h, 24.w, 32.h),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCBD5E1),
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+            ),
+            SizedBox(height: 20.h),
+            Text(
+              'Thay đổi ảnh đại diện 📸',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF1A237E),
+              ),
+            ),
+            SizedBox(height: 6.h),
+            Text(
+              'Chọn một bức ảnh thật đáng yêu từ điện thoại để làm hình đại diện của bé nhé:',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            SizedBox(height: 24.h),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _pickImage(ImageSource.gallery);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 20.h),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFFE3F2FD), Color(0xFFBBDEFB)],
+                        ),
+                        borderRadius: BorderRadius.circular(20.r),
+                        border: Border.all(
+                          color: const Color(0xFF90CAF9).withOpacity(0.5),
+                          width: 1.5.w,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF2196F3).withOpacity(0.08),
+                            blurRadius: 10.r,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(12.w),
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                            ),
+                            child: Icon(
+                              Icons.photo_library_rounded,
+                              size: 28.sp,
+                              color: const Color(0xFF1E88E5),
+                            ),
+                          ),
+                          SizedBox(height: 12.h),
+                          Text(
+                            'Chọn từ thư viện',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF1E88E5),
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            'Ảnh có sẵn trong máy',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF1565C0).withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 16.w),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _pickImage(ImageSource.camera);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 20.h),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFFFFF3E0), Color(0xFFFFE0B2)],
+                        ),
+                        borderRadius: BorderRadius.circular(20.r),
+                        border: Border.all(
+                          color: const Color(0xFFFFCC80).withOpacity(0.5),
+                          width: 1.5.w,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFF9800).withOpacity(0.08),
+                            blurRadius: 10.r,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(12.w),
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                            ),
+                            child: Icon(
+                              Icons.camera_alt_rounded,
+                              size: 28.sp,
+                              color: const Color(0xFFF57C00),
+                            ),
+                          ),
+                          SizedBox(height: 12.h),
+                          Text(
+                            'Chụp ảnh mới',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFFF57C00),
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            'Chụp hình bé ngay',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFFE65100).withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 24.h),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                    side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
+                  ),
+                  backgroundColor: const Color(0xFFF8FAFC),
+                ),
+                child: Text(
+                  'Hủy bỏ',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  int get _xp => _score != null ? _score!.totalXp : 0;
+  int get _level => _score != null ? _score!.level : 1;
+  int get _stars => _score != null ? _score!.totalStars : 0;
+  int get _streak => _score != null ? _score!.streak : 0;
+  int get _medals => _score != null ? _score!.totalMedals : 0;
+  int get _lettersLearned => _score != null ? _score!.lettersLearned : 0;
+  int get _vowelsLearned => _score != null ? _score!.vowelsLearned : 0;
+  int get _readingLearned => _score != null ? _score!.readingLearned : 0;
 
   String _levelTitle(int lv) {
     if (lv >= 20) return 'Bậc thầy ngôn ngữ';
@@ -52,9 +471,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Demo mode: hiển thị 1250/2000 cho level 5; mode thật: 100 XP/level
-    final xpInLevel = _hasRealData ? (_xp % 100) : 1250;
-    final xpNeeded = _hasRealData ? 100 : 2000;
+    // Mỗi level cần 100 XP
+    final xpInLevel = _xp % 100;
+    final xpNeeded = 100;
     final xpRemaining = xpNeeded - xpInLevel;
 
     return Scaffold(
@@ -271,27 +690,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      'Bé Na',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize:
-                                            27.sp, // Lớn và nổi bật hơn nhiều
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.white,
-                                        letterSpacing: -0.5,
-                                        height: 1.1,
-                                        shadows: [
-                                          Shadow(
-                                            color: const Color(
-                                              0xFF1E1B4B,
-                                            ).withOpacity(0.40),
-                                            blurRadius: 8.r,
-                                            offset: Offset(0, 3.h),
+                                    Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            _username,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize:
+                                                  27.sp, // Lớn và nổi bật hơn nhiều
+                                              fontWeight: FontWeight.w900,
+                                              color: Colors.white,
+                                              letterSpacing: -0.5,
+                                              height: 1.1,
+                                              shadows: [
+                                                Shadow(
+                                                  color: const Color(
+                                                    0xFF1E1B4B,
+                                                  ).withOpacity(0.40),
+                                                  blurRadius: 8.r,
+                                                  offset: Offset(0, 3.h),
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                        SizedBox(width: 8.w),
+                                        GestureDetector(
+                                          onTap: _showRenameDialog,
+                                          child: Container(
+                                            padding: EdgeInsets.all(5.w),
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.white.withOpacity(0.22),
+                                              border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.w),
+                                            ),
+                                            child: Icon(
+                                              Icons.edit_rounded,
+                                              color: Colors.white,
+                                              size: 13.sp,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                     SizedBox(height: 8.h),
                                     _buildLevelChip(),
@@ -381,67 +823,92 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ─── Avatar with star badge (top-right) + edit button (bottom-right)
   Widget _buildAvatarWithBadges() {
-    return SizedBox(
-      width: 90.w,
-      height: 90.w,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Avatar
-          Container(
-            width: 90.w,
-            height: 90.w,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white,
-              border: Border.all(color: Colors.white, width: 3.5.w),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF1E1B4B).withOpacity(0.28),
-                  blurRadius: 16.r,
-                  offset: Offset(0, 8.h),
-                ),
-              ],
-            ),
-            child: ClipOval(
-              child: Image.asset('image/Đại diện.png', fit: BoxFit.cover),
-            ),
-          ),
-          // Edit pencil (bottom-right)
-          Positioned(
-            right: -2.w,
-            bottom: -2.h,
-            child: Container(
-              width: 28.w,
-              height: 28.w,
+    return GestureDetector(
+      onTap: _showAvatarPicker,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 90.w,
+        height: 90.w,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Avatar
+            Container(
+              width: 90.w,
+              height: 90.w,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFFFAB40), // Bright shiny orange
-                    Color(0xFFFF6D00), // Rich warm orange
-                  ],
-                ),
-                border: Border.all(color: Colors.white, width: 2.w),
+                color: Colors.white,
+                border: Border.all(color: Colors.white, width: 3.5.w),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFFF6D00).withOpacity(0.35),
-                    blurRadius: 8.r,
-                    offset: Offset(0, 3.h),
+                    color: const Color(0xFF1E1B4B).withOpacity(0.28),
+                    blurRadius: 16.r,
+                    offset: Offset(0, 8.h),
                   ),
                 ],
               ),
-              alignment: Alignment.center,
-              child: Icon(
-                Icons.edit_rounded,
-                color: Colors.white,
-                size: 13.sp,
+              child: ClipOval(
+                child: _avatarUrl.isNotEmpty
+                    ? (_avatarUrl.startsWith('http')
+                        ? Image.network(
+                            _avatarUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Image.asset('image/Đại diện.png', fit: BoxFit.cover),
+                          )
+                        : (_avatarUrl.startsWith('image/') || _avatarUrl.startsWith('assets/')
+                            ? Image.asset(
+                                _avatarUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Image.asset('image/Đại diện.png', fit: BoxFit.cover),
+                              )
+                            : Image.file(
+                                File(_avatarUrl),
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Image.asset('image/Đại diện.png', fit: BoxFit.cover),
+                              )))
+                    : Image.asset('image/Đại diện.png', fit: BoxFit.cover),
               ),
             ),
-          ),
-        ],
+            // Edit pencil (bottom-right)
+            Positioned(
+              right: -2.w,
+              bottom: -2.h,
+              child: Container(
+                width: 28.w,
+                height: 28.w,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFFFFAB40), // Bright shiny orange
+                      Color(0xFFFF6D00), // Rich warm orange
+                    ],
+                  ),
+                  border: Border.all(color: Colors.white, width: 2.w),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF6D00).withOpacity(0.35),
+                      blurRadius: 8.r,
+                      offset: Offset(0, 3.h),
+                    ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.edit_rounded,
+                  color: Colors.white,
+                  size: 13.sp,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -534,7 +1001,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _statItem(
               iconIndex: 1,
               label: 'Chuỗi ngày',
-              value: '$_streak ngày',
+              value: '$_streak',
               labelColor: const Color(0xFF64748B),
               valueColor: const Color(0xFF1E293B),
             ),
@@ -639,13 +1106,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // LEARNING PROGRESS
   // ══════════════════════════════════════════════════════════════
   Widget _buildProgressSection() {
-    // Demo data fallback khi user chưa học
-    final letters = _hasRealData ? _lettersLearned : 18;
-    final spelling = _hasRealData ? 0 : 12;
-    final writing = _hasRealData ? 0 : 8;
-    final reading = _hasRealData ? 0 : 14;
+    final letters = _lettersLearned;
+    final spelling = _vowelsLearned;
+    final writing = _lettersLearned;
+    final reading = _readingLearned;
 
-    final totalProg = ((letters / 33 + _vowelsLearned / 24) / 2 * 100)
+    final totalProg = (((letters / 33) + (spelling / 24) + (reading / 15)) / 3 * 100)
         .clamp(0, 100)
         .toInt();
 
@@ -857,7 +1323,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _progressBar(
                       'Đánh vần',
                       spelling,
-                      20,
+                      24,
                       const Color(0xFF2196F3),
                       'image/Đánh vần.png',
                     ),
@@ -865,7 +1331,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _progressBar(
                       'Luyện viết',
                       writing,
-                      20,
+                      33,
                       const Color(0xFFFF9800),
                       'image/Tập viết.png',
                     ),
@@ -873,7 +1339,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _progressBar(
                       'Tập đọc',
                       reading,
-                      20,
+                      15,
                       const Color(0xFF9C27B0),
                       'image/Tập đọc.png',
                     ),

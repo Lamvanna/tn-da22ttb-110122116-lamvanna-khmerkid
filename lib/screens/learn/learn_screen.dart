@@ -254,7 +254,7 @@ class _LearnScreenState extends State<LearnScreen> {
               Text('⭐', style: TextStyle(fontSize: 12.sp)),
               SizedBox(width: 4.w),
               Text(
-                '1000',
+                '${_score?.totalStars ?? 0}',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w800,

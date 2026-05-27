@@ -7,6 +7,7 @@ import '../../models/khmer_vowel.dart';
 import 'vowel_inline_listen.dart';
 import 'vowel_inline_speak.dart';
 import 'vowel_inline_write.dart';
+import '../../services/score_service.dart';
 
 /// Chi tiết 1 nguyên âm — 3 bước inline: Nghe, Nói, Viết (giống phụ âm)
 class VowelDetailScreen extends StatefulWidget {
@@ -70,9 +71,17 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
     if (_completedSteps[_idx]!.length == 3) _onCompleted();
   }
 
-  void _onCompleted() {
+  void _onCompleted() async {
     _vowels[_idx].isLearned = true;
     _vowels[_idx].starRating = 3;
+
+    try {
+      final scoreService = await ScoreService.getInstance();
+      await scoreService.completeVowelLesson(_idx, 3);
+    } catch (e) {
+      debugPrint('⚠️ Error completing vowel lesson: $e');
+    }
+
     Future.delayed(const Duration(milliseconds: 300), () {
       if (!mounted) return;
       _showCompletionDialog();

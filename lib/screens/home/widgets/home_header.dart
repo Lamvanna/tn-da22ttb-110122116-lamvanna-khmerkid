@@ -17,6 +17,7 @@ class _HomeHeaderState extends State<HomeHeader> {
   StorageService? _storage;
   ScoreService? _score;
   String _username = 'Bé học giỏi';
+  String _avatarUrl = '';
   int _level = 1;
   int _streak = 0;
   int _totalStars = 0;
@@ -33,6 +34,7 @@ class _HomeHeaderState extends State<HomeHeader> {
     if (mounted) {
       setState(() {
         _username = _storage!.getUsername();
+        _avatarUrl = _storage!.getAvatarUrl();
         _level = _score!.level;
         _streak = _score!.streak;
         _totalStars = _score!.totalStars;
@@ -93,7 +95,15 @@ class _HomeHeaderState extends State<HomeHeader> {
                         color: Colors.white.withValues(alpha: 0.25),
                         border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2.5.w)),
                       child: ClipOval(
-                        child: Image.asset('image/Đại diện.png', fit: BoxFit.cover)),
+                        child: _avatarUrl.isNotEmpty && _avatarUrl.startsWith('http')
+                            ? Image.network(
+                                _avatarUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Image.asset('image/Đại diện.png', fit: BoxFit.cover),
+                              )
+                            : Image.asset('image/Đại diện.png', fit: BoxFit.cover),
+                      ),
                     ),
                     SizedBox(width: 14.w),
                     // Name + Level

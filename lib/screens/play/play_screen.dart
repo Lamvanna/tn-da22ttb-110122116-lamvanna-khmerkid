@@ -319,7 +319,7 @@ class _PlayScreenState extends State<PlayScreen> {
               Text('⭐', style: TextStyle(fontSize: 12.sp)),
               SizedBox(width: 4.w),
               Text(
-                '1000', // Temporarily hardcoded for testing!
+                '${_score?.totalStars ?? 0}', // Dynamically loaded from ScoreService
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w800,

@@ -8,7 +8,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_letter.dart';
-import '../../data/stroke_guide_data.dart';
+import '../../services/score_service.dart';
 
 /// Màn hình chi tiết học chữ cái Khmer
 /// Tích hợp TTS (nghe), STT (nói), stroke validation (viết)
@@ -33,9 +33,11 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
 
   // 0 = none, 1 = listen, 2 = speak, 3 = write
   int _activeSheet = 0;
+  ScoreService? _score;
 
   @override
   void initState() {
+    _loadScore();
     super.initState();
     _idx = widget.initialIndex;
     _animCtrl = AnimationController(
@@ -47,6 +49,19 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutBack));
     _animCtrl.forward();
+  }
+
+  Future<void> _loadScore() async {
+    try {
+      final score = await ScoreService.getInstance();
+      if (mounted) {
+        setState(() {
+          _score = score;
+        });
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error loading ScoreService: $e');
+    }
   }
 
   @override
@@ -81,9 +96,16 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
     }
   }
 
-  void _onLetterCompleted() {
+  void _onLetterCompleted() async {
     _letters[_idx].isLearned = true;
     _letters[_idx].starRating = 3;
+
+    try {
+      final scoreService = await ScoreService.getInstance();
+      await scoreService.completeLetterLesson(_idx, 3);
+    } catch (e) {
+      debugPrint('⚠️ Error completing letter lesson: $e');
+    }
 
     Future.delayed(const Duration(milliseconds: 300), () {
       if (!mounted) return;
@@ -293,140 +315,137 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
           // Content
           SafeArea(
             bottom: false,
-            child: Transform.translate(
-              offset: Offset(0, -5.h),
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(8.w, 0, 0, 2.h),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            children: [
-                              IconButton(
-                                onPressed: () => Navigator.pop(context),
-                                icon: Container(
-                                  padding: EdgeInsets.all(8.w),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.15),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.arrow_back_rounded,
-                                    size: 20.w,
-                                  ),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(8.w, 6.h, 0, 10.h),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: Container(
+                                padding: EdgeInsets.all(8.w),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
                                 ),
-                                color: Colors.white,
-                                padding: EdgeInsets.zero,
-                                constraints: BoxConstraints(
-                                  minWidth: 44.w,
-                                  minHeight: 44.w,
+                                child: Icon(
+                                  Icons.arrow_back_rounded,
+                                  size: 20.w,
+                                ),
+                              ),
+                              color: Colors.white,
+                              padding: EdgeInsets.zero,
+                              constraints: BoxConstraints(
+                                minWidth: 44.w,
+                                minHeight: 44.w,
+                              ),
+                            ),
+                            SizedBox(width: 6.w),
+                            Expanded(
+                              child: Text(
+                                'Chữ cái ${_letters.sublist(0, _idx + 1).where((l) => !l.isTest).length}/${_letters.where((l) => !l.isTest).length}',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 24.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Padding(
+                          padding: EdgeInsets.only(left: 54.w, top: 8.h),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 10.w,
+                                  vertical: 4.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.18),
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '⭐',
+                                      style: TextStyle(fontSize: 13.sp),
+                                    ),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      '${_letters.where((l) => l.isLearned && !l.isTest).length * 15}',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                               SizedBox(width: 6.w),
-                              Expanded(
-                                child: Text(
-                                  'Chữ cái ${_letters.sublist(0, _idx + 1).where((l) => !l.isTest).length}/${_letters.where((l) => !l.isTest).length}',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 24.sp,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                  ),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 10.w,
+                                  vertical: 4.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.18),
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '🔥',
+                                      style: TextStyle(fontSize: 13.sp),
+                                    ),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      '${_score?.streak ?? 0}',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
-                          Padding(
-                            padding: EdgeInsets.only(left: 54.w, top: 8.h),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 10.w,
-                                    vertical: 4.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.18),
-                                    borderRadius: BorderRadius.circular(12.r),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        '⭐',
-                                        style: TextStyle(fontSize: 13.sp),
-                                      ),
-                                      SizedBox(width: 4.w),
-                                      Text(
-                                        '${_letters.where((l) => l.isLearned && !l.isTest).length * 15}',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 13.sp,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(width: 6.w),
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 10.w,
-                                    vertical: 4.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.18),
-                                    borderRadius: BorderRadius.circular(12.r),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        '🔥',
-                                        style: TextStyle(fontSize: 13.sp),
-                                      ),
-                                      SizedBox(width: 4.w),
-                                      Text(
-                                        '7 ngày',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 13.sp,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    // Mascot - responsive
-                    Transform.translate(
-                      offset: Offset(-5.w, -5.h),
-                      child: SizedBox(
-                        width: 130.w,
-                        height: 75.h,
-                        child: OverflowBox(
-                          maxHeight: 200.w,
-                          maxWidth: 200.w,
-                          child: Image.asset(
-                            'assets/images/elephant_mascot.png',
-                            width: 200.w,
-                            height: 200.w,
-                            fit: BoxFit.contain,
-                          ),
+                  ),
+                  // Mascot - responsive
+                  Transform.translate(
+                    offset: Offset(-5.w, -5.h),
+                    child: SizedBox(
+                      width: 130.w,
+                      height: 75.h,
+                      child: OverflowBox(
+                        maxHeight: 200.w,
+                        maxWidth: 200.w,
+                        child: Image.asset(
+                          'assets/images/elephant_mascot.png',
+                          width: 200.w,
+                          height: 200.w,
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -1635,6 +1654,11 @@ class _InlineSpeakContentState extends State<_InlineSpeakContent>
   }
 
   Future<void> _initSTT() async {
+    final status = await Permission.microphone.status;
+    if (status.isPermanentlyDenied) {
+      if (mounted) setState(() => _statusMsg = 'Quyền Mic bị chặn. Bé hãy bấm vào đây để mở Cài đặt!');
+      return;
+    }
     final micStatus = await Permission.microphone.request();
     if (!micStatus.isGranted) {
       if (mounted) setState(() => _statusMsg = 'Cần cấp quyền microphone!');
@@ -1643,6 +1667,7 @@ class _InlineSpeakContentState extends State<_InlineSpeakContent>
     try {
       _sttReady = await _speech.initialize(
         onError: (err) {
+          debugPrint('[STT Error] $err');
           if (mounted && _isListening) {
             _pulseCtrl.stop();
             setState(() { _isListening = false;
@@ -1660,12 +1685,37 @@ class _InlineSpeakContentState extends State<_InlineSpeakContent>
         },
       );
       if (_sttReady) {
-        final locales = await _speech.locales();
-        for (final l in locales) {
-          if (l.localeId.toLowerCase().startsWith('vi')) { _selectedLocaleId = l.localeId; break; }
+        try {
+          final systemLocale = await _speech.systemLocale();
+          if (systemLocale != null) {
+            _selectedLocaleId = systemLocale.localeId;
+          }
+          final locales = await _speech.locales();
+          bool foundKhmer = false;
+          for (final l in locales) {
+            if (l.localeId.toLowerCase().startsWith('km')) {
+              _selectedLocaleId = l.localeId;
+              foundKhmer = true;
+              break;
+            }
+          }
+          if (!foundKhmer) {
+            for (final l in locales) {
+              if (l.localeId.toLowerCase().startsWith('vi')) {
+                _selectedLocaleId = l.localeId;
+                break;
+              }
+            }
+          }
+        } catch (localeErr) {
+          debugPrint('STT Locales error: $localeErr');
+          _selectedLocaleId = 'km-KH';
         }
       }
-    } catch (e) { _sttReady = false; }
+    } catch (e) { 
+      debugPrint('STT Initialization error: $e');
+      _sttReady = false; 
+    }
     if (mounted) setState(() {});
   }
 
@@ -1677,6 +1727,7 @@ class _InlineSpeakContentState extends State<_InlineSpeakContent>
     setState(() { _recognized = ''; _statusMsg = ''; _hasResult = false; _isListening = true; });
     _pulseCtrl.repeat(reverse: true);
     try {
+      await _speech.stop();
       await _speech.listen(
         onResult: (result) {
           if (mounted) {
@@ -1722,6 +1773,43 @@ class _InlineSpeakContentState extends State<_InlineSpeakContent>
     if (mounted) {
       setState(() => _isListening = false);
       _evaluate();
+    }
+  }
+
+  Future<void> _toggleListening() async {
+    if (!_sttReady) {
+      final status = await Permission.microphone.status;
+      if (status.isPermanentlyDenied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Quyền Micro bị từ chối vĩnh viễn. Bé hãy mở cài đặt để cấp quyền!'),
+              action: SnackBarAction(
+                label: 'Cài đặt',
+                onPressed: () => openAppSettings(),
+              ),
+            ),
+          );
+        }
+        return;
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đang khởi tạo lại bộ ghi âm giọng nói...')),
+        );
+      }
+      await _initSTT();
+      if (!_sttReady && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Thiết bị chưa sẵn sàng cho Google Speech. Vui lòng thử lại!')),
+        );
+      }
+      return;
+    }
+    if (_isListening) {
+      await _stopListening();
+    } else {
+      await _startListening();
     }
   }
 
@@ -1803,8 +1891,7 @@ class _InlineSpeakContentState extends State<_InlineSpeakContent>
                   SizedBox(height: 18.h),
                   // Mic button with rings
                   GestureDetector(
-                    onLongPressStart: _sttReady && !_isListening ? (_) => _startListening() : null,
-                    onLongPressEnd: _isListening ? (_) => _stopListening() : null,
+                    onTap: _toggleListening,
                     child: AnimatedBuilder(
                       animation: _pulseCtrl,
                       builder: (_, __) => Column(
@@ -1903,10 +1990,10 @@ class _InlineSpeakContentState extends State<_InlineSpeakContent>
                     )
                   else
                     Text(
-                      _isListening ? 'Đang thu âm... Bỏ tay để kết thúc'
+                      _isListening ? 'Đang thu âm... Chạm để dừng'
                         : _statusMsg.isNotEmpty ? _statusMsg
                         : !_sttReady ? 'Đang khởi tạo...'
-                        : 'Nhấn giữ mic và đọc "${widget.letter.romanized}"',
+                        : 'Chạm mic và đọc "${widget.letter.romanized}"',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.sp, fontWeight: FontWeight.w600,
                         color: _isListening ? AppColors.coral : AppColors.textHint,
@@ -2002,6 +2089,7 @@ class _InlineWriteContentState extends State<_InlineWriteContent> {
             children: [
               // Grid
               CustomPaint(size: Size.infinite, painter: _GuideLinePainter()),
+              
               // Guide letter (light)
               Center(
                 child: Padding(
@@ -2012,7 +2100,8 @@ class _InlineWriteContentState extends State<_InlineWriteContent> {
                   )),
                 ),
               ),
-              // Drawing
+              
+              // Drawing canvas
               GestureDetector(
                 onPanStart: (d) => setState(() { _current = [d.localPosition]; _passed = null; }),
                 onPanUpdate: (d) => setState(() => _current.add(d.localPosition)),
@@ -2222,6 +2311,11 @@ class _SpeakSheetState extends State<_SpeakSheet>
   }
 
   Future<void> _initSTT() async {
+    final status = await Permission.microphone.status;
+    if (status.isPermanentlyDenied) {
+      if (mounted) setState(() => _statusMsg = 'Quyền Mic bị chặn. Bé hãy bấm vào đây để mở Cài đặt!');
+      return;
+    }
     final micStatus = await Permission.microphone.request();
     debugPrint('[STT] Mic permission: $micStatus');
     if (!micStatus.isGranted) {
@@ -2258,22 +2352,32 @@ class _SpeakSheetState extends State<_SpeakSheet>
       );
       debugPrint('[STT] Initialize: $_sttReady');
 
-      // Pre-select locale
       if (_sttReady) {
-        final locales = await _speech.locales();
-        for (final l in locales) {
-          if (l.localeId.toLowerCase().startsWith('vi')) {
-            _selectedLocaleId = l.localeId;
-            break;
+        try {
+          final systemLocale = await _speech.systemLocale();
+          if (systemLocale != null) {
+            _selectedLocaleId = systemLocale.localeId;
           }
-        }
-        if (_selectedLocaleId == 'vi-VN') {
+          final locales = await _speech.locales();
+          bool foundKhmer = false;
           for (final l in locales) {
             if (l.localeId.toLowerCase().startsWith('km')) {
               _selectedLocaleId = l.localeId;
+              foundKhmer = true;
               break;
             }
           }
+          if (!foundKhmer) {
+            for (final l in locales) {
+              if (l.localeId.toLowerCase().startsWith('vi')) {
+                _selectedLocaleId = l.localeId;
+                break;
+              }
+            }
+          }
+        } catch (localeErr) {
+          debugPrint('[STT] Locales lookup failed: $localeErr');
+          _selectedLocaleId = 'km-KH';
         }
         debugPrint('[STT] Selected locale: $_selectedLocaleId');
       }
@@ -2307,6 +2411,7 @@ class _SpeakSheetState extends State<_SpeakSheet>
     debugPrint('[STT] Using locale: $_selectedLocaleId');
 
     try {
+      await _speech.stop();
       await _speech.listen(
         onResult: (result) {
           debugPrint(
@@ -2334,6 +2439,52 @@ class _SpeakSheetState extends State<_SpeakSheet>
           _statusMsg = 'Lỗi nhận diện giọng nói. Thử lại!';
         });
       }
+    }
+  }
+
+  Future<void> _stopListening() async {
+    _pulseCtrl.stop();
+    await _speech.stop();
+    if (mounted) {
+      setState(() => _isListening = false);
+      _evaluate();
+    }
+  }
+
+  Future<void> _toggleListening() async {
+    if (!_sttReady) {
+      final status = await Permission.microphone.status;
+      if (status.isPermanentlyDenied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Quyền Micro bị từ chối vĩnh viễn. Bé hãy mở cài đặt để cấp quyền!'),
+              action: SnackBarAction(
+                label: 'Cài đặt',
+                onPressed: () => openAppSettings(),
+              ),
+            ),
+          );
+        }
+        return;
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đang khởi tạo lại bộ ghi âm giọng nói...')),
+        );
+      }
+      await _initSTT();
+      if (!_sttReady && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Thiết bị chưa sẵn sàng cho Google Speech. Vui lòng thử lại!')),
+        );
+      }
+      return;
+    }
+    if (_isListening) {
+      await _stopListening();
+    } else {
+      await _startListening();
     }
   }
 
@@ -2724,7 +2875,7 @@ class _SpeakSheetState extends State<_SpeakSheet>
               // Mic button with wave bars
               Center(
                 child: GestureDetector(
-                  onTap: _sttReady && !_isListening ? _startListening : null,
+                  onTap: _toggleListening,
                   child: AnimatedBuilder(
                     animation: _pulseCtrl,
                     builder: (context, child) => SizedBox(
@@ -2841,11 +2992,11 @@ class _SpeakSheetState extends State<_SpeakSheet>
                       ? 'Đang khởi tạo...'
                       : _isListening
                       ? (_recognized.isNotEmpty
-                            ? '"$_recognized"'
-                            : 'Đang nghe...')
+                            ? '"$_recognized"\n(Chạm để dừng)'
+                            : 'Đang nghe...\n(Chạm để dừng)')
                       : _statusMsg.isNotEmpty
                       ? _statusMsg
-                      : 'Bé nhấn để nói',
+                      : 'Bé chạm để nói',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,

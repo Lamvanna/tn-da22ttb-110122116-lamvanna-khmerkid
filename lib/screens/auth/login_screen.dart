@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui';
 import '../../constants/app_colors.dart';
+import '../../services/auth_service.dart';
 import '../main_screen.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
@@ -229,9 +230,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                 SizedBox(height: 24.h),
 
                                 Row(children: [
-                                  Expanded(child: _socialGlassBtn('Google', isGoogle: true)),
+                                  Expanded(child: _socialGlassBtn(
+                                    'Google', 
+                                    isGoogle: true,
+                                    onTap: _handleGoogleLogin,
+                                  )),
                                   SizedBox(width: 14.w),
-                                  Expanded(child: _socialGlassBtn('Facebook', icon: Icons.facebook, color: Colors.white)),
+                                  Expanded(child: _socialGlassBtn('Facebook', icon: Icons.facebook, color: Colors.white, onTap: () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Đăng nhập bằng Facebook hiện tại chưa khả dụng.')),
+                                    );
+                                  })),
                                 ]),
 
                                 SizedBox(height: 28.h),
@@ -341,39 +350,48 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _socialGlassBtn(String label, {bool isGoogle = false, IconData? icon, Color? color}) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 14.h),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(50.r)),
-      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        if (isGoogle)
-          Text('G', style: GoogleFonts.roboto(fontSize: 20.sp, fontWeight: FontWeight.w700,
-            foreground: Paint()..shader = const LinearGradient(
-              colors: [Color(0xFFEA4335), Color(0xFFFBBC05), Color(0xFF34A853), Color(0xFF4285F4)])
-              .createShader(const Rect.fromLTWH(0, 0, 20, 20))))
-        else
-          Icon(icon, color: color, size: 20.sp),
-        SizedBox(width: 8.w),
-        Text(label, style: GoogleFonts.plusJakartaSans(
-          fontSize: 15.sp, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9))),
-      ]),
+  Widget _socialGlassBtn(String label, {bool isGoogle = false, IconData? icon, Color? color, VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 14.h),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(50.r)),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          if (isGoogle)
+            Text('G', style: GoogleFonts.roboto(fontSize: 20.sp, fontWeight: FontWeight.w700,
+              foreground: Paint()..shader = const LinearGradient(
+                colors: [Color(0xFFEA4335), Color(0xFFFBBC05), Color(0xFF34A853), Color(0xFF4285F4)])
+                .createShader(const Rect.fromLTWH(0, 0, 20, 20))))
+          else
+            Icon(icon, color: color, size: 20.sp),
+          SizedBox(width: 8.w),
+          Text(label, style: GoogleFonts.plusJakartaSans(
+            fontSize: 15.sp, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9))),
+        ]),
+      ),
     );
   }
 
-  void _handleLogin() {
+  void _handleLogin() async {
     // Validate inputs
     String? userErr;
     String? passErr;
 
-    if (_userCtrl.text.trim().isEmpty) {
-      userErr = 'Vui lòng nhập tên đăng nhập';
+    final emailInput = _userCtrl.text.trim();
+    final passwordInput = _passCtrl.text;
+
+    if (emailInput.isEmpty) {
+      userErr = 'Vui lòng nhập email đăng nhập';
+    } else if (!emailInput.contains('@')) {
+      userErr = 'Địa chỉ email không hợp lệ (cần ký tự @)';
     }
-    if (_passCtrl.text.isEmpty) {
+    
+    if (passwordInput.isEmpty) {
       passErr = 'Vui lòng nhập mật khẩu';
-    } else if (_passCtrl.text.length < 4) {
-      passErr = 'Mật khẩu phải có ít nhất 4 ký tự';
+    } else if (passwordInput.length < 6) {
+      passErr = 'Mật khẩu phải có ít nhất 6 ký tự';
     }
 
     setState(() {
@@ -384,9 +402,133 @@ class _LoginScreenState extends State<LoginScreen> {
     if (userErr != null || passErr != null) return;
 
     setState(() => _isLoading = true);
-    Future.delayed(const Duration(milliseconds: 800), () {
+
+    try {
+      final result = await AuthService().login(
+        email: emailInput,
+        password: passwordInput,
+      );
+
       if (!mounted) return;
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainScreen()));
-    });
+      setState(() => _isLoading = false);
+
+      if (result['success'] == true) {
+        // Chuyển hướng sang MainScreen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainScreen()),
+        );
+      } else {
+        // Show error dialog
+        _showErrorDialog(result['message'] ?? 'Đăng nhập thất bại.');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showErrorDialog('Lỗi kết nối mạng: $e');
+    }
+  }  void _handleGoogleLogin() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await AuthService().googleLogin();
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (result['success'] == true) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainScreen()),
+        );
+      } else if (result['isDeveloperError'] == true) {
+        // Gợi ý đăng nhập giả lập khi gặp lỗi cấu hình SHA-1 của Google
+        _showMockBypassDialog();
+      } else {
+        _showErrorDialog(result['message'] ?? 'Đăng nhập bằng Google thất bại.');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showErrorDialog('Lỗi kết nối tới hệ thống Google: $e');
+    }
+  }
+
+  void _showMockBypassDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        title: Row(children: [
+          Icon(Icons.g_mobiledata_rounded, color: Colors.blueAccent, size: 36.sp),
+          SizedBox(width: 4.w),
+          const Text('Bypass Google Auth'),
+        ]),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Thiết bị chưa cấu hình chữ ký SHA-1 trên Google Cloud Console (ApiException 10).',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8.h),
+            const Text('Bạn có muốn kích hoạt Đăng nhập Google giả lập để test nhanh kết nối API Backend không?'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+            },
+            child: const Text('Hủy bỏ', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              setState(() => _isLoading = true);
+              final result = await AuthService().googleMockLogin();
+              if (!mounted) return;
+              setState(() => _isLoading = false);
+              
+              if (result['success'] == true) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MainScreen()),
+                );
+              } else {
+                _showErrorDialog(result['message']);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.headerMid,
+              shape: const StadiumBorder(),
+            ),
+            child: const Text('Đồng ý (Test nhanh)', style: TextStyle(color: Colors.white)),
+          )
+        ],
+      ),
+    );
+  }
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        title: Row(children: [
+          Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 24.sp),
+          SizedBox(width: 8.w),
+          const Text('Thông báo lỗi'),
+        ]),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Đồng ý'),
+          )
+        ],
+      ),
+    );
   }
 }

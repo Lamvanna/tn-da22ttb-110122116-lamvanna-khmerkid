@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../constants/app_colors.dart';
+import '../../services/auth_service.dart';
 import 'login_screen.dart';
 
 /// Màn hình Đăng ký — Deep Glassmorphism (Premium 2026)
@@ -21,7 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   // ─── Form ──
   final _formKey     = GlobalKey<FormState>();
   final _nameCtrl    = TextEditingController();
-  final _phoneCtrl   = TextEditingController();
+  final _emailCtrl   = TextEditingController();
   final _passCtrl    = TextEditingController();
   final _confirmCtrl = TextEditingController();
 
@@ -29,7 +30,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   bool _obConfirm = true;
   bool _isLoading = false;
 
-  String? _nameError, _phoneError, _passError, _confirmError;
+  String? _nameError, _emailError, _passError, _confirmError;
 
   // ─── Entrance animation ──
   late final AnimationController _animCtrl;
@@ -55,7 +56,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   void dispose() {
     _animCtrl.dispose();
     _nameCtrl.dispose();
-    _phoneCtrl.dispose();
+    _emailCtrl.dispose();
     _passCtrl.dispose();
     _confirmCtrl.dispose();
     super.dispose();
@@ -255,12 +256,12 @@ class _RegisterScreenState extends State<RegisterScreen>
 
                       SizedBox(height: 12.h),
                       _glassInput(
-                        controller: _phoneCtrl,
-                        hint: 'Số điện thoại',
-                        icon: Icons.phone_android_rounded,
-                        keyboard: TextInputType.phone,
+                        controller: _emailCtrl,
+                        hint: 'Địa chỉ Email',
+                        icon: Icons.email_outlined,
+                        keyboard: TextInputType.emailAddress,
                       ),
-                      _animatedError(_phoneError),
+                      _animatedError(_emailError),
 
                       SizedBox(height: 12.h),
                       _glassInput(
@@ -607,46 +608,90 @@ class _RegisterScreenState extends State<RegisterScreen>
   // ════════════════════════════════════════════════════════════════
   //  LOGIC
   // ════════════════════════════════════════════════════════════════
-  void _handleRegister() {
-    String? nameErr, phoneErr, passErr, confirmErr;
+  void _handleRegister() async {
+    String? nameErr, emailErr, passErr, confirmErr;
 
-    if (_nameCtrl.text.trim().isEmpty) {
+    final nameInput = _nameCtrl.text.trim();
+    final emailInput = _emailCtrl.text.trim();
+    final passwordInput = _passCtrl.text;
+    final confirmInput = _confirmCtrl.text;
+
+    if (nameInput.isEmpty) {
       nameErr = 'Vui lòng nhập họ và tên';
     }
-    if (_phoneCtrl.text.trim().isEmpty) {
-      phoneErr = 'Vui lòng nhập số điện thoại';
-    } else if (_phoneCtrl.text.trim().length < 10) {
-      phoneErr = 'Số điện thoại phải có ít nhất 10 số';
+    if (emailInput.isEmpty) {
+      emailErr = 'Vui lòng nhập email đăng ký';
+    } else if (!emailInput.contains('@')) {
+      emailErr = 'Địa chỉ email không hợp lệ (cần ký tự @)';
     }
-    if (_passCtrl.text.isEmpty) {
+    
+    if (passwordInput.isEmpty) {
       passErr = 'Vui lòng nhập mật khẩu';
-    } else if (_passCtrl.text.length < 4) {
-      passErr = 'Mật khẩu phải có ít nhất 4 ký tự';
+    } else if (passwordInput.length < 6) {
+      passErr = 'Mật khẩu phải có ít nhất 6 ký tự';
     }
-    if (_confirmCtrl.text != _passCtrl.text) {
+    
+    if (confirmInput != passwordInput) {
       confirmErr = 'Mật khẩu xác nhận không khớp';
     }
 
     setState(() {
       _nameError    = nameErr;
-      _phoneError   = phoneErr;
+      _emailError   = emailErr;
       _passError    = passErr;
       _confirmError = confirmErr;
     });
 
     if (nameErr != null ||
-        phoneErr != null ||
+        emailErr != null ||
         passErr != null ||
         confirmErr != null) {
       return;
     }
 
     setState(() => _isLoading = true);
-    Future.delayed(const Duration(milliseconds: 700), () {
+
+    try {
+      final result = await AuthService().register(
+        name: nameInput,
+        email: emailInput,
+        password: passwordInput,
+      );
+
       if (!mounted) return;
       setState(() => _isLoading = false);
-      _showSuccess();
-    });
+
+      if (result['success'] == true) {
+        _showSuccess();
+      } else {
+        _showErrorDialog(result['message'] ?? 'Đăng ký tài khoản thất bại.');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showErrorDialog('Lỗi kết nối mạng: $e');
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        title: Row(children: [
+          Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 24.sp),
+          SizedBox(width: 8.w),
+          const Text('Thông báo lỗi'),
+        ]),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Đồng ý'),
+          )
+        ],
+      ),
+    );
   }
 
   void _showSuccess() {

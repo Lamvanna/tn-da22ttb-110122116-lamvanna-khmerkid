@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_vowel.dart';
 import 'vowel_detail_screen.dart';
+import '../../services/storage_service.dart';
 
 /// Bản đồ nguyên âm Khmer — Premium learning path (giống phụ âm)
 class VowelScreen extends StatefulWidget {
@@ -45,7 +46,26 @@ class _VowelScreenState extends State<VowelScreen>
     _pulseAnim = Tween<double>(begin: 1.0, end: 1.08).animate(
       CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
     _scrollCtrl = ScrollController();
+    _loadScore();
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrent());
+  }
+
+  Future<void> _loadScore() async {
+    final storage = await StorageService.getInstance();
+    final progress = storage.getVowelProgress(); // Map<int, int>
+    
+    // Đồng bộ hóa tiến trình nguyên âm thực tế từ bộ nhớ vào danh sách _vowels tĩnh
+    for (int i = 0; i < _vowels.length; i++) {
+      if (progress.containsKey(i)) {
+        _vowels[i].isLearned = true;
+        _vowels[i].starRating = progress[i]!;
+      } else {
+        _vowels[i].isLearned = false;
+        _vowels[i].starRating = 0;
+      }
+    }
+    
+    if (mounted) setState(() {});
   }
 
   void _scrollToCurrent() {

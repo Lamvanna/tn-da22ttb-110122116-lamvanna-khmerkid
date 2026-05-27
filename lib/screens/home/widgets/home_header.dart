@@ -48,14 +48,6 @@ class _HomeHeaderState extends State<HomeHeader> {
     return 'Mới bắt đầu';
   }
 
-  IconData _getLevelIcon(int level) {
-    if (level >= 20) return Icons.diamond_rounded;
-    if (level >= 15) return Icons.workspace_premium_rounded;
-    if (level >= 10) return Icons.star_rounded;
-    if (level >= 5) return Icons.star_half_rounded;
-    return Icons.eco_rounded;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -95,7 +87,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                   children: [
                     // Avatar circle
                     Container(
-                      width: 56.w, height: 56.w,
+                      width: 68.w, height: 68.w,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.white.withValues(alpha: 0.25),
@@ -111,12 +103,25 @@ class _HomeHeaderState extends State<HomeHeader> {
                         children: [
                           Text(_username,
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 22.sp, fontWeight: FontWeight.w800, color: Colors.white)),
-                          SizedBox(height: 3.h),
+                              fontSize: 26.sp, fontWeight: FontWeight.w900, color: Colors.white,
+                              letterSpacing: -0.3,
+                              shadows: [
+                                Shadow(
+                                  color: const Color(0xFF1E1B4B).withOpacity(0.35),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            )),
+                          SizedBox(height: 6.h),
                           Row(children: [
-                            Icon(_getLevelIcon(_level),
-                              color: AppColors.successLight, size: 16.sp),
-                            SizedBox(width: 5.w),
+                            Image.asset(
+                              'image/Cấp ${_level.clamp(1, 5)}.png',
+                              width: 22.sp,
+                              height: 22.sp,
+                              fit: BoxFit.contain,
+                            ),
+                            SizedBox(width: 1.w),
                             Text('Cấp $_level: ${_getLevelTitle(_level)}',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13.sp, fontWeight: FontWeight.w600,

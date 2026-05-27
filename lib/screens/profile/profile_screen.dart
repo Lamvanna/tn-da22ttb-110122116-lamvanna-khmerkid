@@ -9,6 +9,7 @@ import '../report/report_screen.dart';
 import '../achievements/achievements_screen.dart';
 import '../../widgets/app_page_route.dart';
 import '../../widgets/game_xp_progress_bar.dart';
+import '../notification/notification_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -94,7 +95,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         Container(
           width: double.infinity,
-          margin: EdgeInsets.only(bottom: 50.h),
+          margin: EdgeInsets.only(bottom: 70.h),
           decoration: BoxDecoration(
             gradient: AppColors.appGradient,
             borderRadius: BorderRadius.only(
@@ -188,20 +189,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: _spark(10.sp, 0.35, color: const Color(0xFFFFF176)),
                   ),
 
-                  // ─── Elephant mascot — to lớn, bóng bẩy, đè lên phần card dưới cực sinh động ───
+                  // ─── Notification Bell ───
                   Positioned(
-                    right: -12.w,
-                    bottom: 52.h,
-                    width: 120.w,
-                    child: Image.asset(
-                      'image/Voi hồ sơ.png',
-                      fit: BoxFit.contain,
+                    right: 20.w,
+                    top: 16.h,
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          AppPageRoute(page: const NotificationScreen()),
+                        );
+                      },
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 46.w,
+                            height: 46.w,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 8.r,
+                                  offset: Offset(0, 4.h),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.notifications_none_rounded,
+                              color: const Color(0xFF3B82F6),
+                              size: 26.sp,
+                            ),
+                          ),
+                        Positioned(
+                          right: -4.w,
+                          top: -4.h,
+                          child: Container(
+                            padding: EdgeInsets.all(5.w),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF4D4F),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2.w),
+                            ),
+                            child: Text(
+                              '3',
+                              style: GoogleFonts.plusJakartaSans(
+                                color: Colors.white,
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.bold,
+                                height: 1.0,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
+                  ),
                   ),
 
                   // ─── Main content ────────────────────────────
                   Padding(
-                    padding: EdgeInsets.fromLTRB(20.w, 4.h, 20.w, 64.h),
+                    padding: EdgeInsets.fromLTRB(20.w, 4.h, 20.w, 44.h),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -408,10 +458,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.shield_rounded,
-            size: 14.sp,
-            color: const Color(0xFFFFD700), // Gold shield
+          Image.asset(
+            'image/Cấp ${_level.clamp(1, 5)}.png',
+            width: 16.sp,
+            height: 16.sp,
+            fit: BoxFit.contain,
           ),
           SizedBox(width: 6.w),
           Flexible(
@@ -519,50 +570,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildStatIcon(int index) {
     switch (index) {
-      case 0: // Star: beautiful multi-colored 3D gradient star
-        return ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [Color(0xFF38BDF8), Color(0xFFEC4899), Color(0xFFFBBF24)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ).createShader(bounds),
-          child: Icon(Icons.star_rounded, size: 40.sp, color: Colors.white),
-        );
-      case 1: // Flame: glossy intense orange-red to bright gold fire
-        return ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [Color(0xFFEF4444), Color(0xFFF59E0B), Color(0xFFFFD000)],
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-          ).createShader(bounds),
-          child: Icon(
-            Icons.local_fire_department_rounded,
-            size: 40.sp,
-            color: Colors.white,
-          ),
-        );
-      case 2: // Medal: rich gold medallion
-        return ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [Color(0xFFFBBF24), Color(0xFFF59E0B), Color(0xFFD97706)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ).createShader(bounds),
-          child: Icon(Icons.stars_rounded, size: 40.sp, color: Colors.white),
-        );
-      case 3: // Trophy: premium gold tournament trophy
-        return ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [Color(0xFF818CF8), Color(0xFF4F46E5), Color(0xFFFFD700)],
-            begin: Alignment.bottomLeft,
-            end: Alignment.topRight,
-          ).createShader(bounds),
-          child: Icon(
-            Icons.emoji_events_rounded,
-            size: 40.sp,
-            color: Colors.white,
-          ),
-        );
+      case 0:
+        return Image.asset('image/sao.png', width: 40.sp, height: 40.sp, fit: BoxFit.contain);
+      case 1:
+        return Image.asset('image/Lửa chuổi.png', width: 40.sp, height: 40.sp, fit: BoxFit.contain);
+      case 2:
+        return Image.asset('image/Huy hiệu.png', width: 40.sp, height: 40.sp, fit: BoxFit.contain);
+      case 3:
+        return Image.asset('image/xếp hạng hồ sơ.png', width: 40.sp, height: 40.sp, fit: BoxFit.contain);
       default:
         return Icon(Icons.help_rounded, size: 40.sp, color: Colors.grey);
     }
@@ -883,8 +898,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Row(
       children: [
         Container(
-          width: 32.w,
-          height: 32.w,
+          width: 44.w,
+          height: 40.w,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -894,7 +909,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color.withValues(alpha: 0.04),
               ],
             ),
-            borderRadius: BorderRadius.circular(10.r),
+            borderRadius: BorderRadius.circular(12.r),
             border: Border.all(
               color: color.withValues(alpha: 0.25),
               width: 1.2.w,
@@ -903,13 +918,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           alignment: Alignment.center,
           child: Image.asset(
             img,
-            width: 20.w,
-            height: 20.h,
+            width: 36.w,
+            height: 36.w,
             errorBuilder: (_, _, _) =>
-                Icon(Icons.book_rounded, size: 16.sp, color: color),
+                Icon(Icons.book_rounded, size: 24.sp, color: color),
           ),
         ),
-        SizedBox(width: 10.w),
+        SizedBox(width: 14.w),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

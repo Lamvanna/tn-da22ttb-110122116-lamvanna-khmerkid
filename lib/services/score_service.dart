@@ -64,6 +64,20 @@ class ScoreService {
     return {'stars': earnedStars, 'xp': earnedXp};
   }
 
+  /// Hoàn thành bài học tập đọc
+  Future<Map<String, int>> completeReadingLesson(int readingIndex, int stars) async {
+    int earnedStars = stars;
+    int earnedXp = stars * 5;
+
+    await _storage.addStars(earnedStars);
+    await _storage.addXp(earnedXp);
+    await _storage.saveReadingProgress(readingIndex, stars);
+    await _storage.updateStreak();
+
+    await _checkAchievements();
+    return {'stars': earnedStars, 'xp': earnedXp};
+  }
+
   /// Hoàn thành bài kiểm tra
   Future<Map<String, int>> completeTest({
     required int correct,
@@ -117,6 +131,9 @@ class ScoreService {
 
   /// Tổng số nguyên âm đã học
   int get vowelsLearned => _storage.getVowelProgress().length;
+
+  /// Tổng số bài tập đọc đã học
+  int get readingLearned => _storage.getReadingProgress().length;
 
   /// Tổng số từ vựng đã học
   int get vocabLearned => _storage.getLearnedVocab().length;

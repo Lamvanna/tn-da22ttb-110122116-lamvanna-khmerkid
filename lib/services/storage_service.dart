@@ -103,6 +103,23 @@ class StorageService {
         jsonEncode(progress.map((k, v) => MapEntry(k.toString(), v))));
   }
 
+  // ─── READING PROGRESS ───────────────────────────────────────
+  static const _keyReadingProgress = 'reading_progress';
+
+  Map<int, int> getReadingProgress() {
+    final json = _prefs?.getString(_keyReadingProgress);
+    if (json == null) return {};
+    final map = jsonDecode(json) as Map<String, dynamic>;
+    return map.map((k, v) => MapEntry(int.parse(k), v as int));
+  }
+
+  Future<void> saveReadingProgress(int index, int stars) async {
+    final progress = getReadingProgress();
+    progress[index] = stars;
+    await _prefs?.setString(_keyReadingProgress,
+        jsonEncode(progress.map((k, v) => MapEntry(k.toString(), v))));
+  }
+
   // ─── VOCABULARY PROGRESS ────────────────────────────────────
   static const _keyVocabLearned = 'vocab_learned';
 

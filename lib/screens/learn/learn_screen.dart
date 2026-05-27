@@ -5,9 +5,8 @@ import '../../constants/app_colors.dart';
 import 'letter_map_screen.dart';
 import 'spelling_hub_screen.dart';
 import 'writing_map_screen.dart';
-import 'reading_screen.dart';
+import 'reading_map_screen.dart';
 import 'vowel_screen.dart';
-import 'vocabulary_screen.dart';
 import 'consonant_series_screen.dart';
 import 'number_map_screen.dart';
 import 'diacritical_map_screen.dart';
@@ -80,9 +79,10 @@ class _LearnScreenState extends State<LearnScreen> {
         color: const Color(0xFFFFD600), stars: 10, btn: 'Bắt đầu học',
         onTap: () => _navigateTo(DiacriticalMapScreen(onBack: () => Navigator.pop(context)))),
       _Zone(n: 7, title: 'Tập đọc', sub: 'Làm quen và đọc câu đơn giản',
-        icon: Icons.auto_stories_rounded, img: 'image/Tập đọc.png', prog: 0, total: 28, done: 0,
+        icon: Icons.auto_stories_rounded, img: 'image/Tập đọc.png',
+        prog: (_score?.readingLearned ?? 0) / 5, total: 5, done: _score?.readingLearned ?? 0,
         color: const Color(0xFF00B0FF), stars: 15, btn: 'Bắt đầu học',
-        onTap: () => _navigateTo(const ReadingScreen())),
+        onTap: () => _navigateTo(ReadingMapScreen(onBack: () => Navigator.pop(context)))),
       _Zone(n: 8, title: 'Luyện viết', sub: 'Tập viết chữ Khmer đúng nét',
         icon: Icons.draw_rounded, img: 'image/Tập viết.png', prog: 0, total: 30, done: 0,
         color: const Color(0xFFFF9100), stars: 15, btn: 'Bắt đầu học',

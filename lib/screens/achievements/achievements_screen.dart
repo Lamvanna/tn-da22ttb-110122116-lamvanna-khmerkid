@@ -20,84 +20,84 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Bước đầu tiên',
       icon: Icons.rocket_launch_rounded,
-      done: true,
+      done: false,
       color: const Color(0xFF4CAF50),
       bgColor: const Color(0xFFE8F5E9),
     ),
     _Achievement(
       title: 'Đã vẽ đẹp',
       icon: Icons.draw_rounded,
-      done: true,
+      done: false,
       color: const Color(0xFFE91E63),
       bgColor: const Color(0xFFFCE4EC),
     ),
     _Achievement(
       title: 'Đọc chăm chỉ',
       icon: Icons.menu_book_rounded,
-      done: true,
+      done: false,
       color: const Color(0xFF2196F3),
       bgColor: const Color(0xFFE3F2FD),
     ),
     _Achievement(
       title: 'Ngôi sao\nsáng',
       icon: Icons.star_rounded,
-      done: true,
+      done: false,
       color: const Color(0xFFFFCA28),
       bgColor: const Color(0xFFFFF8E1),
     ),
     _Achievement(
       title: 'Khám phá\nthế giới',
       icon: Icons.public_rounded,
-      done: true,
+      done: false,
       color: const Color(0xFF00BCD4),
       bgColor: const Color(0xFFE0F7FA),
     ),
     _Achievement(
       title: 'Vui học\nToán',
       icon: Icons.calculate_rounded,
-      done: true,
+      done: false,
       color: const Color(0xFF9C27B0),
       bgColor: const Color(0xFFF3E5F5),
     ),
     _Achievement(
       title: 'Ngoan\nlễ phép',
       icon: Icons.emoji_people_rounded,
-      done: true,
+      done: false,
       color: const Color(0xFF4CAF50),
       bgColor: const Color(0xFFE8F5E9),
     ),
     _Achievement(
       title: 'Chăm chỉ\nhọc',
       icon: Icons.abc_rounded,
-      done: true,
+      done: false,
       color: const Color(0xFF42A5F5),
       bgColor: const Color(0xFFE3F2FD),
     ),
     _Achievement(
       title: 'Nghệ sĩ nhí',
       icon: Icons.palette_rounded,
-      done: true,
+      done: false,
       color: const Color(0xFFFF5722),
       bgColor: const Color(0xFFFBE9E7),
     ),
     _Achievement(
       title: 'Siêu nhắn\ntài xíu',
       icon: Icons.shield_rounded,
-      done: true,
+      done: false,
       color: const Color(0xFFFF9800),
       bgColor: const Color(0xFFFFF3E0),
     ),
     _Achievement(
       title: 'Học mỗi\nngày',
       icon: Icons.calendar_today_rounded,
-      done: true,
+      done: false,
       color: const Color(0xFF3F51B5),
       bgColor: const Color(0xFFE8EAF6),
     ),
     _Achievement(
       title: 'Đồng hành',
       icon: Icons.volunteer_activism_rounded,
-      done: true,
+      done: false,
       color: const Color(0xFFFF9800),
       bgColor: const Color(0xFFFFF3E0),
     ),
@@ -169,9 +169,26 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _score = await ScoreService.getInstance();
     if (mounted) {
       setState(() {
-        _achievements[0] = _achievements[0].copyWith(
-          done: _score!.lettersLearned >= 1,
-        );
+        _achievements[0] = _achievements[0].copyWith(done: _score!.lettersLearned >= 1);
+        _achievements[1] = _achievements[1].copyWith(done: _score!.lettersLearned >= 3);
+        _achievements[2] = _achievements[2].copyWith(done: _score!.readingLearned >= 1);
+        _achievements[3] = _achievements[3].copyWith(done: _score!.totalStars >= 15);
+        _achievements[4] = _achievements[4].copyWith(done: _score!.vocabLearned >= 2);
+        _achievements[5] = _achievements[5].copyWith(done: _score!.totalXp >= 50);
+        _achievements[6] = _achievements[6].copyWith(done: _score!.streak >= 2);
+        _achievements[7] = _achievements[7].copyWith(done: _score!.lettersLearned >= 10);
+        _achievements[8] = _achievements[8].copyWith(done: _score!.lettersLearned >= 5);
+        _achievements[9] = _achievements[9].copyWith(done: _score!.isAchievementUnlocked('perfect_test') || _score!.avgTestScore >= 90);
+        _achievements[10] = _achievements[10].copyWith(done: _score!.streak >= 1);
+        _achievements[11] = _achievements[11].copyWith(done: _score!.totalXp >= 100);
+        _achievements[12] = _achievements[12].copyWith(done: _score!.totalTests >= 10 || _score!.isAchievementUnlocked('test_10'));
+        _achievements[13] = _achievements[13].copyWith(done: _score!.totalMedals >= 5);
+        _achievements[14] = _achievements[14].copyWith(done: _score!.vocabLearned >= 5);
+        _achievements[15] = _achievements[15].copyWith(done: _score!.lettersLearned >= 33 || _score!.isAchievementUnlocked('all_consonants'));
+        _achievements[16] = _achievements[16].copyWith(done: _score!.totalXp >= 80);
+        _achievements[17] = _achievements[17].copyWith(done: _score!.streak >= 5 || _score!.isAchievementUnlocked('streak_5'));
+        _achievements[18] = _achievements[18].copyWith(done: _score!.totalXp >= 150);
+        _achievements[19] = _achievements[19].copyWith(done: _score!.purchasedItems.isNotEmpty);
         _loading = false;
       });
     }
@@ -235,9 +252,16 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                           ),
                         ),
                         SizedBox(width: 14.w),
+                        Image.asset(
+                          'image/cúp hồ sơ.png',
+                          width: 28.w,
+                          height: 28.w,
+                          fit: BoxFit.contain,
+                        ),
+                        SizedBox(width: 8.w),
                         Expanded(
                           child: Text(
-                            ' Thành tích',
+                            'Thành tích',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 20.sp,
                               fontWeight: FontWeight.w800,
@@ -345,7 +369,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 color: Colors.white,
               ),
               child: Image.asset(
-                'image/Thành tích.png',
+                'image/cúp hồ sơ.png',
                 fit: BoxFit.contain,
               ),
             ),

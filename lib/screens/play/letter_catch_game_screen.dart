@@ -25,7 +25,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
     _SyllableData(consonant: 'ក', vowel: 'ា', result: 'កា', meaning: 'quạ'),
     _SyllableData(consonant: 'ម', vowel: 'ា', result: 'មា', meaning: 'mẹ'),
     _SyllableData(consonant: 'ត', vowel: 'ា', result: 'តា', meaning: 'ông'),
-    _SyllableData(consonant: 'ប', vowel: 'ា', result: 'បา', meaning: 'cha'),
+    _SyllableData(consonant: 'ប', vowel: 'ា', result: 'បា', meaning: 'cha'),
     _SyllableData(consonant: 'ស', vowel: 'ា', result: 'សា', meaning: 'xoay'),
     _SyllableData(consonant: 'ក', vowel: 'ី', result: 'កី', meaning: 'khó chịu'),
     _SyllableData(consonant: 'ម', vowel: 'ី', result: 'មី', meaning: 'mì'),
@@ -34,14 +34,14 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
     _SyllableData(consonant: 'រ', vowel: 'ូ', result: 'រូ', meaning: 'hình'),
     _SyllableData(consonant: 'ន', vowel: 'ំ', result: 'នំ', meaning: 'bánh'),
     _SyllableData(consonant: 'ក', vowel: 'ែ', result: 'កែ', meaning: 'sửa'),
-    _SyllableData(consonant: 'ទ', vowel: 'ឹ', result: 'ទឹ', meaning: 'nước'),
+    _SyllableData(consonant: 'ទ', vowel: 'ៅ', result: 'ទៅ', meaning: 'đi'),
     _SyllableData(consonant: 'ច', vowel: 'ា', result: 'ចា', meaning: 'chiên'),
     _SyllableData(consonant: 'ព', vowel: 'ី', result: 'ពី', meaning: 'từ'),
     _SyllableData(consonant: 'ល', vowel: 'ា', result: 'លា', meaning: 'tạm biệt'),
     _SyllableData(consonant: 'ថ', vowel: 'ា', result: 'ថា', meaning: 'nói'),
     _SyllableData(consonant: 'យ', vowel: 'ូ', result: 'យូ', meaning: 'lâu'),
     _SyllableData(consonant: 'ហ', vowel: 'ា', result: 'ហា', meaning: 'há'),
-    _SyllableData(consonant: 'ផ', vowel: 'ា', result: 'ផ្កา', meaning: 'hoa'),
+    _SyllableData(consonant: 'ឈ', vowel: 'ឺ', result: 'ឈឺ', meaning: 'đau/ốm'),
   ];
 
   // ── State ──
@@ -160,7 +160,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
         .map((l) => l.character)
         .toSet()
         .toList();
-    final allVowels = ['ា', 'ិ', 'ី', 'ឹ', 'ូ', 'ុ', 'ែ', 'េ', 'ំ', 'ោ', 'ៅ', 'ួ'];
+    final allVowels = ['ា', 'ិ', 'ី', 'ឹ', 'ឺ', 'ុ', 'ូ', 'ួ', 'េ', 'ែ', 'ៃ', 'ោ', 'ៅ', 'ំ'];
 
     int consonantChoiceCount = 5;
     int vowelChoiceCount = 4;
@@ -260,7 +260,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
     _resultCtrl.forward(from: 0);
 
     ScoreService.getInstance().then((s) {
-      s.completeGame('Bắt chữ Khmer', addedScore);
+      s.completeGame('Bắt chữ Khmer', addedScore, syncToBackend: false);
     });
 
     Future.delayed(const Duration(milliseconds: 2000), () {
@@ -284,6 +284,10 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
     _resultCtrl.forward(from: 0);
 
     if (_lives <= 0) {
+      // Đồng bộ kết quả tổng kết lên backend database
+      ScoreService.getInstance().then((s) {
+        s.completeGame('Bắt chữ Khmer', _score, syncToBackend: true);
+      });
       Future.delayed(const Duration(milliseconds: 1500), () {
         if (mounted) setState(() => _gameOver = true);
       });
@@ -338,18 +342,48 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
 
   String _getIllustrationUrl(String meaning) {
     final map = {
-      'quạ': 'https://lh3.googleusercontent.com/aida-public/AB6AXuB7SOwpVEoEGWrNSPpTqKbj9DUpAaktI2LExUvbK0DtUp39gRoFTSraRlE2t4HAsNaP4eWS0hnq6mUjbNtB_8TN5KAdpo3syPg9JkVYfloMaVBvIeLmtm7a5Vo6KlgdEePC35TcvWR-VB5lbQTVDVd0IUTMnxMUYN7jvMvzFjNBd1CWlT2iU6_TLz8ioljKG7J3NysPhW24NbM2_TmEbOcB2xdHNX4TxW24WAfZKD3MGAPpGeFQUGwRoSoMGbsPlFJJ4TKusPZduQ',
-      'mì': 'https://img.freepik.com/free-vector/ramen-noodle-soup-bowl-with-chopsticks-cartoon-illustration_138676-2603.jpg',
-      'ông': 'https://img.freepik.com/free-vector/old-man-cartoon-character_1308-133939.jpg',
-      'cha': 'https://img.freepik.com/free-vector/father-son-cartoon-illustration_1308-133919.jpg',
-      'mẹ': 'https://img.freepik.com/free-vector/mother-with-daughter-cartoon_1308-133959.jpg',
-      'hình': 'https://img.freepik.com/free-vector/geometric-shapes-cartoon_1308-133969.jpg',
-      'bánh': 'https://img.freepik.com/free-vector/strawberry-cupcake-cartoon_1308-133979.jpg',
-      'hoa': 'https://img.freepik.com/free-vector/yellow-flower-cartoon_1308-133989.jpg',
-      'đất': 'https://img.freepik.com/free-vector/soil-ground-cartoon_1308-133999.jpg',
+      'quạ': 'https://images.unsplash.com/photo-1597005089699-56d30d10aa29?w=300&auto=format&fit=crop',
+      'mì': 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=300&auto=format&fit=crop',
+      'ông': 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=300&auto=format&fit=crop',
+      'cha': 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=300&auto=format&fit=crop',
+      'mẹ': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop',
+      'hình': 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300&auto=format&fit=crop',
+      'bánh': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300&auto=format&fit=crop',
+      'đất': 'https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=300&auto=format&fit=crop',
+      'sửa': 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300&auto=format&fit=crop',
+      'đi': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&auto=format&fit=crop',
+      'đau/ốm': 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=300&auto=format&fit=crop',
+      'khó chịu': 'https://images.unsplash.com/photo-1542382257-201b72a276b9?w=300&auto=format&fit=crop',
+      'xoay': 'https://images.unsplash.com/photo-1590073844006-33379778ae09?w=300&auto=format&fit=crop',
+      'con': 'https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?w=300&auto=format&fit=crop',
+      'chiên': 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=300&auto=format&fit=crop',
+      'từ': 'https://images.unsplash.com/photo-1508847154043-be12a62861c1?w=300&auto=format&fit=crop',
+      'tạm biệt': 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=300&auto=format&fit=crop',
+      'nói': 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=300&auto=format&fit=crop',
+      'lâu': 'https://images.unsplash.com/photo-1508962914676-134849a727f0?w=300&auto=format&fit=crop',
+      'há': 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=300&auto=format&fit=crop',
     };
-    return map[meaning] ?? 'https://img.freepik.com/free-vector/cute-baby-elephant-cartoon_1308-134009.jpg';
+    return map[meaning] ?? 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=300&auto=format&fit=crop';
   }
+
+  Widget _buildIllustrationWidget() {
+    final meaning = _currentSyllable.meaning;
+    final url = _getIllustrationUrl(meaning);
+
+    return Image.network(
+      url,
+      fit: BoxFit.contain,
+      loadingBuilder: (_, child, progress) {
+        if (progress == null) return child;
+        return const Center(child: CircularProgressIndicator(color: Color(0xFFD4A373)));
+      },
+      errorBuilder: (_, __, ___) => Image.asset(
+        'assets/images/elephant_mascot.png',
+        fit: BoxFit.contain,
+      ),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -803,15 +837,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                     ]),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10.r),
-                    child: Image.network(
-                      _getIllustrationUrl(_currentSyllable.meaning),
-                      fit: BoxFit.contain,
-                      loadingBuilder: (_, child, progress) {
-                        if (progress == null) return child;
-                        return const Center(child: CircularProgressIndicator(color: Color(0xFFD4A373)));
-                      },
-                      errorBuilder: (_, __, ___) => const Center(child: Text('🎨', style: TextStyle(fontSize: 40))),
-                    ),
+                    child: _buildIllustrationWidget(),
                   ),
                 ),
                 // Audio Speak icon overlay
@@ -947,7 +973,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
               return Padding(
                 padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 6.h),
                 child: ThreeDTile(
-                  text: vow,
+                  text: 'អ$vow',
                   color: colors[colorIdx],
                   isSelected: isSel,
                   isCorrect: isCorrect,
@@ -994,7 +1020,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
           SizedBox(width: 8.w),
           Text('+', style: GoogleFonts.plusJakartaSans(fontSize: 22.sp, fontWeight: FontWeight.w900, color: Colors.white)),
           SizedBox(width: 8.w),
-          _buildWorkspaceSlot(_selectedVowel, const Color(0xFF2979FF), 'Nguyên âm'),
+          _buildWorkspaceSlot(_selectedVowel != null ? 'អ$_selectedVowel' : null, const Color(0xFF2979FF), 'Nguyên âm'),
           SizedBox(width: 8.w),
           Text('=', style: GoogleFonts.plusJakartaSans(fontSize: 22.sp, fontWeight: FontWeight.w900, color: Colors.white)),
           SizedBox(width: 8.w),

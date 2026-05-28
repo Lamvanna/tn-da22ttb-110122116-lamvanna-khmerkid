@@ -1,3 +1,7 @@
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'auth_service.dart';
 import 'storage_service.dart';
 
 /// Service quản lý điểm số, sao, XP và gamification
@@ -103,7 +107,7 @@ class ScoreService {
   }
 
   /// Hoàn thành mini-game
-  Future<Map<String, int>> completeGame(String gameName, int score) async {
+  Future<Map<String, int>> completeGame(String gameName, int score, {bool syncToBackend = true}) async {
     int earnedStars = (score / 10).ceil().clamp(1, 5);
     int earnedXp = score;
 
@@ -113,6 +117,11 @@ class ScoreService {
     await _storage.updateStreak();
 
     await _checkAchievements();
+
+    if (syncToBackend) {
+      await _syncGameResult(gameName, score);
+    }
+
     return {'stars': earnedStars, 'xp': earnedXp};
   }
 
@@ -182,4 +191,57 @@ class ScoreService {
   /// Kiểm tra achievement có mở khóa chưa
   bool isAchievementUnlocked(String id) =>
       _storage.getUnlockedAchievements().contains(id);
+
+  /// Đồng bộ kết quả game lên backend MongoDB Atlas
+  Future<void> _syncGameResult(String gameName, int score) async {
+    try {
+      final authService = AuthService();
+      if (!authService.isAuthenticated) {
+        if (kDebugMode) print('[ScoreService] Chưa đăng nhập. Không đồng bộ lên backend.');
+        return;
+      }
+
+      String gameType = 'catch_letter';
+      if (gameName.contains('catch') || gameName == 'Bắt chữ Khmer') {
+        gameType = 'catch_letter';
+      } else if (gameName.contains('match') || gameName == 'Nối từ') {
+        gameType = 'match_word';
+      } else if (gameName.contains('arrange') || gameName == 'Sắp xếp chữ') {
+        gameType = 'arrange_letter';
+      } else if (gameName.contains('listening') || gameName == 'Trắc nghiệm nghe') {
+        gameType = 'listening_quiz';
+      } else if (gameName.contains('pronunciation') || gameName == 'Trắc nghiệm phát âm') {
+        gameType = 'pronunciation_quiz';
+      }
+
+      final url = Uri.parse('${authService.baseUrl}/games/result');
+      if (kDebugMode) print('[ScoreService] Đồng bộ kết quả game lên backend: $url ($gameName -> $gameType)');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${authService.accessToken}',
+        },
+        body: jsonEncode({
+          'gameType': gameType,
+          'score': score,
+          'level': 1,
+          'time': 45,
+          'correctAnswers': (score / 10).ceil().clamp(1, 10),
+          'totalQuestions': 10,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (kDebugMode) print('[ScoreService] Đồng bộ kết quả game lên backend thành công!');
+      } else {
+        if (kDebugMode) {
+          print('[ScoreService] Đồng bộ kết quả game thất bại. Mã lỗi: ${response.statusCode}, Nội dung: ${response.body}');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) print('[ScoreService] Lỗi khi đồng bộ kết quả game: $e');
+    }
+  }
 }

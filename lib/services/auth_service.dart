@@ -36,9 +36,9 @@ class AuthService extends ChangeNotifier {
     if (kIsWeb) {
       return 'http://localhost:5000/api';
     }
-    // Sử dụng IP Wi-Fi nội bộ máy tính của bạn (192.168.1.232)
+    // Sử dụng IP Wi-Fi nội bộ máy tính của bạn (172.20.10.4)
     // Giúp cả điện thoại thật CPH2591 và máy giả lập Android đều kết nối mượt mà
-    return 'http://192.168.1.232:5000/api';
+    return 'http://172.20.10.4:5000/api';
   }
 
   /// 1. Tự động Đăng nhập khi mở App (Auto Login)
@@ -235,9 +235,12 @@ class AuthService extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       
-      // Phát hiện lỗi ApiException 10 (Developer Error) để gửi cờ báo hiệu cho UI đề xuất Mock Login
+      // Phát hiện lỗi ApiException (Developer Error hoặc Lỗi kết nối mạng) để gửi cờ báo hiệu cho UI đề xuất Mock Login
       final errorStr = e.toString();
-      bool isDeveloperError = errorStr.contains('ApiException: 10') || errorStr.contains('sign_in_failed');
+      bool isDeveloperError = errorStr.contains('ApiException') || 
+                              errorStr.contains('PlatformException') || 
+                              errorStr.contains('network_error') || 
+                              errorStr.contains('sign_in_failed');
 
       return {
         'success': false,

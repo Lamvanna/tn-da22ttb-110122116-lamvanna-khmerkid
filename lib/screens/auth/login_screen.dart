@@ -470,11 +470,11 @@ class _LoginScreenState extends State<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Thiết bị chưa cấu hình chữ ký SHA-1 trên Google Cloud Console (ApiException 10).',
+              'Thiết bị gặp lỗi cấu hình hoặc lỗi kết nối mạng với hệ thống Google.',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8.h),
-            const Text('Bạn có muốn kích hoạt Đăng nhập Google giả lập để test nhanh kết nối API Backend không?'),
+            const Text('Bạn có muốn sử dụng Đăng nhập giả lập (Mock Login) để truy cập ứng dụng và kiểm tra nhanh tính năng ngay không?'),
           ],
         ),
         actions: [

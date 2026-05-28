@@ -1,9 +1,15 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import '../../constants/app_colors.dart';
+import '../../services/auth_service.dart';
 import '../../services/score_service.dart';
+import '../../services/storage_service.dart';
 import '../main_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Màn hình Xếp hạng - Bảng xếp hạng học sinh
 class LeaderboardScreen extends StatefulWidget {
@@ -16,17 +22,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   ScoreService? _score;
   int _selectedTab = 1; // 0: Tuần, 1: Tháng, 2: Tất cả
   int _myStars = 0;
+  bool _loading = false;
 
-  final List<Map<String, dynamic>> _leaderboard = [
-    {'name': 'Bé An', 'stars': 1560, 'avatar': 'image/Đại diện.png'},
-    {'name': 'Bé Bình', 'stars': 1200, 'avatar': 'image/Đại diện111.png'},
-    {'name': 'Bé Chi', 'stars': 1200, 'avatar': 'image/Đại diện.png'},
-    {'name': 'Bé Dũng', 'stars': 1100, 'avatar': 'image/Đại diện111.png'},
-    {'name': 'Bé Em', 'stars': 1000, 'avatar': 'image/Đại diện.png'},
-    {'name': 'Bé Mỹ', 'stars': 900, 'avatar': 'image/Đại diện111.png'},
-    {'name': 'Bé Dọc', 'stars': 960, 'avatar': 'image/Đại diện.png'},
-    {'name': 'Bé Khánh', 'stars': 900, 'avatar': 'image/Đại diện111.png'},
-  ];
+  final List<Map<String, dynamic>> _leaderboard = [];
 
   @override
   void initState() {
@@ -36,11 +34,162 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
   Future<void> _loadData() async {
     _score = await ScoreService.getInstance();
-    if (mounted) setState(() => _myStars = _score?.totalStars ?? 850);
+    if (mounted) {
+      setState(() {
+        _myStars = _score?.totalStars ?? 0;
+      });
+      await _fetchRanking();
+    }
   }
 
-  int get _myRank =>
-      _leaderboard.where((e) => (e['stars'] as int) > _myStars).length + 1;
+  Future<void> _fetchRanking() async {
+    if (!mounted) return;
+    setState(() => _loading = true);
+
+    try {
+      final auth = AuthService();
+      final storage = await StorageService.getInstance();
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('accessToken') ?? auth.accessToken;
+      
+      String endpoint = '/rank/top';
+      if (_selectedTab == 0) endpoint = '/rank/weekly';
+      if (_selectedTab == 1) endpoint = '/rank/monthly';
+      
+      final url = Uri.parse('${auth.baseUrl}$endpoint');
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        final resData = jsonDecode(response.body);
+        final List<dynamic> list = resData['data'] ?? [];
+        
+        List<Map<String, dynamic>> realList = [];
+        for (var item in list) {
+          final stars = item['stars'] ?? item['totalStars'] ?? 0;
+          realList.add({
+            'name': item['name'] ?? 'Bé học sinh',
+            'stars': stars,
+            'avatar': item['avatar'] ?? 'image/Đại diện.png',
+            'isMe': false,
+          });
+        }
+
+        // Cập nhật thông tin bé
+        final myName = storage.getUsername();
+        final myAvatar = storage.getAvatarUrl();
+        
+        // Thêm chính mình vào danh sách để so sánh và sắp xếp
+        bool meInList = false;
+        for (var item in realList) {
+          if (item['name'] == myName) {
+            item['isMe'] = true;
+            item['avatar'] = myAvatar;
+            item['stars'] = _myStars;
+            meInList = true;
+            break;
+          }
+        }
+        
+        if (!meInList) {
+          realList.add({
+            'name': myName,
+            'stars': _myStars,
+            'avatar': myAvatar,
+            'isMe': true,
+          });
+        }
+
+        // Sắp xếp giảm dần theo số sao
+        realList.sort((a, b) => (b['stars'] as int).compareTo(a['stars'] as int));
+
+        // Gán thứ hạng
+        for (int i = 0; i < realList.length; i++) {
+          realList[i]['rank'] = i + 1;
+        }
+
+        if (mounted) {
+          setState(() {
+            _leaderboard.clear();
+            _leaderboard.addAll(realList);
+            _loading = false;
+          });
+        }
+      } else {
+        throw Exception('Failed to load ranking');
+      }
+    } catch (e) {
+      debugPrint('Error fetching ranking: $e');
+      await _loadFallbackData();
+    }
+  }
+
+  Future<void> _loadFallbackData() async {
+    final storage = await StorageService.getInstance();
+    final myName = storage.getUsername();
+    final myAvatar = storage.getAvatarUrl();
+    
+    List<Map<String, dynamic>> mockList = [
+      {
+        'name': myName,
+        'stars': _myStars,
+        'avatar': myAvatar,
+        'isMe': true,
+      }
+    ];
+
+    mockList.sort((a, b) => (b['stars'] as int).compareTo(a['stars'] as int));
+
+    for (int i = 0; i < mockList.length; i++) {
+      mockList[i]['rank'] = i + 1;
+    }
+
+    if (mounted) {
+      setState(() {
+        _leaderboard.clear();
+        _leaderboard.addAll(mockList);
+        _loading = false;
+      });
+    }
+  }
+
+  Widget _buildAvatarImage(String avatarPath) {
+    if (avatarPath.isEmpty) {
+      return Image.asset('image/Đại diện.png', fit: BoxFit.cover);
+    }
+    if (avatarPath.startsWith('http')) {
+      return Image.network(
+        avatarPath,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) =>
+            Image.asset('image/Đại diện.png', fit: BoxFit.cover),
+      );
+    }
+    if (avatarPath.startsWith('image/') || avatarPath.startsWith('assets/')) {
+      return Image.asset(
+        avatarPath,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) =>
+            Image.asset('image/Đại diện.png', fit: BoxFit.cover),
+      );
+    }
+    return Image.file(
+      File(avatarPath),
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) =>
+          Image.asset('image/Đại diện.png', fit: BoxFit.cover),
+    );
+  }
+
+  int get _myRank {
+    final idx = _leaderboard.indexWhere((e) => e['isMe'] == true);
+    return idx != -1 ? idx + 1 : 9;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -120,17 +269,23 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
           // ═══ CONTENT (scroll) ═══
           Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h),
-              child: Column(
-                children: [
-                  _buildPodium(),
-                  SizedBox(height: 16.h),
-                  ..._buildRankList(),
-                ],
-              ),
-            ),
+            child: _loading || _leaderboard.isEmpty
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF1E88E5),
+                    ),
+                  )
+                : SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h),
+                    child: Column(
+                      children: [
+                        _buildPodium(),
+                        SizedBox(height: 16.h),
+                        ..._buildRankList(),
+                      ],
+                    ),
+                  ),
           ),
 
           // ═══ MY RANK — CHỈ HIỆN KHI KHÔNG CÓ TRONG LIST ═══
@@ -234,7 +389,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     final active = _selectedTab == index;
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => _selectedTab = index),
+        onTap: () {
+          if (_selectedTab != index) {
+            setState(() {
+              _selectedTab = index;
+            });
+            _fetchRanking();
+          }
+        },
         child: Container(
           padding: EdgeInsets.symmetric(vertical: 8.h),
           decoration: BoxDecoration(
@@ -261,6 +423,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   // TOP 3 PODIUM
   // ══════════════════════════════════════════════════════════════
   Widget _buildPodium() {
+    final first = _leaderboard.isNotEmpty ? _leaderboard[0] : null;
+    final second = _leaderboard.length >= 2 ? _leaderboard[1] : null;
+    final third = _leaderboard.length >= 3 ? _leaderboard[2] : null;
+
     return Container(
       padding: EdgeInsets.fromLTRB(8.w, 16.h, 8.w, 14.h),
       decoration: BoxDecoration(
@@ -283,7 +449,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               padding: EdgeInsets.only(top: 28.h),
               child: _podiumItem(
                 rank: 2,
-                data: _leaderboard[1],
+                data: second,
                 crownColor: const Color(0xFFB0BEC5),
                 medalColors: [const Color(0xFFC0C0C0), const Color(0xFFA8A8A8)],
                 avatarSize: 64.w,
@@ -294,7 +460,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           Expanded(
             child: _podiumItem(
               rank: 1,
-              data: _leaderboard[0],
+              data: first,
               crownColor: const Color(0xFFFFCA28),
               medalColors: [const Color(0xFFFFCA28), const Color(0xFFE5A800)],
               avatarSize: 80.w,
@@ -306,7 +472,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               padding: EdgeInsets.only(top: 36.h),
               child: _podiumItem(
                 rank: 3,
-                data: _leaderboard[2],
+                data: third,
                 crownColor: const Color(0xFFCD7F32),
                 medalColors: [const Color(0xFFD4915E), const Color(0xFFB5733A)],
                 avatarSize: 58.w,
@@ -320,11 +486,16 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
   Widget _podiumItem({
     required int rank,
-    required Map<String, dynamic> data,
+    required Map<String, dynamic>? data,
     required Color crownColor,
     required List<Color> medalColors,
     required double avatarSize,
   }) {
+    final bool isEmpty = data == null;
+    final String name = isEmpty ? 'Vị trí trống' : (data['name'] as String);
+    final int stars = isEmpty ? 0 : (data['stars'] as int);
+    final String avatar = isEmpty ? '' : (data['avatar'] as String);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -347,11 +518,13 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: medalColors,
+                      colors: isEmpty 
+                          ? [const Color(0xFFE2E8F0), const Color(0xFFCBD5E1)]
+                          : medalColors,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: medalColors[0].withValues(alpha: 0.4),
+                        color: (isEmpty ? const Color(0xFFCBD5E1) : medalColors[0]).withValues(alpha: 0.4),
                         blurRadius: 10.r,
                         offset: Offset(0, 3.h),
                       ),
@@ -359,35 +532,44 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                   ),
                   padding: EdgeInsets.all(4.w),
                   child: ClipOval(
-                    child: Image.asset(
-                      data['avatar'] as String,
-                      fit: BoxFit.cover,
-                    ),
+                    child: isEmpty 
+                        ? Container(
+                            color: const Color(0xFFF1F5F9),
+                            child: Icon(
+                              Icons.person_rounded,
+                              color: const Color(0xFF94A3B8),
+                              size: (avatarSize * 0.6).sp,
+                            ),
+                          )
+                        : _buildAvatarImage(avatar),
                   ),
                 ),
               ),
               // Crown (layer trên — hiện rõ)
-              Positioned(
-                top: rank == 1 ? -22.h : -15.h,
-                child: Image.asset(
-                  'image/Xếp hạng $rank.png',
-                  width: rank == 1 ? 82.w : 66.w,
-                  height: rank == 1 ? 82.h : 66.h,
-                  fit: BoxFit.contain,
+              if (!isEmpty)
+                Positioned(
+                  top: rank == 1 ? -22.h : -15.h,
+                  child: Image.asset(
+                    'image/Xếp hạng $rank.png',
+                    width: rank == 1 ? 82.w : 66.w,
+                    height: rank == 1 ? 82.h : 66.h,
+                    fit: BoxFit.contain,
+                  ),
                 ),
-              ),
             ],
           ),
         ),
         SizedBox(height: 8.h),
         // Name
         Text(
-          data['name'] as String,
+          name,
           textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: GoogleFonts.plusJakartaSans(
             fontSize: rank == 1 ? 15.sp : 13.sp,
             fontWeight: FontWeight.w800,
-            color: const Color(0xFF1E293B),
+            color: isEmpty ? const Color(0xFF94A3B8) : const Color(0xFF1E293B),
           ),
         ),
         SizedBox(height: 4.h),
@@ -398,17 +580,17 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             Icon(
               Icons.star_rounded,
               size: 16.sp,
-              color: const Color(0xFFFFCA28),
+              color: isEmpty ? const Color(0xFFCBD5E1) : const Color(0xFFFFCA28),
             ),
             SizedBox(width: 3.w),
             Text(
-              '${data['stars']} sao',
+              '$stars sao',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: rank == 1 ? 14.sp : 12.sp,
                 fontWeight: FontWeight.w800,
-                color: rank == 1
-                    ? const Color(0xFFE65100)
-                    : const Color(0xFF6B7280),
+                color: isEmpty
+                    ? const Color(0xFF94A3B8)
+                    : (rank == 1 ? const Color(0xFFE65100) : const Color(0xFF6B7280)),
               ),
             ),
           ],
@@ -477,7 +659,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 width: 2.w),
             ),
             child: ClipOval(
-              child: Image.asset(data['avatar'] as String, fit: BoxFit.cover),
+              child: _buildAvatarImage(data['avatar'] as String),
             ),
           ),
           SizedBox(width: 12.w),
@@ -516,10 +698,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   // MY RANK ROW
   // ══════════════════════════════════════════════════════════════
   Widget _buildMyRank() {
-    return _rankRow(_myRank > 10 ? 10 : _myRank, {
+    final myItem = _leaderboard.firstWhere((e) => e['isMe'] == true, orElse: () => {
       'name': 'Bạn',
       'stars': _myStars,
       'avatar': 'image/Đại diện.png',
-    }, true);
+      'isMe': true,
+    });
+    return _rankRow(_myRank, myItem, true);
   }
 }

@@ -1471,37 +1471,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.star_rounded,
         'label': 'Siêu nhân\nchăm chỉ',
         'color': const Color(0xFFFFB300),
-        'unlocked': true,
+        'unlocked': _streak >= 5,
       },
       {
         'icon': Icons.edit_rounded,
         'label': 'Bút vàng',
         'color': const Color(0xFFFB8C00),
-        'unlocked': true,
+        'unlocked': _lettersLearned >= 5,
       },
       {
         'icon': Icons.auto_stories_rounded,
         'label': 'Siêu nhân\nbài tập',
         'color': const Color(0xFF1E88E5),
-        'unlocked': true,
+        'unlocked': _lettersLearned >= 1,
       },
       {
         'icon': Icons.menu_book_rounded,
         'label': 'Tập đọc',
         'color': const Color(0xFF8E24AA),
-        'unlocked': false,
+        'unlocked': _readingLearned >= 1,
       },
       {
         'icon': Icons.spellcheck_rounded,
         'label': 'Đánh vần\nnhanh',
         'color': const Color(0xFFE53935),
-        'unlocked': false,
+        'unlocked': _vowelsLearned >= 1,
       },
       {
         'icon': Icons.explore_rounded,
         'label': 'Nhà thám\nhiểm',
         'color': const Color(0xFF00897B),
-        'unlocked': false,
+        'unlocked': _xp >= 100,
       },
     ];
 
@@ -1530,31 +1530,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // ─── Header ──
           Row(
             children: [
-              Container(
+              Image.asset(
+                'image/cúp hồ sơ.png',
                 width: 34.w,
                 height: 34.w,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFFFD54F),
-                      Color(0xFFFFB300),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(10.r),
-                  border: Border.all(
-                    color: const Color(0xFFFFB300).withValues(alpha: 0.25),
-                    width: 1.w,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFFB300).withValues(alpha: 0.15),
-                      blurRadius: 8.r,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                alignment: Alignment.center,
-                child: Text('🏆', style: TextStyle(fontSize: 16.sp)),
+                fit: BoxFit.contain,
               ),
               SizedBox(width: 10.w),
               Text(

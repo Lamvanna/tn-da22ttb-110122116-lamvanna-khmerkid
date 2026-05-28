@@ -4,7 +4,7 @@
  * ========================================
  */
 
-const { authenticate } = require('../middlewares/auth');
+const { authenticate, optionalAuth } = require('../middlewares/auth');
 const { authorize } = require('../middlewares/role');
 const { validate } = require('../middlewares/validate');
 const { uploadImage, uploadAudio } = require('../middlewares/upload');
@@ -54,7 +54,7 @@ achievementRouter.get('/', badgeController.getAchievements);
 // Rank Routes - /api/rank/*
 // ========================================
 const rankRouter = require('express').Router();
-rankRouter.use(authenticate);
+rankRouter.use(optionalAuth);
 rankRouter.get('/top', rankController.getTopRanking);
 rankRouter.get('/weekly', rankController.getWeeklyRanking);
 rankRouter.get('/monthly', rankController.getMonthlyRanking);

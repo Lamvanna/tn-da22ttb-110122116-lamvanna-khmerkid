@@ -37,16 +37,16 @@ class KhmerSpellingData {
       'យ', 'រ', 'ល', 'វ',      // Nhóm 6
       'ស', 'ហ', 'ឡ', 'អ'       // Nhóm 7
     ]) ...[
-      KhmerSpelling(consonant: c, vowelSign: 'ា', combined: '$cា', romanized: '...', starRating: 3, isLearned: true),
-      KhmerSpelling(consonant: c, vowelSign: 'ិ', combined: '$cិ', romanized: '...', starRating: 2, isLearned: true),
-      KhmerSpelling(consonant: c, vowelSign: 'ី', combined: '$cី', romanized: '...', starRating: 3, isLearned: true),
-      KhmerSpelling(consonant: c, vowelSign: 'ុ', combined: '$cុ', romanized: '...', starRating: 1, isLearned: true),
-      KhmerSpelling(consonant: c, vowelSign: 'ូ', combined: '$cូ', romanized: '...', starRating: 2, isLearned: true),
-      KhmerSpelling(consonant: c, vowelSign: 'ួ', combined: '$cួ', romanized: '...', starRating: 3, isLearned: true),
-      KhmerSpelling(consonant: c, vowelSign: 'ើ', combined: '$cើ', romanized: '...', starRating: 2, isLearned: true),
-      KhmerSpelling(consonant: c, vowelSign: 'ឿ', combined: '$cឿ', romanized: '...', starRating: 0, isLearned: false),
-      KhmerSpelling(consonant: c, vowelSign: 'ៀ', combined: '$cៀ', romanized: '...', starRating: 0, isLearned: false),
-      KhmerSpelling(consonant: c, vowelSign: 'េ', combined: '$cេ', romanized: '...', starRating: 0, isLearned: false),
+      KhmerSpelling(consonant: c, vowelSign: 'ា', combined: '$cា', romanized: '...'),
+      KhmerSpelling(consonant: c, vowelSign: 'ិ', combined: '$cិ', romanized: '...'),
+      KhmerSpelling(consonant: c, vowelSign: 'ី', combined: '$cី', romanized: '...'),
+      KhmerSpelling(consonant: c, vowelSign: 'ុ', combined: '$cុ', romanized: '...'),
+      KhmerSpelling(consonant: c, vowelSign: 'ូ', combined: '$cូ', romanized: '...'),
+      KhmerSpelling(consonant: c, vowelSign: 'ួ', combined: '$cួ', romanized: '...'),
+      KhmerSpelling(consonant: c, vowelSign: 'ើ', combined: '$cើ', romanized: '...'),
+      KhmerSpelling(consonant: c, vowelSign: 'ឿ', combined: '$cឿ', romanized: '...'),
+      KhmerSpelling(consonant: c, vowelSign: 'ៀ', combined: '$cៀ', romanized: '...'),
+      KhmerSpelling(consonant: c, vowelSign: 'េ', combined: '$cេ', romanized: '...'),
     ]
   ];
 }

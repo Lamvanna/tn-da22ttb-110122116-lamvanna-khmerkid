@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
+import '../../services/storage_service.dart';
 import '../../widgets/app_page_route.dart';
 import 'word_search_game_screen.dart';
 import 'sentence_builder_game_screen.dart';
@@ -23,6 +24,7 @@ class PlayScreen extends StatefulWidget {
 
 class _PlayScreenState extends State<PlayScreen> {
   ScoreService? _score;
+  StorageService? _storage;
 
   @override
   void initState() {
@@ -32,6 +34,7 @@ class _PlayScreenState extends State<PlayScreen> {
 
   Future<void> _loadScore() async {
     _score = await ScoreService.getInstance();
+    _storage = await StorageService.getInstance();
     if (mounted) setState(() {});
   }
 
@@ -68,6 +71,12 @@ class _PlayScreenState extends State<PlayScreen> {
   }
 
   List<_GameZone> _getGames() {
+    final scores = _storage?.getGameScores() ?? {};
+    double getProg(String key, {String? altKey}) {
+      final s = scores[key] ?? (altKey != null ? (scores[altKey] ?? 0) : 0);
+      return (s / 100.0).clamp(0.0, 1.0);
+    }
+
     return [
       _GameZone(
         n: 1,
@@ -75,7 +84,7 @@ class _PlayScreenState extends State<PlayScreen> {
         sub: 'Khmer Letter Catch',
         icon: Icons.catching_pokemon_rounded,
         img: 'image/Bắt chữ Khmer.png',
-        prog: 0.0,
+        prog: getProg('Bắt chữ Khmer', altKey: 'catch_letter'),
         color: const Color(0xFF1A237E),
         stars: 10,
         btn: 'Chơi ngay',
@@ -90,7 +99,7 @@ class _PlayScreenState extends State<PlayScreen> {
         sub: 'Khmer Word Search & Rescue',
         icon: Icons.forest_rounded,
         img: 'image/Giải cứu thú rừng.png',
-        prog: 0.7,
+        prog: getProg('Giải cứu thú rừng', altKey: 'match_word'),
         color: const Color(0xFF2E7D32),
         stars: 10,
         btn: 'Chơi ngay',
@@ -105,7 +114,7 @@ class _PlayScreenState extends State<PlayScreen> {
         sub: 'Khmer Sentence Builder Island',
         icon: Icons.explore_rounded,
         img: 'image/Đảo quốc Ngữ pháp.png',
-        prog: 0.4,
+        prog: getProg('Đảo quốc Ngữ pháp', altKey: 'arrange_letter'),
         color: const Color(0xFF0288D1),
         stars: 15,
         btn: 'Chơi ngay',
@@ -120,7 +129,7 @@ class _PlayScreenState extends State<PlayScreen> {
         sub: 'Khmer Math & Number Garden',
         icon: Icons.calculate_rounded,
         img: 'image/Khu vườn Toán học.png',
-        prog: 0.2,
+        prog: getProg('Khu vườn Toán học', altKey: 'listening_quiz'),
         color: const Color(0xFFF57C00),
         stars: 12,
         btn: 'Chơi ngay',
@@ -135,12 +144,12 @@ class _PlayScreenState extends State<PlayScreen> {
         sub: 'Khmer Adventure Board Game',
         icon: Icons.casino_rounded,
         img: 'image/Cờ tỷ phú Khmer kỳ thú.png',
-        prog: 0.0,
+        prog: getProg('Cờ tỷ phú Khmer kỳ thú'),
         color: const Color(0xFFD32F2F),
         stars: 15,
         btn: 'Chơi ngay',
         objective: 'Chinh phục toàn diện 4 kỹ năng tích hợp (Nghe - Nói - Đọc - Viết) thông qua bàn cờ thám hiểm.',
-        gameplay: 'Bé đổ xúc xắc để Voi con di chuyển qua Rừng phụ âm, Đầm lầy nguyên âm, Động phát âm và Đỉnh núi viết chữ, dứt điểm bằng trận chiến Boss Vua Bóng Tối hoành tráng!',
+        gameplay: 'Bé đổ xúc xắc để Voi con di chuyển qua Rừng phụ âm, Đầm lầy nguyên âm, Động phát âm và Đỉnh núi viết chữ, dứt điểm bằng trận chiến Boss Vua Bóng Tối hoáng tráng!',
         importance: 'Hoạt động như một bài kiểm tra tổng hợp cuối chương (Summative Assessment) cực kỳ hấp dẫn, không áp lực mà kích thích tương tác toàn diện.',
         targetScreen: const BoardGameScreen(),
       ),
@@ -150,7 +159,7 @@ class _PlayScreenState extends State<PlayScreen> {
         sub: 'Khmer Sub-consonant Detective',
         icon: Icons.auto_awesome_rounded,
         img: 'image/Nhà khảo cổ nhí.png',
-        prog: 0.0,
+        prog: getProg('Nhà khảo cổ nhí'),
         color: const Color(0xFF7B1FA2),
         stars: 20,
         btn: 'Chơi ngay',
@@ -165,7 +174,7 @@ class _PlayScreenState extends State<PlayScreen> {
         sub: 'Khmer Consonant Series Runner',
         icon: Icons.pets_rounded,
         img: 'image/Voi con vượt ải.png',
-        prog: 0.0,
+        prog: getProg('Voi con vượt ải'),
         color: const Color(0xFF00ACC1),
         stars: 15,
         btn: 'Chơi ngay',

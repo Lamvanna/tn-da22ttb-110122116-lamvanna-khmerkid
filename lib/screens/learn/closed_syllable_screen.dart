@@ -7,6 +7,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
 import '../../models/khmer_closed_syllable.dart';
+import '../../repositories/progress_repository.dart';
 
 /// Màn hình học vần đóng Khmer (phụ âm đầu + phụ âm cuối + dấu ់)
 class ClosedSyllableScreen extends StatefulWidget {
@@ -65,9 +66,27 @@ class _ClosedSyllableScreenState extends State<ClosedSyllableScreen>
     if (_completedSteps[_idx]!.length == 3) _onLessonCompleted();
   }
 
-  void _onLessonCompleted() {
+  void _onLessonCompleted() async {
     _lesson.isLearned = true;
     _lesson.starRating = 3;
+
+    try {
+      final scoreService = await ScoreService.getInstance();
+      await scoreService.addStars(3);
+      await scoreService.addXp(30);
+      await scoreService.updateStreak();
+
+      // Lưu vào Isar ProgressRepository (Isolated đa người dùng)
+      await ProgressRepository.instance.completeLesson(
+        lessonId: 'closed_syllable_$_idx',
+        lessonType: 'closed_syllable',
+        lessonOrder: _idx,
+        stars: 3,
+      );
+    } catch (e) {
+      debugPrint('⚠️ Error saving closed_syllable progress: $e');
+    }
+
     Future.delayed(const Duration(milliseconds: 300), () {
       if (!mounted) return;
       _showCompletionDialog();

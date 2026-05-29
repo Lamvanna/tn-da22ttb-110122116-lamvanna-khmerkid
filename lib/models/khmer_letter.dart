@@ -1,6 +1,7 @@
 /// Model dữ liệu cho chữ cái Khmer
 /// Mutable để có thể cập nhật trạng thái học
 class KhmerLetter {
+  String? id;           // ID từ MongoDB Atlas
   final String character;     // Ký tự Khmer (e.g., "ក")
   final String romanized;     // Phiên âm Latin (e.g., "ko")
   final String pronunciation; // Phát âm tiếng Việt (e.g., "ka")
@@ -11,6 +12,7 @@ class KhmerLetter {
   final String testRange;     // Phạm vi kiểm tra (e.g., "1-5")
 
   KhmerLetter({
+    this.id,
     required this.character,
     required this.romanized,
     this.pronunciation = '',
@@ -20,6 +22,20 @@ class KhmerLetter {
     this.isTest = false,
     this.testRange = '',
   });
+
+  factory KhmerLetter.fromJson(Map<String, dynamic> json) {
+    return KhmerLetter(
+      id: json['_id'] ?? json['id'],
+      character: json['khmerText'] ?? json['character'] ?? '',
+      romanized: json['romanized'] ?? '',
+      pronunciation: json['pronunciation'] ?? '',
+      meaning: json['meaning'] ?? '',
+      starRating: json['starRating'] ?? 0,
+      isLearned: json['isLearned'] ?? false,
+      isTest: json['isTest'] ?? false,
+      testRange: json['testRange'] ?? '',
+    );
+  }
 }
 
 /// 33 phụ âm + 8 bài kiểm tra = 41 bài
@@ -29,19 +45,19 @@ class KhmerLetterData {
   KhmerLetterData._();
 
   static final List<KhmerLetter> consonants = [
-    // ══════ NHÓM 1: Bài 1-5 (đã học) ══════
-    KhmerLetter(character: 'ក', romanized: 'ko', pronunciation: 'ka', meaning: 'con cò', starRating: 5, isLearned: true),
-    KhmerLetter(character: 'ខ', romanized: 'kho', pronunciation: 'kha', meaning: 'con hổ', starRating: 4, isLearned: true),
-    KhmerLetter(character: 'គ', romanized: 'ko', pronunciation: 'kô', meaning: 'con gà', starRating: 3, isLearned: true),
-    KhmerLetter(character: 'ឃ', romanized: 'kho', pronunciation: 'khô', meaning: 'con bò', starRating: 5, isLearned: true),
-    KhmerLetter(character: 'ង', romanized: 'ngo', pronunciation: 'ngô', meaning: 'con ngỗng', starRating: 4, isLearned: true),
+    // ══════ NHÓM 1: Bài 1-5 ══════
+    KhmerLetter(character: 'ក', romanized: 'ko', pronunciation: 'ka', meaning: 'con cò'),
+    KhmerLetter(character: 'ខ', romanized: 'kho', pronunciation: 'kha', meaning: 'con hổ'),
+    KhmerLetter(character: 'គ', romanized: 'ko', pronunciation: 'kô', meaning: 'con gà'),
+    KhmerLetter(character: 'ឃ', romanized: 'kho', pronunciation: 'khô', meaning: 'con bò'),
+    KhmerLetter(character: 'ង', romanized: 'ngo', pronunciation: 'ngô', meaning: 'con ngỗng'),
     // ── Bài 6: Kiểm tra bài 1-5 ──
-    KhmerLetter(character: '📝', romanized: 'Kiểm tra', isTest: true, testRange: '1-5', starRating: 3, isLearned: true),
+    KhmerLetter(character: '📝', romanized: 'Kiểm tra', isTest: true, testRange: '1-5'),
 
-    // ══════ NHÓM 2: Bài 7-11 (đã học) ══════
-    KhmerLetter(character: 'ច', romanized: 'co', pronunciation: 'cha', meaning: 'con chó', starRating: 3, isLearned: true),
-    KhmerLetter(character: 'ឆ', romanized: 'cho', pronunciation: 'chha', meaning: 'con mèo', starRating: 4, isLearned: true),
-    KhmerLetter(character: 'ជ', romanized: 'co', pronunciation: 'chô', meaning: 'con cá', starRating: 2, isLearned: true),
+    // ══════ NHÓM 2: Bài 7-11 ══════
+    KhmerLetter(character: 'ច', romanized: 'co', pronunciation: 'cha', meaning: 'con chó'),
+    KhmerLetter(character: 'ឆ', romanized: 'cho', pronunciation: 'chha', meaning: 'con mèo'),
+    KhmerLetter(character: 'ជ', romanized: 'co', pronunciation: 'chô', meaning: 'con cá'),
     // ══════ ĐANG HỌC ══════
     KhmerLetter(character: 'ឈ', romanized: 'cho', pronunciation: 'chhô', meaning: 'con hươu', starRating: 0, isLearned: false),
     KhmerLetter(character: 'ញ', romanized: 'nyo', pronunciation: 'nhô', meaning: 'con thỏ', starRating: 0, isLearned: false),

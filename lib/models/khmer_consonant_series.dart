@@ -28,11 +28,11 @@ class KhmerConsonantSeriesData {
   static final List<KhmerConsonantSeries> consonants = [
     // ══════ HÀNG O (អ series - first series) ══════
     KhmerConsonantSeries(character: 'ក', romanized: 'ka', pronunciation: 'ka', series: 'o',
-      example: 'កា', exampleMeaning: 'quạ', starRating: 5, isLearned: true),
+      example: 'កា', exampleMeaning: 'quạ'),
     KhmerConsonantSeries(character: 'ខ', romanized: 'kha', pronunciation: 'kha', series: 'o',
-      example: 'ខា', exampleMeaning: 'gió', starRating: 4, isLearned: true),
+      example: 'ខា', exampleMeaning: 'gió'),
     KhmerConsonantSeries(character: 'ច', romanized: 'cha', pronunciation: 'cha', series: 'o',
-      example: 'ចាន', exampleMeaning: 'đĩa', starRating: 3, isLearned: true),
+      example: 'ចាន', exampleMeaning: 'đĩa'),
     KhmerConsonantSeries(character: 'ឆ', romanized: 'chha', pronunciation: 'chha', series: 'o',
       example: 'ឆ្កែ', exampleMeaning: 'chó', starRating: 0, isLearned: false),
     KhmerConsonantSeries(character: 'ដ', romanized: 'da', pronunciation: 'đa', series: 'o',

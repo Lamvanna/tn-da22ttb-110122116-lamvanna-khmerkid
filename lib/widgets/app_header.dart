@@ -88,7 +88,7 @@ class AppHeader extends StatelessWidget {
                       fontSize: 19.sp, fontWeight: FontWeight.w800,
                       color: Colors.white))),
               // Trailing widget
-              ?trailing,
+              if (trailing != null) trailing!,
             ]),
           ),
         ),

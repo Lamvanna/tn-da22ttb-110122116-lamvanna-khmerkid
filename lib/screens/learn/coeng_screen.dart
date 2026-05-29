@@ -7,6 +7,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
 import '../../models/khmer_coeng.dart';
+import '../../repositories/progress_repository.dart';
 
 /// Màn hình học phụ âm có chân Khmer (phụ âm trên + ្ + phụ âm dưới + nguyên âm)
 class CoengScreen extends StatefulWidget {
@@ -62,9 +63,27 @@ class _CoengScreenState extends State<CoengScreen>
     if (_completedSteps[_idx]!.length == 3) _onLessonCompleted();
   }
 
-  void _onLessonCompleted() {
+  void _onLessonCompleted() async {
     _lesson.isLearned = true;
     _lesson.starRating = 3;
+
+    try {
+      final scoreService = await ScoreService.getInstance();
+      await scoreService.addStars(3);
+      await scoreService.addXp(30);
+      await scoreService.updateStreak();
+
+      // Lưu vào Isar ProgressRepository (Isolated đa người dùng)
+      await ProgressRepository.instance.completeLesson(
+        lessonId: 'coeng_$_idx',
+        lessonType: 'coeng',
+        lessonOrder: _idx,
+        stars: 3,
+      );
+    } catch (e) {
+      debugPrint('⚠️ Error saving coeng progress: $e');
+    }
+
     Future.delayed(const Duration(milliseconds: 300), () {
       if (!mounted) return;
       _showCompletionDialog();

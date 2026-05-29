@@ -5,7 +5,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_letter.dart';
 import 'letter_detail_screen.dart';
+import '../test/test_screen.dart';
+import '../../services/auth_service.dart';
+import '../../services/lesson_service.dart';
 import '../../services/storage_service.dart';
+import '../../repositories/progress_repository.dart';
 
 /// Bản đồ chữ cái Khmer — Premium learning path
 class LetterMapView extends StatefulWidget {
@@ -54,28 +58,155 @@ class _LetterMapViewState extends State<LetterMapView>
   }
 
   Future<void> _loadScore() async {
-    final storage = await StorageService.getInstance();
-    final progress = storage.getLetterProgress(); // Map<int, int>
-    
-    // Đồng bộ hóa tiến trình thực tế từ bộ nhớ vào danh sách _letters tĩnh
+    // 1. Tải nhanh từ bộ nhớ tạm local (Isar ProgressRepository) trước để giao diện hiện lên NGAY LẬP TỨC
+    try {
+      final localLetterProgress = await ProgressRepository.instance.getProgressMap('consonant');
+      
+      // Khôi phục các bài học bình thường
+      for (int i = 0; i < _letters.length; i++) {
+        if (!_letters[i].isTest) {
+          if (localLetterProgress.containsKey(i)) {
+            _letters[i].isLearned = true;
+            _letters[i].starRating = localLetterProgress[i]!;
+          } else {
+            // Không mở khóa sẵn bài nào (mặc định học từ bài đầu tiên)
+            _letters[i].isLearned = false;
+            _letters[i].starRating = 0;
+          }
+        }
+      }
+
+      // Tự động mở khóa và hoàn thành các bài Test nếu tất cả bài học trước nó đã xong
+      final storage = await StorageService.getInstance();
+      await _checkAndUnlockTestNodes(storage);
+
+      if (mounted) {
+        setState(() {});
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrent());
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error loading local cached letter progress: $e');
+    }
+
+    // 2. Chạy bất đồng bộ tải từ MongoDB Atlas trong nền
+    try {
+      // Tải lại tiến trình học tập mới nhất từ database MongoDB Atlas
+      await AuthService().fetchProfile();
+
+      // Tải danh sách dynamic lessons từ database để lấy Object ID thực tế
+      try {
+        final lessonService = await LessonService.getInstance();
+        final dbLessons = await lessonService.fetchLessonsByType('consonant');
+        final lessonIdMap = <String, String>{};
+        for (final l in dbLessons) {
+          final text = l['khmerText']?.toString() ?? '';
+          final id = l['_id']?.toString() ?? l['id']?.toString() ?? '';
+          if (text.isNotEmpty && id.isNotEmpty) {
+            lessonIdMap[text] = id;
+          }
+        }
+        for (final l in _letters) {
+          if (!l.isTest && lessonIdMap.containsKey(l.character)) {
+            l.id = lessonIdMap[l.character];
+          }
+        }
+      } catch (ex) {
+        debugPrint('⚠️ Error fetching dynamic consonant IDs: $ex');
+      }
+
+      final List<dynamic> completedLessons = List<dynamic>.from(
+        AuthService().userProfile?['learningProgress']?['completedLessons'] ?? [],
+      );
+      
+      final completedLetters = completedLessons
+          .where((l) {
+            if (l is Map) {
+              return l['type'] == 'consonant';
+            }
+            return false;
+          })
+          .map((l) => (l as Map)['khmerText']?.toString() ?? '')
+          .toSet();
+
+      final completedLessonIds = completedLessons
+          .map((l) {
+            if (l is Map) {
+              return l['_id']?.toString() ?? l['id']?.toString() ?? '';
+            }
+            return l.toString();
+          })
+          .where((id) => id.isNotEmpty)
+          .toSet();
+
+      final storage = await StorageService.getInstance();
+
+      for (int i = 0; i < _letters.length; i++) {
+        if (!_letters[i].isTest) {
+          final character = _letters[i].character;
+          final id = _letters[i].id;
+
+          bool isDone = completedLetters.contains(character);
+          if (!isDone && id != null && completedLessonIds.contains(id)) {
+            isDone = true;
+          }
+
+          if (isDone) {
+            _letters[i].isLearned = true;
+            if (_letters[i].starRating == 0) {
+              _letters[i].starRating = 3;
+            }
+            // Đồng bộ ngược lại bộ nhớ tạm
+            await storage.saveLetterProgress(i, _letters[i].starRating);
+          } else {
+            _letters[i].isLearned = false;
+            _letters[i].starRating = 0;
+          }
+        }
+      }
+
+      // Tự động mở khóa và hoàn thành các bài Test sau khi tải trực tuyến
+      await _checkAndUnlockTestNodes(storage);
+
+      if (mounted) {
+        setState(() {});
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrent());
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error loading online letter progress: $e');
+    }
+  }
+
+  /// Tự động hoàn thành bài kiểm tra nếu bé đã học hết các phụ âm của nhóm đó
+  Future<void> _checkAndUnlockTestNodes(StorageService storage) async {
     for (int i = 0; i < _letters.length; i++) {
-      if (!_letters[i].isTest) {
-        if (progress.containsKey(i)) {
+      if (_letters[i].isTest) {
+        bool allPrecedingDone = true;
+        for (int j = 0; j < i; j++) {
+          if (!_letters[j].isTest && !_letters[j].isLearned) {
+            allPrecedingDone = false;
+            break;
+          }
+        }
+        if (allPrecedingDone) {
           _letters[i].isLearned = true;
-          _letters[i].starRating = progress[i]!;
+          if (_letters[i].starRating == 0) {
+            _letters[i].starRating = 3;
+          }
+          await storage.saveLetterProgress(i, _letters[i].starRating);
         } else {
-          _letters[i].isLearned = false;
-          _letters[i].starRating = 0;
+          // Bất kỳ bài test nào (ngoại trừ bài test đầu tiên mặc định ở index 5) nếu chưa đủ điều kiện thì khóa lại
+          if (i != 5) {
+            _letters[i].isLearned = false;
+            _letters[i].starRating = 0;
+          }
         }
       }
     }
-    
-    if (mounted) setState(() {});
   }
 
   void _scrollToCurrent() {
-    final target = (_letters.length - 1 - _currentIdx) * _nodeSpacingY - 200.h;
-    if (_scrollCtrl.hasClients && target > 0) {
+    final target = _currentIdx * _nodeSpacingY - 200.h;
+    if (_scrollCtrl.hasClients) {
       _scrollCtrl.animateTo(
         target.clamp(0.0, _scrollCtrl.position.maxScrollExtent),
         duration: const Duration(milliseconds: 900),
@@ -767,12 +898,26 @@ class _LetterMapViewState extends State<LetterMapView>
   }
 
   void _openLetter(int idx) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => LetterDetailScreen(initialIndex: idx)),
-    ).then((_) {
-      if (mounted) setState(() {});
-    });
+    final letter = _letters[idx];
+    if (letter.isTest) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const TestScreen()),
+      ).then((_) {
+        if (mounted) {
+          _loadScore();
+        }
+      });
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => LetterDetailScreen(initialIndex: idx)),
+      ).then((_) {
+        if (mounted) {
+          _loadScore();
+        }
+      });
+    }
   }
 }
 

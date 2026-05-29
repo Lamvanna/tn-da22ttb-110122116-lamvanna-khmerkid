@@ -24,14 +24,11 @@ class KhmerWritingData {
   static final List<KhmerWriting> lessons = [
     // ══ Nhóm 1: Phụ âm cơ bản ══
     KhmerWriting(character: 'ក', romanized: 'ko', type: 'consonant',
-      hint: 'Bắt đầu từ đầu bên trái, vẽ vòng tròn rồi kéo nét thẳng xuống',
-      starRating: 3, isLearned: true),
+      hint: 'Bắt đầu từ đầu bên trái, vẽ vòng tròn rồi kéo nét thẳng xuống'),
     KhmerWriting(character: 'ខ', romanized: 'kho', type: 'consonant',
-      hint: 'Giống chữ ក nhưng thêm một nét cong bên phải',
-      starRating: 3, isLearned: true),
+      hint: 'Giống chữ ក nhưng thêm một nét cong bên phải'),
     KhmerWriting(character: 'គ', romanized: 'ko', type: 'consonant',
-      hint: 'Vẽ vòng tròn rồi kéo hai nét thẳng xuống',
-      starRating: 2, isLearned: true),
+      hint: 'Vẽ vòng tròn rồi kéo hai nét thẳng xuống'),
     KhmerWriting(character: 'ង', romanized: 'ngo', type: 'consonant',
       hint: 'Vẽ vòng tròn nhỏ rồi kéo nét cong sang phải'),
     KhmerWriting(character: 'ច', romanized: 'co', type: 'consonant',

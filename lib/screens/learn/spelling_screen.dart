@@ -84,9 +84,24 @@ class _SpellingScreenState extends State<SpellingScreen>
     }
   }
 
-  void _onLessonCompleted() {
-    _lesson.isLearned = true;
-    _lesson.starRating = 3;
+  Future<void> _onLessonCompleted() async {
+    setState(() {
+      _lesson.isLearned = true;
+      _lesson.starRating = 3;
+    });
+
+    try {
+      final scoreService = await ScoreService.getInstance();
+      await scoreService.completeSpellingLesson(
+        _idx,
+        3,
+        lessonId: null,
+        spellingText: _lesson.combined,
+        transliteration: _lesson.romanized,
+      );
+    } catch (e) {
+      debugPrint('Error saving spelling progress: $e');
+    }
 
     Future.delayed(const Duration(milliseconds: 300), () {
       if (!mounted) return;

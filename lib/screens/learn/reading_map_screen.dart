@@ -8,6 +8,7 @@ import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
 import '../../services/storage_service.dart';
 import 'reading_screen.dart';
+import '../../repositories/progress_repository.dart';
 
 /// Bản đồ học tập đọc tiếng Khmer dạng Zigzag Timeline - Đồng bộ 100% LetterMapView
 class ReadingMapScreen extends StatefulWidget {
@@ -56,23 +57,22 @@ class _ReadingMapScreenState extends State<ReadingMapScreen>
 
   Future<void> _loadScore() async {
     _score = await ScoreService.getInstance();
-    
-    // Load progress from Storage
-    final storage = await StorageService.getInstance();
-    final progressMap = storage.getReadingProgress();
-    
-    for (int i = 0; i < _items.length; i++) {
-      final stars = progressMap[i] ?? 0;
-      _items[i].starRating = stars;
-      _items[i].isLearned = stars > 0;
+    try {
+      final progressMap = await ProgressRepository.instance.getProgressMap('reading');
+      for (int i = 0; i < _items.length; i++) {
+        final stars = progressMap[i] ?? 0;
+        _items[i].starRating = stars;
+        _items[i].isLearned = stars > 0;
+      }
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint('Error loading reading progress: $e');
     }
-
-    if (mounted) setState(() {});
   }
 
   void _scrollToCurrent() {
-    final target = (_items.length - 1 - _currentIdx) * _nodeSpacingY - 200.h;
-    if (_scrollCtrl.hasClients && target > 0) {
+    final target = _currentIdx * _nodeSpacingY - 200.h;
+    if (_scrollCtrl.hasClients) {
       _scrollCtrl.animateTo(
         target.clamp(0.0, _scrollCtrl.position.maxScrollExtent),
         duration: const Duration(milliseconds: 900),

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
-import '../../services/storage_service.dart';
 import '../../services/score_service.dart';
+import '../../services/auth_service.dart';
+import '../../services/storage_service.dart';
 import '../../widgets/app_header.dart';
 
-/// Màn hình Báo cáo — Thống kê tiến độ học tập cho phụ huynh/giáo viên
+/// Màn hình Báo cáo — Thống kê tiến độ học tập 100% Dynamic từ MongoDB
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
   @override
@@ -13,8 +14,8 @@ class ReportScreen extends StatefulWidget {
 }
 
 class _ReportScreenState extends State<ReportScreen> {
-  StorageService? _storage;
   ScoreService? _score;
+  StorageService? _storage;
   bool _loading = true;
 
   @override
@@ -24,8 +25,10 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Future<void> _init() async {
-    _storage = await StorageService.getInstance();
     _score = await ScoreService.getInstance();
+    _storage = await StorageService.getInstance();
+    // Làm mới profile từ MongoDB
+    await AuthService().fetchProfile();
     if (mounted) setState(() => _loading = false);
   }
 
@@ -59,6 +62,8 @@ class _ReportScreenState extends State<ReportScreen> {
         const SizedBox(height: 14),
         _buildProgressCard(),
         const SizedBox(height: 14),
+        _buildSkillLevelsCard(),
+        const SizedBox(height: 14),
         _buildTestHistoryCard(),
         const SizedBox(height: 14),
         _buildStreakCard(),
@@ -69,6 +74,9 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
+  // ══════════════════════════════════════════════════════════════
+  // OVERVIEW CARD — Dữ liệu từ MongoDB
+  // ══════════════════════════════════════════════════════════════
   Widget _buildOverviewCard() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -87,7 +95,7 @@ class _ReportScreenState extends State<ReportScreen> {
           _statBox('🎖️', '${_score?.totalMedals ?? 0}', 'Huy chương', AppColors.tertiary),
         ]),
         const SizedBox(height: 16),
-        // Level progress
+        // Level progress (Dynamic from MongoDB)
         Row(children: [
           Text('Tiến trình cấp ${_score?.level ?? 1}:', style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
           const SizedBox(width: 8),
@@ -101,6 +109,15 @@ class _ReportScreenState extends State<ReportScreen> {
           const SizedBox(width: 8),
           Text('${((_score?.levelProgress ?? 0) * 100).toInt()}%',
               style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primary)),
+        ]),
+        const SizedBox(height: 12),
+        // Extra stats from MongoDB
+        Row(children: [
+          _miniStat('Bài học', '${_score?.totalLessonsCompleted ?? 0}', const Color(0xFF4CAF50)),
+          const SizedBox(width: 10),
+          _miniStat('Game', '${_score?.totalGamesPlayed ?? 0}', const Color(0xFF2196F3)),
+          const SizedBox(width: 10),
+          _miniStat('XP', '${_score?.totalXp ?? 0}', const Color(0xFFFF9800)),
         ]),
       ]),
     );
@@ -120,6 +137,9 @@ class _ReportScreenState extends State<ReportScreen> {
     ));
   }
 
+  // ══════════════════════════════════════════════════════════════
+  // PROGRESS CARD — Dữ liệu Dynamic từ MongoDB
+  // ══════════════════════════════════════════════════════════════
   Widget _buildProgressCard() {
     final letterProg = _score?.lettersLearned ?? 0;
     final vowelProg = _score?.vowelsLearned ?? 0;
@@ -138,7 +158,7 @@ class _ReportScreenState extends State<ReportScreen> {
         const SizedBox(height: 12),
         _progressBar('Từ vựng', vocabProg, 38, AppColors.consonantAccent),
         const SizedBox(height: 12),
-        _progressBar('Số Khmer', 10, 10, AppColors.tertiary),
+        _progressBar('Số Khmer', _score?.numbersLearned ?? 0, 10, AppColors.tertiary),
       ]),
     );
   }
@@ -160,6 +180,59 @@ class _ReportScreenState extends State<ReportScreen> {
     ]);
   }
 
+  // ══════════════════════════════════════════════════════════════
+  // SKILL LEVELS CARD — Dynamic từ MongoDB learningProgress
+  // ══════════════════════════════════════════════════════════════
+  Widget _buildSkillLevelsCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22),
+        boxShadow: AppColors.cardShadowList),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('🎯 Kỹ năng', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.onBackground)),
+        const SizedBox(height: 16),
+        _skillBar('Nghe', _score?.listeningLevel ?? 0, const Color(0xFF4CAF50), Icons.hearing_rounded),
+        const SizedBox(height: 12),
+        _skillBar('Nói', _score?.speakingLevel ?? 0, const Color(0xFF2196F3), Icons.record_voice_over_rounded),
+        const SizedBox(height: 12),
+        _skillBar('Đọc', _score?.readingLevel ?? 0, const Color(0xFF9C27B0), Icons.menu_book_rounded),
+        const SizedBox(height: 12),
+        _skillBar('Viết', _score?.writingLevel ?? 0, const Color(0xFFFF9800), Icons.edit_rounded),
+      ]),
+    );
+  }
+
+  Widget _skillBar(String label, int level, Color color, IconData icon) {
+    final pct = level / 100.0;
+    return Row(children: [
+      Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: color, size: 20),
+      ),
+      const SizedBox(width: 12),
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+          Text('$level/100',
+              style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
+        ]),
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(value: pct, minHeight: 8,
+            backgroundColor: const Color(0xFFEEEEEE), valueColor: AlwaysStoppedAnimation(color)),
+        ),
+      ])),
+    ]);
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // TEST HISTORY CARD
+  // ══════════════════════════════════════════════════════════════
   Widget _buildTestHistoryCard() {
     final history = _storage?.getTestHistory() ?? [];
     final avg = _score?.avgTestScore ?? 0;
@@ -220,10 +293,12 @@ class _ReportScreenState extends State<ReportScreen> {
     ));
   }
 
+  // ══════════════════════════════════════════════════════════════
+  // STREAK & STUDY TIME — Dynamic từ MongoDB
+  // ══════════════════════════════════════════════════════════════
   Widget _buildStreakCard() {
     final streak = _score?.streak ?? 0;
-    final studyMinutes = _storage?.getTotalStudyMinutes() ?? 0;
-    final dailyMinutes = _storage?.getDailyStudyMinutes() ?? 0;
+    final totalStudyTime = _score?.totalStudyTime ?? 0;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -235,14 +310,17 @@ class _ReportScreenState extends State<ReportScreen> {
         Row(children: [
           _miniStat('Streak', '$streak ngày', const Color(0xFFEF5350)),
           const SizedBox(width: 10),
-          _miniStat('Hôm nay', '$dailyMinutes phút', const Color(0xFF4CAF50)),
+          _miniStat('Tổng', '$totalStudyTime phút', const Color(0xFF5B9CF5)),
           const SizedBox(width: 10),
-          _miniStat('Tổng', '$studyMinutes phút', const Color(0xFF5B9CF5)),
+          _miniStat('Bài học', '${_score?.totalLessonsCompleted ?? 0}', const Color(0xFF4CAF50)),
         ]),
       ]),
     );
   }
 
+  // ══════════════════════════════════════════════════════════════
+  // RECOMMENDATIONS — Dynamic từ MongoDB
+  // ══════════════════════════════════════════════════════════════
   Widget _buildRecommendations() {
     final letterProg = _score?.lettersLearned ?? 0;
     final avgScore = _score?.avgTestScore ?? 0;
@@ -252,6 +330,8 @@ class _ReportScreenState extends State<ReportScreen> {
     if (avgScore < 70 && avgScore > 0) tips.add('📝 Cần ôn tập lại — điểm TB dưới 70%');
     if ((_score?.streak ?? 0) < 3) tips.add('🔥 Khuyến khích học liên tục mỗi ngày');
     if ((_score?.vocabLearned ?? 0) < 5) tips.add('📚 Nên bắt đầu học từ vựng theo chủ đề');
+    if ((_score?.listeningLevel ?? 0) < 30) tips.add('🎧 Nên luyện nghe nhiều hơn');
+    if ((_score?.speakingLevel ?? 0) < 30) tips.add('🗣️ Nên luyện nói nhiều hơn');
     if (tips.isEmpty) tips.add('🎉 Bé đang học rất tốt! Tiếp tục phát huy!');
 
     return Container(

@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_writing.dart';
 import 'writing_detail_screen.dart';
+import '../../services/storage_service.dart';
+import '../../repositories/progress_repository.dart';
 
 /// Bản đồ tập viết Khmer — Premium learning path (zigzag)
 class WritingMapScreen extends StatefulWidget {
@@ -40,12 +42,35 @@ class _WritingMapScreenState extends State<WritingMapScreen>
     _pulseAnim = Tween<double>(begin: 1.0, end: 1.08).animate(
       CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
     _scrollCtrl = ScrollController();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrent());
+    _loadProgress().then((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrent());
+    });
+  }
+
+  Future<void> _loadProgress() async {
+    try {
+      final progress = await ProgressRepository.instance.getProgressMap('writing');
+      if (mounted) {
+        setState(() {
+          for (int i = 0; i < _lessons.length; i++) {
+            if (progress.containsKey(i)) {
+              _lessons[i].isLearned = true;
+              _lessons[i].starRating = progress[i]!;
+            } else {
+              _lessons[i].isLearned = false;
+              _lessons[i].starRating = 0;
+            }
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading writing progress: $e');
+    }
   }
 
   void _scrollToCurrent() {
-    final target = (_lessons.length - 1 - _currentIdx) * _nodeSpacingY - 200;
-    if (_scrollCtrl.hasClients && target > 0) {
+    final target = _currentIdx * _nodeSpacingY - 200;
+    if (_scrollCtrl.hasClients) {
       _scrollCtrl.animateTo(
         target.clamp(0.0, _scrollCtrl.position.maxScrollExtent),
         duration: const Duration(milliseconds: 900),
@@ -304,7 +329,9 @@ class _WritingMapScreenState extends State<WritingMapScreen>
     Navigator.push(context,
       MaterialPageRoute(builder: (_) => WritingDetailScreen(initialIndex: idx)),
     ).then((_) {
-      if (mounted) setState(() {});
+      if (mounted) {
+        _loadProgress();
+      }
     });
   }
 }

@@ -4,7 +4,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/khmer_number.dart';
 import '../../services/score_service.dart';
+import '../../services/auth_service.dart';
+import '../../services/lesson_service.dart';
+import '../../services/storage_service.dart';
+import '../../repositories/progress_repository.dart';
 import 'number_detail_screen.dart';
+
 
 /// Bản đồ số Khmer — Premium learning path
 class NumberMapScreen extends StatefulWidget {
@@ -50,12 +55,113 @@ class _NumberMapScreenState extends State<NumberMapScreen>
 
   Future<void> _loadScore() async {
     _score = await ScoreService.getInstance();
-    if (mounted) setState(() {});
+    // 1. Tải nhanh từ bộ nhớ tạm local (Isar ProgressRepository) trước để giao diện hiện lên NGAY LẬP TỨC
+    try {
+      final localNumberProgress = await ProgressRepository.instance.getProgressMap('number');
+      for (int i = 0; i < _items.length; i++) {
+        if (localNumberProgress.containsKey(i)) {
+          _items[i].isLearned = true;
+          _items[i].starRating = localNumberProgress[i]!;
+        } else {
+          // Không mở khóa sẵn bài nào (mặc định học từ bài đầu tiên)
+          _items[i].isLearned = false;
+          _items[i].starRating = 0;
+        }
+      }
+      if (mounted) {
+        setState(() {});
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrent());
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error loading local cached number progress: $e');
+    }
+
+    // 2. Chạy bất đồng bộ tải từ MongoDB Atlas trong nền
+    try {
+      // Tải lại tiến trình học tập mới nhất từ database MongoDB Atlas
+      await AuthService().fetchProfile();
+
+      // Tải danh sách dynamic lessons từ database để lấy Object ID thực tế
+      try {
+        final lessonService = await LessonService.getInstance();
+        final dbLessons = await lessonService.fetchLessonsByType('number');
+        final lessonIdMap = <String, String>{};
+        for (final l in dbLessons) {
+          final text = l['khmerText']?.toString() ?? '';
+          final id = l['_id']?.toString() ?? l['id']?.toString() ?? '';
+          if (text.isNotEmpty && id.isNotEmpty) {
+            lessonIdMap[text] = id;
+          }
+        }
+        for (final l in _items) {
+          if (lessonIdMap.containsKey(l.character)) {
+            l.id = lessonIdMap[l.character];
+          }
+        }
+      } catch (ex) {
+        debugPrint('⚠️ Error fetching dynamic number IDs: $ex');
+      }
+
+      final List<dynamic> completedLessons = List<dynamic>.from(
+        AuthService().userProfile?['learningProgress']?['completedLessons'] ?? [],
+      );
+      
+      final completedNumbers = completedLessons
+          .where((l) {
+            if (l is Map) {
+              return l['type'] == 'number';
+            }
+            return false;
+          })
+          .map((l) => (l as Map)['khmerText']?.toString() ?? '')
+          .toSet();
+
+      final completedLessonIds = completedLessons
+          .map((l) {
+            if (l is Map) {
+              return l['_id']?.toString() ?? l['id']?.toString() ?? '';
+            }
+            return l.toString();
+          })
+          .where((id) => id.isNotEmpty)
+          .toSet();
+
+      final storage = await StorageService.getInstance();
+
+      if (mounted) {
+        setState(() {
+          for (int i = 0; i < _items.length; i++) {
+            final character = _items[i].character;
+            final id = _items[i].id;
+
+            bool isDone = completedNumbers.contains(character);
+            if (!isDone && id != null && completedLessonIds.contains(id)) {
+              isDone = true;
+            }
+
+            if (isDone) {
+              _items[i].isLearned = true;
+              if (_items[i].starRating == 0) {
+                _items[i].starRating = 3;
+              }
+              // Đồng bộ ngược lại bộ nhớ tạm
+              storage.saveNumberProgress(i, _items[i].starRating);
+            } else {
+              _items[i].isLearned = false;
+              _items[i].starRating = 0;
+            }
+          }
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrent());
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error loading online number progress: $e');
+    }
   }
 
   void _scrollToCurrent() {
-    final target = (_items.length - 1 - _currentIdx) * _nodeSpacingY - 200.h;
-    if (_scrollCtrl.hasClients && target > 0) {
+    final target = _currentIdx * _nodeSpacingY - 200.h;
+    if (_scrollCtrl.hasClients) {
       _scrollCtrl.animateTo(
         target.clamp(0.0, _scrollCtrl.position.maxScrollExtent),
         duration: const Duration(milliseconds: 900),
@@ -365,7 +471,11 @@ class _NumberMapScreenState extends State<NumberMapScreen>
   void _openNumber(int idx) {
     Navigator.push(context,
       MaterialPageRoute(builder: (_) => NumberDetailScreen(initialIndex: idx)),
-    ).then((_) { if (mounted) setState(() {}); });
+    ).then((_) {
+      if (mounted) {
+        _loadScore();
+      }
+    });
   }
 }
 

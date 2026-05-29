@@ -1,9 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../services/storage_service.dart';
 import '../../../services/score_service.dart';
+import '../../../services/auth_service.dart';
 import '../../../constants/app_colors.dart';
 
 /// Header trang chủ — Gradient xanh nhạt + avatar + stats card trắng
@@ -25,21 +27,37 @@ class _HomeHeaderState extends State<HomeHeader> {
   @override
   void initState() {
     super.initState();
+    AuthService().addListener(_onAuthChanged);
     _loadData();
+    AuthService().fetchProfile();
+  }
+
+  @override
+  void dispose() {
+    AuthService().removeListener(_onAuthChanged);
+    super.dispose();
+  }
+
+  void _onAuthChanged() {
+    _updateStats();
   }
 
   Future<void> _loadData() async {
     _storage = await StorageService.getInstance();
     _score = await ScoreService.getInstance();
-    if (mounted) {
-      setState(() {
-        _username = _storage!.getUsername();
-        _avatarUrl = _storage!.getAvatarUrl();
-        _level = _score!.level;
-        _streak = _score!.streak;
-        _totalStars = _score!.totalStars;
-      });
-    }
+    _updateStats();
+  }
+
+  void _updateStats() {
+    if (!mounted) return;
+    final user = AuthService().userProfile;
+    setState(() {
+      _username = user?['name'] ?? (_storage?.getUsername() ?? 'Bé học giỏi');
+      _avatarUrl = user?['avatar'] ?? (_storage?.getAvatarUrl() ?? '');
+      _level = user?['level'] ?? (_score?.level ?? 1);
+      _streak = user?['streak'] ?? (_score?.streak ?? 0);
+      _totalStars = user?['stars'] ?? (_score?.totalStars ?? 0);
+    });
   }
 
   String _getLevelTitle(int level) {
@@ -95,13 +113,20 @@ class _HomeHeaderState extends State<HomeHeader> {
                         color: Colors.white.withValues(alpha: 0.25),
                         border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2.5.w)),
                       child: ClipOval(
-                        child: _avatarUrl.isNotEmpty && _avatarUrl.startsWith('http')
-                            ? Image.network(
-                                _avatarUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Image.asset('image/Đại diện.png', fit: BoxFit.cover),
-                              )
+                        child: _avatarUrl.isNotEmpty
+                            ? (_avatarUrl.startsWith('http')
+                                ? Image.network(
+                                    _avatarUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        Image.asset('image/Đại diện.png', fit: BoxFit.cover),
+                                  )
+                                : Image.file(
+                                    File(_avatarUrl),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        Image.asset('image/Đại diện.png', fit: BoxFit.cover),
+                                  ))
                             : Image.asset('image/Đại diện.png', fit: BoxFit.cover),
                       ),
                     ),

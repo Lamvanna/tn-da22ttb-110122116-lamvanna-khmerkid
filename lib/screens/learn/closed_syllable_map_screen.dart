@@ -6,6 +6,7 @@ import '../../models/khmer_closed_syllable.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
 import 'closed_syllable_screen.dart';
+import '../../repositories/progress_repository.dart';
 
 /// Bản đồ vần đóng — Timeline cards nhóm theo phụ âm đầu
 class ClosedSyllableMapScreen extends StatefulWidget {
@@ -63,7 +64,24 @@ class _ClosedSyllableMapScreenState extends State<ClosedSyllableMapScreen>
 
   Future<void> _loadScore() async {
     _score = await ScoreService.getInstance();
-    if (mounted) setState(() {});
+    try {
+      final progress = await ProgressRepository.instance.getProgressMap('closed_syllable');
+      if (mounted) {
+        setState(() {
+          for (int i = 0; i < _lessons.length; i++) {
+            if (progress.containsKey(i)) {
+              _lessons[i].isLearned = true;
+              _lessons[i].starRating = progress[i]!;
+            } else {
+              _lessons[i].isLearned = false;
+              _lessons[i].starRating = 0;
+            }
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error loading closed_syllable progress: $e');
+    }
   }
 
   @override

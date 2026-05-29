@@ -122,6 +122,74 @@ class StorageService {
         jsonEncode(progress.map((k, v) => MapEntry(k.toString(), v))));
   }
 
+  // ─── NUMBER PROGRESS ────────────────────────────────────────
+  static const _keyNumberProgress = 'number_progress';
+
+  Map<int, int> getNumberProgress() {
+    final json = _prefs?.getString(_keyNumberProgress);
+    if (json == null) return {};
+    final map = jsonDecode(json) as Map<String, dynamic>;
+    return map.map((k, v) => MapEntry(int.parse(k), v as int));
+  }
+
+  Future<void> saveNumberProgress(int index, int stars) async {
+    final progress = getNumberProgress();
+    progress[index] = stars;
+    await _prefs?.setString(_keyNumberProgress,
+        jsonEncode(progress.map((k, v) => MapEntry(k.toString(), v))));
+  }
+
+  // ─── DIACRITICAL PROGRESS ───────────────────────────────────
+  static const _keyDiacriticalProgress = 'diacritical_progress';
+
+  Map<int, int> getDiacriticalProgress() {
+    final json = _prefs?.getString(_keyDiacriticalProgress);
+    if (json == null) return {};
+    final map = jsonDecode(json) as Map<String, dynamic>;
+    return map.map((k, v) => MapEntry(int.parse(k), v as int));
+  }
+
+  Future<void> saveDiacriticalProgress(int index, int stars) async {
+    final progress = getDiacriticalProgress();
+    progress[index] = stars;
+    await _prefs?.setString(_keyDiacriticalProgress,
+        jsonEncode(progress.map((k, v) => MapEntry(k.toString(), v))));
+  }
+
+  // ─── SPELLING PROGRESS ──────────────────────────────────────
+  static const _keySpellingProgress = 'spelling_progress';
+
+  Map<int, int> getSpellingProgress() {
+    final json = _prefs?.getString(_keySpellingProgress);
+    if (json == null) return {};
+    final map = jsonDecode(json) as Map<String, dynamic>;
+    return map.map((k, v) => MapEntry(int.parse(k), v as int));
+  }
+
+  Future<void> saveSpellingProgress(int index, int stars) async {
+    final progress = getSpellingProgress();
+    progress[index] = stars;
+    await _prefs?.setString(_keySpellingProgress,
+        jsonEncode(progress.map((k, v) => MapEntry(k.toString(), v))));
+  }
+
+  // ─── WRITING PROGRESS ───────────────────────────────────────
+  static const _keyWritingProgress = 'writing_progress';
+
+  Map<int, int> getWritingProgress() {
+    final json = _prefs?.getString(_keyWritingProgress);
+    if (json == null) return {};
+    final map = jsonDecode(json) as Map<String, dynamic>;
+    return map.map((k, v) => MapEntry(int.parse(k), v as int));
+  }
+
+  Future<void> saveWritingProgress(int index, int stars) async {
+    final progress = getWritingProgress();
+    progress[index] = stars;
+    await _prefs?.setString(_keyWritingProgress,
+        jsonEncode(progress.map((k, v) => MapEntry(k.toString(), v))));
+  }
+
   // ─── VOCABULARY PROGRESS ────────────────────────────────────
   static const _keyVocabLearned = 'vocab_learned';
 
@@ -257,6 +325,17 @@ class StorageService {
     final set = getUnlockedAchievements();
     set.add(id);
     await _prefs?.setStringList(_keyAchievements, set.toList());
+  }
+
+  // ─── OFFLINE LESSONS CACHE ───────────────────────────────────
+  static const _keyCachedLessonsPrefix = 'cached_lessons_';
+
+  String? getCachedLessons(String type) {
+    return _prefs?.getString('$_keyCachedLessonsPrefix$type');
+  }
+
+  Future<void> saveCachedLessons(String type, String jsonStr) async {
+    await _prefs?.setString('$_keyCachedLessonsPrefix$type', jsonStr);
   }
 
   // ─── CLEAR ALL ───────────────────────────────────────────────

@@ -30,25 +30,21 @@ class KhmerDiacriticalData {
       character: '់', name: 'បន្តក់', romanized: 'Bantoc',
       description: 'Dấu ngắn - rút gọn nguyên âm',
       example: 'កក់', exampleMeaning: 'gội',
-      starRating: 5, isLearned: true,
     ),
     KhmerDiacritical(
       character: 'ំ', name: 'និគ្គហិត', romanized: 'Nikahit',
       description: 'Dấu âm mũi - thêm âm "m"',
       example: 'កំ', exampleMeaning: 'nắm',
-      starRating: 4, isLearned: true,
     ),
     KhmerDiacritical(
       character: 'ះ', name: 'រះមុក', romanized: 'Reahmuk',
       description: 'Dấu hơi thở - thêm âm "h"',
       example: 'សះ', exampleMeaning: 'lành',
-      starRating: 3, isLearned: true,
     ),
     KhmerDiacritical(
       character: 'ៈ', name: 'យុគលពិន្ទុ', romanized: 'Yukolpintu',
       description: 'Dấu hai chấm - ngắn hóa nguyên âm',
       example: 'នៈ', exampleMeaning: 'ấy',
-      starRating: 0, isLearned: false,
     ),
     KhmerDiacritical(
       character: '៉', name: 'មូសិកទន្ត', romanized: 'Musekadoan',

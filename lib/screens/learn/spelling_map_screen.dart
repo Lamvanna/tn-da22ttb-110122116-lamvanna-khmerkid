@@ -5,7 +5,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../models/khmer_spelling.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
+import '../../services/storage_service.dart';
 import 'spelling_screen.dart';
+import '../../repositories/progress_repository.dart';
 
 /// Bản đồ ghép vần — Timeline cards nhóm theo nguyên âm
 /// Thiết kế: Timeline dots + Stars bên trái, Cards bên phải
@@ -68,7 +70,24 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
 
   Future<void> _loadScore() async {
     _score = await ScoreService.getInstance();
-    if (mounted) setState(() {});
+    try {
+      final progress = await ProgressRepository.instance.getProgressMap('spelling');
+      if (mounted) {
+        setState(() {
+          for (int i = 0; i < _lessons.length; i++) {
+            if (progress.containsKey(i)) {
+              _lessons[i].isLearned = true;
+              _lessons[i].starRating = progress[i]!;
+            } else {
+              _lessons[i].isLearned = false;
+              _lessons[i].starRating = 0;
+            }
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading spelling progress: $e');
+    }
   }
 
 
@@ -246,7 +265,9 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
     Navigator.push(context,
       MaterialPageRoute(builder: (_) => SpellingScreen(initialIndex: idx)),
     ).then((_) {
-      if (mounted) setState(() {});
+      if (mounted) {
+        _loadScore();
+      }
     });
   }
 }

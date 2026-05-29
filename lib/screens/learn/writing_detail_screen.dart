@@ -4,6 +4,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_writing.dart';
 import '../../widgets/app_header.dart';
+import '../../services/score_service.dart';
 
 /// Trang chi tiết tập viết — Canvas lớn với chữ mẫu mờ
 class WritingDetailScreen extends StatefulWidget {
@@ -47,11 +48,19 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
     _currentStroke.clear();
   });
 
-  void _markDone() {
+  Future<void> _markDone() async {
     setState(() {
       _lesson.isLearned = true;
       _lesson.starRating = 3;
     });
+    
+    try {
+      final scoreService = await ScoreService.getInstance();
+      await scoreService.completeWritingLesson(_current, 3, lessonId: null);
+    } catch (e) {
+      debugPrint('Error saving writing progress: $e');
+    }
+
     _speak(_lesson.character);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Row(children: [

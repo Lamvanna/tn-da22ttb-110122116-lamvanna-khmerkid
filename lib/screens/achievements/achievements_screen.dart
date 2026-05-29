@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/score_service.dart';
+import '../../services/auth_service.dart';
 import '../../constants/app_colors.dart';
 import '../main_screen.dart';
 
-/// Màn hình Thành tích — Grid badge tròn
+/// Màn hình Thành tích — Grid badge tròn động 100% từ MongoDB
 class AchievementsScreen extends StatefulWidget {
   const AchievementsScreen({super.key});
   @override
@@ -15,14 +16,17 @@ class AchievementsScreen extends StatefulWidget {
 class _AchievementsScreenState extends State<AchievementsScreen> {
   ScoreService? _score;
   bool _loading = true;
+  List<dynamic> _backendBadges = [];
+  Set<String> _unlockedBadgeIds = {};
 
-  static final List<_Achievement> _achievements = [
+  static final List<_Achievement> _fallbackAchievements = [
     _Achievement(
       title: 'Bước đầu tiên',
       icon: Icons.rocket_launch_rounded,
       done: false,
       color: const Color(0xFF4CAF50),
       bgColor: const Color(0xFFE8F5E9),
+      description: 'Hoàn thành bài học đầu tiên của bé!',
     ),
     _Achievement(
       title: 'Đã vẽ đẹp',
@@ -30,6 +34,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFFE91E63),
       bgColor: const Color(0xFFFCE4EC),
+      description: 'Hoàn thành 3 bài học tập viết Khmer.',
     ),
     _Achievement(
       title: 'Đọc chăm chỉ',
@@ -37,125 +42,39 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFF2196F3),
       bgColor: const Color(0xFFE3F2FD),
+      description: 'Hoàn thành bài học tập đọc đầu tiên.',
     ),
     _Achievement(
-      title: 'Ngôi sao\nsáng',
+      title: 'Ngôi sao sáng',
       icon: Icons.star_rounded,
       done: false,
       color: const Color(0xFFFFCA28),
       bgColor: const Color(0xFFFFF8E1),
+      description: 'Tích lũy được 15 ngôi sao danh giá.',
     ),
     _Achievement(
-      title: 'Khám phá\nthế giới',
+      title: 'Khám phá thế giới',
       icon: Icons.public_rounded,
       done: false,
       color: const Color(0xFF00BCD4),
       bgColor: const Color(0xFFE0F7FA),
+      description: 'Học được 2 từ vựng tiếng Khmer mới.',
     ),
     _Achievement(
-      title: 'Vui học\nToán',
+      title: 'Vui học Toán',
       icon: Icons.calculate_rounded,
       done: false,
       color: const Color(0xFF9C27B0),
       bgColor: const Color(0xFFF3E5F5),
+      description: 'Tích lũy được 50 điểm XP học tập.',
     ),
     _Achievement(
-      title: 'Ngoan\nlễ phép',
+      title: 'Ngoan lễ phép',
       icon: Icons.emoji_people_rounded,
       done: false,
       color: const Color(0xFF4CAF50),
       bgColor: const Color(0xFFE8F5E9),
-    ),
-    _Achievement(
-      title: 'Chăm chỉ\nhọc',
-      icon: Icons.abc_rounded,
-      done: false,
-      color: const Color(0xFF42A5F5),
-      bgColor: const Color(0xFFE3F2FD),
-    ),
-    _Achievement(
-      title: 'Nghệ sĩ nhí',
-      icon: Icons.palette_rounded,
-      done: false,
-      color: const Color(0xFFFF5722),
-      bgColor: const Color(0xFFFBE9E7),
-    ),
-    _Achievement(
-      title: 'Siêu nhắn\ntài xíu',
-      icon: Icons.shield_rounded,
-      done: false,
-      color: const Color(0xFFFF9800),
-      bgColor: const Color(0xFFFFF3E0),
-    ),
-    _Achievement(
-      title: 'Học mỗi\nngày',
-      icon: Icons.calendar_today_rounded,
-      done: false,
-      color: const Color(0xFF3F51B5),
-      bgColor: const Color(0xFFE8EAF6),
-    ),
-    _Achievement(
-      title: 'Đồng hành',
-      icon: Icons.volunteer_activism_rounded,
-      done: false,
-      color: const Color(0xFFFF9800),
-      bgColor: const Color(0xFFFFF3E0),
-    ),
-    _Achievement(
-      title: 'Nhà bác học',
-      icon: Icons.biotech_rounded,
-      done: false,
-      color: const Color(0xFF607D8B),
-      bgColor: const Color(0xFFECEFF1),
-    ),
-    _Achievement(
-      title: 'Tiến độ\nthần tốc',
-      icon: Icons.speed_rounded,
-      done: false,
-      color: const Color(0xFF795548),
-      bgColor: const Color(0xFFEFEBE9),
-    ),
-    _Achievement(
-      title: 'Diễn đạt tốt',
-      icon: Icons.record_voice_over_rounded,
-      done: false,
-      color: const Color(0xFF009688),
-      bgColor: const Color(0xFFE0F2F1),
-    ),
-    _Achievement(
-      title: 'Đạt mốc lớn',
-      icon: Icons.flag_rounded,
-      done: false,
-      color: const Color(0xFFE53935),
-      bgColor: const Color(0xFFFFEBEE),
-    ),
-    _Achievement(
-      title: 'Nghỉ xả hơi',
-      icon: Icons.self_improvement_rounded,
-      done: false,
-      color: const Color(0xFF8BC34A),
-      bgColor: const Color(0xFFF1F8E9),
-    ),
-    _Achievement(
-      title: 'Siêu nhẫn\nkiên trì',
-      icon: Icons.timer_rounded,
-      done: false,
-      color: const Color(0xFF757575),
-      bgColor: const Color(0xFFF5F5F5),
-    ),
-    _Achievement(
-      title: 'Học hỏi\nmỗi ngày',
-      icon: Icons.auto_stories_rounded,
-      done: false,
-      color: const Color(0xFF5D4037),
-      bgColor: const Color(0xFFEFEBE9),
-    ),
-    _Achievement(
-      title: 'Đồng lòng',
-      icon: Icons.handshake_rounded,
-      done: false,
-      color: const Color(0xFF455A64),
-      bgColor: const Color(0xFFECEFF1),
+      description: 'Đạt chuỗi học tập liên tục 2 ngày.',
     ),
   ];
 
@@ -167,30 +86,36 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 
   Future<void> _init() async {
     _score = await ScoreService.getInstance();
-    if (mounted) {
-      setState(() {
-        _achievements[0] = _achievements[0].copyWith(done: _score!.lettersLearned >= 1);
-        _achievements[1] = _achievements[1].copyWith(done: _score!.lettersLearned >= 3);
-        _achievements[2] = _achievements[2].copyWith(done: _score!.readingLearned >= 1);
-        _achievements[3] = _achievements[3].copyWith(done: _score!.totalStars >= 15);
-        _achievements[4] = _achievements[4].copyWith(done: _score!.vocabLearned >= 2);
-        _achievements[5] = _achievements[5].copyWith(done: _score!.totalXp >= 50);
-        _achievements[6] = _achievements[6].copyWith(done: _score!.streak >= 2);
-        _achievements[7] = _achievements[7].copyWith(done: _score!.lettersLearned >= 10);
-        _achievements[8] = _achievements[8].copyWith(done: _score!.lettersLearned >= 5);
-        _achievements[9] = _achievements[9].copyWith(done: _score!.isAchievementUnlocked('perfect_test') || _score!.avgTestScore >= 90);
-        _achievements[10] = _achievements[10].copyWith(done: _score!.streak >= 1);
-        _achievements[11] = _achievements[11].copyWith(done: _score!.totalXp >= 100);
-        _achievements[12] = _achievements[12].copyWith(done: _score!.totalTests >= 10 || _score!.isAchievementUnlocked('test_10'));
-        _achievements[13] = _achievements[13].copyWith(done: _score!.totalMedals >= 5);
-        _achievements[14] = _achievements[14].copyWith(done: _score!.vocabLearned >= 5);
-        _achievements[15] = _achievements[15].copyWith(done: _score!.lettersLearned >= 33 || _score!.isAchievementUnlocked('all_consonants'));
-        _achievements[16] = _achievements[16].copyWith(done: _score!.totalXp >= 80);
-        _achievements[17] = _achievements[17].copyWith(done: _score!.streak >= 5 || _score!.isAchievementUnlocked('streak_5'));
-        _achievements[18] = _achievements[18].copyWith(done: _score!.totalXp >= 150);
-        _achievements[19] = _achievements[19].copyWith(done: _score!.purchasedItems.isNotEmpty);
-        _loading = false;
-      });
+    try {
+      // 1. Tải danh sách tất cả các huy hiệu từ Backend MongoDB
+      final badges = await AuthService().fetchBadges();
+      
+      // 2. Lấy danh sách ID các huy hiệu đã mở khóa của bé từ user profile
+      final user = AuthService().userProfile;
+      final userBadges = user?['badges'] as List<dynamic>? ?? [];
+      final Set<String> unlockedIds = {};
+      for (var b in userBadges) {
+        if (b is Map) {
+          unlockedIds.add(b['_id']?.toString() ?? '');
+        } else {
+          unlockedIds.add(b.toString());
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _backendBadges = badges;
+          _unlockedBadgeIds = unlockedIds;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error initializing Achievements screen: $e');
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -199,11 +124,15 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     if (_loading) {
       return Scaffold(
         backgroundColor: const Color(0xFFD6E9F8),
-        body: const Center(child: CircularProgressIndicator()),
+        body: const Center(child: CircularProgressIndicator(color: AppColors.primary)),
       );
     }
-    final done = _achievements.where((a) => a.done).length;
-    final total = _achievements.length;
+
+    final bool useFallback = _backendBadges.isEmpty;
+    final int done = useFallback
+        ? _fallbackAchievements.where((a) => a.done).length
+        : _backendBadges.where((b) => _unlockedBadgeIds.contains(b['_id']?.toString())).length;
+    final int total = useFallback ? _fallbackAchievements.length : _backendBadges.length;
 
     return Scaffold(
       backgroundColor: const Color(0xFFD6E9F8),
@@ -273,7 +202,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     ),
                   ),
                 ),
-                // Hình Voi tràn ra ngoài
+                // Elephant Mascot (top right)
                 Positioned(
                   right: 20.w,
                   bottom: -6.h,
@@ -302,9 +231,13 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 mainAxisSpacing: 14.h,
                 childAspectRatio: 0.7,
               ),
-              itemCount: _achievements.length,
+              itemCount: total,
               itemBuilder: (context, index) {
-                return _buildBadge(_achievements[index]);
+                if (useFallback) {
+                  return _buildFallbackBadge(_fallbackAchievements[index]);
+                } else {
+                  return _buildDynamicBadge(_backendBadges[index]);
+                }
               },
             ),
           ),
@@ -321,7 +254,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   // ══════════════════════════════════════════════════════════════
   Widget _buildTrophyHeader(int done, int total) {
     final remaining = total - done;
-    final progress = done / total;
+    final progress = total > 0 ? done / total : 0.0;
     return Container(
       margin: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 4.h),
       padding: EdgeInsets.all(12.w),
@@ -381,7 +314,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Tiến độ của bạn',
+                Text(
+                  'Tiến độ của bạn',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 10.sp,
                     fontWeight: FontWeight.w600,
@@ -392,7 +326,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text('$done',
+                    Text(
+                      '$done',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 24.sp,
                         fontWeight: FontWeight.w900,
@@ -402,7 +337,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     ),
                     Padding(
                       padding: EdgeInsets.only(bottom: 2.h),
-                      child: Text('/$total',
+                      child: Text(
+                        '/$total',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w700,
@@ -424,7 +360,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                       ),
                     ),
                     FractionallySizedBox(
-                      widthFactor: progress,
+                      widthFactor: progress.clamp(0.0, 1.0),
                       child: Container(
                         height: 6.h,
                         decoration: BoxDecoration(
@@ -469,7 +405,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                         color: AppColors.primary,
                       ),
                     ),
-                    const TextSpan(text: ' thành tích nữa để hoàn thành!'),
+                    const TextSpan(text: ' thành tích nữa!'),
                   ],
                 ),
               ),
@@ -481,58 +417,199 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   }
 
   // ══════════════════════════════════════════════════════════════
-  // BADGE ITEM
+  // DYNAMIC BADGE ITEM (MongoDB Atlas data)
   // ══════════════════════════════════════════════════════════════
-  Widget _buildBadge(_Achievement a) {
+  Widget _buildDynamicBadge(Map<String, dynamic> badge) {
+    final String id = badge['_id']?.toString() ?? '';
+    final String name = badge['name']?.toString() ?? 'Huy chương';
+    final String description = badge['description']?.toString() ?? '';
+    final String iconUrl = badge['iconUrl']?.toString() ?? '';
+    final String type = badge['type']?.toString() ?? 'learning';
+    final bool isUnlocked = _unlockedBadgeIds.contains(id);
+
+    // Dynamic colors based on badge type
+    Color accentColor = const Color(0xFF7367D6);
+    Color bgColor = const Color(0xFFF2F0FF);
+    IconData fallbackIcon = Icons.stars_rounded;
+
+    if (type == 'level') {
+      accentColor = const Color(0xFFFF9800);
+      bgColor = const Color(0xFFFFF3E0);
+      fallbackIcon = Icons.rocket_launch_rounded;
+    } else if (type == 'pronunciation') {
+      accentColor = const Color(0xFFFF5722);
+      bgColor = const Color(0xFFFBE9E7);
+      fallbackIcon = Icons.record_voice_over_rounded;
+    } else if (type == 'streak') {
+      accentColor = const Color(0xFFE91E63);
+      bgColor = const Color(0xFFFCE4EC);
+      fallbackIcon = Icons.local_fire_department_rounded;
+    } else if (type == 'learning') {
+      accentColor = const Color(0xFF4CAF50);
+      bgColor = const Color(0xFFE8F5E9);
+      fallbackIcon = Icons.auto_stories_rounded;
+    } else if (type == 'ranking') {
+      accentColor = const Color(0xFFFFCA28);
+      bgColor = const Color(0xFFFFF8E1);
+      fallbackIcon = Icons.emoji_events_rounded;
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // Circular badge
-        Container(
-          width: 72.w,
-          height: 72.w,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: a.done
-                ? const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFFFFD54F), Color(0xFFFFA000)],
-                  )
-                : const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFFC0C0C0), Color(0xFF9E9E9E)],
-                  ),
-            boxShadow: [
-              BoxShadow(
-                color: a.done
-                    ? const Color(0xFFFFA000).withValues(alpha: 0.35)
-                    : Colors.black.withValues(alpha: 0.1),
-                blurRadius: 8.r,
-                offset: Offset(0, 3.h),
-              ),
-            ],
-          ),
-          padding: EdgeInsets.all(4.w),
+        GestureDetector(
+          onTap: () {
+            _showBadgeDetailDialog(name, description, isUnlocked, accentColor, iconUrl, fallbackIcon);
+          },
           child: Container(
+            width: 72.w,
+            height: 72.w,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: a.done ? a.bgColor : const Color(0xFFE0E0E0),
-              border: Border.all(
-                color: a.done
-                    ? Colors.white.withValues(alpha: 0.6)
-                    : Colors.white.withValues(alpha: 0.3),
-                width: 2.w,
-              ),
+              gradient: isUnlocked
+                  ? const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFFFD54F), Color(0xFFFFA000)],
+                    )
+                  : const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFCBD5E1), Color(0xFF94A3B8)],
+                    ),
+              boxShadow: [
+                BoxShadow(
+                  color: isUnlocked
+                      ? const Color(0xFFFFA000).withValues(alpha: 0.35)
+                      : Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 8.r,
+                  offset: Offset(0, 3.h),
+                ),
+              ],
             ),
-            child: a.done
-                ? Icon(a.icon, size: 30.sp, color: a.color)
-                : Icon(
-                    Icons.lock_rounded,
-                    size: 22.sp,
-                    color: const Color(0xFFB0B0B0),
-                  ),
+            padding: EdgeInsets.all(4.w),
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isUnlocked ? bgColor : const Color(0xFFE2E8F0),
+                border: Border.all(
+                  color: isUnlocked
+                      ? Colors.white.withValues(alpha: 0.6)
+                      : Colors.white.withValues(alpha: 0.35),
+                  width: 2.w,
+                ),
+              ),
+              child: isUnlocked
+                  ? ClipOval(
+                      child: iconUrl.isNotEmpty && iconUrl.startsWith('http')
+                          ? Image.network(
+                              iconUrl,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Icon(fallbackIcon, size: 30.sp, color: accentColor),
+                            )
+                          : Icon(fallbackIcon, size: 30.sp, color: accentColor),
+                    )
+                  : ClipOval(
+                      child: iconUrl.isNotEmpty && iconUrl.startsWith('http')
+                          ? ShaderMask(
+                              shaderCallback: (bounds) => const LinearGradient(
+                                colors: [Colors.grey, Colors.blueGrey],
+                              ).createShader(bounds),
+                              child: Image.network(
+                                iconUrl,
+                                fit: BoxFit.contain,
+                                color: Colors.grey.withValues(alpha: 0.6),
+                                colorBlendMode: BlendMode.modulate,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Icon(Icons.lock_rounded, size: 22.sp, color: const Color(0xFF94A3B8)),
+                              ),
+                            )
+                          : Icon(
+                              Icons.lock_rounded,
+                              size: 22.sp,
+                              color: const Color(0xFF94A3B8),
+                            ),
+                    ),
+            ),
+          ),
+        ),
+        SizedBox(height: 6.h),
+        // Label
+        Text(
+          name,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 10.sp,
+            fontWeight: FontWeight.w700,
+            color: isUnlocked ? const Color(0xFF334155) : const Color(0xFF94A3B8),
+            height: 1.2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // FALLBACK BADGE ITEM
+  // ══════════════════════════════════════════════════════════════
+  Widget _buildFallbackBadge(_Achievement a) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GestureDetector(
+          onTap: () {
+            _showBadgeDetailDialog(a.title, a.description, a.done, a.color, '', a.icon);
+          },
+          child: Container(
+            width: 72.w,
+            height: 72.w,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: a.done
+                  ? const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFFFD54F), Color(0xFFFFA000)],
+                    )
+                  : const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFCBD5E1), Color(0xFF94A3B8)],
+                    ),
+              boxShadow: [
+                BoxShadow(
+                  color: a.done
+                      ? const Color(0xFFFFA000).withValues(alpha: 0.35)
+                      : Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 8.r,
+                  offset: Offset(0, 3.h),
+                ),
+              ],
+            ),
+            padding: EdgeInsets.all(4.w),
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: a.done ? a.bgColor : const Color(0xFFE2E8F0),
+                border: Border.all(
+                  color: a.done
+                      ? Colors.white.withValues(alpha: 0.6)
+                      : Colors.white.withValues(alpha: 0.35),
+                  width: 2.w,
+                ),
+              ),
+              child: a.done
+                  ? Icon(a.icon, size: 30.sp, color: a.color)
+                  : Icon(
+                      Icons.lock_rounded,
+                      size: 22.sp,
+                      color: const Color(0xFF94A3B8),
+                    ),
+            ),
           ),
         ),
         SizedBox(height: 6.h),
@@ -544,12 +621,139 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           overflow: TextOverflow.ellipsis,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 10.sp,
-            fontWeight: FontWeight.w600,
-            color: a.done ? const Color(0xFF37474F) : const Color(0xFF9E9E9E),
+            fontWeight: FontWeight.w700,
+            color: a.done ? const Color(0xFF334155) : const Color(0xFF94A3B8),
             height: 1.2,
           ),
         ),
       ],
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // DETAIL DIALOG
+  // ══════════════════════════════════════════════════════════════
+  void _showBadgeDetailDialog(
+    String name,
+    String description,
+    bool isUnlocked,
+    Color accentColor,
+    String iconUrl,
+    IconData fallbackIcon,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28.r),
+        ),
+        child: Container(
+          padding: EdgeInsets.all(24.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28.r),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Badge icon stacked
+              Container(
+                width: 100.w,
+                height: 100.w,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isUnlocked ? accentColor.withValues(alpha: 0.12) : const Color(0xFFF1F5F9),
+                  border: Border.all(
+                    color: isUnlocked ? accentColor.withValues(alpha: 0.3) : const Color(0xFFE2E8F0),
+                    width: 3.w,
+                  ),
+                ),
+                padding: EdgeInsets.all(12.w),
+                child: isUnlocked
+                    ? ClipOval(
+                        child: iconUrl.isNotEmpty && iconUrl.startsWith('http')
+                            ? Image.network(
+                                iconUrl,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Icon(fallbackIcon, size: 48.sp, color: accentColor),
+                              )
+                            : Icon(fallbackIcon, size: 48.sp, color: accentColor),
+                      )
+                    : Icon(
+                        Icons.lock_rounded,
+                        size: 44.sp,
+                        color: const Color(0xFF94A3B8),
+                      ),
+              ),
+              SizedBox(height: 20.h),
+              // Badge Name
+              Text(
+                name,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF1E293B),
+                ),
+              ),
+              SizedBox(height: 8.h),
+              // Unlocked status chip
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: isUnlocked ? const Color(0xFFEDF8F2) : const Color(0xFFFFF1F2),
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                child: Text(
+                  isUnlocked ? '🎉 Đã đạt được' : '🔒 Chưa mở khóa',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w800,
+                    color: isUnlocked ? const Color(0xFF2D8054) : const Color(0xFFE11D48),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              // Description
+              Text(
+                description,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF64748B),
+                  height: 1.4,
+                ),
+              ),
+              SizedBox(height: 24.h),
+              // Close button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isUnlocked ? accentColor : const Color(0xFF64748B),
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16.r),
+                    ),
+                    elevation: 2,
+                  ),
+                  child: Text(
+                    'Đóng',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -647,6 +851,7 @@ class _Achievement {
   final bool done;
   final Color color;
   final Color bgColor;
+  final String description;
 
   const _Achievement({
     required this.title,
@@ -654,15 +859,6 @@ class _Achievement {
     required this.done,
     required this.color,
     required this.bgColor,
+    required this.description,
   });
-
-  _Achievement copyWith({bool? done}) {
-    return _Achievement(
-      title: title,
-      icon: icon,
-      color: color,
-      bgColor: bgColor,
-      done: done ?? this.done,
-    );
-  }
 }

@@ -1,6 +1,7 @@
 /// Model dữ liệu cho nguyên âm Khmer
 /// Bao gồm dạng phụ thuộc (dependent) và dạng độc lập
 class KhmerVowel {
+  String? id;            // ID từ MongoDB Atlas
   final String character;      // Ký tự nguyên âm Khmer
   final String dependent;      // Dạng phụ thuộc (gắn phụ âm)
   final String romanized;      // Phiên âm Latin
@@ -11,6 +12,7 @@ class KhmerVowel {
   bool isLearned;
 
   KhmerVowel({
+    this.id,
     required this.character,
     this.dependent = '',
     required this.romanized,
@@ -20,6 +22,20 @@ class KhmerVowel {
     this.starRating = 0,
     this.isLearned = false,
   });
+
+  factory KhmerVowel.fromJson(Map<String, dynamic> json) {
+    return KhmerVowel(
+      id: json['_id'] ?? json['id'],
+      character: json['khmerText'] ?? json['character'] ?? '',
+      dependent: json['dependent'] ?? '',
+      romanized: json['romanized'] ?? '',
+      pronunciation: json['pronunciation'] ?? '',
+      example: json['example'] ?? '',
+      exampleMeaning: json['exampleMeaning'] ?? json['meaning'] ?? '',
+      starRating: json['starRating'] ?? 0,
+      isLearned: json['isLearned'] ?? false,
+    );
+  }
 
   String get displayCharacter => character.startsWith('អ') ? character.replaceFirst('អ', '◌') : character;
 }
@@ -38,8 +54,6 @@ class KhmerVowelData {
       pronunciation: 'a',
       example: 'កា',
       exampleMeaning: 'quạ',
-      starRating: 5,
-      isLearned: true,
     ),
     KhmerVowel(
       character: 'អិ',
@@ -48,8 +62,6 @@ class KhmerVowelData {
       pronunciation: 'êk',
       example: 'កិន',
       exampleMeaning: 'công việc',
-      starRating: 4,
-      isLearned: true,
     ),
     KhmerVowel(
       character: 'អី',
@@ -58,8 +70,6 @@ class KhmerVowelData {
       pronunciation: 'ây',
       example: 'កី',
       exampleMeaning: 'khó chịu',
-      starRating: 3,
-      isLearned: true,
     ),
     KhmerVowel(
       character: 'អឹ',
@@ -68,8 +78,6 @@ class KhmerVowelData {
       pronunciation: 'ưk',
       example: 'កឹប',
       exampleMeaning: 'kẹp/ghim',
-      starRating: 5,
-      isLearned: true,
     ),
     KhmerVowel(
       character: 'អឺ',
@@ -78,8 +86,6 @@ class KhmerVowelData {
       pronunciation: 'ư',
       example: 'កឺ',
       exampleMeaning: 'tiếng ồn',
-      starRating: 4,
-      isLearned: true,
     ),
     KhmerVowel(
       character: 'អុ',
@@ -88,8 +94,6 @@ class KhmerVowelData {
       pronunciation: 'ô',
       example: 'កុក',
       exampleMeaning: 'con cò',
-      starRating: 3,
-      isLearned: true,
     ),
     KhmerVowel(
       character: 'អូ',

@@ -4,10 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_vowel.dart';
+import '../../services/auth_service.dart';
 import 'vowel_inline_listen.dart';
 import 'vowel_inline_speak.dart';
 import 'vowel_inline_write.dart';
 import '../../services/score_service.dart';
+import '../../services/lesson_service.dart';
+import '../../services/storage_service.dart';
 
 /// Chi tiết 1 nguyên âm — 3 bước inline: Nghe, Nói, Viết (giống phụ âm)
 class VowelDetailScreen extends StatefulWidget {
@@ -22,10 +25,12 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
   late int _idx;
   late AnimationController _animCtrl;
   late Animation<double> _scaleAnim;
-  final List<KhmerVowel> _vowels = KhmerVowelData.vowels;
+  List<KhmerVowel> _vowels = KhmerVowelData.vowels;
+  bool _isLoading = false;
   final FlutterTts _tts = FlutterTts();
   bool _ttsReady = false;
   bool _isPlaying = false;
+  ScoreService? _score;
 
   // Track hoàn thành (0=nghe, 1=nói, 2=viết)
   final Map<int, Set<int>> _completedSteps = {};
@@ -42,7 +47,146 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
     _scaleAnim = Tween<double>(begin: 0.9, end: 1.0).animate(
       CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutBack));
     _animCtrl.forward();
+    _loadScoreAndLessons();
     _initTts();
+  }
+
+  Future<void> _loadScoreAndLessons() async {
+    try {
+      final score = await ScoreService.getInstance();
+      if (mounted) {
+        setState(() {
+          _score = score;
+        });
+      }
+
+      // 1. Tạo bản sao từ danh sách tĩnh chất lượng cao để bảo toàn các nguyên âm phụ thuộc, ví dụ và nghĩa tiếng Việt gốc
+      final List<KhmerVowel> fullList = KhmerVowelData.vowels.map((item) {
+        return KhmerVowel(
+          id: item.id,
+          character: item.character,
+          dependent: item.dependent,
+          romanized: item.romanized,
+          pronunciation: item.pronunciation,
+          example: item.example,
+          exampleMeaning: item.exampleMeaning,
+          starRating: item.starRating,
+          isLearned: item.isLearned,
+        );
+      }).toList();
+
+      // 2. Tải nhanh từ bộ nhớ tạm local (SharedPreferences) trước để màn hình mở lên NGAY LẬP TỨC
+      try {
+        final storage = await StorageService.getInstance();
+        final localVowelProgress = storage.getVowelProgress();
+        for (int i = 0; i < fullList.length; i++) {
+          if (localVowelProgress.containsKey(i)) {
+            fullList[i].isLearned = true;
+            fullList[i].starRating = localVowelProgress[i]!;
+          } else {
+            // 6 nguyên âm đầu tiên mặc định learned
+            if (i < 6) {
+              fullList[i].isLearned = true;
+              fullList[i].starRating = 3;
+            } else {
+              fullList[i].isLearned = false;
+              fullList[i].starRating = 0;
+            }
+          }
+        }
+        if (mounted) {
+          setState(() {
+            _vowels = fullList;
+          });
+        }
+      } catch (e) {
+        debugPrint('⚠️ Error loading local cached vowel progress in detail: $e');
+      }
+
+      // 3. Tải danh sách dynamic lessons từ database để lấy ID của từng nguyên âm trong nền
+      final lessonService = await LessonService.getInstance();
+      final lessonsData = await lessonService.fetchLessonsByType('vowel');
+      
+      final lessonIdMap = <String, String>{};
+      for (final l in lessonsData) {
+        final text = l['khmerText']?.toString() ?? '';
+        final id = l['_id']?.toString() ?? l['id']?.toString() ?? '';
+        if (text.isNotEmpty && id.isNotEmpty) {
+          lessonIdMap[text] = id;
+        }
+      }
+
+      // Ánh xạ ID từ DB vào danh sách tĩnh
+      for (final v in fullList) {
+        if (lessonIdMap.containsKey(v.character)) {
+          v.id = lessonIdMap[v.character];
+        }
+      }
+
+      // 4. Tải danh sách các bài học đã hoàn thành của người dùng từ MongoDB Atlas
+      final List<dynamic> completedLessons = List<dynamic>.from(
+        AuthService().userProfile?['learningProgress']?['completedLessons'] ?? [],
+      );
+
+      final completedVowels = completedLessons
+          .where((l) {
+            if (l is Map) {
+              return l['type'] == 'vowel';
+            }
+            return false;
+          })
+          .map((l) => (l as Map)['khmerText']?.toString() ?? '')
+          .toSet();
+
+      final completedIds = completedLessons
+          .map((l) {
+            if (l is Map) {
+              return l['_id']?.toString() ?? l['id']?.toString() ?? '';
+            }
+            return l.toString();
+          })
+          .where((id) => id.isNotEmpty)
+          .toSet();
+
+      final storage = await StorageService.getInstance();
+
+      // 5. Đồng bộ trạng thái học tập thực tế và mở khóa mặc định các bài học ban đầu
+      for (int i = 0; i < fullList.length; i++) {
+        final character = fullList[i].character;
+        final id = fullList[i].id;
+
+        bool isDone = completedVowels.contains(character);
+        if (!isDone && id != null && completedIds.contains(id)) {
+          isDone = true;
+        }
+
+        if (isDone) {
+          fullList[i].isLearned = true;
+          if (fullList[i].starRating == 0) {
+            fullList[i].starRating = 3;
+          }
+          await storage.saveVowelProgress(i, fullList[i].starRating);
+        } else {
+          fullList[i].isLearned = false;
+          fullList[i].starRating = 0;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _vowels = fullList;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error loading dynamic vowel lessons: $e');
+      if (mounted) {
+        setState(() {
+          _vowels = KhmerVowelData.vowels;
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _initTts() async {
@@ -77,7 +221,13 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
 
     try {
       final scoreService = await ScoreService.getInstance();
-      await scoreService.completeVowelLesson(_idx, 3);
+      await scoreService.completeVowelLesson(
+        _idx,
+        3,
+        lessonId: _v.id,
+        vowelText: _v.displayCharacter,
+        transliteration: _v.romanized,
+      );
     } catch (e) {
       debugPrint('⚠️ Error completing vowel lesson: $e');
     }
@@ -144,11 +294,14 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
   @override
   void dispose() { _tts.stop(); _animCtrl.dispose(); super.dispose(); }
 
-  KhmerVowel get _v => _vowels[_idx];
-  bool _isStepComplete(int step) => _completedSteps[_idx]?.contains(step) ?? false;
+  KhmerVowel get _v => _vowels.isNotEmpty ? _vowels[_idx] : KhmerVowelData.vowels[_idx];
+  bool _isStepComplete(int step) {
+    if (_vowels.isEmpty) return false;
+    return _completedSteps[_idx]?.contains(step) ?? false;
+  }
   int get _completedCount => _completedSteps[_idx]?.length ?? 0;
 
-  bool _canGo(int i) => i >= 0 && i < _vowels.length;
+  bool _canGo(int i) => _vowels.isNotEmpty && i >= 0 && i < _vowels.length;
   void _goTo(int i) {
     if (!_canGo(i)) return;
     _animCtrl.reset();
@@ -162,6 +315,16 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.learnBackground,
+        body: Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primary,
+          ),
+        ),
+      );
+    }
     return Scaffold(
       backgroundColor: AppColors.learnBackground,
       body: Column(children: [
@@ -255,7 +418,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
                               child: Row(mainAxisSize: MainAxisSize.min, children: [
                                 Text('⭐', style: TextStyle(fontSize: 13.sp)),
                                 SizedBox(width: 4.w),
-                                Text('${_vowels.where((v) => v.isLearned).length * 15}',
+                                Text('${_score?.totalStars ?? 0}',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 13.sp, fontWeight: FontWeight.w700, color: Colors.white)),
                               ]),
@@ -269,7 +432,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
                               child: Row(mainAxisSize: MainAxisSize.min, children: [
                                 Text('🔥', style: TextStyle(fontSize: 13.sp)),
                                 SizedBox(width: 4.w),
-                                Text('7 ngày',
+                                Text('${_score?.streak ?? 0} ngày',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 13.sp, fontWeight: FontWeight.w700, color: Colors.white)),
                               ]),

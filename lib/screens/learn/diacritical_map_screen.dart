@@ -5,7 +5,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../models/khmer_diacritical.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
+import '../../services/storage_service.dart';
 import 'diacritical_screen.dart';
+import '../../repositories/progress_repository.dart';
 
 /// Bản đồ học dấu Khmer dạng Timeline - Premium 100% đồng bộ SpellingMapScreen
 class DiacriticalMapScreen extends StatefulWidget {
@@ -38,7 +40,24 @@ class _DiacriticalMapScreenState extends State<DiacriticalMapScreen>
 
   Future<void> _loadScore() async {
     _score = await ScoreService.getInstance();
-    if (mounted) setState(() {});
+    try {
+      final progress = await ProgressRepository.instance.getProgressMap('diacritical');
+      if (mounted) {
+        setState(() {
+          for (int i = 0; i < _items.length; i++) {
+            if (progress.containsKey(i)) {
+              _items[i].isLearned = true;
+              _items[i].starRating = progress[i]!;
+            } else {
+              _items[i].isLearned = false;
+              _items[i].starRating = 0;
+            }
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading diacritical progress: $e');
+    }
   }
 
   @override

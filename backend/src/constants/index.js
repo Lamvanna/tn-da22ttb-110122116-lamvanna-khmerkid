@@ -211,6 +211,9 @@ const SOCKET_EVENTS = {
   BADGE_UNLOCK: 'badge:unlock',
   NOTIFICATION: 'notification:new',
   STREAK_UPDATE: 'streak:update',
+  PROGRESS_SYNC: 'progress:sync',
+  LESSON_COMPLETED: 'lesson:completed',
+  LESSON_UNLOCKED: 'lesson:unlocked',
 };
 
 module.exports = {

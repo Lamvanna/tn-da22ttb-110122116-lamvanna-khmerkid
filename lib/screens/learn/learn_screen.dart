@@ -12,6 +12,10 @@ import 'number_map_screen.dart';
 import 'diacritical_map_screen.dart';
 import '../../services/score_service.dart';
 import '../../widgets/app_page_route.dart';
+import '../../models/khmer_number.dart';
+import '../../models/khmer_spelling.dart';
+import '../../models/khmer_diacritical.dart';
+import '../../models/khmer_writing.dart';
 
 /// Màn hình Học - Lộ trình học tập Khmer (dạng danh sách) - RESPONSIVE
 class LearnScreen extends StatefulWidget {
@@ -53,6 +57,28 @@ class _LearnScreenState extends State<LearnScreen> {
   List<_Zone> _getZones() {
     final lp = (_score?.lettersLearned ?? 0) / 33;
     final vp = (_score?.vowelsLearned ?? 0) / 24;
+
+    final totalNumbers = KhmerNumberData.numbers.length;
+    final doneNumbers = _score?.numbersLearned ?? 0;
+    final numProg = totalNumbers > 0 ? doneNumbers / totalNumbers : 0.0;
+
+    final totalSpelling = KhmerSpellingData.lessons.length;
+    final doneSpelling = _score?.spellingLearned ?? 0;
+    final spellProg = totalSpelling > 0 ? doneSpelling / totalSpelling : 0.0;
+
+    final totalDiacritical = KhmerDiacriticalData.diacriticals.length;
+    final doneDiacritical = _score?.diacriticalsLearned ?? 0;
+    final diacritProg = totalDiacritical > 0 ? doneDiacritical / totalDiacritical : 0.0;
+
+    final totalWriting = KhmerWritingData.lessons.length;
+    final doneWriting = _score?.writingLearned ?? 0;
+    final writeProg = totalWriting > 0 ? doneWriting / totalWriting : 0.0;
+
+    // Phụ âm o-ô tính tổng hợp dựa trên số phụ âm + nguyên âm đã học
+    final totalO_O = 33 + 24;
+    final doneO_O = (_score?.lettersLearned ?? 0) + (_score?.vowelsLearned ?? 0);
+    final o_oProg = totalO_O > 0 ? doneO_O / totalO_O : 0.0;
+
     return [
       _Zone(n: 1, title: 'Học phụ âm', sub: 'Nhận biết 33 phụ âm Khmer',
         icon: Icons.abc_rounded, img: 'image/Phụ âm.png', prog: lp, total: 33, done: _score?.lettersLearned ?? 0,
@@ -63,19 +89,19 @@ class _LearnScreenState extends State<LearnScreen> {
         color: const Color(0xFFFF1744), stars: 10, btn: 'Bắt đầu học',
         onTap: () => _navigateTo(VowelScreen(onBack: () => Navigator.pop(context)))),
       _Zone(n: 3, title: 'Học phụ âm o-ô', sub: 'Phân biệt 2 nhóm phụ âm hàng o và hàng ô',
-        icon: Icons.text_fields_rounded, img: 'image/Học phụ âm o và ô.png', prog: 0, total: 33, done: 0,
+        icon: Icons.text_fields_rounded, img: 'image/Học phụ âm o và ô.png', prog: o_oProg, total: totalO_O, done: doneO_O,
         color: const Color(0xFF43A047), stars: 10, btn: 'Bắt đầu học',
         onTap: () => _navigateTo(ConsonantSeriesScreen(onBack: () => Navigator.pop(context)))),
       _Zone(n: 4, title: 'Học số Khmer', sub: 'Học chữ số Khmer từ ០ đến ៩',
-        icon: Icons.calculate_rounded, img: 'image/Học số.png', prog: 0, total: 10, done: 0,
+        icon: Icons.calculate_rounded, img: 'image/Học số.png', prog: numProg, total: totalNumbers, done: doneNumbers,
         color: const Color(0xFF00ACC1), stars: 10, btn: 'Bắt đầu học',
         onTap: () => _navigateTo(NumberMapScreen(onBack: () => Navigator.pop(context)))),
       _Zone(n: 5, title: 'Ghép vần', sub: 'Ghép âm thành tiếng và từ',
-        icon: Icons.spellcheck_rounded, img: 'image/Đánh vần.png', prog: 0, total: 30, done: 0,
+        icon: Icons.spellcheck_rounded, img: 'image/Đánh vần.png', prog: spellProg, total: totalSpelling, done: doneSpelling,
         color: const Color(0xFFF57C00), stars: 15, btn: 'Bắt đầu học',
         onTap: () => _navigateTo(const SpellingHubScreen())),
       _Zone(n: 6, title: 'Học dấu', sub: 'Học các dấu Khmer ់ ំ ះ ៈ và các dấu thường dùng',
-        icon: Icons.format_shapes_rounded, img: 'image/Học dấu.png', prog: 0, total: 12, done: 0,
+        icon: Icons.format_shapes_rounded, img: 'image/Học dấu.png', prog: diacritProg, total: totalDiacritical, done: doneDiacritical,
         color: const Color(0xFFFFD600), stars: 10, btn: 'Bắt đầu học',
         onTap: () => _navigateTo(DiacriticalMapScreen(onBack: () => Navigator.pop(context)))),
       _Zone(n: 7, title: 'Tập đọc', sub: 'Làm quen và đọc câu đơn giản',
@@ -84,7 +110,7 @@ class _LearnScreenState extends State<LearnScreen> {
         color: const Color(0xFF00B0FF), stars: 15, btn: 'Bắt đầu học',
         onTap: () => _navigateTo(ReadingMapScreen(onBack: () => Navigator.pop(context)))),
       _Zone(n: 8, title: 'Luyện viết', sub: 'Tập viết chữ Khmer đúng nét',
-        icon: Icons.draw_rounded, img: 'image/Tập viết.png', prog: 0, total: 30, done: 0,
+        icon: Icons.draw_rounded, img: 'image/Tập viết.png', prog: writeProg, total: totalWriting, done: doneWriting,
         color: const Color(0xFFFF9100), stars: 15, btn: 'Bắt đầu học',
         onTap: () => _navigateTo(const WritingMapScreen())),
       _Zone(n: 9, title: 'Đọc hiểu', sub: 'Hiểu nội dung và trả lời câu hỏi',

@@ -4,6 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_number.dart';
 import '../../services/score_service.dart';
+import '../../services/lesson_service.dart';
+import '../../services/storage_service.dart';
+import '../../services/auth_service.dart';
 import 'number_inline_listen.dart';
 import 'number_inline_speak.dart';
 import 'number_inline_write.dart';
@@ -22,7 +25,8 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
   late int _idx;
   late AnimationController _animCtrl;
   late Animation<double> _scaleAnim;
-  final List<KhmerNumber> _numbers = KhmerNumberData.numbers;
+  List<KhmerNumber> _numbers = KhmerNumberData.numbers;
+  bool _isLoading = false;
   ScoreService? _score;
 
   // Track hoàn thành (0=nghe, 1=nói, 2=viết)
@@ -40,12 +44,144 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
     _scaleAnim = Tween<double>(begin: 0.9, end: 1.0).animate(
         CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutBack));
     _animCtrl.forward();
-    _loadScore();
+    _loadScoreAndLessons();
   }
 
-  Future<void> _loadScore() async {
-    _score = await ScoreService.getInstance();
-    if (mounted) setState(() {});
+  Future<void> _loadScoreAndLessons() async {
+    try {
+      final score = await ScoreService.getInstance();
+      if (mounted) {
+        setState(() {
+          _score = score;
+        });
+      }
+
+      // 1. Tạo bản sao từ danh sách tĩnh chất lượng cao để bảo toàn ký tự gốc, phiên âm, từ vựng và cách đọc tiếng Việt
+      final List<KhmerNumber> fullList = KhmerNumberData.numbers.map((item) {
+        return KhmerNumber(
+          id: item.id,
+          character: item.character,
+          value: item.value,
+          khmerWord: item.khmerWord,
+          romanized: item.romanized,
+          pronunciation: item.pronunciation,
+          starRating: item.starRating,
+          isLearned: item.isLearned,
+        );
+      }).toList();
+
+      // 2. Tải nhanh từ bộ nhớ tạm local (SharedPreferences) trước để màn hình mở lên NGAY LẬP TỨC
+      try {
+        final storage = await StorageService.getInstance();
+        final localNumberProgress = storage.getNumberProgress();
+        for (int i = 0; i < fullList.length; i++) {
+          if (localNumberProgress.containsKey(i)) {
+            fullList[i].isLearned = true;
+            fullList[i].starRating = localNumberProgress[i]!;
+          } else {
+            // 5 số đầu tiên mặc định learned
+            if (i < 5) {
+              fullList[i].isLearned = true;
+              fullList[i].starRating = 3;
+            } else {
+              fullList[i].isLearned = false;
+              fullList[i].starRating = 0;
+            }
+          }
+        }
+        if (mounted) {
+          setState(() {
+            _numbers = fullList;
+          });
+        }
+      } catch (e) {
+        debugPrint('⚠️ Error loading local cached number progress in detail: $e');
+      }
+
+      // 3. Tải danh sách dynamic lessons từ database để lấy ID của từng số trong nền
+      final lessonService = await LessonService.getInstance();
+      final lessonsData = await lessonService.fetchLessonsByType('number');
+      
+      final lessonIdMap = <String, String>{};
+      for (final l in lessonsData) {
+        final text = l['khmerText']?.toString() ?? '';
+        final id = l['_id']?.toString() ?? l['id']?.toString() ?? '';
+        if (text.isNotEmpty && id.isNotEmpty) {
+          lessonIdMap[text] = id;
+        }
+      }
+
+      // Ánh xạ ID từ DB vào danh sách tĩnh
+      for (final n in fullList) {
+        if (lessonIdMap.containsKey(n.character)) {
+          n.id = lessonIdMap[n.character];
+        }
+      }
+
+      // 4. Tải danh sách các bài học đã hoàn thành của người dùng từ MongoDB Atlas
+      final List<dynamic> completedLessons = List<dynamic>.from(
+        AuthService().userProfile?['learningProgress']?['completedLessons'] ?? [],
+      );
+
+      final completedNumbers = completedLessons
+          .where((l) {
+            if (l is Map) {
+              return l['type'] == 'number';
+            }
+            return false;
+          })
+          .map((l) => (l as Map)['khmerText']?.toString() ?? '')
+          .toSet();
+
+      final completedIds = completedLessons
+          .map((l) {
+            if (l is Map) {
+              return l['_id']?.toString() ?? l['id']?.toString() ?? '';
+            }
+            return l.toString();
+          })
+          .where((id) => id.isNotEmpty)
+          .toSet();
+
+      final storage = await StorageService.getInstance();
+
+      // 5. Đồng bộ trạng thái học tập thực tế và mở khóa mặc định các bài học ban đầu
+      for (int i = 0; i < fullList.length; i++) {
+        final character = fullList[i].character;
+        final id = fullList[i].id;
+
+        bool isDone = completedNumbers.contains(character);
+        if (!isDone && id != null && completedIds.contains(id)) {
+          isDone = true;
+        }
+
+        if (isDone) {
+          fullList[i].isLearned = true;
+          if (fullList[i].starRating == 0) {
+            fullList[i].starRating = 3;
+          }
+          await storage.saveNumberProgress(i, fullList[i].starRating);
+        } else {
+          fullList[i].isLearned = false;
+          fullList[i].starRating = 0;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _numbers = fullList;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error loading dynamic number lessons: $e');
+      if (mounted) {
+        setState(() {
+          _numbers = KhmerNumberData.numbers;
+          _isLoading = false;
+        });
+      }
+    }
   }
 
 
@@ -56,9 +192,25 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
     if (_completedSteps[_idx]!.length == 3) _onCompleted();
   }
 
-  void _onCompleted() {
-    _numbers[_idx].isLearned = true;
-    _numbers[_idx].starRating = 3;
+  Future<void> _onCompleted() async {
+    setState(() {
+      _numbers[_idx].isLearned = true;
+      _numbers[_idx].starRating = 3;
+    });
+
+    try {
+      final scoreService = await ScoreService.getInstance();
+      await scoreService.completeNumberLesson(
+        _idx,
+        3,
+        lessonId: _num.id,
+        numberText: _num.character,
+        transliteration: _num.romanized,
+      );
+    } catch (e) {
+      debugPrint('Error saving number progress: $e');
+    }
+
     Future.delayed(const Duration(milliseconds: 300), () {
       if (!mounted) return;
       _showCompletionDialog();
@@ -155,11 +307,13 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
     super.dispose();
   }
 
-  KhmerNumber get _num => _numbers[_idx];
-  bool _isStepComplete(int step) =>
-      _completedSteps[_idx]?.contains(step) ?? false;
+  KhmerNumber get _num => _numbers.isNotEmpty ? _numbers[_idx] : KhmerNumberData.numbers[_idx];
+  bool _isStepComplete(int step) {
+    if (_numbers.isEmpty) return false;
+    return _completedSteps[_idx]?.contains(step) ?? false;
+  }
 
-  bool _canGo(int i) => i >= 0 && i < _numbers.length;
+  bool _canGo(int i) => _numbers.isNotEmpty && i >= 0 && i < _numbers.length;
   void _goTo(int i) {
     if (!_canGo(i)) return;
     _animCtrl.reset();
@@ -179,6 +333,16 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF0F4FF),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primary,
+          ),
+        ),
+      );
+    }
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4FF),
       body: Column(children: [

@@ -69,9 +69,25 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
     if (_completedSteps[_idx]!.length == 3) _onLessonCompleted();
   }
 
-  void _onLessonCompleted() {
-    _lesson.isLearned = true;
-    _lesson.starRating = 3;
+  Future<void> _onLessonCompleted() async {
+    setState(() {
+      _lesson.isLearned = true;
+      _lesson.starRating = 3;
+    });
+
+    try {
+      final scoreService = await ScoreService.getInstance();
+      await scoreService.completeDiacriticalLesson(
+        _idx,
+        3,
+        lessonId: null,
+        diacriticalText: _lesson.character,
+        transliteration: _lesson.romanized,
+      );
+    } catch (e) {
+      debugPrint('Error saving diacritical progress: $e');
+    }
+
     Future.delayed(const Duration(milliseconds: 300), () {
       if (!mounted) return;
       _showCompletionDialog();

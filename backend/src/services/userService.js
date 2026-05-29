@@ -19,7 +19,8 @@ class UserService {
   async getProfile(userId) {
     const user = await User.findById(userId)
       .populate('badges')
-      .populate('achievements');
+      .populate('achievements')
+      .populate('learningProgress.completedLessons');
 
     if (!user) {
       throw new AppError(MESSAGES.USER_NOT_FOUND, 404);
@@ -149,10 +150,16 @@ class UserService {
    * Mark lesson as completed
    */
   async markLessonCompleted(userId, lessonId) {
-    await User.findByIdAndUpdate(userId, {
-      $addToSet: { 'learningProgress.completedLessons': lessonId },
-      $inc: { 'learningProgress.totalLessonsCompleted': 1 },
-    });
+    await User.findOneAndUpdate(
+      {
+        _id: userId,
+        'learningProgress.completedLessons': { $ne: lessonId }
+      },
+      {
+        $addToSet: { 'learningProgress.completedLessons': lessonId },
+        $inc: { 'learningProgress.totalLessonsCompleted': 1 },
+      }
+    );
   }
 
   /**

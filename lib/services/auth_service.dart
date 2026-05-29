@@ -1,10 +1,13 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'storage_service.dart';
+import 'sync_manager.dart';
+import '../repositories/progress_repository.dart';
+import '../data/local/local_database.dart';
+
 
 /// Dịch vụ Xác thực người dùng (AuthService) kết nối tới Backend Node.js
 class AuthService extends ChangeNotifier {
@@ -25,9 +28,10 @@ class AuthService extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _accessToken != null;
 
-  // Google Sign-In instance (Sử dụng Web Client ID làm clientId để lấy idToken trên Android)
+  // Google Sign-In instance (Sử dụng Web Client ID làm serverClientId để lấy idToken trên Android)
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId: '1085311175086-0ka8le871ugi8qr0d0p5rv615qlnca3m.apps.googleusercontent.com',
+    serverClientId: '1085311175086-0ka8le871ugi8qr0d0p5rv615qlnca3m.apps.googleusercontent.com',
     scopes: ['email', 'profile'],
   );
 
@@ -158,6 +162,9 @@ class AuthService extends ChangeNotifier {
         // Đồng bộ lên StorageService nội bộ để cập nhật giao diện Trang chủ ngay lập tức
         await _syncProfileToStorage(_userProfile!);
 
+        // Trigger full sync sau khi đăng nhập
+        SyncManager.instance.fullSync();
+
         notifyListeners();
         return {'success': true, 'message': 'Đăng nhập thành công!'};
       } else {
@@ -222,6 +229,9 @@ class AuthService extends ChangeNotifier {
         // Đồng bộ lên StorageService để cập nhật giao diện Trang chủ
         await _syncProfileToStorage(_userProfile!);
 
+        // Trigger full sync sau khi đăng nhập Google
+        SyncManager.instance.fullSync();
+
         notifyListeners();
         return {'success': true, 'message': 'Đăng nhập Google thành công!'};
       } else {
@@ -282,6 +292,9 @@ class AuthService extends ChangeNotifier {
         // Đồng bộ lên StorageService để cập nhật giao diện Trang chủ
         await _syncProfileToStorage(_userProfile!);
 
+        // Trigger full sync sau khi đăng nhập Mock
+        SyncManager.instance.fullSync();
+
         notifyListeners();
         return {'success': true, 'message': 'Đăng nhập bằng tài khoản Google giả lập thành công!'};
       } else {
@@ -313,13 +326,40 @@ class AuthService extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        _userProfile = responseData['data']['user'];
+        final dynamic data = responseData['data']?['user'] ?? responseData['data'];
         
+        if (data == null) {
+          debugPrint('⚠️ Fetch profile: response data is null');
+          return false;
+        }
+
+        final Map<String, dynamic> profile = Map<String, dynamic>.from(data);
+        
+        // Tải thêm thông tin thứ hạng động từ backend MongoDB
+        try {
+          final rankResponse = await http.get(
+            Uri.parse('$baseUrl/users/rank'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $_accessToken',
+            },
+          ).timeout(const Duration(seconds: 3));
+          if (rankResponse.statusCode == 200) {
+            final rankData = jsonDecode(rankResponse.body);
+            final rankVal = rankData['data']?['rank'] ?? 1;
+            profile['rank'] = rankVal;
+          }
+        } catch (e) {
+          debugPrint('⚠️ Error fetching rank: $e');
+        }
+
+        _userProfile = profile;
+
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('userProfile', jsonEncode(_userProfile));
+        await prefs.setString('userProfile', jsonEncode(profile));
 
         // Đồng bộ lên StorageService để cập nhật giao diện Trang chủ
-        await _syncProfileToStorage(_userProfile!);
+        await _syncProfileToStorage(profile);
 
         notifyListeners();
         return true;
@@ -328,6 +368,70 @@ class AuthService extends ChangeNotifier {
     } catch (e) {
       debugPrint('❌ Error fetching profile: $e');
       return false;
+    }
+  }
+
+  /// 5.1 Cập nhật thông tin cá nhân (Update Profile)
+  Future<bool> updateProfile({String? name, String? avatar}) async {
+    if (_accessToken == null) return false;
+
+    try {
+      final body = <String, dynamic>{};
+      if (name != null) body['name'] = name;
+      if (avatar != null) body['avatar'] = avatar;
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/users/profile'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_accessToken',
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        _userProfile = responseData['data']?['user'] ?? responseData['data'];
+        
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('userProfile', jsonEncode(_userProfile));
+
+        // Đồng bộ lên StorageService để cập nhật giao diện Trang chủ
+        if (_userProfile != null) {
+          await _syncProfileToStorage(_userProfile!);
+        }
+
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('❌ Error updating profile: $e');
+      return false;
+    }
+  }
+
+  /// 5.2 Lấy toàn bộ danh sách huy hiệu từ backend
+  Future<List<dynamic>> fetchBadges() async {
+    if (_accessToken == null) return [];
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/badges'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_accessToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return responseData['data'] ?? [];
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ Error fetching badges: $e');
+      return [];
     }
   }
 
@@ -390,10 +494,20 @@ class AuthService extends ChangeNotifier {
       _refreshToken = null;
       _userProfile = null;
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('accessToken');
-      await prefs.remove('refreshToken');
-      await prefs.remove('userProfile');
+      // Xóa SharedPreferences local progress bằng StorageService
+      try {
+        final storage = await StorageService.getInstance();
+        await storage.clearAll();
+      } catch (e) {
+        debugPrint('⚠️ Error clearing SharedPreferences on logout: $e');
+      }
+
+      // Xóa cơ sở dữ liệu Isar nội bộ để bảo mật dữ liệu giữa các tài khoản khác nhau
+      try {
+        await LocalDatabase.instance.clearAll();
+      } catch (e) {
+        debugPrint('⚠️ Error clearing local database on logout: $e');
+      }
 
       _isLoading = false;
       notifyListeners();
@@ -401,6 +515,7 @@ class AuthService extends ChangeNotifier {
   }
 
   /// Đồng bộ hồ sơ từ Backend sang bộ lưu trữ SharedPreferences nội bộ (cho trang chủ hiển thị)
+  /// + Lưu vào Isar ProfileCache
   Future<void> _syncProfileToStorage(Map<String, dynamic> profile) async {
     try {
       final storage = await StorageService.getInstance();
@@ -409,6 +524,12 @@ class AuthService extends ChangeNotifier {
       await storage.setXp(profile['xp'] ?? 0);
       await storage.setStreak(profile['streak'] ?? 0);
       await storage.setAvatarUrl(profile['avatar'] ?? '');
+
+      // Lưu vào Isar ProfileCache
+      try {
+        await ProgressRepository.instance.saveProfileCache(profile);
+      } catch (_) {}
+
       debugPrint('🔄 Đồng bộ profile từ server lên Local Storage thành công! (Name: ${profile['name']}, Stars: ${profile['stars']}, XP: ${profile['xp']}, Avatar: ${profile['avatar']})');
     } catch (e) {
       debugPrint('⚠️ Error syncing profile to storage: $e');

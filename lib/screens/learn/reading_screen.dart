@@ -1107,7 +1107,7 @@ class _ReadingScreenState extends State<ReadingScreen>
     if (lesson.isLearned) return; // Already completed
 
     _isCompleting = true;
-    _score?.completeReadingLesson(_currentLesson, 3).then((_) {
+    _score?.completeReadingLesson(_currentLesson, 3, lessonId: null).then((_) {
       setState(() {
         lesson.isLearned = true;
         lesson.starRating = 3;

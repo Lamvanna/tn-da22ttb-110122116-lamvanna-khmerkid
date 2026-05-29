@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
 import '../../services/storage_service.dart';
+import '../../services/auth_service.dart';
 import '../settings/settings_screen.dart';
 import '../report/report_screen.dart';
 import '../achievements/achievements_screen.dart';
@@ -22,13 +23,26 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   ScoreService? _score;
+  StorageService? _storage;
   String _username = 'Bé Na';
   String _avatarUrl = '';
 
   @override
   void initState() {
     super.initState();
+    AuthService().addListener(_onAuthChanged);
     _loadData();
+    AuthService().fetchProfile();
+  }
+
+  @override
+  void dispose() {
+    AuthService().removeListener(_onAuthChanged);
+    super.dispose();
+  }
+
+  void _onAuthChanged() {
+    _updateStats();
   }
 
   Future<void> _loadData() async {
@@ -37,10 +51,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) {
       setState(() {
         _score = s;
-        _username = storage.getUsername();
-        _avatarUrl = storage.getAvatarUrl();
+        _storage = storage;
       });
+      _updateStats();
     }
+  }
+
+  void _updateStats() {
+    if (!mounted) return;
+    final user = AuthService().userProfile;
+    setState(() {
+      _username = user?['name'] ?? (_storage?.getUsername() ?? 'Bé Na');
+      _avatarUrl = user?['avatar'] ?? (_storage?.getAvatarUrl() ?? '');
+    });
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -56,13 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (image == null) return;
 
       final path = image.path;
-      final storage = await StorageService.getInstance();
-      await storage.setAvatarUrl(path);
-
-      if (!mounted) return;
-      setState(() {
-        _avatarUrl = path;
-      });
+      await AuthService().updateProfile(avatar: path);
 
       messenger.showSnackBar(
         SnackBar(
@@ -191,12 +208,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         if (newName.isEmpty) return;
                         final messenger = ScaffoldMessenger.of(context);
                         final navigator = Navigator.of(context);
-                        final storage = await StorageService.getInstance();
-                        await storage.setUsername(newName);
-                        if (!mounted) return;
-                        setState(() {
-                          _username = newName;
-                        });
+                        
+                        await AuthService().updateProfile(name: newName);
+                        
                         navigator.pop();
                         messenger.showSnackBar(
                           SnackBar(
@@ -454,6 +468,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   int get _xp => _score != null ? _score!.totalXp : 0;
   int get _level => _score != null ? _score!.level : 1;
+  int get _rank => _score != null ? _score!.rank : 1;
   int get _stars => _score != null ? _score!.totalStars : 0;
   int get _streak => _score != null ? _score!.streak : 0;
   int get _medals => _score != null ? _score!.totalMedals : 0;
@@ -471,9 +486,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Mỗi level cần 100 XP
-    final xpInLevel = _xp % 100;
-    final xpNeeded = 100;
+    // Tải động XP cần thiết từ Backend MongoDB
+    final xpInLevel = _score?.currentLevelXp ?? (_xp % 100);
+    final xpNeeded = _score?.nextLevelXp ?? 100;
     final xpRemaining = xpNeeded - xpInLevel;
 
     return Scaffold(
@@ -1017,7 +1032,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _statItem(
               iconIndex: 3,
               label: 'Thứ hạng',
-              value: 'Top 5',
+              value: 'Top $_rank',
               labelColor: const Color(0xFF64748B),
               valueColor: const Color(0xFF1E293B),
             ),
@@ -1463,10 +1478,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // ══════════════════════════════════════════════════════════════
-  // ACHIEVEMENTS
+  // ACHIEVEMENTS (Dynamic từ MongoDB)
   // ══════════════════════════════════════════════════════════════
   Widget _buildAchievements() {
-    final badges = [
+    // Lấy badges từ MongoDB user profile
+    final profile = AuthService().userProfile;
+    final backendBadges = profile?['badges'] as List? ?? [];
+    
+    // Nếu có badges từ MongoDB thì dùng dynamic, nếu không thì dùng fallback
+    final bool useDynamic = backendBadges.isNotEmpty && backendBadges.first is Map;
+    
+    // Fallback static badges (khi chưa có data từ MongoDB)
+    final fallbackBadges = [
       {
         'icon': Icons.star_rounded,
         'label': 'Siêu nhân\nchăm chỉ',
@@ -1504,6 +1527,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'unlocked': _xp >= 100,
       },
     ];
+
+    // Sử dụng badges từ MongoDB nếu có, nếu không dùng fallback
+    final List<Map<String, dynamic>> badges;
+    if (useDynamic) {
+      // Xây dựng badges list từ MongoDB data
+      badges = backendBadges.map<Map<String, dynamic>>((b) {
+        final badgeMap = b as Map<String, dynamic>;
+        final String type = badgeMap['type']?.toString() ?? 'learning';
+        Color badgeColor = const Color(0xFF4CAF50);
+        IconData badgeIcon = Icons.stars_rounded;
+        if (type == 'level') { badgeColor = const Color(0xFFFF9800); badgeIcon = Icons.rocket_launch_rounded; }
+        else if (type == 'pronunciation') { badgeColor = const Color(0xFFFF5722); badgeIcon = Icons.record_voice_over_rounded; }
+        else if (type == 'streak') { badgeColor = const Color(0xFFE91E63); badgeIcon = Icons.local_fire_department_rounded; }
+        else if (type == 'learning') { badgeColor = const Color(0xFF4CAF50); badgeIcon = Icons.auto_stories_rounded; }
+        else if (type == 'ranking') { badgeColor = const Color(0xFFFFCA28); badgeIcon = Icons.emoji_events_rounded; }
+        return {
+          'icon': badgeIcon,
+          'label': badgeMap['name']?.toString() ?? 'Huy chương',
+          'color': badgeColor,
+          'unlocked': true, // Backend badges đã unlock
+        };
+      }).toList();
+    } else {
+      badges = fallbackBadges;
+    }
 
     return Container(
       padding: EdgeInsets.all(18.w),
@@ -1565,7 +1613,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
                 child: Text(
-                  '$_medals/24',
+                  '$_medals/${badges.length}',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 10.sp,
                     fontWeight: FontWeight.w900,

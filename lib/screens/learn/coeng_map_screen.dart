@@ -6,6 +6,7 @@ import '../../models/khmer_coeng.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
 import 'coeng_screen.dart';
+import '../../repositories/progress_repository.dart';
 
 /// Bản đồ phụ âm có chân — Timeline cards nhóm theo cụm phụ âm kép
 class CoengMapScreen extends StatefulWidget {
@@ -59,7 +60,24 @@ class _CoengMapScreenState extends State<CoengMapScreen>
 
   Future<void> _loadScore() async {
     _score = await ScoreService.getInstance();
-    if (mounted) setState(() {});
+    try {
+      final progress = await ProgressRepository.instance.getProgressMap('coeng');
+      if (mounted) {
+        setState(() {
+          for (int i = 0; i < _lessons.length; i++) {
+            if (progress.containsKey(i)) {
+              _lessons[i].isLearned = true;
+              _lessons[i].starRating = progress[i]!;
+            } else {
+              _lessons[i].isLearned = false;
+              _lessons[i].starRating = 0;
+            }
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error loading coeng progress: $e');
+    }
   }
 
   @override

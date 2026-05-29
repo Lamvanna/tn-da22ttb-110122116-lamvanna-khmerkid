@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'auth_service.dart';
 import 'storage_service.dart';
+import '../repositories/progress_repository.dart';
 
 /// Service quản lý điểm số, sao, XP và gamification
 class ScoreService {
@@ -20,11 +21,35 @@ class ScoreService {
   }
 
   // ─── GETTERS ─────────────────────────────────────────────────
-  int get totalStars => _storage.getStars();
-  int get totalXp => _storage.getXp();
-  int get streak => _storage.getStreak();
-  int get level => (totalXp / 100).floor() + 1;
-  double get levelProgress => (totalXp % 100) / 100.0;
+  int get totalStars => AuthService().userProfile?['stars'] ?? 0;
+  int get totalXp => AuthService().userProfile?['xp'] ?? 0;
+  int get streak => AuthService().userProfile?['streak'] ?? 0;
+  int get level => AuthService().userProfile?['level'] ?? 1;
+  int get rank => AuthService().userProfile?['rank'] ?? 1;
+
+  int get currentLevelXp {
+    final curXp = AuthService().userProfile?['levelInfo']?['currentLevelXp'];
+    if (curXp != null) {
+      return (curXp as num).toInt();
+    }
+    return totalXp % 100;
+  }
+
+  int get nextLevelXp {
+    final nextXp = AuthService().userProfile?['levelInfo']?['nextLevelXp'];
+    if (nextXp != null) {
+      return (nextXp as num).toInt();
+    }
+    return 100;
+  }
+
+  double get levelProgress {
+    final progress = AuthService().userProfile?['levelInfo']?['progress'];
+    if (progress != null) {
+      return progress.toDouble() / 100.0;
+    }
+    return (totalXp % 100) / 100.0;
+  }
   
   Set<String> get purchasedItems => _storage.getPurchasedItems();
 
@@ -34,51 +59,269 @@ class ScoreService {
     return await _storage.spendStars(amount);
   }
 
+  Future<void> addStars(int amount) async => await _storage.addStars(amount);
+  Future<void> addXp(int amount) async => await _storage.addXp(amount);
+  Future<void> updateStreak() async => await _storage.updateStreak();
+
   Future<void> addPurchasedItem(String itemKey) async {
     await _storage.addPurchasedItem(itemKey);
   }
 
   /// Hoàn thành bài học chữ cái
-  Future<Map<String, int>> completeLetterLesson(int letterIndex, int stars) async {
+  Future<Map<String, int>> completeLetterLesson(
+    int letterIndex,
+    int stars, {
+    required String? lessonId,
+    String letterText = 'ក',
+    String transliteration = 'ko',
+  }) async {
     int earnedStars = stars;
     int earnedXp = stars * 5;
 
-    await _storage.addStars(earnedStars);
-    await _storage.addXp(earnedXp);
-    await _storage.saveLetterProgress(letterIndex, stars);
-    await _storage.updateStreak();
-
     // Check achievements
     await _checkAchievements();
+
+    // Lưu cục bộ SharedPreferences (tương thích cũ)
+    await _storage.saveLetterProgress(letterIndex, stars);
+    await _storage.addStars(earnedStars);
+    await _storage.addXp(earnedXp);
+    await _storage.updateStreak();
+
+    // Lưu vào Isar ProgressRepository (Isolated đa người dùng)
+    try {
+      await ProgressRepository.instance.completeLesson(
+        lessonId: lessonId ?? 'consonant_$letterIndex',
+        lessonType: 'consonant',
+        lessonOrder: letterIndex,
+        stars: stars,
+      );
+    } catch (e) {
+      debugPrint('⚠️ Error saving letter progress to Isar: $e');
+    }
+
+    // Đồng bộ lên backend MongoDB Atlas
+    await _syncListeningResult(100, lessonId: lessonId);
+    await _syncSpeakingResult(letterText, letterText, lessonId: lessonId);
+    await _syncWritingResult(100, lessonId: lessonId);
 
     return {'stars': earnedStars, 'xp': earnedXp};
   }
 
   /// Hoàn thành bài học nguyên âm
-  Future<Map<String, int>> completeVowelLesson(int vowelIndex, int stars) async {
+  Future<Map<String, int>> completeVowelLesson(
+    int vowelIndex,
+    int stars, {
+    required String? lessonId,
+    String vowelText = 'ា',
+    String transliteration = 'aa',
+  }) async {
     int earnedStars = stars;
     int earnedXp = stars * 5;
 
+    await _checkAchievements();
+
+    // Lưu cục bộ SharedPreferences (tương thích cũ)
+    await _storage.saveVowelProgress(vowelIndex, stars);
     await _storage.addStars(earnedStars);
     await _storage.addXp(earnedXp);
-    await _storage.saveVowelProgress(vowelIndex, stars);
     await _storage.updateStreak();
 
-    await _checkAchievements();
+    // Lưu vào Isar ProgressRepository (Isolated đa người dùng)
+    try {
+      await ProgressRepository.instance.completeLesson(
+        lessonId: lessonId ?? 'vowel_$vowelIndex',
+        lessonType: 'vowel',
+        lessonOrder: vowelIndex,
+        stars: stars,
+      );
+    } catch (e) {
+      debugPrint('⚠️ Error saving vowel progress to Isar: $e');
+    }
+
+    // Đồng bộ lên backend MongoDB Atlas
+    await _syncListeningResult(100, lessonId: lessonId);
+    await _syncSpeakingResult(vowelText, vowelText, lessonId: lessonId);
+    await _syncWritingResult(100, lessonId: lessonId);
+
     return {'stars': earnedStars, 'xp': earnedXp};
   }
 
   /// Hoàn thành bài học tập đọc
-  Future<Map<String, int>> completeReadingLesson(int readingIndex, int stars) async {
+  Future<Map<String, int>> completeReadingLesson(int readingIndex, int stars, {required String? lessonId}) async {
     int earnedStars = stars;
     int earnedXp = stars * 5;
 
+    await _checkAchievements();
+
+    // Lưu cục bộ SharedPreferences (tương thích cũ)
+    await _storage.saveReadingProgress(readingIndex, stars);
     await _storage.addStars(earnedStars);
     await _storage.addXp(earnedXp);
-    await _storage.saveReadingProgress(readingIndex, stars);
     await _storage.updateStreak();
 
+    // Lưu vào Isar ProgressRepository (Isolated đa người dùng)
+    try {
+      await ProgressRepository.instance.completeLesson(
+        lessonId: lessonId ?? 'reading_$readingIndex',
+        lessonType: 'reading',
+        lessonOrder: readingIndex,
+        stars: stars,
+      );
+    } catch (e) {
+      debugPrint('⚠️ Error saving reading progress to Isar: $e');
+    }
+
+    // Đồng bộ lên backend MongoDB Atlas
+    await _syncReadingResult(100, lessonId: lessonId);
+
+    return {'stars': earnedStars, 'xp': earnedXp};
+  }
+
+  /// Hoàn thành bài học số Khmer
+  Future<Map<String, int>> completeNumberLesson(
+    int numberIndex,
+    int stars, {
+    required String? lessonId,
+    String numberText = '០',
+    String transliteration = '0',
+  }) async {
+    int earnedStars = stars;
+    int earnedXp = stars * 5;
+
     await _checkAchievements();
+
+    // Lưu cục bộ SharedPreferences (tương thích cũ)
+    await _storage.saveNumberProgress(numberIndex, stars);
+    await _storage.addStars(earnedStars);
+    await _storage.addXp(earnedXp);
+    await _storage.updateStreak();
+
+    // Lưu vào Isar ProgressRepository (Isolated đa người dùng)
+    try {
+      await ProgressRepository.instance.completeLesson(
+        lessonId: lessonId ?? 'number_$numberIndex',
+        lessonType: 'number',
+        lessonOrder: numberIndex,
+        stars: stars,
+      );
+    } catch (e) {
+      debugPrint('⚠️ Error saving number progress to Isar: $e');
+    }
+
+    // Đồng bộ lên backend MongoDB Atlas
+    await _syncListeningResult(100, lessonId: lessonId);
+    await _syncSpeakingResult(numberText, numberText, lessonId: lessonId);
+    await _syncWritingResult(100, lessonId: lessonId);
+
+    return {'stars': earnedStars, 'xp': earnedXp};
+  }
+
+  /// Hoàn thành bài học dấu Khmer
+  Future<Map<String, int>> completeDiacriticalLesson(
+    int diacriticalIndex,
+    int stars, {
+    required String? lessonId,
+    String diacriticalText = '់',
+    String transliteration = '់',
+  }) async {
+    int earnedStars = stars;
+    int earnedXp = stars * 5;
+
+    await _checkAchievements();
+
+    // Lưu cục bộ SharedPreferences (tương thích cũ)
+    await _storage.saveDiacriticalProgress(diacriticalIndex, stars);
+    await _storage.addStars(earnedStars);
+    await _storage.addXp(earnedXp);
+    await _storage.updateStreak();
+
+    // Lưu vào Isar ProgressRepository (Isolated đa người dùng)
+    try {
+      await ProgressRepository.instance.completeLesson(
+        lessonId: lessonId ?? 'diacritical_$diacriticalIndex',
+        lessonType: 'diacritical',
+        lessonOrder: diacriticalIndex,
+        stars: stars,
+      );
+    } catch (e) {
+      debugPrint('⚠️ Error saving diacritical progress to Isar: $e');
+    }
+
+    // Đồng bộ lên backend MongoDB Atlas
+    await _syncListeningResult(100, lessonId: lessonId);
+    await _syncSpeakingResult(diacriticalText, diacriticalText, lessonId: lessonId);
+    await _syncWritingResult(100, lessonId: lessonId);
+
+    return {'stars': earnedStars, 'xp': earnedXp};
+  }
+
+  /// Hoàn thành bài học ghép vần Khmer
+  Future<Map<String, int>> completeSpellingLesson(
+    int spellingIndex,
+    int stars, {
+    required String? lessonId,
+    String spellingText = 'កា',
+    String transliteration = 'kaa',
+  }) async {
+    int earnedStars = stars;
+    int earnedXp = stars * 5;
+
+    await _checkAchievements();
+
+    // Lưu cục bộ SharedPreferences (tương thích cũ)
+    await _storage.saveSpellingProgress(spellingIndex, stars);
+    await _storage.addStars(earnedStars);
+    await _storage.addXp(earnedXp);
+    await _storage.updateStreak();
+
+    // Lưu vào Isar ProgressRepository (Isolated đa người dùng)
+    try {
+      await ProgressRepository.instance.completeLesson(
+        lessonId: lessonId ?? 'spelling_$spellingIndex',
+        lessonType: 'spelling',
+        lessonOrder: spellingIndex,
+        stars: stars,
+      );
+    } catch (e) {
+      debugPrint('⚠️ Error saving spelling progress to Isar: $e');
+    }
+
+    // Đồng bộ lên backend MongoDB Atlas
+    await _syncListeningResult(100, lessonId: lessonId);
+    await _syncSpeakingResult(spellingText, spellingText, lessonId: lessonId);
+    await _syncWritingResult(100, lessonId: lessonId);
+
+    return {'stars': earnedStars, 'xp': earnedXp};
+  }
+
+  /// Hoàn thành bài luyện viết Khmer
+  Future<Map<String, int>> completeWritingLesson(int writingIndex, int stars, {required String? lessonId}) async {
+    int earnedStars = stars;
+    int earnedXp = stars * 5;
+
+    await _checkAchievements();
+
+    // Lưu cục bộ SharedPreferences (tương thích cũ)
+    await _storage.saveWritingProgress(writingIndex, stars);
+    await _storage.addStars(earnedStars);
+    await _storage.addXp(earnedXp);
+    await _storage.updateStreak();
+
+    // Lưu vào Isar ProgressRepository (Isolated đa người dùng)
+    try {
+      await ProgressRepository.instance.completeLesson(
+        lessonId: lessonId ?? 'writing_$writingIndex',
+        lessonType: 'writing',
+        lessonOrder: writingIndex,
+        stars: stars,
+      );
+    } catch (e) {
+      debugPrint('⚠️ Error saving writing progress to Isar: $e');
+    }
+
+    // Đồng bộ lên backend MongoDB Atlas
+    await _syncWritingResult(100, lessonId: lessonId);
+
     return {'stars': earnedStars, 'xp': earnedXp};
   }
 
@@ -133,16 +376,71 @@ class ScoreService {
     await _storage.updateStreak();
   }
 
-  // ─── STATISTICS ──────────────────────────────────────────────
+  // ─── STATISTICS (Dynamic from MongoDB) ────────────────────────
 
-  /// Tổng số chữ đã học
-  int get lettersLearned => _storage.getLetterProgress().length;
+  /// Tổng số bài học đã hoàn thành (từ MongoDB learningProgress)
+  int get totalLessonsCompleted {
+    final lp = AuthService().userProfile?['learningProgress'];
+    return (lp?['totalLessonsCompleted'] as num?)?.toInt() ?? 0;
+  }
+
+  /// Tổng số game đã chơi (từ MongoDB learningProgress)
+  int get totalGamesPlayed {
+    final lp = AuthService().userProfile?['learningProgress'];
+    return (lp?['totalGamesPlayed'] as num?)?.toInt() ?? 0;
+  }
+
+  /// Tổng thời gian học (phút) (từ MongoDB learningProgress)
+  int get totalStudyTime {
+    final lp = AuthService().userProfile?['learningProgress'];
+    return (lp?['totalStudyTime'] as num?)?.toInt() ?? 0;
+  }
+
+  /// Skill levels (0-100) từ MongoDB
+  int get listeningLevel {
+    final lp = AuthService().userProfile?['learningProgress'];
+    return (lp?['listeningLevel'] as num?)?.toInt() ?? 0;
+  }
+  int get speakingLevel {
+    final lp = AuthService().userProfile?['learningProgress'];
+    return (lp?['speakingLevel'] as num?)?.toInt() ?? 0;
+  }
+  int get readingLevel {
+    final lp = AuthService().userProfile?['learningProgress'];
+    return (lp?['readingLevel'] as num?)?.toInt() ?? 0;
+  }
+  int get writingLevel {
+    final lp = AuthService().userProfile?['learningProgress'];
+    return (lp?['writingLevel'] as num?)?.toInt() ?? 0;
+  }
+
+  /// Tổng số chữ đã học (MongoDB completedLessons count, fallback to local)
+  int get lettersLearned {
+    final lp = AuthService().userProfile?['learningProgress'];
+    final completed = lp?['completedLessons'] as List?;
+    if (completed != null && completed.isNotEmpty) {
+      return completed.length;
+    }
+    return _storage.getLetterProgress().length;
+  }
 
   /// Tổng số nguyên âm đã học
   int get vowelsLearned => _storage.getVowelProgress().length;
 
   /// Tổng số bài tập đọc đã học
   int get readingLearned => _storage.getReadingProgress().length;
+
+  /// Tổng số số đã học
+  int get numbersLearned => _storage.getNumberProgress().length;
+
+  /// Tổng số dấu đã học
+  int get diacriticalsLearned => _storage.getDiacriticalProgress().length;
+
+  /// Tổng số bài ghép vần đã học
+  int get spellingLearned => _storage.getSpellingProgress().length;
+
+  /// Tổng số bài luyện viết đã học
+  int get writingLearned => _storage.getWritingProgress().length;
 
   /// Tổng số từ vựng đã học
   int get vocabLearned => _storage.getLearnedVocab().length;
@@ -161,8 +459,15 @@ class ScoreService {
     return total / history.length;
   }
 
-  /// Số huy chương
-  int get totalMedals => _storage.getUnlockedAchievements().length;
+  /// Số huy chương (từ MongoDB badges + achievements)
+  int get totalMedals {
+    final profile = AuthService().userProfile;
+    final badges = profile?['badges'] as List? ?? [];
+    final achievements = profile?['achievements'] as List? ?? [];
+    final count = badges.length + achievements.length;
+    if (count > 0) return count;
+    return _storage.getUnlockedAchievements().length;
+  }
 
   // ─── ACHIEVEMENTS CHECK ──────────────────────────────────────
   Future<void> _checkAchievements() async {
@@ -235,6 +540,8 @@ class ScoreService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (kDebugMode) print('[ScoreService] Đồng bộ kết quả game lên backend thành công!');
+        // Tải lại profile mới nhất từ MongoDB
+        await authService.fetchProfile();
       } else {
         if (kDebugMode) {
           print('[ScoreService] Đồng bộ kết quả game thất bại. Mã lỗi: ${response.statusCode}, Nội dung: ${response.body}');
@@ -242,6 +549,129 @@ class ScoreService {
       }
     } catch (e) {
       if (kDebugMode) print('[ScoreService] Lỗi khi đồng bộ kết quả game: $e');
+    }
+  }
+
+  /// Đồng bộ kết quả Nghe lên backend
+  Future<void> _syncListeningResult(int score, {String? lessonId}) async {
+    try {
+      final authService = AuthService();
+      if (!authService.isAuthenticated) return;
+
+      final url = Uri.parse('${authService.baseUrl}/listening/result');
+      if (kDebugMode) print('[ScoreService] Đồng bộ Listening: $url');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${authService.accessToken}',
+        },
+        body: jsonEncode({
+          'lessonId': lessonId,
+          'answers': [],
+          'correctAnswers': score,
+          'totalQuestions': 100,
+        }),
+      );
+      if (kDebugMode) print('[ScoreService] Listening Sync Status: ${response.statusCode}');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await authService.fetchProfile();
+      }
+    } catch (e) {
+      if (kDebugMode) print('[ScoreService] Error syncing listening: $e');
+    }
+  }
+
+  /// Đồng bộ kết quả Nói lên backend
+  Future<void> _syncSpeakingResult(String ref, String rec, {String? lessonId}) async {
+    try {
+      final authService = AuthService();
+      if (!authService.isAuthenticated) return;
+
+      final url = Uri.parse('${authService.baseUrl}/speaking/check');
+      if (kDebugMode) print('[ScoreService] Đồng bộ Speaking: $url ($ref -> $rec)');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${authService.accessToken}',
+        },
+        body: jsonEncode({
+          'lessonId': lessonId,
+          'referenceText': ref,
+          'recognizedText': rec,
+          'audioUrl': '',
+        }),
+      );
+      if (kDebugMode) print('[ScoreService] Speaking Sync Status: ${response.statusCode}');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await authService.fetchProfile();
+      }
+    } catch (e) {
+      if (kDebugMode) print('[ScoreService] Error syncing speaking: $e');
+    }
+  }
+
+  /// Đồng bộ kết quả Viết lên backend
+  Future<void> _syncWritingResult(int score, {String? lessonId}) async {
+    try {
+      final authService = AuthService();
+      if (!authService.isAuthenticated) return;
+
+      final url = Uri.parse('${authService.baseUrl}/writing/check');
+      if (kDebugMode) print('[ScoreService] Đồng bộ Writing: $url');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${authService.accessToken}',
+        },
+        body: jsonEncode({
+          'lessonId': lessonId,
+          'score': score,
+          'imageUrl': '',
+        }),
+      );
+      if (kDebugMode) print('[ScoreService] Writing Sync Status: ${response.statusCode}');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await authService.fetchProfile();
+      }
+    } catch (e) {
+      if (kDebugMode) print('[ScoreService] Error syncing writing: $e');
+    }
+  }
+
+  /// Đồng bộ kết quả Đọc lên backend
+  Future<void> _syncReadingResult(int score, {String? lessonId}) async {
+    try {
+      final authService = AuthService();
+      if (!authService.isAuthenticated) return;
+
+      final url = Uri.parse('${authService.baseUrl}/reading/result');
+      if (kDebugMode) print('[ScoreService] Đồng bộ Reading: $url');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${authService.accessToken}',
+        },
+        body: jsonEncode({
+          'lessonId': lessonId,
+          'answers': score,
+          'correctAnswers': score,
+          'totalQuestions': 100,
+        }),
+      );
+      if (kDebugMode) print('[ScoreService] Reading Sync Status: ${response.statusCode}');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await authService.fetchProfile();
+      }
+    } catch (e) {
+      if (kDebugMode) print('[ScoreService] Error syncing reading: $e');
     }
   }
 }

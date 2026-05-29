@@ -1,3 +1,5 @@
+import 'dart:convert' show jsonEncode;
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
@@ -6,9 +8,9 @@ import 'package:permission_handler/permission_handler.dart';
 /// Speech Service — Singleton quản lý Speech-to-Text
 /// ────────────────────────────────────────────────────────────────────
 /// Features:
-///   • Auto-detect locale: km_KH → vi-VN
+///   • Auto-detect locale: km_KH → no fallback
 ///   • partialResults: true (realtime transcript)
-///   • listenFor: 12 giây
+///   • listenFor: 7 giây
 ///   • pauseFor: 3 giây
 ///   • Permission handling tự động
 ///   • Clean error handling
@@ -34,13 +36,14 @@ class SpeechService {
   bool _isListening = false;
   String _selectedLocaleId = 'km-KH';
   bool _khmerAvailable = false;
+  DateTime? _startTime;
 
   // ─── Config ─────────────────────────────────────────────────────
-  static const Duration defaultListenFor = Duration(seconds: 15);
-  static const Duration defaultPauseFor = Duration(seconds: 6);
+  static const Duration defaultListenFor = Duration(seconds: 7);
+  static const Duration defaultPauseFor = Duration(seconds: 3);
 
   // ─── Callbacks ──────────────────────────────────────────────────
-  void Function(String text, bool isFinal)? onResult;
+  void Function(String text, double confidence, bool isFinal)? onResult;
   void Function(String status)? onStatus;
   void Function(String error)? onError;
 
@@ -125,13 +128,14 @@ class SpeechService {
 
   Future<void> _detectBestLocale() async {
     try {
-      // Try to get system locale first
       final systemLocale = await _speech.systemLocale();
-      if (systemLocale != null) {
+      if (systemLocale != null && systemLocale.localeId.toLowerCase().startsWith('km')) {
         _selectedLocaleId = systemLocale.localeId;
+        _khmerAvailable = true;
+        return;
       }
 
-      // Search for Khmer locale
+      // Search for Khmer locale in all available locales
       final locales = await _speech.locales();
       for (final l in locales) {
         if (l.localeId.toLowerCase().startsWith('km')) {
@@ -141,18 +145,12 @@ class SpeechService {
         }
       }
 
-      // Fallback to Vietnamese
-      for (final l in locales) {
-        if (l.localeId.toLowerCase().startsWith('vi')) {
-          _selectedLocaleId = l.localeId;
-          return;
-        }
-      }
-
-      // If neither found, default to km-KH and let the engine handle it
+      // If no Khmer locale is found, do NOT fallback to Vietnamese/English
+      _khmerAvailable = false;
       _selectedLocaleId = 'km-KH';
     } catch (e) {
       debugPrint('[SpeechService] Locale detection error: $e');
+      _khmerAvailable = false;
       _selectedLocaleId = 'km-KH';
     }
   }
@@ -175,20 +173,28 @@ class SpeechService {
 
     try {
       _isListening = true;
+      _startTime = DateTime.now();
+      
+      // ignore: deprecated_member_use
       await _speech.listen(
         onResult: (result) {
-          onResult?.call(result.recognizedWords, result.finalResult);
+          onResult?.call(result.recognizedWords, result.confidence, result.finalResult);
           if (result.finalResult) {
             _isListening = false;
+            final durationMs = DateTime.now().difference(_startTime!).inMilliseconds;
+            _logSTTResult(result.recognizedWords, result.confidence, durationMs);
           }
         },
-        listenOptions: stt.SpeechListenOptions(
-          listenFor: listenFor ?? defaultListenFor,
-          pauseFor: pauseFor ?? defaultPauseFor,
-          localeId: localeId ?? _selectedLocaleId,
-          partialResults: true,
-          cancelOnError: true,
-        ),
+        // ignore: deprecated_member_use
+        listenFor: listenFor ?? defaultListenFor,
+        // ignore: deprecated_member_use
+        pauseFor: pauseFor ?? defaultPauseFor,
+        // ignore: deprecated_member_use
+        localeId: localeId ?? _selectedLocaleId,
+        // ignore: deprecated_member_use
+        partialResults: true,
+        // ignore: deprecated_member_use
+        cancelOnError: true,
       );
       return true;
     } catch (e) {
@@ -196,6 +202,26 @@ class SpeechService {
       _isListening = false;
       onError?.call(e.toString());
       return false;
+    }
+  }
+
+  void _logSTTResult(String text, double confidence, int durationMs) {
+    try {
+      final osName = Platform.isAndroid ? 'Android' : (Platform.isIOS ? 'iOS' : Platform.operatingSystem);
+      final deviceInfo = '$osName ${Platform.operatingSystemVersion}';
+
+      final logMap = {
+        'locale': _selectedLocaleId,
+        'recognizedText': text,
+        'confidence': double.parse(confidence.toStringAsFixed(2)),
+        'listenDuration': durationMs,
+        'deviceInfo': deviceInfo,
+        'createdAt': DateTime.now().toIso8601String(),
+      };
+
+      debugPrint('[SpeechService] 🎤 STT Log:\n${jsonEncode(logMap)}');
+    } catch (e) {
+      debugPrint('[SpeechService] Log STT error: $e');
     }
   }
 

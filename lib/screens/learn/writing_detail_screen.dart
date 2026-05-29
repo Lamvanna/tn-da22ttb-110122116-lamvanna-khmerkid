@@ -5,6 +5,7 @@ import '../../constants/app_colors.dart';
 import '../../models/khmer_writing.dart';
 import '../../widgets/app_header.dart';
 import '../../services/score_service.dart';
+import '../../services/scoring_service.dart';
 
 /// Trang chi tiết tập viết — Canvas lớn với chữ mẫu mờ
 class WritingDetailScreen extends StatefulWidget {
@@ -49,14 +50,47 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
   });
 
   Future<void> _markDone() async {
+    final canvasBox = context.findRenderObject() as RenderBox?;
+    final size = canvasBox?.size ?? const Size(300, 300);
+
+    final recognition = ScoringService.instance.recognizeWriting(
+      character: _lesson.character,
+      strokes: _strokes,
+      canvasSize: size,
+    );
+
+    if (!recognition.passed) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              const Icon(Icons.cancel_rounded, color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+              Text('Chưa đạt! Điểm viết: ${recognition.finalScore.round()}%',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+            ]),
+            const SizedBox(height: 6),
+            ...recognition.tips.map((tip) => Text('• $tip',
+              style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.white.withOpacity(0.9)))),
+          ],
+        ),
+        backgroundColor: AppColors.coral,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 4)));
+      return;
+    }
+
     setState(() {
       _lesson.isLearned = true;
-      _lesson.starRating = 3;
+      _lesson.starRating = recognition.stars;
     });
     
     try {
       final scoreService = await ScoreService.getInstance();
-      await scoreService.completeWritingLesson(_current, 3, lessonId: null);
+      await scoreService.completeWritingLesson(_current, recognition.stars, lessonId: null);
     } catch (e) {
       debugPrint('Error saving writing progress: $e');
     }
@@ -66,13 +100,17 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
       content: Row(children: [
         const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
         const SizedBox(width: 8),
-        Text('Hoàn thành "${_lesson.character}" (${_lesson.romanized})!',
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+        Expanded(
+          child: Text(
+            'Hoàn thành "${_lesson.character}" (${recognition.finalScore.round()}%) - ${recognition.stars} ⭐!',
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+          ),
+        ),
       ]),
       backgroundColor: AppColors.tertiary,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      duration: const Duration(seconds: 2)));
+      duration: const Duration(seconds: 3)));
   }
 
   void _next() {

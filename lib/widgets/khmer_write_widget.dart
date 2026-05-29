@@ -6,6 +6,7 @@ import '../constants/app_colors.dart';
 import '../services/scoring_service.dart';
 import '../services/ocr_service.dart';
 import '../data/stroke_guide_data.dart';
+import '../data/khmer_stroke_templates.dart';
 import 'dart:math' as math;
 
 /// ════════════════════════════════════════════════════════════════════
@@ -53,6 +54,7 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
   bool? _passed;
   bool _showHint = false;
   WritingResult? _result;
+  RecognitionResult? _recResult;
   bool _checking = false;
   final GlobalKey _canvasKey = GlobalKey();
 
@@ -65,6 +67,8 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
+    // Asynchronously preload the high-fidelity font shape template
+    KhmerStrokeTemplateData.loadDynamicFontTemplate(widget.character);
   }
 
   @override
@@ -78,6 +82,7 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
         _current = [];
         _passed = null;
         _result = null;
+        _recResult = null;
       });
 
   Future<void> _check() async {
@@ -121,24 +126,29 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
         }
       }
 
-      // Fallback: stroke-based scoring
+      // Fallback: advanced $1 shape recognizer with grid + direction analysis
       final canvasBox =
           _canvasKey.currentContext?.findRenderObject() as RenderBox?;
       final size = canvasBox?.size ?? const Size(300, 300);
 
-      final result = ScoringService.instance.scoreWriting(
+      final recognition = ScoringService.instance.recognizeWriting(
+        character: widget.character,
         strokes: _strokes,
-        canvasWidth: size.width,
-        canvasHeight: size.height,
-        expectedCharacter: widget.character,
+        canvasSize: size,
       );
 
       setState(() {
-        _result = result;
-        _passed = result.passed;
+        _recResult = recognition;
+        _result = WritingResult(
+          score: recognition.finalScore.round(),
+          passed: recognition.passed,
+          stars: recognition.stars,
+          feedback: recognition.feedback,
+        );
+        _passed = recognition.passed;
       });
 
-      if (result.passed) {
+      if (recognition.passed) {
         _bounceCtrl.forward(from: 0);
         widget.onComplete?.call();
       }
@@ -380,11 +390,11 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
               ),
               Center(
                 child: Padding(
-                  padding: EdgeInsets.only(bottom: 20.h),
+                  padding: EdgeInsets.only(top: 6.h),
                   child: Text(
                     widget.character,
                     style: GoogleFonts.battambang(
-                      fontSize: 180.sp,
+                      fontSize: 260.sp,
                       fontWeight: FontWeight.w700,
                       color: AppColors.tertiary.withValues(alpha: 0.65),
                     ),
@@ -432,11 +442,11 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
               // Guide letter (very light)
               Center(
                 child: Padding(
-                  padding: EdgeInsets.only(bottom: 20.h),
+                  padding: EdgeInsets.only(top: 6.h),
                   child: Text(
                     widget.character,
                     style: GoogleFonts.battambang(
-                      fontSize: 180.sp,
+                      fontSize: 260.sp,
                       fontWeight: FontWeight.w300,
                       color: widget.accentColor.withValues(alpha: 0.1),
                     ),
@@ -445,6 +455,7 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
               ),
               // Drawing surface
               GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onPanStart: (d) => setState(() {
                   _current = [d.localPosition];
                   _passed = null;
@@ -453,12 +464,15 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
                 onPanUpdate: (d) =>
                     setState(() => _current.add(d.localPosition)),
                 onPanEnd: (_) => setState(() {
-                  _strokes.add(List.from(_current));
-                  _current = [];
+                  if (_current.isNotEmpty) {
+                    _strokes.add(List.from(_current));
+                    _current = [];
+                  }
                 }),
-                child: CustomPaint(
-                  size: Size.infinite,
-                  painter: _StrokePainterWidget(_strokes, _current),
+                child: SizedBox.expand(
+                  child: CustomPaint(
+                    painter: _StrokePainterWidget(_strokes, _current),
+                  ),
                 ),
               ),
               // Floating Result Banner inside the Stack
@@ -497,43 +511,145 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
                             ),
                           ],
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              _passed! ? '🎉' : '😅',
-                              style: TextStyle(fontSize: 18.sp),
-                            ),
-                            SizedBox(width: 8.w),
-                            Expanded(
-                              child: Text(
-                                _passed!
-                                    ? 'Đẹp lắm! ${_result!.score}%'
-                                    : _result!.feedback,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: _passed!
-                                      ? AppColors.tertiaryDark
-                                      : AppColors.coralDark,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  _passed! ? '🎉' : '😅',
+                                  style: TextStyle(fontSize: 18.sp),
                                 ),
-                              ),
-                            ),
-                            if (_passed!) ...[
-                              SizedBox(width: 4.w),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: List.generate(
-                                  3,
-                                  (i) => Icon(
-                                    i < _result!.stars
-                                        ? Icons.star_rounded
-                                        : Icons.star_outline_rounded,
-                                    size: 18.w,
-                                    color: i < _result!.stars
-                                        ? AppColors.secondary
-                                        : AppColors.surfaceContainerHighest,
+                                SizedBox(width: 8.w),
+                                Expanded(
+                                  child: Text(
+                                    _passed!
+                                        ? 'Tuyệt vời! ${_result!.score}%'
+                                        : 'Chưa đạt! ${_result!.score}%',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w800,
+                                      color: _passed!
+                                          ? AppColors.tertiaryDark
+                                          : AppColors.coralDark,
+                                    ),
                                   ),
+                                ),
+                                if (_passed!) ...[
+                                  SizedBox(width: 4.w),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: List.generate(
+                                      3,
+                                      (i) => Icon(
+                                        i < _result!.stars
+                                            ? Icons.star_rounded
+                                            : Icons.star_outline_rounded,
+                                        size: 18.w,
+                                        color: i < _result!.stars
+                                            ? AppColors.secondary
+                                            : AppColors.surfaceContainerHighest,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            if (_recResult != null) ...[
+                              SizedBox(height: 6.h),
+                              Divider(
+                                color: (_passed! ? AppColors.tertiary : AppColors.coral).withValues(alpha: 0.15),
+                                height: 1.h,
+                              ),
+                              SizedBox(height: 6.h),
+                              // Feedback lines with visual check/cross markers
+                              ..._recResult!.feedback.split('\n').map((line) {
+                                final isCorrect = line.startsWith('✓');
+                                final isIncorrect = line.startsWith('✗');
+                                final isWarning = line.startsWith('△');
+                                final hasPrefix = isCorrect || isIncorrect || isWarning;
+                                final displayLine = hasPrefix ? line.substring(2) : line;
+                                return Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 2.h),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(
+                                        isCorrect
+                                            ? Icons.check_circle_rounded
+                                            : isIncorrect
+                                                ? Icons.cancel_rounded
+                                                : Icons.info_rounded,
+                                        size: 14.w,
+                                        color: isCorrect
+                                            ? Colors.green[700]
+                                            : isIncorrect
+                                                ? Colors.red[700]
+                                                : Colors.orange[700],
+                                      ),
+                                      SizedBox(width: 8.w),
+                                      Expanded(
+                                        child: Text(
+                                          displayLine,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                              if (!_passed! && _recResult!.tips.isNotEmpty) ...[
+                                SizedBox(height: 4.h),
+                                Text(
+                                  'Gợi ý sửa:',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.coralDark,
+                                  ),
+                                ),
+                                ..._recResult!.tips.map((tip) => Padding(
+                                  padding: EdgeInsets.only(left: 4.w, top: 2.h),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '•',
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          color: AppColors.coral,
+                                        ),
+                                      ),
+                                      SizedBox(width: 6.w),
+                                      Expanded(
+                                        child: Text(
+                                          tip,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 11.sp,
+                                            fontWeight: FontWeight.w500,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )),
+                              ],
+                            ] else ...[
+                              // Fallback display if OCR result
+                              SizedBox(height: 4.h),
+                              Text(
+                                _result!.feedback,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: _passed! ? AppColors.tertiaryDark : AppColors.coralDark,
                                 ),
                               ),
                             ],

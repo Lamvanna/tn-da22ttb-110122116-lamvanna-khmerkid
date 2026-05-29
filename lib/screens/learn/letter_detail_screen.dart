@@ -232,26 +232,30 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
     }
   }
 
-  void _onLetterCompleted() async {
+  void _onLetterCompleted() {
     _letters[_idx].isLearned = true;
     _letters[_idx].starRating = 3;
 
-    try {
-      final scoreService = await ScoreService.getInstance();
-      await scoreService.completeLetterLesson(
-        _idx,
-        3,
-        lessonId: _letter.id,
-        letterText: _letter.character,
-        transliteration: _letter.romanized,
-      );
-    } catch (e) {
-      debugPrint('⚠️ Error completing letter lesson: $e');
-    }
-
-    Future.delayed(const Duration(milliseconds: 300), () {
+    // Show completion dialog immediately (with a tiny 150ms delay for a smooth visual transition)
+    Future.delayed(const Duration(milliseconds: 150), () {
       if (!mounted) return;
       _showCompletionDialog();
+    });
+
+    // Save progress to local DB (Isar) and sync with MongoDB backend in the background asynchronously
+    Future.microtask(() async {
+      try {
+        final scoreService = await ScoreService.getInstance();
+        await scoreService.completeLetterLesson(
+          _idx,
+          3,
+          lessonId: _letter.id,
+          letterText: _letter.character,
+          transliteration: _letter.romanized,
+        );
+      } catch (e) {
+        debugPrint('⚠️ Error completing letter lesson in background: $e');
+      }
     });
   }
 
@@ -395,7 +399,9 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
             _buildHeader(),
             Expanded(
               child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
+                physics: _activeSheet == 3
+                    ? const NeverScrollableScrollPhysics()
+                    : const BouncingScrollPhysics(),
                 padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
                 child: ScaleTransition(
                   scale: _scaleAnim,

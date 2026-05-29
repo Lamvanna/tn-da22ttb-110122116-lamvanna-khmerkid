@@ -13,6 +13,7 @@ const authRoutes = require('./authRoutes');
 const userRoutes = require('./userRoutes');
 const lessonRoutes = require('./lessonRoutes');
 const progressRoutes = require('./progressRoutes');
+const templateRoutes = require('./templateRoutes');
 const { listeningRouter, speakingRouter, writingRouter, readingRouter } = require('./skillRoutes');
 const { gameRouter, missionRouter, badgeRouter, achievementRouter, rankRouter, uploadRouter, adminRouter } = require('./otherRoutes');
 
@@ -23,6 +24,7 @@ router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/lessons', lessonRoutes);
 router.use('/progress', progressRoutes);
+router.use('/templates', templateRoutes);
 router.use('/listening', listeningRouter);
 router.use('/speaking', speakingRouter);
 router.use('/writing', writingRouter);

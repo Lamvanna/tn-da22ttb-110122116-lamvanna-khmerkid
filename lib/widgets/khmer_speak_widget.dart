@@ -1,3 +1,5 @@
+import 'dart:convert' show jsonEncode;
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -60,6 +62,9 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
   String _statusMsg = '';
   bool _hasResult = false;
   PronunciationResult? _result;
+  double _rawConfidence = 0.0;
+  PronunciationScoreResult? _scoreResult;
+  bool _khmerUnsupported = false;
 
   @override
   void initState() {
@@ -78,9 +83,12 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
   Future<void> _initServices() async {
     await _tts.init();
 
-    _speech.onResult = (text, isFinal) {
+    _speech.onResult = (text, confidence, isFinal) {
       if (mounted) {
-        setState(() => _recognized = text);
+        setState(() {
+          _recognized = text;
+          _rawConfidence = confidence;
+        });
         if (isFinal) {
           _onListeningDone();
         }
@@ -106,7 +114,15 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
     };
 
     final ok = await _speech.init();
-    if (mounted) setState(() => _sttReady = ok);
+    if (mounted) {
+      setState(() {
+        _sttReady = ok;
+        _khmerUnsupported = ok && !_speech.isKhmerAvailable;
+        if (_khmerUnsupported) {
+          _statusMsg = 'Thiết bị chưa tải gói offline Khmer (Đang sử dụng nhận dạng qua mạng).';
+        }
+      });
+    }
   }
 
   void _onListeningDone() {
@@ -185,7 +201,17 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
         );
       }
       final ok = await _speech.init();
-      if (mounted) setState(() => _sttReady = ok);
+      if (mounted) {
+        setState(() {
+          _sttReady = ok;
+          _khmerUnsupported = ok && !_speech.isKhmerAvailable;
+          if (_khmerUnsupported) {
+            _statusMsg = 'Thiết bị chưa tải gói offline Khmer (Đang sử dụng nhận dạng qua mạng).';
+          } else {
+            _statusMsg = '';
+          }
+        });
+      }
       if (!ok && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -210,21 +236,76 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
       return;
     }
 
-    final result = _scoring.scorePronunciation(
-      spoken: _recognized,
-      character: widget.character,
-      romanized: widget.romanized,
-      pronunciation: widget.pronunciation,
+    final double calibConfidence = ScoringService.calibrateConfidence(_rawConfidence);
+
+    // 1. Kiểm tra Confidence Gate
+    if (calibConfidence < 0.5) {
+      setState(() {
+        _statusMsg = 'Chúng tôi nghe chưa rõ. Vui lòng đọc lại.';
+        _result = null;
+        _scoreResult = null;
+        _hasResult = true;
+      });
+      _logSessionResult(null);
+      return;
+    }
+
+    // 2. Thực hiện chấm điểm biệt lập thông minh (Phase 2 & 5)
+    final scoreResult = _scoring.scorePronunciationSeparated(
+      targetCharacter: widget.character,
+      recognizedText: _recognized,
+      confidence: _rawConfidence,
       passThreshold: widget.passThreshold,
     );
 
+    // 3. Khớp highlights cho giao diện trực quan
+    final highlights = _scoring.buildHighlights(_recognized, widget.character, scoreResult.passed);
+
+    // 4. Đồng bộ adapter PronunciationResult cho tính tương thích ngược của UI
+    final pronunciationRes = PronunciationResult(
+      accuracy: scoreResult.weightedScore.round(),
+      passed: scoreResult.passed,
+      stars: _accuracyToStars(scoreResult.weightedScore.round()),
+      matchedTarget: widget.character,
+      highlights: highlights,
+    );
+
     setState(() {
-      _result = result;
+      _scoreResult = scoreResult;
+      _result = pronunciationRes;
       _hasResult = true;
     });
 
-    if (result.passed) {
+    _logSessionResult(scoreResult);
+
+    if (scoreResult.passed) {
       widget.onComplete?.call();
+    }
+  }
+
+  void _logSessionResult(PronunciationScoreResult? scoreResult) {
+    try {
+      final osName = Platform.isAndroid ? 'Android' : (Platform.isIOS ? 'iOS' : Platform.operatingSystem);
+      final deviceInfo = '$osName ${Platform.operatingSystemVersion}';
+
+      final logMap = {
+        'sessionId': 'speak_${widget.character}_${DateTime.now().millisecondsSinceEpoch}',
+        'character': widget.character,
+        'recognizedText': _recognized,
+        'confidence': double.parse(_rawConfidence.toStringAsFixed(2)),
+        'localeUsed': _speech.activeLocale,
+        'localeSupported': _speech.isKhmerAvailable,
+        'rawScore': scoreResult != null ? scoreResult.rawScore.round() : 0,
+        'weightedScore': scoreResult != null ? scoreResult.weightedScore.round() : 0,
+        'passed': scoreResult != null ? scoreResult.passed : false,
+        'device': deviceInfo,
+        'os': Platform.operatingSystem,
+        'createdAt': DateTime.now().toIso8601String(),
+      };
+
+      debugPrint('[KhmerSpeakWidget] 📊 Session Log:\n${jsonEncode(logMap)}');
+    } catch (e) {
+      debugPrint('[KhmerSpeakWidget] Log session error: $e');
     }
   }
 
@@ -240,6 +321,8 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
     setState(() {
       _hasResult = false;
       _result = null;
+      _scoreResult = null;
+      _rawConfidence = 0.0;
       _recognized = '';
       _statusMsg = '';
     });
@@ -271,10 +354,10 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
 
         // ── Content ──
         Expanded(
-          child: Align(
-            alignment: const Alignment(0, -0.3),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -409,7 +492,7 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
                     ),
 
                   // Result
-                  if (_hasResult && _result != null) _buildResult(),
+                  if (_hasResult) _buildResult(),
 
                   // Status message
                   if (!_hasResult)
@@ -551,11 +634,117 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
     );
   }
 
+  int _accuracyToStars(int accuracy) {
+    if (accuracy >= 90) return 3;
+    if (accuracy >= 80) return 2;
+    if (accuracy >= 70) return 1;
+    return 0;
+  }
+
+  Widget _buildDetailRow(
+    String label, 
+    String value, {
+    bool isKhmerTarget = false,
+    bool isKhmerRecognized = false,
+    Color? textColor,
+    FontWeight fontWeight = FontWeight.w700,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 90.w,
+          child: Text(
+            label,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textHint,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: isKhmerTarget || isKhmerRecognized
+                ? GoogleFonts.battambang(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.bold,
+                    color: textColor ?? AppColors.primaryDark,
+                  )
+                : GoogleFonts.plusJakartaSans(
+                    fontSize: 14.sp,
+                    fontWeight: fontWeight,
+                    color: textColor ?? AppColors.textPrimary,
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildResult() {
-    final r = _result!;
+    final double calibConfidence = ScoringService.calibrateConfidence(_rawConfidence);
+    final r = _result;
+
+    if (r == null) {
+      // Confidence gate failed
+      return Container(
+        margin: EdgeInsets.only(top: 8.h),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: AppColors.coralSurface,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: AppColors.coral.withValues(alpha: 0.3),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10.r,
+              offset: Offset(0, 4.h),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Warning header
+            Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: AppColors.coral, size: 24.w),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    'Chúng tôi nghe chưa rõ. Vui lòng đọc lại.',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.coralDark,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8.h),
+            const Divider(color: Colors.black12, height: 1),
+            SizedBox(height: 8.h),
+            
+            // Detail grid
+            _buildDetailRow('Bạn đọc', widget.character, isKhmerTarget: true),
+            SizedBox(height: 6.h),
+            _buildDetailRow('Hệ thống nghe', _recognized.isNotEmpty ? _recognized : '(không rõ)', isKhmerRecognized: true),
+            SizedBox(height: 6.h),
+            _buildDetailRow('Độ tin cậy', '${(calibConfidence * 100).toStringAsFixed(0)}% (${_rawConfidence.toStringAsFixed(2)} raw)'),
+          ],
+        ),
+      );
+    }
+
+    // Normal score display
     return Container(
-      margin: EdgeInsets.only(top: 4.h),
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+      margin: EdgeInsets.only(top: 8.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       decoration: BoxDecoration(
         color: r.passed
             ? AppColors.tertiarySurface
@@ -566,77 +755,117 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
               ? AppColors.tertiary.withValues(alpha: 0.3)
               : AppColors.coral.withValues(alpha: 0.3),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10.r,
+            offset: Offset(0, 4.h),
+          ),
+        ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Emoji & Success/Fail Feedback Header
           Row(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(r.emoji, style: TextStyle(fontSize: 20.sp)),
-              SizedBox(width: 8.w),
-              Text(
-                '${r.accuracy}%',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.w800,
-                  color: r.passed
-                      ? AppColors.tertiaryDark
-                      : AppColors.coralDark,
-                ),
+              Row(
+                children: [
+                  Text(r.emoji, style: TextStyle(fontSize: 20.sp)),
+                  SizedBox(width: 8.w),
+                  Text(
+                    r.feedback,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w700,
+                      color: r.passed
+                          ? AppColors.tertiaryDark
+                          : AppColors.coralDark,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(width: 8.w),
-              Text(
-                r.feedback,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w600,
-                  color: r.passed
-                      ? AppColors.tertiaryDark
-                      : AppColors.coralDark,
+              // Stars display
+              Row(
+                children: List.generate(
+                  3,
+                  (i) => Icon(
+                    i < r.stars
+                        ? Icons.star_rounded
+                        : Icons.star_outline_rounded,
+                    size: 18.w,
+                    color: i < r.stars
+                        ? AppColors.secondary
+                        : AppColors.surfaceContainerHighest,
+                  ),
                 ),
               ),
             ],
           ),
+          SizedBox(height: 8.h),
+          const Divider(color: Colors.black12, height: 1),
+          SizedBox(height: 8.h),
+
+          // Detail rows
+          _buildDetailRow('Bạn đọc', widget.character, isKhmerTarget: true),
+          SizedBox(height: 6.h),
+          _buildDetailRow('Hệ thống nghe', _recognized, isKhmerRecognized: true),
+          SizedBox(height: 6.h),
+          
+          // Highlights row
           if (_recognized.isNotEmpty) ...[
-            SizedBox(height: 6.h),
-            // Highlighted transcript
-            Wrap(
-              spacing: 4.w,
-              children: r.highlights.map((h) {
-                return Text(
-                  h.text,
-                  style: GoogleFonts.battambang(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: h.isCorrect
-                        ? AppColors.tertiaryDark
-                        : AppColors.errorRed,
-                    decoration: h.isCorrect
-                        ? null
-                        : TextDecoration.lineThrough,
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-          if (r.passed) ...[
-            SizedBox(height: 4.h),
             Row(
-              mainAxisSize: MainAxisSize.min,
-              children: List.generate(
-                3,
-                (i) => Icon(
-                  i < r.stars
-                      ? Icons.star_rounded
-                      : Icons.star_outline_rounded,
-                  size: 18.w,
-                  color: i < r.stars
-                      ? AppColors.secondary
-                      : AppColors.surfaceContainerHighest,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 90.w,
+                  child: Text(
+                    'Đánh giá từ:',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textHint,
+                    ),
+                  ),
                 ),
-              ),
+                Expanded(
+                  child: Wrap(
+                    spacing: 4.w,
+                    children: r.highlights.map((h) {
+                      return Text(
+                        h.text,
+                        style: GoogleFonts.battambang(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: h.isCorrect
+                              ? AppColors.tertiaryDark
+                              : AppColors.errorRed,
+                          decoration: h.isCorrect
+                              ? null
+                              : TextDecoration.lineThrough,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
             ),
+            SizedBox(height: 6.h),
           ],
+
+          _buildDetailRow('Độ tin cậy', '${(calibConfidence * 100).toStringAsFixed(0)}% (${_rawConfidence.toStringAsFixed(2)} raw)'),
+          SizedBox(height: 6.h),
+          if (_scoreResult != null) ...[
+            _buildDetailRow('Phương thức', _scoreResult!.matchMethod),
+            SizedBox(height: 6.h),
+          ],
+          _buildDetailRow(
+            'Điểm số', 
+            '${r.accuracy}%', 
+            textColor: r.passed ? AppColors.tertiaryDark : AppColors.coralDark,
+            fontWeight: FontWeight.w800,
+          ),
         ],
       ),
     );

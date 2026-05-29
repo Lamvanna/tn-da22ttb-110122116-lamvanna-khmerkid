@@ -45,6 +45,22 @@ const writingResultSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    shapeScore: {
+      type: Number,
+      default: 0,
+    },
+    strokeScore: {
+      type: Number,
+      default: 0,
+    },
+    directionScore: {
+      type: Number,
+      default: 0,
+    },
+    strokeCount: {
+      type: Number,
+      default: 0,
+    },
     xpEarned: {
       type: Number,
       default: 0,

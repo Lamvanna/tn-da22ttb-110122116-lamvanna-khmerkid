@@ -6,6 +6,10 @@
 class StrokeGuideData {
   StrokeGuideData._();
 
+  static bool hasExplicitGuide(String character) {
+    return _data.containsKey(character);
+  }
+
   static List<List<double>> getStrokes(String character) {
     return _data[character] ?? _defaultStrokes;
   }

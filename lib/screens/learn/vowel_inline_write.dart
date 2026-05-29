@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_vowel.dart';
+import '../../services/scoring_service.dart';
 
 class VowelInlineWriteContent extends StatefulWidget {
   final KhmerVowel vowel;
@@ -17,14 +18,27 @@ class _S extends State<VowelInlineWriteContent> {
   List<Offset> _current = [];
   bool? _passed;
   bool _showHint = false;
+  final GlobalKey _canvasKey = GlobalKey();
 
   void _clear() => setState(() { _strokes.clear(); _current = []; _passed = null; });
 
   void _check() {
-    final total = _strokes.fold<int>(0, (s, l) => s + l.length);
-    if (total < 10) { setState(() => _passed = false); return; }
-    setState(() => _passed = true);
-    widget.onComplete();
+    final canvasBox = _canvasKey.currentContext?.findRenderObject() as RenderBox?;
+    final size = canvasBox?.size ?? const Size(200, 200);
+
+    final recognition = ScoringService.instance.recognizeWriting(
+      character: widget.vowel.displayCharacter,
+      strokes: _strokes,
+      canvasSize: size,
+    );
+
+    setState(() {
+      _passed = recognition.passed;
+    });
+
+    if (recognition.passed) {
+      widget.onComplete();
+    }
   }
 
   @override
@@ -81,10 +95,46 @@ class _S extends State<VowelInlineWriteContent> {
               child: Text(widget.vowel.displayCharacter, style: GoogleFonts.battambang(
                 fontSize: 180.sp, fontWeight: FontWeight.w300, color: const Color(0xFFD7CCC8).withValues(alpha: 0.45))))),
             GestureDetector(
+              key: _canvasKey,
               onPanStart: (d) => setState(() { _current = [d.localPosition]; _passed = null; }),
               onPanUpdate: (d) => setState(() => _current.add(d.localPosition)),
               onPanEnd: (_) => setState(() { _strokes.add(List.from(_current)); _current = []; }),
               child: CustomPaint(size: Size.infinite, painter: _StrokePainter(_strokes, _current))),
+            if (_passed != null)
+              Positioned(
+                left: 10.w,
+                right: 10.w,
+                bottom: 10.h,
+                child: Container(
+                  padding: EdgeInsets.all(8.w),
+                  decoration: BoxDecoration(
+                    color: _passed! ? AppColors.tertiarySurface : AppColors.coralSurface,
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(
+                      color: _passed!
+                          ? AppColors.tertiary.withValues(alpha: 0.35)
+                          : AppColors.coral.withValues(alpha: 0.35),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 6.r,
+                        offset: Offset(0, 2.h),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    _passed! ? 'Viết rất đẹp! 🎉' : 'Nét vẽ chưa chuẩn. Hãy thử viết lại nhé!',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w800,
+                      color: _passed! ? AppColors.tertiaryDark : AppColors.coralDark,
+                    ),
+                  ),
+                ),
+              ),
           ]))));
   }
 

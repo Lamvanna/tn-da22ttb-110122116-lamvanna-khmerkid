@@ -260,25 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         decorationColor: Colors.white.withValues(alpha: 0.5))))),
                                 ]),
 
-                                SizedBox(height: 20.h),
 
-                                // Skip button — Dùng thử
-                                GestureDetector(
-                                  onTap: () => Navigator.pushReplacement(context,
-                                    MaterialPageRoute(builder: (_) => const MainScreen())),
-                                  behavior: HitTestBehavior.opaque,
-                                  child: Container(
-                                    width: double.infinity,
-                                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
-                                      borderRadius: BorderRadius.circular(50.r)),
-                                    child: Center(child: Text('Dùng thử không đăng nhập',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 14.sp, fontWeight: FontWeight.w500,
-                                        color: Colors.white.withValues(alpha: 0.8)))),
-                                  ),
-                                ),
                               ]),
                             ),
                           ),

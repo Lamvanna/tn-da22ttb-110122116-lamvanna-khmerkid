@@ -7,6 +7,7 @@ import '../constants/app_colors.dart';
 import '../services/tts_service.dart';
 import '../services/speech_service.dart';
 import '../services/scoring_service.dart';
+import '../services/audio_preprocessing_service.dart';
 
 /// ════════════════════════════════════════════════════════════════════
 /// KhmerSpeakWidget — Widget NÓI tái sử dụng
@@ -58,13 +59,22 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
 
   bool _sttReady = false;
   bool _isListening = false;
+  bool _isStartingListening = false;
   String _recognized = '';
+  List<String> _alternates = const [];
+  String _matchedText = '';
   String _statusMsg = '';
   bool _hasResult = false;
   PronunciationResult? _result;
   double _rawConfidence = 0.0;
   PronunciationScoreResult? _scoreResult;
   bool _khmerUnsupported = false;
+
+  // Audio visualization
+  double _audioLevel = 0.0;
+  final List<double> _audioLevelHistory = List.filled(20, 0.0); // 20 bars
+  int _audioLevelIndex = 0;
+  AudioAnalysisResult? _audioAnalysis;
 
   @override
   void initState() {
@@ -83,15 +93,34 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
   Future<void> _initServices() async {
     await _tts.init();
 
-    _speech.onResult = (text, confidence, isFinal) {
+    _speech.onResult = (text, confidence, isFinal, alternates) {
       if (mounted) {
         setState(() {
           _recognized = text;
+          _alternates = alternates;
           _rawConfidence = confidence;
         });
         if (isFinal) {
           _onListeningDone();
         }
+      }
+    };
+
+    _speech.onAudioLevel = (level) {
+      if (mounted && _isListening) {
+        setState(() {
+          _audioLevel = level;
+          _audioLevelHistory[_audioLevelIndex] = level;
+          _audioLevelIndex = (_audioLevelIndex + 1) % _audioLevelHistory.length;
+        });
+      }
+    };
+
+    _speech.onAudioQualityAnalysis = (analysis) {
+      if (mounted) {
+        setState(() {
+          _audioAnalysis = analysis;
+        });
       }
     };
     _speech.onError = (err) {
@@ -134,35 +163,75 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
 
   @override
   void dispose() {
-    _speech.stop();
+    // Cleanup callbacks để tránh memory leak
+    _speech.onResult = null;
+    _speech.onError = null;
+    _speech.onStatus = null;
+    _speech.onAudioLevel = null;
+    _speech.onAudioQualityAnalysis = null;
+
+    // Stop services
+    _speech.cancel();
     _tts.stop();
+
+    // Dispose controllers
     _pulseCtrl.dispose();
     _timerCtrl.dispose();
+
     super.dispose();
   }
 
   Future<void> _startListening() async {
-    await _tts.stop();
-    // Safe delay to let mobile audio hardware reset before opening the mic
-    await Future.delayed(const Duration(milliseconds: 350));
-    setState(() {
-      _recognized = '';
-      _statusMsg = '';
-      _hasResult = false;
-      _result = null;
-      _isListening = true;
-    });
-    _pulseCtrl.repeat(reverse: true);
-    _timerCtrl.forward(from: 0);
+    // Debounce: tránh spam click
+    if (_isStartingListening) {
+      debugPrint('[KhmerSpeakWidget] Already starting, ignoring...');
+      return;
+    }
 
-    final ok = await _speech.startListening();
-    if (!ok && mounted) {
-      _pulseCtrl.stop();
-      _timerCtrl.stop();
+    _isStartingListening = true;
+
+    try {
+      await _tts.stop();
+      // Tăng delay lên 500ms để đảm bảo TTS đã dừng hoàn toàn
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      if (!mounted) return;
+
       setState(() {
-        _isListening = false;
-        _statusMsg = 'Lỗi nhận diện. Thử lại!';
+        _recognized = '';
+        _alternates = const [];
+        _matchedText = '';
+        _statusMsg = 'Đang khởi động mic...';
+        _hasResult = false;
+        _result = null;
+        _isListening = true;
+        _audioLevel = 0.0;
+        _audioLevelHistory.fillRange(0, _audioLevelHistory.length, 0.0);
+        _audioLevelIndex = 0;
+        _audioAnalysis = null;
       });
+      _pulseCtrl.repeat(reverse: true);
+      _timerCtrl.forward(from: 0);
+
+      final ok = await _speech.startListening();
+
+      if (!mounted) return;
+
+      if (!ok) {
+        _pulseCtrl.stop();
+        _timerCtrl.stop();
+        setState(() {
+          _isListening = false;
+          _statusMsg = 'Không thể khởi động mic. Vui lòng thử lại!';
+        });
+      } else {
+        // Thành công, xóa status message
+        setState(() {
+          _statusMsg = '';
+        });
+      }
+    } finally {
+      _isStartingListening = false;
     }
   }
 
@@ -177,6 +246,12 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
   }
 
   Future<void> _toggleListening() async {
+    // Debounce: tránh spam click
+    if (_isStartingListening) {
+      debugPrint('[KhmerSpeakWidget] Toggle ignored: already starting');
+      return;
+    }
+
     if (!_sttReady) {
       final permStatus = await _speech.checkPermission();
       if (permStatus == SpeechPermissionStatus.permanentlyDenied) {
@@ -238,8 +313,29 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
 
     final double calibConfidence = ScoringService.calibrateConfidence(_rawConfidence);
 
-    // 1. Kiểm tra Confidence Gate
-    if (calibConfidence < 0.5) {
+    // Chấm điểm trên TẤT CẢ bản chép engine đề xuất và chọn bản khớp nhất.
+    // Engine thường trả bản đầu sai (tiếng Khmer/giọng trẻ), nhưng một alternate
+    // khác lại đúng — đây là lý do "nói vậy mà nhận ra khác".
+    final candidates = <String>[
+      if (_recognized.trim().isNotEmpty) _recognized.trim(),
+      ..._alternates,
+    ];
+    final best = _scoring.scoreBestAlternate(
+      targetCharacter: widget.character,
+      alternates: candidates,
+      confidence: _rawConfidence,
+      romanized: widget.romanized,
+      pronunciation: widget.pronunciation,
+      passThreshold: widget.passThreshold,
+    );
+    final scoreResult = best.result;
+    _matchedText = best.matchedText;
+
+    // Chỉ báo "nghe chưa rõ" khi VỪA không khớp (điểm thấp) VỪA confidence rất thấp.
+    // Nếu văn bản khớp tốt thì luôn chấm, dù máy báo confidence thấp.
+    final bool reallyUnclear =
+        calibConfidence < 0.35 && scoreResult.rawScore < 50.0;
+    if (reallyUnclear) {
       setState(() {
         _statusMsg = 'Chúng tôi nghe chưa rõ. Vui lòng đọc lại.';
         _result = null;
@@ -250,16 +346,8 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
       return;
     }
 
-    // 2. Thực hiện chấm điểm biệt lập thông minh (Phase 2 & 5)
-    final scoreResult = _scoring.scorePronunciationSeparated(
-      targetCharacter: widget.character,
-      recognizedText: _recognized,
-      confidence: _rawConfidence,
-      passThreshold: widget.passThreshold,
-    );
-
-    // 3. Khớp highlights cho giao diện trực quan
-    final highlights = _scoring.buildHighlights(_recognized, widget.character, scoreResult.passed);
+    // Khớp highlights cho giao diện trực quan (dùng bản đã chọn)
+    final highlights = _scoring.buildHighlights(_matchedText, widget.character, scoreResult.passed);
 
     // 4. Đồng bộ adapter PronunciationResult cho tính tương thích ngược của UI
     final pronunciationRes = PronunciationResult(
@@ -317,6 +405,19 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
     );
   }
 
+  /// Văn bản hiển thị ở dòng "Hệ thống nghe": ưu tiên bản chép đã được chọn để
+  /// khớp (matchedText). Nếu bản đó khác bản đoán đầu, hiển thị thêm bản đầu để
+  /// minh bạch ("nghe X, hiểu là Y").
+  String _displayHeard() {
+    final matched = _matchedText.trim();
+    final first = _recognized.trim();
+    if (matched.isEmpty && first.isEmpty) return '(không rõ)';
+    if (matched.isNotEmpty && matched != first && first.isNotEmpty) {
+      return '$matched  (nghe: "$first")';
+    }
+    return matched.isNotEmpty ? matched : first;
+  }
+
   void _retry() {
     setState(() {
       _hasResult = false;
@@ -324,6 +425,8 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
       _scoreResult = null;
       _rawConfidence = 0.0;
       _recognized = '';
+      _alternates = const [];
+      _matchedText = '';
       _statusMsg = '';
     });
   }
@@ -460,6 +563,10 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
                     SizedBox(height: 4.h),
                   ],
 
+                  // Audio quality indicator
+                  if (_isListening && _audioAnalysis != null)
+                    _buildAudioQualityIndicator(),
+
                   // Mic button
                   GestureDetector(
                     onTap: _hasResult ? _retry : _toggleListening,
@@ -469,6 +576,10 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
                     ),
                   ),
                   SizedBox(height: 4.h),
+
+                  // Audio waveform visualization
+                  if (_isListening) _buildWaveform(),
+                  if (_isListening) SizedBox(height: 4.h),
 
                   // Transcript realtime
                   if (_isListening && _recognized.isNotEmpty)
@@ -527,17 +638,21 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
   }
 
   Widget _buildMicButton() {
+    // Tính kích thước động dựa trên audio level
+    final levelScale = _isListening ? (1.0 + _audioLevel * 0.15) : 1.0;
+
     return Column(
       children: [
-        // Triple ring mic
-        Container(
-          width: 110.w,
-          height: 110.w,
+        // Triple ring mic với animation dựa trên audio level
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          width: 110.w * levelScale,
+          height: 110.w * levelScale,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
               color: widget.accentColor
-                  .withValues(alpha: _isListening ? 0.5 : 0.25),
+                  .withValues(alpha: _isListening ? (0.3 + _audioLevel * 0.4) : 0.25),
               width: 1.5.w,
               strokeAlign: BorderSide.strokeAlignOutside,
             ),
@@ -581,12 +696,12 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
                         color: widget.accentColor.withValues(
                           alpha: 0.3 +
                               (_isListening
-                                  ? 0.25 * _pulseCtrl.value
+                                  ? 0.25 * _pulseCtrl.value + _audioLevel * 0.2
                                   : 0),
                         ),
                         blurRadius: (16 +
                                 (_isListening
-                                    ? 12 * _pulseCtrl.value
+                                    ? 12 * _pulseCtrl.value + _audioLevel * 8
                                     : 0))
                             .r,
                         offset: Offset(0, 4.h),
@@ -608,29 +723,128 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
           ),
         ),
         SizedBox(height: 6.h),
-        // Wave bars
+        // Wave bars với animation dựa trên audio level history
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(11, (i) {
             final center = 5;
             final dist = (i - center).abs();
             final base = dist <= 1 ? 16.h : dist <= 3 ? 8.h : 4.h;
+
+            // Lấy audio level từ history cho mỗi bar
+            final historyIndex = (_audioLevelIndex + i) % _audioLevelHistory.length;
+            final levelForBar = _audioLevelHistory[historyIndex];
+
             final h = _isListening
-                ? base * (0.5 + 0.5 * _pulseCtrl.value)
+                ? base * (0.5 + 0.5 * levelForBar)
                 : base * 0.4;
-            return Container(
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 100),
               width: dist <= 1 ? 4.w : 3.w,
               height: h,
               margin: EdgeInsets.symmetric(horizontal: 1.5.w),
               decoration: BoxDecoration(
                 color: widget.accentColor
-                    .withValues(alpha: _isListening ? 0.8 : 0.3),
+                    .withValues(alpha: _isListening ? (0.5 + levelForBar * 0.5) : 0.3),
                 borderRadius: BorderRadius.circular(2.r),
               ),
             );
           }),
         ),
       ],
+    );
+  }
+
+  Widget _buildWaveform() {
+    return Container(
+      height: 60.h,
+      margin: EdgeInsets.symmetric(horizontal: 20.w),
+      padding: EdgeInsets.all(8.w),
+      decoration: BoxDecoration(
+        color: widget.surfaceColor,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: widget.accentColor.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: List.generate(20, (i) {
+          final level = _audioLevelHistory[i];
+          final height = (level * 40.h).clamp(2.h, 40.h);
+
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 100),
+            width: 3.w,
+            height: height,
+            decoration: BoxDecoration(
+              color: level > 0.6
+                  ? AppColors.tertiary
+                  : level > 0.3
+                      ? widget.accentColor
+                      : widget.accentColor.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(2.r),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildAudioQualityIndicator() {
+    if (_audioAnalysis == null) return const SizedBox.shrink();
+
+    final analysis = _audioAnalysis!;
+    Color indicatorColor;
+    IconData indicatorIcon;
+    String indicatorText;
+
+    switch (analysis.quality) {
+      case AudioQuality.excellent:
+        indicatorColor = AppColors.tertiary;
+        indicatorIcon = Icons.check_circle_rounded;
+        indicatorText = 'Xuất sắc';
+        break;
+      case AudioQuality.good:
+        indicatorColor = AppColors.tertiary;
+        indicatorIcon = Icons.check_circle_outline_rounded;
+        indicatorText = 'Tốt';
+        break;
+      case AudioQuality.fair:
+        indicatorColor = AppColors.secondary;
+        indicatorIcon = Icons.info_outline_rounded;
+        indicatorText = 'Khá';
+        break;
+      case AudioQuality.poor:
+        indicatorColor = AppColors.coral;
+        indicatorIcon = Icons.warning_amber_rounded;
+        indicatorText = 'Kém';
+        break;
+      case AudioQuality.veryPoor:
+        indicatorColor = AppColors.errorRed;
+        indicatorIcon = Icons.error_outline_rounded;
+        indicatorText = 'Rất kém';
+        break;
+    }
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: 4.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(indicatorIcon, color: indicatorColor, size: 16.w),
+          SizedBox(width: 4.w),
+          Text(
+            'Chất lượng: $indicatorText',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w600,
+              color: indicatorColor,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -733,7 +947,7 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
             // Detail grid
             _buildDetailRow('Bạn đọc', widget.character, isKhmerTarget: true),
             SizedBox(height: 6.h),
-            _buildDetailRow('Hệ thống nghe', _recognized.isNotEmpty ? _recognized : '(không rõ)', isKhmerRecognized: true),
+            _buildDetailRow('Hệ thống nghe', _displayHeard(), isKhmerRecognized: true),
             SizedBox(height: 6.h),
             _buildDetailRow('Độ tin cậy', '${(calibConfidence * 100).toStringAsFixed(0)}% (${_rawConfidence.toStringAsFixed(2)} raw)'),
           ],

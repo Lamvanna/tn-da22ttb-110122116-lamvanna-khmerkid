@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show NetworkInterface, InternetAddressType;
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
@@ -35,14 +37,184 @@ class AuthService extends ChangeNotifier {
     scopes: ['email', 'profile'],
   );
 
-  /// Tự động lấy URL máy chủ dựa trên nền tảng thiết bị
+  static String _activeBaseUrl = 'http://192.168.1.4:5000/api';
+
+  /// Cổng & đường dẫn API của backend (dùng để ráp URL khi quét mạng)
+  static const int _serverPort = 5000;
+  static const String _apiPath = '/api';
+
+  /// Timeout dùng chung cho mọi request HTTP — tránh "quay mãi" khi server sai IP
+  static const Duration _httpTimeout = Duration(seconds: 12);
+
+  /// Khóa lưu IP server (đã dò được / người dùng nhập tay) trong SharedPreferences
+  static const String _kSavedServerUrl = 'saved_server_url';
+  static const String _kManualServerUrl = 'manual_server_url';
+
+  /// Danh sách các IP máy chủ dự phòng (Candidate IPs)
+  static final List<String> _candidateUrls = [
+    'http://192.168.1.4:5000/api', // IP Wi-Fi phòng/nhà hiện tại
+    'http://172.20.10.4:5000/api', // IP Wi-Fi Hotspot 4G phát từ điện thoại
+    'http://10.0.2.2:5000/api',    // IP máy ảo Android Emulator kết nối với localhost
+    'http://localhost:5000/api',   // IP localhost cho Web/PC
+  ];
+
+  /// Lấy/đặt IP server do người dùng nhập tay (ưu tiên cao nhất)
+  static Future<String?> getManualServerUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_kManualServerUrl);
+  }
+
+  /// Đặt IP server thủ công. Truyền IP thô (vd "192.168.1.50") hoặc URL đầy đủ.
+  /// Truyền null/rỗng để xóa và quay về tự dò.
+  static Future<void> setManualServerUrl(String? ipOrUrl) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (ipOrUrl == null || ipOrUrl.trim().isEmpty) {
+      await prefs.remove(_kManualServerUrl);
+      return;
+    }
+    final normalized = _normalizeUrl(ipOrUrl.trim());
+    await prefs.setString(_kManualServerUrl, normalized);
+    _activeBaseUrl = normalized;
+  }
+
+  /// IP/URL server đang hoạt động (để hiển thị trong màn hình Cài đặt)
+  static String get currentServerUrl => _activeBaseUrl;
+
+  /// Chuẩn hóa input người dùng thành URL API đầy đủ.
+  /// "192.168.1.50" → "http://192.168.1.50:5000/api"
+  static String _normalizeUrl(String input) {
+    var s = input.trim();
+    if (!s.startsWith('http://') && !s.startsWith('https://')) {
+      s = 'http://$s';
+    }
+    final uri = Uri.parse(s);
+    final port = uri.hasPort ? uri.port : _serverPort;
+    return '${uri.scheme}://${uri.host}:$port$_apiPath';
+  }
+
+  /// Ping một URL /health, trả về true nếu server phản hồi 200.
+  static Future<bool> _ping(String url,
+      {Duration timeout = const Duration(milliseconds: 900)}) async {
+    try {
+      final res =
+          await http.get(Uri.parse('$url/health')).timeout(timeout);
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Tự động dò tìm IP máy chủ đang hoạt động.
+  /// Thứ tự ưu tiên: IP nhập tay → IP đã lưu lần trước → danh sách cứng →
+  /// quét subnet của thiết bị. Server tìm được sẽ được ghi nhớ.
+  static Future<void> detectActiveServer() async {
+    if (kIsWeb) {
+      _activeBaseUrl = 'http://localhost:5000/api';
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+
+    // 1) IP người dùng nhập tay — ưu tiên cao nhất
+    final manual = prefs.getString(_kManualServerUrl);
+    if (manual != null && manual.isNotEmpty) {
+      _activeBaseUrl = manual;
+      if (await _ping(manual, timeout: const Duration(seconds: 2))) {
+        debugPrint('✅ [AuthService] Dùng IP thủ công: $manual');
+        return;
+      }
+      debugPrint('⚠️ [AuthService] IP thủ công không phản hồi, thử cách khác: $manual');
+    }
+
+    // 2) IP đã lưu từ lần kết nối thành công gần nhất
+    final saved = prefs.getString(_kSavedServerUrl);
+    final List<String> priority = [
+      if (saved != null && saved.isNotEmpty) saved,
+      ..._candidateUrls,
+    ];
+
+    debugPrint('🔍 [AuthService] Dò tìm IP máy chủ trong danh sách ưu tiên...');
+    final found = await _firstResponding(priority);
+    if (found != null) {
+      _activeBaseUrl = found;
+      await prefs.setString(_kSavedServerUrl, found);
+      debugPrint('🚀 [AuthService] Đã chọn máy chủ: $_activeBaseUrl');
+      return;
+    }
+
+    // 3) Quét subnet của thiết bị (router đổi DHCP, IP cứng không còn đúng)
+    debugPrint('🔎 [AuthService] Không thấy trong danh sách — quét subnet...');
+    final scanned = await _scanLocalSubnet();
+    if (scanned != null) {
+      _activeBaseUrl = scanned;
+      await prefs.setString(_kSavedServerUrl, scanned);
+      debugPrint('🚀 [AuthService] Quét subnet thấy máy chủ: $_activeBaseUrl');
+      return;
+    }
+
+    debugPrint('⚠️ [AuthService] Không phát hiện server nào, dùng IP mặc định: $_activeBaseUrl');
+  }
+
+  /// Ping song song nhiều URL, trả về URL phản hồi đầu tiên (hoặc null).
+  static Future<String?> _firstResponding(List<String> urls) async {
+    final completer = Completer<String?>();
+    var remaining = urls.length;
+    if (remaining == 0) return null;
+    for (final url in urls) {
+      _ping(url).then((ok) {
+        if (ok && !completer.isCompleted) {
+          completer.complete(url);
+        }
+        remaining--;
+        if (remaining == 0 && !completer.isCompleted) {
+          completer.complete(null);
+        }
+      });
+    }
+    return completer.future;
+  }
+
+  /// Quét dải IP cùng subnet với thiết bị để tìm backend.
+  /// Suy ra prefix (vd 192.168.1.) từ IP Wi-Fi của máy, ping .1→.254 theo lô.
+  static Future<String?> _scanLocalSubnet() async {
+    try {
+      final prefixes = <String>{};
+      final interfaces = await NetworkInterface.list(
+        includeLoopback: false,
+        type: InternetAddressType.IPv4,
+      );
+      for (final iface in interfaces) {
+        for (final addr in iface.addresses) {
+          final ip = addr.address; // vd 192.168.1.23
+          final lastDot = ip.lastIndexOf('.');
+          if (lastDot > 0) prefixes.add(ip.substring(0, lastDot + 1));
+        }
+      }
+      if (prefixes.isEmpty) return null;
+
+      for (final prefix in prefixes) {
+        // Quét theo lô 32 host một lần để không nghẽn mạng
+        for (var start = 1; start <= 254; start += 32) {
+          final batch = <String>[];
+          for (var i = start; i < start + 32 && i <= 254; i++) {
+            batch.add('http://$prefix$i:$_serverPort$_apiPath');
+          }
+          final hit = await _firstResponding(batch);
+          if (hit != null) return hit;
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ [AuthService] Lỗi quét subnet: $e');
+    }
+    return null;
+  }
+
+  /// Tự động lấy URL máy chủ dựa trên nền tảng thiết bị hoặc IP đã dò tìm
   String get baseUrl {
     if (kIsWeb) {
       return 'http://localhost:5000/api';
     }
-    // Sử dụng IP Wi-Fi nội bộ máy tính của bạn (172.20.10.4)
-    // Giúp cả điện thoại thật CPH2591 và máy giả lập Android đều kết nối mượt mà
-    return 'http://172.20.10.4:5000/api';
+    return _activeBaseUrl;
   }
 
   /// 1. Tự động Đăng nhập khi mở App (Auto Login)
@@ -105,7 +277,7 @@ class AuthService extends ChangeNotifier {
           'email': email,
           'password': password,
         }),
-      );
+      ).timeout(_httpTimeout);
 
       final responseData = jsonDecode(response.body);
 
@@ -143,7 +315,7 @@ class AuthService extends ChangeNotifier {
           'email': email,
           'password': password,
         }),
-      );
+      ).timeout(_httpTimeout);
 
       final responseData = jsonDecode(response.body);
       _isLoading = false;
@@ -210,7 +382,7 @@ class AuthService extends ChangeNotifier {
         Uri.parse('$baseUrl/auth/google/mobile-signin'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'idToken': idToken}),
-      );
+      ).timeout(_httpTimeout);
 
       final responseData = jsonDecode(response.body);
       _isLoading = false;
@@ -247,10 +419,22 @@ class AuthService extends ChangeNotifier {
       
       // Phát hiện lỗi ApiException (Developer Error hoặc Lỗi kết nối mạng) để gửi cờ báo hiệu cho UI đề xuất Mock Login
       final errorStr = e.toString();
-      bool isDeveloperError = errorStr.contains('ApiException') || 
-                              errorStr.contains('PlatformException') || 
-                              errorStr.contains('network_error') || 
+      bool isDeveloperError = errorStr.contains('ApiException') ||
+                              errorStr.contains('PlatformException') ||
+                              errorStr.contains('network_error') ||
                               errorStr.contains('sign_in_failed');
+
+      // Timeout = server sai IP / không kết nối được → hướng dẫn người dùng
+      if (e is TimeoutException) {
+        return {
+          'success': false,
+          'message':
+              'Không kết nối được máy chủ (quá thời gian chờ). Hãy kiểm tra mạng, '
+              'hoặc vào Cài đặt → Kết nối máy chủ để nhập IP / dò tìm lại.',
+          'isDeveloperError': false,
+          'isTimeout': true,
+        };
+      }
 
       return {
         'success': false,
@@ -261,19 +445,22 @@ class AuthService extends ChangeNotifier {
   }
 
   /// Đăng nhập bằng tài khoản Google giả lập (Bypass SHA-1 và Client ID cho kiểm thử địa phương)
-  Future<Map<String, dynamic>> googleMockLogin() async {
+  Future<Map<String, dynamic>> googleMockLogin({String? email, String? name}) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      // Tạo idToken giả lập theo định dạng mock_email_name_googleId
-      const mockToken = 'mock_kietnguyen@gmail.com_Nguyễn Tuấn Kiệt_google_1234567890';
+      final targetEmail = email ?? 'kietnguyen@gmail.com';
+      final targetName = name ?? 'Nguyễn Tuấn Kiệt';
+      
+      // Tạo idToken giả lập động từ email và tên do người dùng cung cấp (tránh hardcode tài khoản cá nhân trong code)
+      final mockToken = 'mock_${targetEmail}_${targetName}_google_1234567890';
 
       final response = await http.post(
         Uri.parse('$baseUrl/auth/google/mobile-signin'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'idToken': mockToken}),
-      );
+      ).timeout(_httpTimeout);
 
       final responseData = jsonDecode(response.body);
       _isLoading = false;
@@ -322,7 +509,7 @@ class AuthService extends ChangeNotifier {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_accessToken',
         },
-      );
+      ).timeout(_httpTimeout);
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -387,7 +574,7 @@ class AuthService extends ChangeNotifier {
           'Authorization': 'Bearer $_accessToken',
         },
         body: jsonEncode(body),
-      );
+      ).timeout(_httpTimeout);
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -422,7 +609,7 @@ class AuthService extends ChangeNotifier {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_accessToken',
         },
-      );
+      ).timeout(_httpTimeout);
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -444,7 +631,7 @@ class AuthService extends ChangeNotifier {
         Uri.parse('$baseUrl/auth/refresh-token'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'refreshToken': _refreshToken}),
-      );
+      ).timeout(_httpTimeout);
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -470,14 +657,14 @@ class AuthService extends ChangeNotifier {
 
     try {
       if (_accessToken != null) {
-        // Báo cáo đăng xuất lên server
+        // Báo cáo đăng xuất lên server (timeout ngắn để không treo UI khi offline)
         await http.post(
           Uri.parse('$baseUrl/auth/logout'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $_accessToken',
           },
-        );
+        ).timeout(const Duration(seconds: 5));
       }
     } catch (e) {
       debugPrint('⚠️ Server logout report failed: $e');

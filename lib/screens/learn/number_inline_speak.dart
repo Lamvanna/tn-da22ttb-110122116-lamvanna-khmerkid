@@ -6,6 +6,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_number.dart';
+import '../../services/scoring_service.dart';
 
 class NumberInlineSpeakContent extends StatefulWidget {
   final KhmerNumber number;
@@ -146,27 +147,24 @@ class _S extends State<NumberInlineSpeakContent> with SingleTickerProviderStateM
 
   void _evaluate() {
     if (_hasResult) return;
-    final spoken = _recognized.toLowerCase().trim();
+    final spoken = _recognized.trim();
     if (spoken.isEmpty) { setState(() => _statusMsg = 'Không nhận diện được. Nói to hơn!'); return; }
-    String n(String s) => s.toLowerCase().trim().replaceAll(RegExp(r'\s+'), '');
-    final sn = n(spoken);
-    final targets = [widget.number.romanized, widget.number.pronunciation, widget.number.character, widget.number.value].where((t) => t.isNotEmpty).map(n).toList();
-    bool exact = targets.any((t) => sn.contains(t) || t.contains(sn));
-    if (exact) { _accuracy = 100; _isCorrect = true; } else {
-      double best = 0;
-      for (final t in targets) { final s = _sim(sn, t); if (s > best) best = s; }
-      _accuracy = (best * 100).round().clamp(0, 99);
-      _isCorrect = _accuracy >= 30;
-    }
+    // Số được đọc bằng TỪ Khmer (khmerWord), nên dùng nó làm mục tiêu Khmer,
+    // kèm romanized + pronunciation cho phần Latin.
+    final res = ScoringService.instance.scorePronunciation(
+      spoken: spoken,
+      character: widget.number.khmerWord.isNotEmpty
+          ? widget.number.khmerWord
+          : widget.number.character,
+      romanized: widget.number.romanized,
+      pronunciation: widget.number.pronunciation,
+      passThreshold: 30, // Nương tay với trẻ nhỏ
+    );
+    _accuracy = res.accuracy;
+    _isCorrect = res.passed;
     setState(() => _hasResult = true);
     if (_isCorrect) widget.onComplete();
   }
-
-  double _sim(String a, String b) { if (a.isEmpty || b.isEmpty) return 0; final mx = a.length > b.length ? a.length : b.length; int m = a.length, nn = b.length;
-    final d = List.generate(m + 1, (_) => List.filled(nn + 1, 0));
-    for (int i = 0; i <= m; i++) d[i][0] = i; for (int j = 0; j <= nn; j++) d[0][j] = j;
-    for (int i = 1; i <= m; i++) for (int j = 1; j <= nn; j++) { final c = a[i-1] == b[j-1] ? 0 : 1; d[i][j] = [d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+c].reduce((a,b) => a<b?a:b); }
-    return 1.0 - (d[m][nn] / mx); }
 
   Future<void> _playExample() async { final t = widget.number.pronunciation.isNotEmpty ? widget.number.pronunciation : widget.number.romanized; await _tts.speak(t); }
 

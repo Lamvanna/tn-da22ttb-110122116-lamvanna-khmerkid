@@ -1,15 +1,15 @@
 /// Model dữ liệu cho chữ cái Khmer
 /// Mutable để có thể cập nhật trạng thái học
 class KhmerLetter {
-  String? id;           // ID từ MongoDB Atlas
-  final String character;     // Ký tự Khmer (e.g., "ក")
-  final String romanized;     // Phiên âm Latin (e.g., "ko")
+  String? id; // ID từ MongoDB Atlas
+  final String character; // Ký tự Khmer (e.g., "ក")
+  final String romanized; // Phiên âm Latin (e.g., "ko")
   final String pronunciation; // Phát âm tiếng Việt (e.g., "ka")
-  final String meaning;       // Ý nghĩa / liên tưởng (e.g., "con cò")
-  int starRating;             // Số sao đã đạt (0-5)
-  bool isLearned;             // Đã học chưa
-  final bool isTest;          // Bài kiểm tra
-  final String testRange;     // Phạm vi kiểm tra (e.g., "1-5")
+  final String meaning; // Ý nghĩa / liên tưởng (e.g., "con cò")
+  int starRating; // Số sao đã đạt (0-5)
+  bool isLearned; // Đã học chưa
+  final bool isTest; // Bài kiểm tra
+  final String testRange; // Phạm vi kiểm tra (e.g., "1-5")
 
   KhmerLetter({
     this.id,
@@ -46,68 +46,338 @@ class KhmerLetterData {
 
   static final List<KhmerLetter> consonants = [
     // ══════ NHÓM 1: Bài 1-5 ══════
-    KhmerLetter(character: 'ក', romanized: 'ko', pronunciation: 'ka', meaning: 'con cò'),
-    KhmerLetter(character: 'ខ', romanized: 'kho', pronunciation: 'kha', meaning: 'con hổ'),
-    KhmerLetter(character: 'គ', romanized: 'ko', pronunciation: 'kô', meaning: 'con gà'),
-    KhmerLetter(character: 'ឃ', romanized: 'kho', pronunciation: 'khô', meaning: 'con bò'),
-    KhmerLetter(character: 'ង', romanized: 'ngo', pronunciation: 'ngô', meaning: 'con ngỗng'),
-    // ── Bài 6: Kiểm tra bài 1-5 ──
-    KhmerLetter(character: '📝', romanized: 'Kiểm tra', isTest: true, testRange: '1-5'),
-
-    // ══════ NHÓM 2: Bài 7-11 ══════
-    KhmerLetter(character: 'ច', romanized: 'co', pronunciation: 'cha', meaning: 'con chó'),
-    KhmerLetter(character: 'ឆ', romanized: 'cho', pronunciation: 'chha', meaning: 'con mèo'),
-    KhmerLetter(character: 'ជ', romanized: 'co', pronunciation: 'chô', meaning: 'con cá'),
-    // ══════ ĐANG HỌC ══════
-    KhmerLetter(character: 'ឈ', romanized: 'cho', pronunciation: 'chhô', meaning: 'con hươu', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'ញ', romanized: 'nyo', pronunciation: 'nhô', meaning: 'con thỏ', starRating: 0, isLearned: false),
-    // ── Bài 12: Kiểm tra bài 7-11 ──
-    KhmerLetter(character: '📝', romanized: 'Kiểm tra', isTest: true, testRange: '7-11', starRating: 0, isLearned: false),
+    KhmerLetter(
+      character: 'ក',
+      romanized: 'ka',
+      pronunciation: 'ka',
+      meaning: 'con cò',
+    ),
+    KhmerLetter(
+      character: 'ខ',
+      romanized: 'kha',
+      pronunciation: 'kha',
+      meaning: 'con hổ',
+    ),
+    KhmerLetter(
+      character: 'គ',
+      romanized: 'ko',
+      pronunciation: 'ko',
+      meaning: 'con gà',
+    ),
+    KhmerLetter(
+      character: 'ឃ',
+      romanized: 'kho',
+      pronunciation: 'kho',
+      meaning: 'con bò',
+    ),
+    KhmerLetter(
+      character: 'ង',
+      romanized: 'ngo',
+      pronunciation: 'ngo',
+      meaning: 'con ngỗng',
+    ),
+    // ── Bài 6: ច (cho) ──
+    KhmerLetter(
+      character: 'ច',
+      romanized: 'cho',
+      pronunciation: 'cho',
+      meaning: 'con chó',
+    ),
+    // ── Bài 7: ឆ (chhor) ──
+    KhmerLetter(
+      character: 'ឆ',
+      romanized: 'chhor',
+      pronunciation: 'chhor',
+      meaning: 'con mèo',
+    ),
+    KhmerLetter(
+      character: 'ជ',
+      romanized: 'cho',
+      pronunciation: 'cho',
+      meaning: 'con cá',
+    ),
+    // ── Bài 8: ជ (cho) ──
+    KhmerLetter(
+      character: 'ជ',
+      romanized: 'cho',
+      pronunciation: 'cho',
+      meaning: 'con cá',
+    ),
+    // ── Bài 9: ឈ (chhor) ──
+    KhmerLetter(
+      character: 'ឈ',
+      romanized: 'chhor',
+      pronunciation: 'chhor',
+      meaning: 'con hươu',
+      starRating: 0,
+      isLearned: false,
+    ),
+    // ── Bài 10: ញ (nhor) ──
+    KhmerLetter(
+      character: 'ញ',
+      romanized: 'nhor',
+      pronunciation: 'nhor',
+      meaning: 'con thỏ',
+      starRating: 0,
+      isLearned: false,
+    ),
+    // ── Bài 11: Kiểm tra bài 6-10 ──
+    KhmerLetter(
+      character: '📝',
+      romanized: 'Kiểm tra',
+      isTest: true,
+      testRange: '6-10',
+      starRating: 0,
+      isLearned: false,
+    ),
 
     // ══════ NHÓM 3: Bài 13-17 ══════
-    KhmerLetter(character: 'ដ', romanized: 'do', pronunciation: 'đa', meaning: 'con voi', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'ឋ', romanized: 'tho', pronunciation: 'tha', meaning: 'con rùa', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'ឌ', romanized: 'do', pronunciation: 'đô', meaning: 'con ong', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'ឍ', romanized: 'tho', pronunciation: 'thô', meaning: 'con cua', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'ណ', romanized: 'no', pronunciation: 'na', meaning: 'con rắn', starRating: 0, isLearned: false),
+    KhmerLetter(
+      character: 'ដ',
+      romanized: 'da',
+      pronunciation: 'da',
+      meaning: 'con voi',
+      starRating: 0,
+      isLearned: false,
+    ),
+    KhmerLetter(
+      character: 'ឋ',
+      romanized: 'tha',
+      pronunciation: 'tha',
+      meaning: 'con rùa',
+      starRating: 0,
+      isLearned: false,
+    ),
+    KhmerLetter(
+      character: 'ឌ',
+      romanized: 'do',
+      pronunciation: 'do',
+      meaning: 'con ong',
+      starRating: 0,
+      isLearned: false,
+    ),
+    KhmerLetter(
+      character: 'ឍ',
+      romanized: 'tho',
+      pronunciation: 'tho',
+      meaning: 'con cua',
+      starRating: 0,
+      isLearned: false,
+    ),
+    KhmerLetter(
+      character: 'ណ',
+      romanized: 'na',
+      pronunciation: 'na',
+      meaning: 'con rắn',
+      starRating: 0,
+      isLearned: false,
+    ),
     // ── Bài 18: Kiểm tra bài 13-17 ──
-    KhmerLetter(character: '📝', romanized: 'Kiểm tra', isTest: true, testRange: '13-17', starRating: 0, isLearned: false),
+    KhmerLetter(
+      character: '📝',
+      romanized: 'Kiểm tra',
+      isTest: true,
+      testRange: '13-17',
+      starRating: 0,
+      isLearned: false,
+    ),
 
     // ══════ NHÓM 4: Bài 19-23 ══════
-    KhmerLetter(character: 'ត', romanized: 'to', pronunciation: 'ta', meaning: 'con hổ', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'ថ', romanized: 'tho', pronunciation: 'tha', meaning: 'con ngựa', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'ទ', romanized: 'to', pronunciation: 'tô', meaning: 'con vịt', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'ធ', romanized: 'tho', pronunciation: 'thô', meaning: 'con bướm', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'ន', romanized: 'no', pronunciation: 'nô', meaning: 'con cọp', starRating: 0, isLearned: false),
+    KhmerLetter(
+      character: 'ត',
+      romanized: 'ta',
+      pronunciation: 'ta',
+      meaning: 'con hổ',
+      starRating: 0,
+      isLearned: false,
+    ),
+    KhmerLetter(
+      character: 'ថ',
+      romanized: 'tha',
+      pronunciation: 'tha',
+      meaning: 'con ngựa',
+      starRating: 0,
+      isLearned: false,
+    ),
+    KhmerLetter(
+      character: 'ទ',
+      romanized: 'to',
+      pronunciation: 'to',
+      meaning: 'con vịt',
+      starRating: 0,
+      isLearned: false,
+    ),
+    KhmerLetter(
+      character: 'ធ',
+      romanized: 'tho',
+      pronunciation: 'tho',
+      meaning: 'con bướm',
+      starRating: 0,
+      isLearned: false,
+    ),
+    KhmerLetter(
+      character: 'ន',
+      romanized: 'no',
+      pronunciation: 'no',
+      meaning: 'con cọp',
+      starRating: 0,
+      isLearned: false,
+    ),
     // ── Bài 24: Kiểm tra bài 19-23 ──
-    KhmerLetter(character: '📝', romanized: 'Kiểm tra', isTest: true, testRange: '19-23', starRating: 0, isLearned: false),
+    KhmerLetter(
+      character: '📝',
+      romanized: 'Kiểm tra',
+      isTest: true,
+      testRange: '19-23',
+      starRating: 0,
+      isLearned: false,
+    ),
 
     // ══════ NHÓM 5: Bài 25-29 ══════
-    KhmerLetter(character: 'ប', romanized: 'bo', pronunciation: 'ba', meaning: 'con ếch', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'ផ', romanized: 'pho', pronunciation: 'pha', meaning: 'con ốc', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'ព', romanized: 'po', pronunciation: 'pô', meaning: 'con công', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'ភ', romanized: 'pho', pronunciation: 'phô', meaning: 'con sóc', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'ម', romanized: 'mo', pronunciation: 'ma', meaning: 'con kiến', starRating: 0, isLearned: false),
+    KhmerLetter(
+      character: 'ប',
+      romanized: 'ba',
+      pronunciation: 'ba',
+      meaning: 'con ếch',
+      starRating: 0,
+      isLearned: false,
+    ),
+    KhmerLetter(
+      character: 'ផ',
+      romanized: 'pha',
+      pronunciation: 'pha',
+      meaning: 'con ốc',
+      starRating: 0,
+      isLearned: false,
+    ),
+    KhmerLetter(
+      character: 'ព',
+      romanized: 'po',
+      pronunciation: 'po',
+      meaning: 'con công',
+      starRating: 0,
+      isLearned: false,
+    ),
+    KhmerLetter(
+      character: 'ភ',
+      romanized: 'pho',
+      pronunciation: 'pho',
+      meaning: 'con sóc',
+      starRating: 0,
+      isLearned: false,
+    ),
+    KhmerLetter(
+      character: 'ម',
+      romanized: 'mo',
+      pronunciation: 'mo',
+      meaning: 'con kiến',
+      starRating: 0,
+      isLearned: false,
+    ),
     // ── Bài 30: Kiểm tra bài 25-29 ──
-    KhmerLetter(character: '📝', romanized: 'Kiểm tra', isTest: true, testRange: '25-29', starRating: 0, isLearned: false),
+    KhmerLetter(
+      character: '📝',
+      romanized: 'Kiểm tra',
+      isTest: true,
+      testRange: '25-29',
+      starRating: 0,
+      isLearned: false,
+    ),
 
     // ══════ NHÓM 6: Bài 31-34 ══════
-    KhmerLetter(character: 'យ', romanized: 'yo', pronunciation: 'ya', meaning: 'con dê', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'រ', romanized: 'ro', pronunciation: 'ra', meaning: 'con sư tử', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'ល', romanized: 'lo', pronunciation: 'la', meaning: 'con heo', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'វ', romanized: 'vo', pronunciation: 'va', meaning: 'con chim', starRating: 0, isLearned: false),
+    KhmerLetter(
+      character: 'យ',
+      romanized: 'yo',
+      pronunciation: 'yo',
+      meaning: 'con dê',
+      starRating: 0,
+      isLearned: false,
+    ),
+    KhmerLetter(
+      character: 'រ',
+      romanized: 'ro',
+      pronunciation: 'ro',
+      meaning: 'con sư tử',
+      starRating: 0,
+      isLearned: false,
+    ),
+    KhmerLetter(
+      character: 'ល',
+      romanized: 'lo',
+      pronunciation: 'lo',
+      meaning: 'con heo',
+      starRating: 0,
+      isLearned: false,
+    ),
+    KhmerLetter(
+      character: 'វ',
+      romanized: 'vo',
+      pronunciation: 'vo',
+      meaning: 'con chim',
+      starRating: 0,
+      isLearned: false,
+    ),
     // ── Bài 35: Kiểm tra bài 31-34 ──
-    KhmerLetter(character: '📝', romanized: 'Kiểm tra', isTest: true, testRange: '31-34', starRating: 0, isLearned: false),
+    KhmerLetter(
+      character: '📝',
+      romanized: 'Kiểm tra',
+      isTest: true,
+      testRange: '31-34',
+      starRating: 0,
+      isLearned: false,
+    ),
 
     // ══════ NHÓM 7: Bài 36-39 ══════
-    KhmerLetter(character: 'ស', romanized: 'so', pronunciation: 'sa', meaning: 'con tôm', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'ហ', romanized: 'ho', pronunciation: 'ha', meaning: 'con chuột', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'ឡ', romanized: 'lo', pronunciation: 'la', meaning: 'con gấu', starRating: 0, isLearned: false),
-    KhmerLetter(character: 'អ', romanized: 'a', pronunciation: 'a', meaning: 'con khỉ đột', starRating: 0, isLearned: false),
+    KhmerLetter(
+      character: 'ស',
+      romanized: 'sa',
+      pronunciation: 'sa',
+      meaning: 'con tôm',
+      starRating: 0,
+      isLearned: false,
+    ),
+    KhmerLetter(
+      character: 'ហ',
+      romanized: 'ha',
+      pronunciation: 'ha',
+      meaning: 'con chuột',
+      starRating: 0,
+      isLearned: false,
+    ),
+    KhmerLetter(
+      character: 'ឡ',
+      romanized: 'la',
+      pronunciation: 'la',
+      meaning: 'con gấu',
+      starRating: 0,
+      isLearned: false,
+    ),
+    KhmerLetter(
+      character: 'អ',
+      romanized: 'a',
+      pronunciation: 'a',
+      meaning: 'con khỉ đột',
+      starRating: 0,
+      isLearned: false,
+    ),
     // ── Bài 40: Kiểm tra bài 36-39 ──
-    KhmerLetter(character: '📝', romanized: 'Kiểm tra', isTest: true, testRange: '36-39', starRating: 0, isLearned: false),
+    KhmerLetter(
+      character: '📝',
+      romanized: 'Kiểm tra',
+      isTest: true,
+      testRange: '36-39',
+      starRating: 0,
+      isLearned: false,
+    ),
 
     // ══════ BÀI 41: KIỂM TRA TỔNG ══════
-    KhmerLetter(character: '🏆', romanized: 'Tổng KT', isTest: true, testRange: '1-40', starRating: 0, isLearned: false),
+    KhmerLetter(
+      character: '🏆',
+      romanized: 'Tổng KT',
+      isTest: true,
+      testRange: '1-40',
+      starRating: 0,
+      isLearned: false,
+    ),
   ];
 }

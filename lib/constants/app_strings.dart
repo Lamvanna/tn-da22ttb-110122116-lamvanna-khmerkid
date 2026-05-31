@@ -85,6 +85,7 @@ class AppStrings {
 
   // ─── Settings Screen ──────────────────────────────────────────────
   static const String settingsTitle = 'Cài đặt';
+  static const String settingsSubtitle = 'Tùy chỉnh trải nghiệm học tập';
   static const String sound = 'Âm thanh';
   static const String soundDesc = 'Bật/tắt hiệu ứng âm thanh';
   static const String language = 'Ngôn ngữ';
@@ -97,6 +98,53 @@ class AppStrings {
   static const String vietnameseLang = 'Vietnamese';
   static const String english = 'English';
   static const String englishLang = 'Anh';
+
+  // Section headers
+  static const String sectionAudio = 'Âm thanh & Giọng đọc';
+  static const String sectionGeneral = 'Chung';
+  static const String sectionData = 'Dữ liệu';
+  static const String sectionAbout = 'Giới thiệu';
+
+  // Speech speed
+  static const String speechSpeed = 'Tốc độ đọc';
+  static const String speechSpeedDesc = 'Điều chỉnh tốc độ phát âm';
+  static const String speedSlow = 'Chậm';
+  static const String speedNormal = 'Vừa';
+  static const String speedFast = 'Nhanh';
+
+  // Haptics
+  static const String haptics = 'Rung phản hồi';
+  static const String hapticsDesc = 'Rung nhẹ khi chạm và hoàn thành';
+
+  // Data management
+  static const String resetProgress = 'Đặt lại tiến độ';
+  static const String resetProgressDesc = 'Xóa toàn bộ sao, XP và bài đã học';
+  static const String resetConfirmTitle = 'Đặt lại tiến độ?';
+  static const String resetConfirmMsg =
+      'Toàn bộ sao, XP, chuỗi ngày và bài đã học sẽ bị xóa. Hồ sơ và đăng nhập được giữ lại. Hành động này không thể hoàn tác.';
+  static const String resetDone = 'Đã đặt lại tiến độ học';
+  static const String cancel = 'Hủy';
+  static const String confirmReset = 'Đặt lại';
+
+  // About
+  static const String appVersion = 'Phiên bản';
+  static const String aboutApp = 'Về ứng dụng';
+  static const String aboutAppDesc = 'KhmerKid — Học chữ Khmer cho bé';
+
+  // Server connection
+  static const String sectionServer = 'Kết nối máy chủ';
+  static const String serverAddress = 'Địa chỉ máy chủ';
+  static const String serverAuto = 'Tự động dò tìm';
+  static const String serverManualHint = 'VD: 192.168.1.50';
+  static const String serverDetecting = 'Đang dò tìm máy chủ...';
+  static const String serverRedetect = 'Dò tìm lại';
+  static const String serverSaveManual = 'Lưu IP thủ công';
+  static const String serverClearManual = 'Dùng tự động';
+  static const String serverFound = 'Đã kết nối máy chủ';
+  static const String serverNotFound = 'Không tìm thấy máy chủ nào';
+  static const String serverManualSaved = 'Đã lưu địa chỉ máy chủ';
+  static const String serverHelp =
+      'Nếu đổi WiFi/4G mà không đăng nhập được, nhập IP máy tính chạy server vào đây, hoặc bấm Dò tìm lại.';
 
   // ─── Pet Screen ───────────────────────────────────────────────────
   static const String petTitle = 'Thú vui';

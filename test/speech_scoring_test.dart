@@ -137,5 +137,141 @@ void main() {
       expect(resultHomophone.rawScore, equals(90.0));
       expect(resultHomophone.passed, isTrue);
     });
+
+    // ── Bài 6 trở đi: dùng romanized/pronunciation của chính chữ cái ──
+    // Trước đây các chữ này chỉ dựa vào bản đồ cứng nên dễ trượt. Giờ scorer
+    // nhận thêm romanized + pronunciation từ dữ liệu bài học nên khớp được.
+    group('Lesson romanized/pronunciation are accepted (bài 6+)', () {
+      // (ký tự, romanized, pronunciation, người dùng đọc)
+      final cases = [
+        ['ច', 'Cho', 'cho', 'cho'], // bài 7
+        ['ឆ', 'Chho', 'chho', 'chho'], // bài 8
+        ['ដ', 'Đo', 'đo', 'đo'], // bài 13
+        ['ត', 'To', 'to', 'to'], // bài 19
+        ['ប', 'Bo', 'bo', 'bo'], // bài 25
+        ['យ', 'Dô', 'dô', 'dô'], // bài 31
+        ['ស', 'So', 'so', 'so'], // bài 36
+        ['ហ', 'Ho', 'ho', 'ho'], // bài 37
+        ['វ', 'Vô', 'vô', 'vô'], // bài 34
+      ];
+
+      for (final c in cases) {
+        test('${c[0]} ("${c[1]}") được chấp nhận khi đọc "${c[3]}"', () {
+          final result = scoring.scorePronunciationSeparated(
+            targetCharacter: c[0],
+            recognizedText: c[3],
+            confidence: 1.0,
+            romanized: c[1],
+            pronunciation: c[2],
+          );
+
+          expect(result.passed, isTrue,
+              reason: 'Đọc đúng "${c[3]}" cho ${c[0]} phải đạt');
+          expect(result.rawScore, greaterThanOrEqualTo(90.0));
+        });
+      }
+    });
+
+    test('Latin gần đúng vẫn đạt nhờ Dice so với romanized (vô vs vo)', () {
+      final result = scoring.scorePronunciationSeparated(
+        targetCharacter: 'វ',
+        recognizedText: 'vo',
+        confidence: 1.0,
+        romanized: 'Vô',
+        pronunciation: 'vô',
+      );
+
+      expect(result.passed, isTrue);
+    });
+
+    // ── Sửa lỗi "đọc đúng vẫn trượt" do confidence thấp ──
+    // Nhiều máy Android trả confidence = 0 dù nghe đúng. Khớp văn bản dứt khoát
+    // (exact/accepted/phonetic) KHÔNG được bị hạ điểm theo confidence.
+    test('Khớp chính xác đậu dù confidence = 0 (lỗi Android trả confidence thấp)',
+        () {
+      final result = scoring.scorePronunciationSeparated(
+        targetCharacter: 'ក',
+        recognizedText: 'ក',
+        confidence: 0.0,
+      );
+      expect(result.weightedScore, equals(100.0));
+      expect(result.passed, isTrue);
+    });
+
+    test('Khớp phát âm đồng nghĩa đậu dù confidence = 0', () {
+      final result = scoring.scorePronunciationSeparated(
+        targetCharacter: 'ស',
+        recognizedText: 'so',
+        confidence: 0.0,
+        romanized: 'So',
+        pronunciation: 'so',
+      );
+      expect(result.passed, isTrue);
+      expect(result.weightedScore, greaterThanOrEqualTo(90.0));
+    });
+
+    test('Khớp mờ (dice) vẫn nương tay tối thiểu 85% điểm thô', () {
+      // recognizedText khớp một phần với romanized → method dice
+      final result = scoring.scorePronunciationSeparated(
+        targetCharacter: 'ខ',
+        recognizedText: 'khaa', // gần "kho"/"kh" nhưng không trùng khớp tuyệt đối
+        confidence: 0.0,
+        romanized: 'Kho',
+        pronunciation: 'kho',
+      );
+      if (result.matchMethod == 'dice') {
+        // weighted >= rawScore * 0.85 dù confidence = 0
+        expect(result.weightedScore,
+            greaterThanOrEqualTo(result.rawScore * 0.85 - 0.01));
+      }
+    });
+
+    // ── Chọn bản chép thay thế tốt nhất (alternates) ──
+    // Engine STT trả bản đầu sai nhưng alternate sau đúng → phải chọn bản đúng.
+    group('scoreBestAlternate chọn bản khớp nhất', () {
+      test('Bản đầu sai, alternate thứ 2 đúng → đậu', () {
+        final best = scoring.scoreBestAlternate(
+          targetCharacter: 'ច',
+          alternates: ['chha', 'cho', 'xyz'], // "cho" mới khớp
+          confidence: 0.0,
+          romanized: 'Cho',
+          pronunciation: 'cho',
+        );
+        expect(best.result.passed, isTrue);
+        expect(best.matchedText, equals('cho'));
+      });
+
+      test('Khớp chính xác chữ Khmer trong alternates', () {
+        final best = scoring.scoreBestAlternate(
+          targetCharacter: 'ក',
+          alternates: ['ខ', 'ក', 'ko'],
+          confidence: 0.0,
+        );
+        expect(best.result.rawScore, equals(100.0));
+        expect(best.matchedText, equals('ក'));
+      });
+
+      test('Không có bản nào khớp → trả kết quả tốt nhất, không crash', () {
+        final best = scoring.scoreBestAlternate(
+          targetCharacter: 'ស',
+          alternates: ['xxx', 'yyy'],
+          confidence: 0.0,
+          romanized: 'So',
+          pronunciation: 'so',
+        );
+        expect(best.result, isNotNull);
+        expect(best.matchedText, isNotEmpty);
+      });
+
+      test('Danh sách rỗng → không crash, điểm 0', () {
+        final best = scoring.scoreBestAlternate(
+          targetCharacter: 'ក',
+          alternates: const [],
+          confidence: 0.0,
+        );
+        expect(best.result.rawScore, equals(0.0));
+        expect(best.result.passed, isFalse);
+      });
+    });
   });
 }

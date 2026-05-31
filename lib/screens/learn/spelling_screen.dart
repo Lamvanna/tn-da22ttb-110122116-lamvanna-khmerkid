@@ -448,9 +448,11 @@ class _SpellingScreenState extends State<SpellingScreen>
       ),
       child: Column(
         children: [
+          SizedBox(height: 24.h),
+
           // ── Top: Spelling Formula Row ──
           Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 90.h, 16.w, 24.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -469,14 +471,47 @@ class _SpellingScreenState extends State<SpellingScreen>
               ],
             ),
           ),
-          
-          // (Center showcase removed as requested)
-          SizedBox(height: 70.h),
-          
+
+          SizedBox(height: 16.h),
+
+          // ── Center: Large Combined Character Showcase ──
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 20.w),
+            padding: EdgeInsets.symmetric(vertical: 24.h),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF58CC02).withValues(alpha: 0.08),
+                  const Color(0xFF58CC02).withValues(alpha: 0.03),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20.r),
+              border: Border.all(
+                color: const Color(0xFF58CC02).withValues(alpha: 0.2),
+                width: 2,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                _lesson.combined,
+                style: GoogleFonts.battambang(
+                  fontSize: 120.sp,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF58CC02),
+                  height: 1.0,
+                ),
+              ),
+            ),
+          ),
+
+          SizedBox(height: 20.h),
+
           // ── Bottom: Details & Meaning Container ──
           Container(
             margin: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 40.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
             decoration: BoxDecoration(
               color: const Color(0xFFEEF4FC),
               borderRadius: BorderRadius.circular(18.r),
@@ -499,12 +534,13 @@ class _SpellingScreenState extends State<SpellingScreen>
                         Text(
                           '"${_lesson.romanized}"',
                           style: GoogleFonts.battambang(
-                            fontSize: 24.sp,
+                            fontSize: 20.sp,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF1565C0),
                           ),
                         ),
-                      SizedBox(height: 6.h),
+                      if (_lesson.romanized.isNotEmpty && _lesson.romanized != '...')
+                        SizedBox(height: 4.h),
                       Row(
                         children: [
                           Icon(
@@ -517,8 +553,8 @@ class _SpellingScreenState extends State<SpellingScreen>
                             child: Text(
                               _lesson.meaning.isNotEmpty ? 'Nghĩa: ${_lesson.meaning}' : 'Bài luyện ghép âm',
                               style: GoogleFonts.plusJakartaSans(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w600,
                                 color: AppColors.textSecondary,
                               ),
                             ),
@@ -531,8 +567,8 @@ class _SpellingScreenState extends State<SpellingScreen>
                 SizedBox(width: 8.w),
                 // Decorative icon
                 Container(
-                  width: 56.w,
-                  height: 56.w,
+                  width: 48.w,
+                  height: 48.w,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
@@ -547,7 +583,7 @@ class _SpellingScreenState extends State<SpellingScreen>
                   child: Icon(
                     Icons.school_rounded,
                     color: const Color(0xFF1E88E5),
-                    size: 26.sp,
+                    size: 24.sp,
                   ),
                 ),
               ],
@@ -897,21 +933,83 @@ class _InlineSpellingListenContentState extends State<_InlineSpellingListenConte
     _pulseCtrl.repeat(reverse: true);
     await _tts.setSpeechRate(_speedRate);
 
-    // Phát âm theo chuỗi đánh vần: [phụ âm] -> [nguyên âm] -> [kết quả]
-    final text = _khmerSupported
-        ? '${widget.lesson.consonant} ${widget.lesson.vowelSign} ${widget.lesson.combined}'
-        : widget.lesson.meaning;
-    
-    final result = await _tts.speak(text);
-    if (result != 1 && mounted) {
-      Future.delayed(const Duration(milliseconds: 2500), () {
-        if (mounted) {
-          setState(() => _isPlaying = false);
-          _pulseCtrl.stop();
-        }
-      });
+    // Ưu tiên phát file âm thanh ghi sẵn, fallback sang TTS
+    final hasAudioFiles = await _playAudioFiles();
+
+    if (!hasAudioFiles) {
+      // Luôn dùng phiên âm Latin để đảm bảo phát âm chính xác
+      final consonantRoman = _getConsonantRoman(widget.lesson.consonant);
+      final vowelRoman = _getVowelRoman(widget.lesson.vowelSign);
+      final text = '$consonantRoman. $vowelRoman. ${widget.lesson.romanized}';
+
+      debugPrint('[TTS] Speaking romanized: "$text"');
+      debugPrint('[TTS] Consonant: ${widget.lesson.consonant} → $consonantRoman');
+      debugPrint('[TTS] Vowel: ${widget.lesson.vowelSign} → $vowelRoman');
+
+      // Đặt ngôn ngữ về tiếng Anh để đọc phiên âm Latin
+      await _tts.setLanguage('en-US');
+
+      final result = await _tts.speak(text);
+      if (result != 1 && mounted) {
+        Future.delayed(const Duration(milliseconds: 2500), () {
+          if (mounted) {
+            setState(() => _isPlaying = false);
+            _pulseCtrl.stop();
+          }
+        });
+      }
     }
+
     if (_playCount >= 1) widget.onComplete();
+  }
+
+  // Phát file âm thanh ghi sẵn (nếu có)
+  Future<bool> _playAudioFiles() async {
+    try {
+      // TODO: Thêm AudioPlayer package và phát file âm thanh
+      // Cấu trúc file: assets/audio/consonants/ក.mp3, assets/audio/vowels/ា.mp3
+      //
+      // final player = AudioPlayer();
+      // await player.play(AssetSource('audio/consonants/${widget.lesson.consonant}.mp3'));
+      // await Future.delayed(Duration(milliseconds: 800));
+      // await player.play(AssetSource('audio/vowels/${widget.lesson.vowelSign}.mp3'));
+      // await Future.delayed(Duration(milliseconds: 800));
+      // await player.play(AssetSource('audio/combined/${widget.lesson.combined}.mp3'));
+      //
+      // if (mounted) {
+      //   setState(() => _isPlaying = false);
+      //   _pulseCtrl.stop();
+      // }
+      // return true;
+
+      return false; // Tạm thời return false để dùng TTS
+    } catch (e) {
+      debugPrint('[Audio] Error playing audio files: $e');
+      return false;
+    }
+  }
+
+  // Helper để lấy phiên âm phụ âm
+  String _getConsonantRoman(String consonant) {
+    const map = {
+      'ក': 'ka', 'ខ': 'kha', 'គ': 'ko', 'ឃ': 'kho', 'ង': 'ngo',
+      'ច': 'cha', 'ឆ': 'chho', 'ជ': 'cho', 'ឈ': 'chhô', 'ញ': 'nho',
+      'ដ': 'da', 'ឋ': 'tha', 'ឌ': 'do', 'ឍ': 'tho', 'ណ': 'na',
+      'ត': 'ta', 'ថ': 'tha', 'ទ': 'to', 'ធ': 'tho', 'ន': 'no',
+      'ប': 'ba', 'ផ': 'pha', 'ព': 'po', 'ភ': 'pho', 'ម': 'mo',
+      'យ': 'yo', 'រ': 'ro', 'ល': 'lo', 'វ': 'vo',
+      'ស': 'sa', 'ហ': 'ha', 'ឡ': 'la', 'អ': 'a',
+    };
+    return map[consonant] ?? consonant;
+  }
+
+  // Helper để lấy phiên âm nguyên âm
+  String _getVowelRoman(String vowel) {
+    const map = {
+      'ា': 'aa', 'ិ': 'e', 'ី': 'ei', 'ុ': 'o', 'ូ': 'oo',
+      'ួ': 'uor', 'ើ': 'aeu', 'ឿ': 'oeu', 'ៀ': 'ie', 'េ': 'e',
+    };
+    return map[vowel] ?? vowel;
   }
 
   @override
@@ -1165,13 +1263,13 @@ class _InlineSpellingSpeakContentState extends State<_InlineSpellingSpeakContent
     try {
       _sttReady = await _speech.initialize(
         onError: (err) {
-          debugPrint('[STT Error] $err');
-          if (mounted && _isListening) {
+          debugPrint('[STT Error] ${err.errorMsg} - ${err.permanent}');
+          if (mounted) {
             _pulseCtrl.stop();
             setState(() {
               _isListening = false;
               if (_recognized.isEmpty) {
-                _statusMsg = 'Không nhận diện được giọng bé. Hãy nói to hơn!';
+                _statusMsg = 'Lỗi: ${err.errorMsg}. Hãy thử lại!';
               } else {
                 _evaluate();
               }
@@ -1179,45 +1277,78 @@ class _InlineSpellingSpeakContentState extends State<_InlineSpellingSpeakContent
           }
         },
         onStatus: (status) {
+          debugPrint('[STT Status] $status');
           if (status == 'done' && mounted && _isListening) {
             _pulseCtrl.stop();
             setState(() => _isListening = false);
-            _evaluate();
+            if (_recognized.isNotEmpty) {
+              _evaluate();
+            } else {
+              setState(() => _statusMsg = 'Không nghe thấy giọng nói. Thử lại nhé!');
+            }
+          } else if (status == 'notListening' && mounted && _isListening) {
+            _pulseCtrl.stop();
+            setState(() {
+              _isListening = false;
+              if (_recognized.isEmpty) {
+                _statusMsg = 'Không nghe thấy. Hãy nói to và rõ hơn!';
+              }
+            });
           }
         },
       );
 
       if (_sttReady) {
         try {
-          final systemLocale = await _speech.systemLocale();
-          if (systemLocale != null) {
-            _selectedLocaleId = systemLocale.localeId;
-          }
           final locales = await _speech.locales();
+          debugPrint('[STT] Available locales: ${locales.map((l) => l.localeId).join(", ")}');
+
           bool foundKhmer = false;
+          // Tìm Khmer locale
           for (final l in locales) {
-            if (l.localeId.toLowerCase().startsWith('km')) {
+            final lid = l.localeId.toLowerCase();
+            if (lid.startsWith('km') || lid.contains('khmer')) {
               _selectedLocaleId = l.localeId;
               foundKhmer = true;
+              debugPrint('[STT] Found Khmer locale: ${l.localeId}');
               break;
             }
           }
+
+          // Fallback sang Vietnamese nếu không có Khmer
           if (!foundKhmer) {
             for (final l in locales) {
               if (l.localeId.toLowerCase().startsWith('vi')) {
                 _selectedLocaleId = l.localeId;
+                debugPrint('[STT] Using Vietnamese locale: ${l.localeId}');
                 break;
               }
+            }
+          }
+
+          // Fallback cuối cùng
+          if (!foundKhmer && !_selectedLocaleId.startsWith('vi')) {
+            final systemLocale = await _speech.systemLocale();
+            if (systemLocale != null) {
+              _selectedLocaleId = systemLocale.localeId;
+              debugPrint('[STT] Using system locale: ${systemLocale.localeId}');
             }
           }
         } catch (localeErr) {
           debugPrint('STT Locales error: $localeErr');
           _selectedLocaleId = 'km-KH';
         }
+      } else {
+        if (mounted) {
+          setState(() => _statusMsg = 'Không thể khởi tạo nhận diện giọng nói!');
+        }
       }
     } catch (e) {
       debugPrint('STT Init error: $e');
       _sttReady = false;
+      if (mounted) {
+        setState(() => _statusMsg = 'Lỗi khởi tạo: $e');
+      }
     }
     if (mounted) setState(() {});
   }
@@ -1243,27 +1374,52 @@ class _InlineSpellingSpeakContentState extends State<_InlineSpellingSpeakContent
 
     try {
       await _speech.stop();
-      await _speech.listen(
+
+      debugPrint('[STT] Starting to listen with locale: $_selectedLocaleId');
+
+      final success = await _speech.listen(
         onResult: (result) {
+          debugPrint('[STT] Result: ${result.recognizedWords} (final: ${result.finalResult})');
           if (mounted) {
             setState(() => _recognized = result.recognizedWords);
             if (result.finalResult) {
               _pulseCtrl.stop();
               setState(() => _isListening = false);
-              _evaluate();
+              if (_recognized.isNotEmpty) {
+                _evaluate();
+              } else {
+                setState(() => _statusMsg = 'Không nghe thấy gì. Thử lại nhé!');
+              }
             }
           }
         },
-        listenFor: const Duration(seconds: 8),
-        pauseFor: const Duration(seconds: 3),
+        listenFor: const Duration(seconds: 10),
+        pauseFor: const Duration(seconds: 4),
         localeId: _selectedLocaleId,
+        partialResults: true,
+        onSoundLevelChange: (level) {
+          // Feedback âm thanh đang được thu
+          debugPrint('[STT] Sound level: $level');
+        },
       );
-    } catch (_) {
+
+      if (!success) {
+        debugPrint('[STT] Failed to start listening');
+        _pulseCtrl.stop();
+        if (mounted) {
+          setState(() {
+            _isListening = false;
+            _statusMsg = 'Không thể bắt đầu ghi âm. Thử lại!';
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('[STT] Listen error: $e');
       _pulseCtrl.stop();
       if (mounted) {
         setState(() {
           _isListening = false;
-          _statusMsg = 'Lỗi nhận diện. Thử nói lại nhé!';
+          _statusMsg = 'Lỗi ghi âm: $e';
         });
       }
     }
@@ -1323,34 +1479,210 @@ class _InlineSpellingSpeakContentState extends State<_InlineSpellingSpeakContent
       return;
     }
 
+    debugPrint('[STT] ========================================');
+    debugPrint('[STT] Bài ${widget.lesson.consonant} + ${widget.lesson.vowelSign} = ${widget.lesson.combined}');
+    debugPrint('[STT] Phiên âm mong đợi: "${widget.lesson.romanized}"');
+    debugPrint('[STT] Người dùng nói: "$spoken"');
+    debugPrint('[STT] ========================================');
+
+    // KHÔNG normalize cho Khmer - giữ nguyên để kiểm tra chính xác
+    final spokenOriginal = spoken.trim();
     String normalize(String s) => s.toLowerCase().trim().replaceAll(RegExp(r'\s+'), '');
     final spokenNorm = normalize(spoken);
+
+    // Targets bao gồm cả chữ Khmer và phiên âm
     final targets = [
       widget.lesson.combined,
       widget.lesson.romanized,
-    ].where((t) => t.isNotEmpty).map(normalize).toList();
+      widget.lesson.consonant,
+      widget.lesson.vowelSign,
+    ].where((t) => t.isNotEmpty && t != '...').toList();
 
-    bool exact = targets.any((t) => spokenNorm.contains(t) || t.contains(spokenNorm));
+    final targetsNorm = targets.map(normalize).toList();
+
+    debugPrint('[STT] Targets to match: ${targets.join(", ")}');
+
+    // 1. Kiểm tra khớp chính xác
+    bool exact = targetsNorm.any((t) {
+      final match = spokenNorm.contains(t) || t.contains(spokenNorm);
+      if (match) debugPrint('[STT] ✓ Exact match found with: "$t"');
+      return match;
+    });
+
+    // 1b. Kiểm tra nếu spoken BẮT ĐẦU bằng bất kỳ target nào (TRƯỚC KHI normalize)
+    bool startsWithTarget = false;
+    String matchedTarget = '';
+    for (final t in targets) {
+      if (spokenOriginal.startsWith(t) || t.startsWith(spokenOriginal)) {
+        startsWithTarget = true;
+        matchedTarget = t;
+        debugPrint('[STT] ✓ Starts with target (original): "$t"');
+        break;
+      }
+    }
+
+    // Kiểm tra cả normalized version
+    if (!startsWithTarget) {
+      for (int i = 0; i < targets.length; i++) {
+        final t = targetsNorm[i];
+        if (spokenNorm.startsWith(t) || t.startsWith(spokenNorm)) {
+          startsWithTarget = true;
+          matchedTarget = targets[i];
+          debugPrint('[STT] ✓ Starts with target (normalized): "$t"');
+          break;
+        }
+      }
+    }
+
+    // 2. Kiểm tra nếu spoken chứa ít nhất 1 ký tự Khmer từ targets
+    bool hasKhmerChar = false;
+    int khmerMatchCount = 0;
+    final targetKhmerChars = <String>{};
+    final spokenKhmerChars = <String>[];
+
+    // Thu thập tất cả ký tự Khmer từ targets (dùng original, không normalize)
+    for (final t in targets) {
+      for (final char in t.runes) {
+        if (char >= 0x1780 && char <= 0x17FF) {
+          targetKhmerChars.add(String.fromCharCode(char));
+        }
+      }
+    }
+
+    // Thu thập tất cả ký tự Khmer từ spoken (dùng original)
+    for (final char in spokenOriginal.runes) {
+      if (char >= 0x1780 && char <= 0x17FF) {
+        spokenKhmerChars.add(String.fromCharCode(char));
+      }
+    }
+
+    debugPrint('[STT] Target Khmer chars: ${targetKhmerChars.join(", ")}');
+    debugPrint('[STT] Spoken Khmer chars: ${spokenKhmerChars.join(", ")}');
+
+    // Kiểm tra spoken có chứa ký tự Khmer nào từ targets
+    for (final c in spokenKhmerChars) {
+      if (targetKhmerChars.contains(c)) {
+        khmerMatchCount++;
+        hasKhmerChar = true;
+        debugPrint('[STT] ✓ Found matching Khmer character: "$c"');
+      }
+    }
+
+    // Kiểm tra nếu ký tự đầu tiên của spoken khớp với target
+    bool firstCharMatch = false;
+    if (spokenKhmerChars.isNotEmpty && targetKhmerChars.isNotEmpty) {
+      final firstSpoken = spokenKhmerChars.first;
+      if (targetKhmerChars.contains(firstSpoken)) {
+        firstCharMatch = true;
+        debugPrint('[STT] ✓ First character matches: "$firstSpoken"');
+      }
+    }
+
+    // Kiểm tra nếu spoken chỉ thêm "រ" vào sau target
+    bool isTargetPlusRo = false;
+    for (final t in targets) {
+      if (spokenOriginal == t + 'រ' || spokenOriginal == t + 'ර') {
+        isTargetPlusRo = true;
+        debugPrint('[STT] ✓ Spoken is target + រ: "$t" + រ');
+        break;
+      }
+    }
+
+    // 3. Kiểm tra âm thanh tương tự (phonetic similarity)
+    bool phoneticMatch = false;
+    final romanizedLower = widget.lesson.romanized.toLowerCase();
+
+    // Các biến thể phát âm có thể
+    final phoneticVariants = <String>[
+      romanizedLower,
+      romanizedLower.replaceAll('aa', 'a'),
+      romanizedLower.replaceAll('oo', 'o'),
+      romanizedLower.replaceAll('ei', 'i'),
+      romanizedLower.replaceAll('kh', 'k'),
+      romanizedLower.replaceAll('ch', 'c'),
+      romanizedLower.replaceAll('ph', 'p'),
+      romanizedLower.replaceAll('th', 't'),
+      // Thêm biến thể ngược lại
+      romanizedLower.replaceAll('k', 'kh'),
+      romanizedLower.replaceAll('c', 'ch'),
+      romanizedLower.replaceAll('p', 'ph'),
+      romanizedLower.replaceAll('t', 'th'),
+    ];
+
+    for (final variant in phoneticVariants) {
+      if (spokenNorm.contains(variant) || variant.contains(spokenNorm)) {
+        phoneticMatch = true;
+        debugPrint('[STT] ✓ Phonetic match found with variant: "$variant"');
+        break;
+      }
+    }
+
+    // 4. Tính độ tương đồng với từng target
+    double best = 0;
+    String bestTarget = '';
+    for (int i = 0; i < targets.length; i++) {
+      final t = targetsNorm[i];
+      final s = _sim(spokenNorm, t);
+      debugPrint('[STT] Similarity "$spokenNorm" vs "$t": ${(s * 100).toStringAsFixed(1)}%');
+      if (s > best) {
+        best = s;
+        bestTarget = targets[i];
+      }
+    }
+
+    debugPrint('[STT] Best match: "$bestTarget" with ${(best * 100).toStringAsFixed(1)}% similarity');
+    debugPrint('[STT] Khmer char matches: $khmerMatchCount');
+    debugPrint('[STT] First char match: $firstCharMatch');
+    debugPrint('[STT] Starts with target: $startsWithTarget');
+    debugPrint('[STT] Is target + រ: $isTargetPlusRo');
+
+    // Đánh giá kết quả - ƯU TIÊN KIỂM TRA TARGET + រ
     if (exact) {
+      debugPrint('[STT] ✓ PASS - Exact match!');
       _score = 5;
       _isCorrect = true;
+    } else if (isTargetPlusRo) {
+      // Nếu spoken = target + "រ" (STT tự thêm) → CHẤP NHẬN
+      debugPrint('[STT] ✓ PASS - Target + រ (STT auto-added)!');
+      _score = 5;
+      _isCorrect = true;
+    } else if (startsWithTarget) {
+      // Nếu spoken BẮT ĐẦU bằng target
+      debugPrint('[STT] ✓ PASS - Starts with target!');
+      _score = 5;
+      _isCorrect = true;
+    } else if (firstCharMatch && spokenKhmerChars.length <= 3) {
+      // Nếu ký tự đầu khớp và không quá dài (tránh nhận nhầm từ khác)
+      debugPrint('[STT] ✓ PASS - First character matches and reasonable length!');
+      _score = 4;
+      _isCorrect = true;
+    } else if (khmerMatchCount >= 2) {
+      // Nếu khớp 2+ ký tự Khmer → rất tốt
+      debugPrint('[STT] ✓ PASS - Multiple Khmer characters matched!');
+      _score = 5;
+      _isCorrect = true;
+    } else if (phoneticMatch) {
+      // Nếu khớp phonetic variant → khá tốt
+      debugPrint('[STT] ✓ PASS - Phonetic match!');
+      _score = 4;
+      _isCorrect = true;
+    } else if (best > 0.6) {
+      _score = 5;
+      _isCorrect = true;
+      debugPrint('[STT] ✓ PASS - Very high similarity (>60%)');
+    } else if (best > 0.45) {
+      _score = 4;
+      _isCorrect = true;
+      debugPrint('[STT] ✓ PASS - High similarity (>45%)');
+    } else if (best > 0.3) {
+      _score = 3;
+      _isCorrect = true;
+      debugPrint('[STT] ✓ PASS - Good similarity (>30%)');
     } else {
-      double best = 0;
-      for (final t in targets) {
-        final s = _sim(spokenNorm, t);
-        if (s > best) best = s;
-      }
-
-      if (best > 0.4) {
-        _score = 4;
-        _isCorrect = true;
-      } else if (best > 0.25) {
-        _score = 3;
-        _isCorrect = true;
-      } else {
-        _score = 1;
-        _isCorrect = false;
-      }
+      // Không đủ điểm → SAI
+      _score = 1;
+      _isCorrect = false;
+      debugPrint('[STT] ✗ FAIL - Similarity too low (<30%)');
     }
 
     setState(() => _hasResult = true);
@@ -1379,7 +1711,7 @@ class _InlineSpellingSpeakContentState extends State<_InlineSpellingSpeakContent
               ),
               SizedBox(height: 8.h),
               Text(
-                _isCorrect ? 'Bé ghép vần phát âm rất tốt!' : 'Hãy thử lại thật to và rõ nhé!',
+                _isCorrect ? 'Bé phát âm rất tốt!' : 'Hãy thử lại thật to và rõ nhé!',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 16.sp,
@@ -1393,24 +1725,94 @@ class _InlineSpellingSpeakContentState extends State<_InlineSpellingSpeakContent
                 children: List.generate(
                   3,
                   (i) => Icon(
-                    i < _score ~/ 2
+                    i < (_score / 2).ceil()
                         ? Icons.star_rounded
                         : Icons.star_outline_rounded,
                     size: 28.w,
-                    color: i < _score ~/ 2 ? AppColors.secondary : AppColors.surfaceContainerHighest,
+                    color: i < (_score / 2).ceil() ? AppColors.secondary : AppColors.surfaceContainerHighest,
                   ),
                 ),
               ),
-              if (_recognized.isNotEmpty) ...[
-                SizedBox(height: 8.h),
-                Text(
-                  'Nghe được: "$_recognized"',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14.sp,
-                    color: AppColors.textSecondary,
-                  ),
+              SizedBox(height: 12.h),
+              // Hiển thị so sánh rõ ràng
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  color: AppColors.tertiarySurface,
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: AppColors.tertiary.withValues(alpha: 0.2)),
                 ),
-              ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.record_voice_over_rounded, size: 16.sp, color: AppColors.tertiary),
+                        SizedBox(width: 6.w),
+                        Text(
+                          'Hệ thống nghe:',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.tertiaryDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      _recognized.isNotEmpty ? '"$_recognized"' : '(không nghe thấy)',
+                      style: GoogleFonts.battambang(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Row(
+                      children: [
+                        Icon(Icons.check_circle_outline_rounded, size: 16.sp, color: AppColors.primary),
+                        SizedBox(width: 6.w),
+                        Text(
+                          'Bài học:',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      '${widget.lesson.combined} (${widget.lesson.romanized})',
+                      style: GoogleFonts.battambang(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    if (khmerMatchCount > 0) ...[
+                      SizedBox(height: 6.h),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.tertiary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Text(
+                          '✓ Khớp $khmerMatchCount ký tự Khmer',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.tertiaryDark,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
               if (_isCorrect) ...[
                 SizedBox(height: 6.h),
                 Text(
@@ -1423,54 +1825,35 @@ class _InlineSpellingSpeakContentState extends State<_InlineSpellingSpeakContent
                 ),
               ],
               SizedBox(height: 20.h),
-              if (_isCorrect) ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.tertiary,
-                      padding: EdgeInsets.symmetric(vertical: 14.h),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
-                    ),
-                    child: Text(
-                      'Hoàn thành ✅',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 8.h),
-              ],
               SizedBox(
                 width: double.infinity,
-                child: OutlinedButton(
+                child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(ctx);
-                    setState(() {
-                      _hasResult = false;
-                      _recognized = '';
-                      _statusMsg = '';
-                      _score = 0;
-                    });
+                    if (_isCorrect) {
+                      // Đóng sheet nếu đúng
+                      setState(() => _hasResult = false);
+                    } else {
+                      // Reset để thử lại
+                      setState(() {
+                        _hasResult = false;
+                        _recognized = '';
+                        _statusMsg = '';
+                        _score = 0;
+                      });
+                    }
                   },
-                  style: OutlinedButton.styleFrom(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _isCorrect ? AppColors.tertiary : AppColors.primary,
                     padding: EdgeInsets.symmetric(vertical: 14.h),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
-                    side: BorderSide(color: AppColors.violet),
                   ),
                   child: Text(
-                    'Thử lại',
+                    _isCorrect ? 'Tiếp tục ✅' : 'Thử lại',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.violet,
+                      color: Colors.white,
                     ),
                   ),
                 ),

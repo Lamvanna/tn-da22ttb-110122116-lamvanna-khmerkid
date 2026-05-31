@@ -18,6 +18,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _userCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+  final _mockEmailCtrl = TextEditingController();
   bool _remember = false;
   bool _obscure = true;
   bool _isLoading = false;
@@ -28,6 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _userCtrl.dispose();
     _passCtrl.dispose();
+    _mockEmailCtrl.dispose();
     super.dispose();
   }
 
@@ -245,20 +247,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                 SizedBox(height: 28.h),
 
-                                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                                  Text('Chưa có tài khoản? ', style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 15.sp, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9))),
-                                  GestureDetector(
-                                    onTap: () => Navigator.push(context,
-                                      MaterialPageRoute(builder: (_) => const RegisterScreen())),
-                                    behavior: HitTestBehavior.opaque,
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(vertical: 8.h),
-                                      child: Text('Đăng ký ngay', style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 15.sp, fontWeight: FontWeight.w700, color: Colors.white,
-                                        decoration: TextDecoration.underline,
-                                        decorationColor: Colors.white.withValues(alpha: 0.5))))),
-                                ]),
+                                Wrap(
+                                  alignment: WrapAlignment.center,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    Text('Chưa có tài khoản? ', style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 15.sp, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9))),
+                                    GestureDetector(
+                                      onTap: () => Navigator.push(context,
+                                        MaterialPageRoute(builder: (_) => const RegisterScreen())),
+                                      behavior: HitTestBehavior.opaque,
+                                      child: Padding(
+                                        padding: EdgeInsets.symmetric(vertical: 8.h),
+                                        child: Text('Đăng ký ngay', style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 15.sp, fontWeight: FontWeight.w700, color: Colors.white,
+                                          decoration: TextDecoration.underline,
+                                          decorationColor: Colors.white.withValues(alpha: 0.5))))),
+                                  ],
+                                ),
 
 
                               ]),
@@ -340,18 +346,22 @@ class _LoginScreenState extends State<LoginScreen> {
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(50.r)),
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          if (isGoogle)
-            Text('G', style: GoogleFonts.roboto(fontSize: 20.sp, fontWeight: FontWeight.w700,
-              foreground: Paint()..shader = const LinearGradient(
-                colors: [Color(0xFFEA4335), Color(0xFFFBBC05), Color(0xFF34A853), Color(0xFF4285F4)])
-                .createShader(const Rect.fromLTWH(0, 0, 20, 20))))
-          else
-            Icon(icon, color: color, size: 20.sp),
-          SizedBox(width: 8.w),
-          Text(label, style: GoogleFonts.plusJakartaSans(
-            fontSize: 15.sp, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9))),
-        ]),
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            if (isGoogle)
+              Text('G', style: GoogleFonts.roboto(fontSize: 20.sp, fontWeight: FontWeight.w700,
+                foreground: Paint()..shader = const LinearGradient(
+                  colors: [Color(0xFFEA4335), Color(0xFFFBBC05), Color(0xFF34A853), Color(0xFF4285F4)])
+                  .createShader(const Rect.fromLTWH(0, 0, 20, 20))))
+            else
+              Icon(icon, color: color, size: 20.sp),
+            SizedBox(width: 8.w),
+            Text(label, style: GoogleFonts.plusJakartaSans(
+              fontSize: 15.sp, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9))),
+          ],
+        ),
       ),
     );
   }
@@ -437,6 +447,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _showMockBypassDialog() {
+    _mockEmailCtrl.clear(); // Reset input field each time dialog opens
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -447,17 +458,35 @@ class _LoginScreenState extends State<LoginScreen> {
           SizedBox(width: 4.w),
           const Text('Bypass Google Auth'),
         ]),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Thiết bị gặp lỗi cấu hình hoặc lỗi kết nối mạng với hệ thống Google.',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8.h),
-            const Text('Bạn có muốn sử dụng Đăng nhập giả lập (Mock Login) để truy cập ứng dụng và kiểm tra nhanh tính năng ngay không?'),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Thiết bị gặp lỗi cấu hình hoặc lỗi kết nối mạng với hệ thống Google.',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8.h),
+              const Text('Bạn có muốn sử dụng Đăng nhập giả lập (Mock Login) để truy cập ứng dụng không?'),
+              SizedBox(height: 16.h),
+              TextField(
+                controller: _mockEmailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Email kiểm thử (Không bắt buộc)',
+                  hintText: 'Nhập email (ví dụ: hero01633661157@gmail.com)',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -468,9 +497,17 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
+              final emailVal = _mockEmailCtrl.text.trim();
               Navigator.pop(ctx);
               setState(() => _isLoading = true);
-              final result = await AuthService().googleMockLogin();
+              
+              // Tách phần tên từ email nếu người dùng nhập
+              final nameVal = emailVal.isNotEmpty ? emailVal.split('@')[0] : null;
+
+              final result = await AuthService().googleMockLogin(
+                email: emailVal.isNotEmpty ? emailVal : null,
+                name: nameVal,
+              );
               if (!mounted) return;
               setState(() => _isLoading = false);
               

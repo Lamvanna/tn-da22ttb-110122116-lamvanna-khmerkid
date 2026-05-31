@@ -5,6 +5,7 @@ import 'package:string_similarity/string_similarity.dart';
 import '../data/stroke_guide_data.dart';
 import 'dollar_one_recognizer.dart';
 import '../data/khmer_stroke_templates.dart';
+import 'handwriting_tracing_service.dart';
 
 class PronunciationScoreResult {
   final double rawScore;
@@ -98,70 +99,134 @@ class ScoringService {
   static final ScoringService instance = ScoringService._();
 
   // ─── Config ─────────────────────────────────────────────────────
-  static const int defaultPassThreshold = 70; // 70%
+  static const int defaultPassThreshold = 75; // Tăng từ 70% lên 75% - NGHIÊM NGẶT HƠN
 
   // ─── Multiple Accepted Pronunciations Map ──────────────────────────
+  // CHỈ GIỮ PHÁT ÂM CHUẨN - Loại bỏ các biến thể quá khoan dung
+  // Mỗi chữ chỉ có 2-3 cách phát âm được chấp nhận (chuẩn + biến thể gần)
   static const Map<String, List<String>> acceptedPronunciations = {
-    'ក': ['ko', 'kor', 'koh', 'k'],
-    'ខ': ['kho', 'khor', 'khoh', 'kh'],
-    'គ': ['ko', 'kor', 'koh', 'k', 'co', 'cor'],
-    'ឃ': ['kho', 'khor', 'khoh', 'kh', 'cho', 'chor'],
-    'ង': ['ngo', 'ngor', 'ngoh', 'ng'],
-    'ច': ['co', 'cor', 'coh', 'ch', 'jo', 'jor'],
-    'ឆ': ['cho', 'chor', 'choh', 'ch'],
-    'ជ': ['co', 'cor', 'coh', 'ch', 'jo', 'jor'],
-    'ឈ': ['cho', 'chor', 'choh', 'ch'],
-    'ញ': ['nho', 'nhor', 'nhoh', 'nh', 'ny', 'nyo'],
-    'ដ': ['do', 'dor', 'doh', 'd'],
-    'ឋ': ['tho', 'thor', 'thoh', 'th'],
-    'ឌ': ['do', 'dor', 'doh', 'd'],
-    'ឍ': ['tho', 'thor', 'thoh', 'th'],
-    'ណ': ['no', 'nor', 'noh', 'n'],
-    'ត': ['to', 'tor', 'toh', 't'],
-    'ថ': ['tho', 'thor', 'thoh', 'th'],
-    'ទ': ['to', 'tor', 'toh', 't'],
-    'ធ': ['tho', 'thor', 'thoh', 'th'],
-    'ន': ['no', 'nor', 'noh', 'n'],
-    'ប': ['bo', 'bor', 'boh', 'b'],
-    'ផ': ['pho', 'phor', 'phoh', 'ph'],
-    'ព': ['po', 'por', 'poh', 'p'],
-    'ភ': ['pho', 'phor', 'phoh', 'ph'],
-    'ម': ['mo', 'mor', 'moh', 'm'],
-    'យ': ['yo', 'yor', 'yoh', 'y'],
-    'រ': ['ro', 'ror', 'roh', 'r'],
-    'ល': ['lo', 'lor', 'loh', 'l'],
-    'វ': ['vo', 'vor', 'voh', 'v', 'wo', 'wor'],
-    'ស': ['so', 'sor', 'soh', 's'],
-    'ហ': ['ho', 'hor', 'hoh', 'h'],
-    'ឡ': ['lo', 'lor', 'loh', 'l'],
-    'អ': ['o', 'or', 'oh'],
+    // Phụ âm Series 1 (A-series)
+    'ក': ['ka', 'ko'],           // Chỉ 2 cách: ka (chuẩn), ko (biến thể)
+    'ខ': ['kha', 'kho'],         // Loại bỏ: khor, khaa, khaw, ka, ko
+    'គ': ['ko', 'kor'],          // Loại bỏ: koo, kou, go, gor, goo
+    'ឃ': ['kho', 'khor'],        // Loại bỏ: khoo, khou, ko, kor
+    'ង': ['ngo', 'ngor'],        // Loại bỏ: ngoo, no, nor
+
+    // Phụ âm Series 2 (O-series) - QUAN TRỌNG
+    'ច': ['cho', 'chor'],        // Loại bỏ: choo, chou, co, cor, jo, jor
+    'ឆ': ['chhor', 'chor'],      // Loại bỏ: chho, cho, choo, chhoo
+    'ជ': ['cho', 'chor'],        // Loại bỏ: choo, jo, jor, joo
+    'ឈ': ['chhor', 'chor'],      // Loại bỏ: chho, cho, jo
+    'ញ': ['nhor', 'nho'],        // Loại bỏ: nhoo, nyo, nyor, no
+
+    // Phụ âm Series 3
+    'ដ': ['da', 'do'],           // Loại bỏ: dor, daa, daw, doo, ta, to
+    'ឋ': ['tha', 'tho'],         // Loại bỏ: thor, thaa, thaw, thoo, ta, to
+    'ឌ': ['do', 'dor'],          // Loại bỏ: doo, dou, to, tor
+    'ឍ': ['tho', 'thor'],        // Loại bỏ: thoo, thou, to, tor
+    'ណ': ['na', 'no'],           // Loại bỏ: nor, naa, naw, noo
+
+    // Phụ âm Series 4
+    'ត': ['ta', 'to'],           // Loại bỏ: tor, taa, taw, too, da, do
+    'ថ': ['tha', 'tho'],         // Loại bỏ: thor, thaa, thaw, thoo, ta, to
+    'ទ': ['to', 'tor'],          // Loại bỏ: too, tou, do, dor
+    'ធ': ['tho', 'thor'],        // Loại bỏ: thoo, thou, to, tor
+    'ន': ['no', 'nor'],          // Loại bỏ: noo, nou, na, naa
+
+    // Phụ âm Series 5
+    'ប': ['ba', 'bo'],           // Loại bỏ: bor, baa, baw, boo, pa, po
+    'ផ': ['pha', 'pho'],         // Loại bỏ: phor, phaa, phaw, phoo, pa, po
+    'ព': ['po', 'por'],          // Loại bỏ: poo, pou, bo, bor
+    'ភ': ['pho', 'phor'],        // Loại bỏ: phoo, phou, po, por
+    'ម': ['mo', 'mor'],          // Loại bỏ: moo, mou, ma, maa
+
+    // Phụ âm Series 6
+    'យ': ['yo', 'yor'],          // Loại bỏ: yoo, you, ya, yaa, jo
+    'រ': ['ro', 'ror'],          // Loại bỏ: roo, rou, ra, raa, lo
+    'ល': ['lo', 'lor'],          // Loại bỏ: loo, lou, la, laa
+    'វ': ['vo', 'vor'],          // Loại bỏ: voo, vou, va, vaa, wo, wor
+
+    // Phụ âm Series 7
+    'ស': ['sa', 'so'],           // Loại bỏ: sor, saa, saw, soo, sha, sho
+    'ហ': ['ha', 'ho'],           // Loại bỏ: hor, haa, haw, hoo
+    'ឡ': ['la', 'lo'],           // Loại bỏ: lor, laa, law, loo
+    'អ': ['a', 'o'],             // Loại bỏ: or, aa, aw, oo, ou
   };
 
   // ─── Device Matrix Dynamic Calibration ────────────────────────────
   static double calibrateConfidence(double rawConfidence) {
+    // GIẢM BOOST - Không nên boost quá nhiều
     double factor = 0.0;
     try {
       if (Platform.isAndroid) {
         final versionStr = Platform.operatingSystemVersion.toLowerCase();
         if (versionStr.contains('sdk') || versionStr.contains('google') || versionStr.contains('emulator')) {
-          factor = 0.20; // Emulator / Low-end boost
+          factor = 0.10; // Giảm từ 0.25 xuống 0.10
         } else {
-          factor = 0.12; // Samsung / Mid-end boost
+          factor = 0.08; // Giảm từ 0.18 xuống 0.08
         }
+      } else if (Platform.isIOS) {
+        factor = 0.08; // Giảm từ 0.15 xuống 0.08
       }
     } catch (_) {
-      factor = 0.10; // Fallback
+      factor = 0.08; // Giảm từ 0.15 xuống 0.08
     }
     return (rawConfidence + factor).clamp(0.0, 1.0);
   }
 
   // ─── Pronunciation Scoring ──────────────────────────────────────
 
+  /// Chấm điểm trên NHIỀU bản chép thay thế (alternates) và chọn bản tốt nhất.
+  /// Engine STT thường trả bản đoán đầu tiên sai (đặc biệt tiếng Khmer / giọng
+  /// trẻ em) nhưng một alternate khác lại đúng — nên ta thử khớp tất cả.
+  /// Trả về cặp (kết quả tốt nhất, văn bản đã chọn) để UI hiển thị đúng bản khớp.
+  ({PronunciationScoreResult result, String matchedText}) scoreBestAlternate({
+    required String targetCharacter,
+    required List<String> alternates,
+    required double confidence,
+    String romanized = '',
+    String pronunciation = '',
+    int passThreshold = defaultPassThreshold,
+  }) {
+    // Lọc rỗng & loại trùng, luôn đảm bảo có ít nhất 1 phần tử để chấm
+    final candidates = <String>[];
+    for (final a in alternates) {
+      final t = a.trim();
+      if (t.isNotEmpty && !candidates.contains(t)) candidates.add(t);
+    }
+    if (candidates.isEmpty) candidates.add('');
+
+    PronunciationScoreResult? best;
+    String bestText = candidates.first;
+    for (final cand in candidates) {
+      final r = scorePronunciationSeparated(
+        targetCharacter: targetCharacter,
+        recognizedText: cand,
+        confidence: confidence,
+        romanized: romanized,
+        pronunciation: pronunciation,
+        passThreshold: passThreshold,
+      );
+      // Ưu tiên điểm thô cao hơn; nếu bằng nhau, ưu tiên bản đã pass
+      if (best == null ||
+          r.rawScore > best.rawScore ||
+          (r.rawScore == best.rawScore && r.passed && !best.passed)) {
+        best = r;
+        bestText = cand;
+      }
+      // Khớp tuyệt đối thì dừng sớm
+      if (r.rawScore >= 100.0) break;
+    }
+    return (result: best!, matchedText: bestText);
+  }
+
   /// Chấm điểm phát âm biệt lập được thiết kế đặc thù cho việc kiểm thử độc lập (Phase 2).
   PronunciationScoreResult scorePronunciationSeparated({
     required String targetCharacter,
     required String recognizedText,
     required double confidence,
+    String romanized = '',
+    String pronunciation = '',
     int passThreshold = defaultPassThreshold,
   }) {
     final spokenNorm = _normalize(recognizedText);
@@ -176,6 +241,20 @@ class ScoringService {
       );
     }
 
+    // Tập hợp các dạng phát âm Latin được chấp nhận cho chữ cái này:
+    //   • Bản đồ phát âm cứng (acceptedPronunciations)
+    //   • romanized + pronunciation của CHÍNH chữ cái (lấy từ dữ liệu bài học)
+    // Nhờ vậy mọi bài (kể cả bài 6 trở đi) đều có mục tiêu so khớp, không còn
+    // phụ thuộc vào việc chữ cái có nằm trong bản đồ cứng hay không.
+    final Set<String> latinForms = {};
+    if (acceptedPronunciations.containsKey(targetCharacter)) {
+      latinForms.addAll(acceptedPronunciations[targetCharacter]!);
+    }
+    for (final extra in [romanized, pronunciation]) {
+      final n = _normalize(extra);
+      if (n.isNotEmpty) latinForms.add(n);
+    }
+
     // Cân chuẩn độ tin cậy thông qua Ma trận Thiết bị
     final calibratedConfidence = calibrateConfidence(confidence);
 
@@ -186,43 +265,71 @@ class ScoringService {
     if (spokenNorm == targetNorm || recognizedText == targetCharacter) {
       rawScore = 100.0;
       matchMethod = 'exact';
-    } 
+    }
     // 2. Tra cứu phát âm đồng nghĩa được chấp nhận (Multiple Accepted Pronunciations)
-    else if (acceptedPronunciations.containsKey(targetCharacter) &&
-        acceptedPronunciations[targetCharacter]!.contains(spokenNorm)) {
-      rawScore = 95.0;
+    else if (latinForms.contains(spokenNorm)) {
+      rawScore = 90.0; // Giảm từ 95.0 xuống 90.0 - không phải exact match
       matchMethod = 'accepted_pronunciation';
     }
     // 3. Đối sánh âm vị học đã chuẩn hóa (Phonetic Matching)
     else if (() {
       final normRec = _normalizePhonetic(recognizedText);
-      final normTarget = _normalizePhonetic(targetCharacter);
       if (normRec.isEmpty) return false;
-      
+
+      final normTarget = _normalizePhonetic(targetCharacter);
       if (normTarget.isNotEmpty && normRec == normTarget) return true;
-      
-      if (acceptedPronunciations.containsKey(targetCharacter)) {
-        return acceptedPronunciations[targetCharacter]!.any((p) {
-          final normP = _normalizePhonetic(p);
-          return normP.isNotEmpty && normRec == normP;
-        });
+
+      if (latinForms.any((p) {
+        final normP = _normalizePhonetic(p);
+        return normP.isNotEmpty && normRec == normP;
+      })) {
+        return true;
       }
+
       return false;
     }()) {
-      rawScore = 90.0;
+      rawScore = 85.0; // Giảm từ 90.0 xuống 85.0
       matchMethod = 'phonetic';
     }
     // 4. Đo lường tỷ lệ tương đồng Dice Coefficient
     else {
-      final similarity = StringSimilarity.compareTwoStrings(spokenNorm, targetNorm);
-      rawScore = similarity * 100.0;
+      double best = StringSimilarity.compareTwoStrings(spokenNorm, targetNorm);
+      final recPhonetic = _normalizePhonetic(recognizedText);
+
+      // So sánh với tất cả các dạng phát âm được chấp nhận
+      for (final p in latinForms) {
+        best = math.max(best, StringSimilarity.compareTwoStrings(spokenNorm, p));
+        if (recPhonetic.isNotEmpty) {
+          final pPhon = _normalizePhonetic(p);
+          if (pPhon.isNotEmpty) {
+            best = math.max(
+                best, StringSimilarity.compareTwoStrings(recPhonetic, pPhon));
+          }
+        }
+      }
+
+      rawScore = best * 100.0;
       matchMethod = 'dice';
+
+      // THÊM: Nếu Dice score quá thấp (<50%), coi như sai hoàn toàn
+      if (rawScore < 50.0) {
+        rawScore = rawScore * 0.5; // Penalty nặng cho điểm thấp
+      }
     }
 
-    // Tính điểm Weighted theo độ tin cậy đã cân chuẩn (Confidence Weighting)
-    // Chặn dưới bằng 60% raw_score để không phạt quá nặng giọng nói trẻ em khi gate đạt
-    double weightedScore = rawScore * calibratedConfidence;
-    weightedScore = math.max(rawScore * 0.60, weightedScore);
+    // Tính điểm Weighted (Confidence Weighting).
+    // NGHIÊM NGẶT HƠN: Luôn áp dụng confidence weight, kể cả với exact match
+    double weightedScore;
+    if (matchMethod == 'exact') {
+      // Exact match: vẫn tin tưởng nhưng giảm nhẹ nếu confidence thấp
+      weightedScore = rawScore * math.max(0.90, calibratedConfidence);
+    } else if (matchMethod == 'accepted_pronunciation' || matchMethod == 'phonetic') {
+      // Khớp tốt: áp dụng confidence nhẹ
+      weightedScore = rawScore * math.max(0.85, calibratedConfidence);
+    } else {
+      // Khớp mờ (dice): áp dụng confidence đầy đủ
+      weightedScore = rawScore * calibratedConfidence;
+    }
 
     // Rounding & Threshold Check
     final finalWeighted = weightedScore.clamp(0.0, 100.0);
@@ -248,6 +355,8 @@ class ScoringService {
       targetCharacter: character,
       recognizedText: spoken,
       confidence: 1.0, // Mặc định tin cậy tối đa cho các lệnh gọi cũ
+      romanized: romanized,
+      pronunciation: pronunciation,
       passThreshold: passThreshold,
     );
 
@@ -275,11 +384,39 @@ class ScoringService {
 
   // ─── Writing Scoring ────────────────────────────────────────────
 
-  /// Chấm điểm viết chữ dựa trên stroke analysis + shape guide coordinates.
+  /// Chấm điểm viết chữ dựa trên template tracing (pixel coverage).
+  /// Scoring dựa trên độ phủ giữa nét viết và nét mẫu.
+  /// KHÔNG sử dụng OCR hay shape recognition.
+  RecognitionResult recognizeWriting({
+    required String character,
+    required List<List<Offset>> strokes,
+    required Size canvasSize,
+  }) {
+    // Sử dụng HandwritingTracingService mới
+    final tracingResult = HandwritingTracingService.instance.scoreTracing(
+      character: character,
+      userStrokes: strokes,
+      canvasSize: canvasSize,
+    );
+
+    // Chuyển đổi TracingScoreResult sang RecognitionResult để tương thích
+    return RecognitionResult(
+      finalScore: tracingResult.finalScore,
+      passed: tracingResult.passed,
+      shapeScore: tracingResult.insideCoverage,
+      strokeScore: 100.0 - tracingResult.outsideCoverage,
+      directionScore: tracingResult.insideCoverage > tracingResult.outsideCoverage ? 100.0 : 0.0,
+      feedback: tracingResult.feedback,
+      tips: tracingResult.tips,
+      stars: tracingResult.stars,
+    );
+  }
+
+  /// Chấm điểm viết chữ dựa trên stroke analysis + shape guide coordinates (LEGACY).
   /// Kiểm tra: số nét, kích thước, tỉ lệ, coverage và độ khớp hình dáng chữ mẫu.
   /// Nhận diện chữ viết tay sử dụng thuật toán $1 Unistroke Recognizer kết hợp
   /// Phân tích nét viết (Stroke Analysis), Hướng nét viết (Stroke Direction), và Grid Bitmap 16x16.
-  RecognitionResult recognizeWriting({
+  RecognitionResult recognizeWritingLegacy({
     required String character,
     required List<List<Offset>> strokes,
     required Size canvasSize,
@@ -362,10 +499,12 @@ class ScoringService {
     // 2. Fetch template data
     final template = KhmerStrokeTemplateData.getTemplate(character);
 
-    // 3. Anti-Scribble / Anti-Cheat Detection
+    // 3. Anti-Scribble / Anti-Cheat Detection (CHỈ PHÁT HIỆN VẼ BẬY RÕ RÀNG)
     bool isScribble = false;
     List<String> cheatFeedback = [];
-    if (strokes.length > 9) {
+
+    // Chỉ phát hiện số nét QUÁ NHIỀU (> 10 nét)
+    if (strokes.length > 10) {
       isScribble = true;
       cheatFeedback.add('Số nét vẽ quá nhiều (hiện có ${strokes.length} nét).');
     }
@@ -373,16 +512,23 @@ class ScoringService {
     // Compute grid occupancy ratio for user
     final userMergedPath = DollarOneRecognizer.mergeStrokes(strokes);
     final userPreprocessed = DollarOneRecognizer.preprocess(userMergedPath);
-    
+
     // Compute 16x16 grid occupancy for user
     final userGrid = KhmerStrokeTemplateData.computeGrid16x16(userPreprocessed);
     int userFilledCells = userGrid.where((cell) => cell == 1).length;
     double occupancyRatio = userFilledCells / 256.0;
 
+    // Chỉ phát hiện tô KÍN màn hình (> 70%)
     if (occupancyRatio > 0.70) {
       isScribble = true;
       cheatFeedback.add('Hình vẽ tô kín cả màn hình.');
     }
+
+    // KHÔNG kiểm tra nét ngắn nữa - gây false positive
+
+    // KHÔNG kiểm tra vẽ sọc nữa - gây false positive
+
+    // KHÔNG kiểm tra độ dài nữa - gây false positive
 
     if (isScribble) {
       return RecognitionResult(
@@ -422,25 +568,62 @@ class ScoringService {
       }
     }
     double iou = union > 0 ? (intersection / union) : 0.0;
-    // Map IoU using a robust piece-wise curve:
-    // - Under 0.28 (garbage drawings): heavily penalized to cap shapeScore below 42% so it fails early.
-    // - 0.28 to 0.60 (valid drawings): scaled smoothly and generously from 38% to 100% for child-friendliness.
+
+    // Kiểm tra IoU quá thấp = viết bậy
+    if (iou < 0.12) { // Giảm từ 0.15 xuống 0.12
+      return RecognitionResult(
+        finalScore: (iou * 100).roundToDouble().clamp(0, 30),
+        passed: false,
+        shapeScore: iou * 100,
+        strokeScore: 20,
+        directionScore: 10,
+        feedback: 'Hình vẽ không giống chữ cái. Hãy viết theo mẫu nhé! ✍️',
+        tips: [
+          'Nhìn kỹ chữ mẫu màu xanh.',
+          'Vẽ chậm rãi và cẩn thận.',
+          'Tham khảo gợi ý để biết cách viết đúng.',
+        ],
+        stars: 0,
+      );
+    }
+
+    // Map IoU using a balanced curve (KHOAN DUNG HƠN cho trẻ em):
+    // - Under 0.20 (garbage drawings): penalized to cap shapeScore below 35%.
+    // - 0.20 to 0.50 (valid drawings): scaled smoothly from 35% to 100%.
     double gridShapeScore = 0.0;
-    if (iou < 0.28) {
-      gridShapeScore = (iou / 0.28) * 38.0;
+    if (iou < 0.20) {
+      gridShapeScore = (iou / 0.20) * 35.0;
     } else {
-      gridShapeScore = 38.0 + ((iou - 0.28) / (0.60 - 0.28)) * 62.0;
+      gridShapeScore = 35.0 + ((iou - 0.20) / (0.50 - 0.20)) * 65.0;
     }
     gridShapeScore = gridShapeScore.clamp(0.0, 100.0);
 
-    // Combine shape scores: take the maximum of both to handle stroke-order variations,
-    // but cap by gridShapeScore * 1.4 to prevent garbage drawings from cheating the system
-    // due to accidental alignment with scrambled outline templates.
-    double shapeScore = math.max(dollarOneShapeScore, gridShapeScore);
-    shapeScore = math.min(shapeScore, gridShapeScore * 1.4).clamp(0.0, 100.0);
+    // Combine shape scores: TĂNG trọng số Dollar One để nhạy hơn với hình dạng nét
+    // - dollarOneShapeScore: 60% - nhạy với hình dạng, thứ tự nét, hướng vẽ (QUAN TRỌNG)
+    // - gridShapeScore (IoU): 40% - đo độ phủ tổng thể
+    double shapeScore = (dollarOneShapeScore * 0.6) + (gridShapeScore * 0.4);
+    shapeScore = shapeScore.clamp(0.0, 100.0);
 
-    // Fail early only if shape is completely unrelated (less than 42% boosted shapeScore)
-    if (shapeScore < 42.0) {
+    // Kiểm tra Dollar One quá thấp = hình dạng nét hoàn toàn sai
+    if (dollarOneShapeScore < 20.0) { // Giảm từ 30% xuống 20%
+      return RecognitionResult(
+        finalScore: (shapeScore * 0.9).roundToDouble().clamp(0, 35),
+        passed: false,
+        shapeScore: shapeScore,
+        strokeScore: 25,
+        directionScore: 15,
+        feedback: 'Hình dạng nét vẽ không giống chữ mẫu. Hãy vẽ theo đúng hình! ✍️',
+        tips: [
+          'Quan sát kỹ hình dạng từng nét trong chữ mẫu.',
+          'Vẽ chậm rãi, theo đúng hướng mũi tên.',
+          'Tránh vẽ sọc thẳng đơn giản.',
+        ],
+        stars: 0,
+      );
+    }
+
+    // Fail early only if shape is completely unrelated (less than 35% boosted shapeScore)
+    if (shapeScore < 35.0) {
       return RecognitionResult(
         finalScore: (shapeScore * 0.95).roundToDouble().clamp(0, 49),
         passed: false,
@@ -453,7 +636,7 @@ class ScoringService {
       );
     }
 
-    // 5. Stroke Analysis (25% weight)
+    // 5. Stroke Analysis (15% weight - giảm từ 25%)
     double strokeCountScore = 100.0;
     final guides = StrokeGuideData.getStrokes(character);
     if (guides.isNotEmpty) {
@@ -463,11 +646,13 @@ class ScoringService {
       if (diff == 0) {
         strokeCountScore = 100.0;
       } else if (diff == 1) {
-        strokeCountScore = 80.0; // Generous: was 65.0
+        strokeCountScore = 90.0; // Rất khoan dung (tăng từ 80.0)
       } else if (diff == 2) {
-        strokeCountScore = 60.0; // Generous: was 40.0
+        strokeCountScore = 75.0; // Rất khoan dung (tăng từ 60.0)
+      } else if (diff == 3) {
+        strokeCountScore = 60.0; // Thêm mức mới
       } else {
-        strokeCountScore = 40.0; // Generous: was 20.0
+        strokeCountScore = 50.0; // Khoan dung (tăng từ 40.0)
       }
     }
 
@@ -494,33 +679,33 @@ class ScoringService {
         final g = guides[i];
         final expectedAngleRad = g[3] * math.pi / 180.0;
         final stroke = strokes[i];
-        
+
         if (stroke.length >= 2) {
           final double dx = stroke.last.dx - stroke.first.dx;
           final double dy = stroke.last.dy - stroke.first.dy;
           final double drawnAngle = math.atan2(dy, dx);
           double angleDiff = (drawnAngle - expectedAngleRad).abs();
           if (angleDiff > math.pi) angleDiff = 2 * math.pi - angleDiff;
-          
+
           double dirS = 0.0;
-          if (angleDiff < (45.0 * math.pi / 180.0)) { // Generous angle tolerance
+          if (angleDiff < (60.0 * math.pi / 180.0)) { // Rất khoan dung (tăng từ 45°)
             dirS = 100.0;
-          } else if (angleDiff < (90.0 * math.pi / 180.0)) { // Generous angle tolerance
-            dirS = 70.0; // Generous: was 60.0
+          } else if (angleDiff < (120.0 * math.pi / 180.0)) { // Rất khoan dung (tăng từ 90°)
+            dirS = 80.0; // Khoan dung (tăng từ 70.0)
             badDirectionIndices.add(i);
           } else {
-            dirS = 40.0; // Generous: was 10.0
+            dirS = 60.0; // Khoan dung (tăng từ 40.0)
             badDirectionIndices.add(i);
           }
           totalDirScore += dirS;
         } else {
-          totalDirScore += 50.0;
+          totalDirScore += 70.0; // Khoan dung (tăng từ 50.0)
         }
       }
-      
+
       if (strokes.length != guides.length) {
         int diff = (strokes.length - guides.length).abs();
-        totalDirScore = (totalDirScore / math.max(strokes.length, guides.length)) * (1.0 - (diff * 0.08)).clamp(0.3, 1.0) * 100.0;
+        totalDirScore = (totalDirScore / math.max(strokes.length, guides.length)) * (1.0 - (diff * 0.05)).clamp(0.5, 1.0) * 100.0; // Giảm penalty (từ 0.08 xuống 0.05, từ 0.3 lên 0.5)
       } else {
         totalDirScore = totalDirScore / guides.length;
       }
@@ -544,8 +729,8 @@ class ScoringService {
       }
     }
 
-    // 8. Compute final weighted score
-    double finalScore = shapeScore * 0.65 + strokeScore * 0.25 + directionScore * 0.10;
+    // 8. Compute final weighted score (tăng trọng số shape, giảm stroke và direction)
+    double finalScore = shapeScore * 0.75 + strokeScore * 0.15 + directionScore * 0.10;
     int roundedFinal = finalScore.round().clamp(0, 100);
     
     // Smart Feedback & Tips
@@ -580,14 +765,14 @@ class ScoringService {
       }
     }
 
-    // Encouraging passing criteria: 58% or above passes for kids
-    bool passed = roundedFinal >= 58;
+    // Encouraging passing criteria: 50% or above passes for kids (giảm từ 58%)
+    bool passed = roundedFinal >= 50;
     int stars = 0;
-    if (roundedFinal >= 85) {
+    if (roundedFinal >= 80) {
       stars = 3;
-    } else if (roundedFinal >= 72) {
+    } else if (roundedFinal >= 65) {
       stars = 2;
-    } else if (roundedFinal >= 58) {
+    } else if (roundedFinal >= 50) {
       stars = 1;
     }
 
@@ -698,19 +883,24 @@ class ScoringService {
     return str;
   }
 
+  String _khmerInitial(String s) {
+    final normalized = _normalizeKhmer(s);
+    return normalized.isNotEmpty ? normalized[0] : '';
+  }
+
   String _normalizeLatin(String s) {
     var str = s.toLowerCase().trim().replaceAll(RegExp(r'\s+'), '');
-    
+
     // Loại bỏ dấu tiếng Việt
     var withDiacritics = 'àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ';
     var withoutDiacritics = 'aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyydAAAAAAAAAAAAAAAAAEEEEEEEEEEEIIIIIOOOOOOOOOOOOOOOOOUUUUUUUUUUUYYYYYD';
     for (int i = 0; i < withDiacritics.length; i++) {
       str = str.replaceAll(withDiacritics[i], withoutDiacritics[i]);
     }
-    
+
     // Giữ lại chữ cái thường và số
     str = str.replaceAll(RegExp(r'[^a-z0-9]'), '');
-    
+
     // Các từ đồng âm gần âm phổ biến (đặc biệt khi fallback tiếng Việt)
     if (str.startsWith('c')) str = 'k' + str.substring(1);
     if (str.startsWith('q')) str = 'k' + str.substring(1);
@@ -718,7 +908,22 @@ class ScoringService {
     if (str.startsWith('v')) str = 'd' + str.substring(1);
     if (str.startsWith('tr')) str = 'ch' + str.substring(2);
     if (str.startsWith('ph')) str = 'f' + str.substring(2);
-    
+
+    // Chuẩn hóa các âm cuối tương tự
+    str = str.replaceAll('aw', 'o');
+    str = str.replaceAll('ao', 'o');
+    str = str.replaceAll('ow', 'o');
+    str = str.replaceAll('oh', 'o');
+    str = str.replaceAll('or', 'o');
+
+    // Chuẩn hóa các phụ âm kép
+    str = str.replaceAll('kh', 'k');
+    str = str.replaceAll('ch', 'j');
+    str = str.replaceAll('th', 't');
+    str = str.replaceAll('ph', 'f');
+    str = str.replaceAll('ng', 'n');
+    str = str.replaceAll('nh', 'n');
+
     return str;
   }
 
@@ -728,6 +933,54 @@ class ScoringService {
     } else {
       return _normalizeLatin(s);
     }
+  }
+
+  /// Fuzzy matching: cho phép sai lệch 1 ký tự (thêm, bớt, hoặc thay thế)
+  /// Ví dụ: "ko" khớp với "koh", "kor", "k", "koo"
+  bool _isFuzzyMatch(String a, String b) {
+    if (a == b) return true;
+    if (a.isEmpty || b.isEmpty) return false;
+
+    // Độ dài chênh lệch quá nhiều thì không khớp
+    if ((a.length - b.length).abs() > 1) return false;
+
+    // Kiểm tra nếu một chuỗi là substring của chuỗi kia
+    if (a.contains(b) || b.contains(a)) return true;
+
+    // Kiểm tra Levenshtein distance = 1
+    return _levenshteinDistance(a, b) <= 1;
+  }
+
+  /// Tính khoảng cách Levenshtein (edit distance)
+  int _levenshteinDistance(String a, String b) {
+    if (a == b) return 0;
+    if (a.isEmpty) return b.length;
+    if (b.isEmpty) return a.length;
+
+    List<int> v0 = List.filled(b.length + 1, 0);
+    List<int> v1 = List.filled(b.length + 1, 0);
+
+    for (int i = 0; i <= b.length; i++) {
+      v0[i] = i;
+    }
+
+    for (int i = 0; i < a.length; i++) {
+      v1[0] = i + 1;
+
+      for (int j = 0; j < b.length; j++) {
+        int cost = (a[i] == b[j]) ? 0 : 1;
+        v1[j + 1] = math.min(
+          math.min(v1[j] + 1, v0[j + 1] + 1),
+          v0[j] + cost,
+        );
+      }
+
+      List<int> temp = v0;
+      v0 = v1;
+      v1 = temp;
+    }
+
+    return v0[b.length];
   }
 
   int _accuracyToStars(int accuracy) {

@@ -6,6 +6,7 @@ import 'screens/splash/splash_screen.dart';
 import 'data/local/local_database.dart';
 import 'services/connectivity_service.dart';
 import 'services/sync_manager.dart';
+import 'services/auth_service.dart';
 
 /// Điểm khởi đầu ứng dụng KhmerKid
 /// Học chữ Khmer cho trẻ em tiểu học
@@ -13,6 +14,15 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // ─── Khởi tạo Hybrid Offline-First Architecture ──────────────
+  // 0. Dò tìm IP máy chủ đang hoạt động (IP đã lưu → danh sách → quét subnet).
+  //    Bọc timeout tổng để không kẹt splash khi mạng không có server.
+  await AuthService.detectActiveServer().timeout(
+    const Duration(seconds: 8),
+    onTimeout: () {
+      debugPrint('⏱️ [main] Dò server quá lâu, tiếp tục khởi động app.');
+    },
+  );
+
   // 1. Mở Isar local database + migrate từ SharedPreferences
   await LocalDatabase.init();
   // 2. Khởi tạo connectivity monitoring

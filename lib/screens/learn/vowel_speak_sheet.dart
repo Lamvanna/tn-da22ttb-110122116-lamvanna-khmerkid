@@ -6,6 +6,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_vowel.dart';
+import '../../services/scoring_service.dart';
 
 /// Sheet luyện nói nguyên âm — RESPONSIVE + Plus Jakarta Sans
 class VowelSpeakSheet extends StatefulWidget {
@@ -177,34 +178,25 @@ class _State extends State<VowelSpeakSheet> with SingleTickerProviderStateMixin 
 
   void _evaluate() {
     if (_hasResult) return;
-    final spoken = _recognized.toLowerCase().trim();
+    final spoken = _recognized.trim();
     if (spoken.isEmpty) { setState(() => _statusMsg = 'Không nhận diện được. Hãy nói to hơn!'); return; }
-    String normalize(String s) => s.toLowerCase().trim().replaceAll(RegExp(r'\s+'), '');
-    final spokenNorm = normalize(spoken);
-    final targets = [widget.vowel.romanized, widget.vowel.pronunciation, widget.vowel.character].where((t) => t.isNotEmpty).map(normalize).toList();
-    bool exact = targets.any((t) => spokenNorm.contains(t) || t.contains(spokenNorm));
-    if (exact) { _score = 5; _isCorrect = true; } else {
-      bool firstCharMatch = targets.any((t) => t.isNotEmpty && spokenNorm.isNotEmpty && t[0] == spokenNorm[0]);
-      double best = 0;
-      for (final t in targets) { final s = _sim(spokenNorm, t); if (s > best) best = s; }
-      if (firstCharMatch) best = (best + 0.15).clamp(0.0, 1.0);
-      if (best > 0.5) { _score = 4; _isCorrect = true; }
-      else if (best > 0.3) { _score = 3; _isCorrect = true; }
-      else if (best > 0.15) { _score = 2; _isCorrect = false; }
-      else { _score = 1; _isCorrect = false; }
-    }
+    final res = ScoringService.instance.scorePronunciation(
+      spoken: spoken,
+      character: widget.vowel.character,
+      romanized: widget.vowel.romanized,
+      pronunciation: widget.vowel.pronunciation,
+      passThreshold: 30, // Nương tay với trẻ nhỏ
+    );
+    // Quy đổi điểm 0–100 sang thang 1–5 sao của sheet này
+    final acc = res.accuracy;
+    if (acc >= 90) { _score = 5; }
+    else if (acc >= 60) { _score = 4; }
+    else if (acc >= 40) { _score = 3; }
+    else if (acc >= 20) { _score = 2; }
+    else { _score = 1; }
+    _isCorrect = res.passed;
     setState(() => _hasResult = true);
     if (_isCorrect) widget.onComplete();
-  }
-
-  double _sim(String a, String b) { if (a.isEmpty || b.isEmpty) return 0; final mx = a.length > b.length ? a.length : b.length; return 1.0 - (_lev(a, b) / mx); }
-  int _lev(String s, String t) {
-    final m = s.length, n = t.length;
-    final d = List.generate(m + 1, (_) => List.filled(n + 1, 0));
-    for (int i = 0; i <= m; i++) d[i][0] = i;
-    for (int j = 0; j <= n; j++) d[0][j] = j;
-    for (int i = 1; i <= m; i++) { for (int j = 1; j <= n; j++) { final c = s[i-1] == t[j-1] ? 0 : 1; d[i][j] = [d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+c].reduce((a, b) => a < b ? a : b); } }
-    return d[m][n];
   }
 
   @override

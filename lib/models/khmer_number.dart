@@ -40,14 +40,14 @@ class KhmerNumberData {
 
   static final List<KhmerNumber> numbers = [
     KhmerNumber(character: '០', value: '0', khmerWord: 'សូន្យ', romanized: 'soun', pronunciation: 'soun'),
-    KhmerNumber(character: '១', value: '1', khmerWord: 'មួយ', romanized: 'muoy', pronunciation: 'muôi'),
-    KhmerNumber(character: '២', value: '2', khmerWord: 'ពីរ', romanized: 'pii', pronunciation: 'pi'),
-    KhmerNumber(character: '៣', value: '3', khmerWord: 'បី', romanized: 'bei', pronunciation: 'bây'),
-    KhmerNumber(character: '៤', value: '4', khmerWord: 'បួន', romanized: 'buon', pronunciation: 'buôn'),
+    KhmerNumber(character: '១', value: '1', khmerWord: 'មួយ', romanized: 'muəj', pronunciation: 'muəj'),
+    KhmerNumber(character: '២', value: '2', khmerWord: 'ពីរ', romanized: 'piː', pronunciation: 'piː'),
+    KhmerNumber(character: '៣', value: '3', khmerWord: 'បី', romanized: 'bəj', pronunciation: 'bəj'),
+    KhmerNumber(character: '៤', value: '4', khmerWord: 'បួន', romanized: 'buən', pronunciation: 'buən'),
     KhmerNumber(character: '៥', value: '5', khmerWord: 'ប្រាំ', romanized: 'pram', pronunciation: 'pram'),
-    KhmerNumber(character: '៦', value: '6', khmerWord: 'ប្រាំមួយ', romanized: 'pram muoy', pronunciation: 'pram muôi'),
-    KhmerNumber(character: '៧', value: '7', khmerWord: 'ប្រាំពីរ', romanized: 'pram pii', pronunciation: 'pram pi'),
-    KhmerNumber(character: '៨', value: '8', khmerWord: 'ប្រាំបី', romanized: 'pram bei', pronunciation: 'pram bây'),
-    KhmerNumber(character: '៩', value: '9', khmerWord: 'ប្រាំបួន', romanized: 'pram buon', pronunciation: 'pram buôn'),
+    KhmerNumber(character: '៦', value: '6', khmerWord: 'ប្រាំមួយ', romanized: 'pram muəj', pronunciation: 'pram muəj'),
+    KhmerNumber(character: '៧', value: '7', khmerWord: 'ប្រាំពីរ', romanized: 'pram piː', pronunciation: 'pram piː'),
+    KhmerNumber(character: '៨', value: '8', khmerWord: 'ប្រាំបី', romanized: 'pram bəj', pronunciation: 'pram bəj'),
+    KhmerNumber(character: '៩', value: '9', khmerWord: 'ប្រាំបួន', romanized: 'pram buən', pronunciation: 'pram buən'),
   ];
 }

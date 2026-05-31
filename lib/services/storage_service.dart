@@ -265,6 +265,9 @@ class StorageService {
   // ─── SETTINGS ────────────────────────────────────────────────
   static const _keySoundEnabled = 'sound_enabled';
   static const _keyLanguage = 'app_language';
+  static const _keyTtsSpeed = 'tts_speed';
+  static const _keyHaptics = 'haptics_enabled';
+  static const _keyOffline = 'offline_enabled';
 
   bool getSoundEnabled() => _prefs?.getBool(_keySoundEnabled) ?? true;
   Future<void> setSoundEnabled(bool val) async =>
@@ -273,6 +276,19 @@ class StorageService {
   String getLanguage() => _prefs?.getString(_keyLanguage) ?? 'vi';
   Future<void> setLanguage(String lang) async =>
       await _prefs?.setString(_keyLanguage, lang);
+
+  /// Tốc độ đọc TTS: 0 = chậm, 1 = vừa, 2 = nhanh (mặc định vừa)
+  int getTtsSpeed() => _prefs?.getInt(_keyTtsSpeed) ?? 1;
+  Future<void> setTtsSpeed(int val) async =>
+      await _prefs?.setInt(_keyTtsSpeed, val);
+
+  bool getHapticsEnabled() => _prefs?.getBool(_keyHaptics) ?? true;
+  Future<void> setHapticsEnabled(bool val) async =>
+      await _prefs?.setBool(_keyHaptics, val);
+
+  bool getOfflineEnabled() => _prefs?.getBool(_keyOffline) ?? false;
+  Future<void> setOfflineEnabled(bool val) async =>
+      await _prefs?.setBool(_keyOffline, val);
 
   // ─── PROFILE ─────────────────────────────────────────────────
   static const _keyUsername = 'username';
@@ -340,4 +356,19 @@ class StorageService {
 
   // ─── CLEAR ALL ───────────────────────────────────────────────
   Future<void> clearAll() async => await _prefs?.clear();
+
+  /// Đặt lại CHỈ tiến độ học (giữ lại đăng nhập, hồ sơ & cài đặt).
+  /// Dùng cho nút "Đặt lại tiến độ" trong màn hình Cài đặt.
+  Future<void> clearProgress() async {
+    const keys = [
+      _keyStars, _keyXp, _keyStreak, _keyLastStudy,
+      _keyLetterProgress, _keyVowelProgress, _keyReadingProgress,
+      _keyNumberProgress, _keyDiacriticalProgress, _keySpellingProgress,
+      _keyWritingProgress, _keyVocabLearned, _keyTestHistory,
+      _keyGameScores, _keyAchievements, _keyTotalStudyMinutes,
+    ];
+    for (final k in keys) {
+      await _prefs?.remove(k);
+    }
+  }
 }

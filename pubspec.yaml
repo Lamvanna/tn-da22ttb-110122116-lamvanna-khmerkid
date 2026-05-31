@@ -32,6 +32,7 @@ dependencies:
   signature: ^5.5.0
   path_provider: ^2.1.5
   flutter_tesseract_ocr: ^0.4.27
+  audioplayers: ^5.2.1  # Phát âm chuẩn từ file âm thanh
 
   # Hybrid Offline-First Architecture
   isar: ^3.1.0+1
@@ -69,6 +70,11 @@ flutter:
     - assets/images/elephant_mascot.png
     - assets/images/splash_bg.png
     - image/
+    # Audio assets - Phát âm chuẩn tiếng Khmer
+    - assets/audio/khmer/consonants/
+    - assets/audio/khmer/vowels/
+    - assets/audio/khmer/numbers/
+    - assets/audio/khmer/words/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -35,7 +35,10 @@ class DailyQuestWidget extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: Spacing.s4),
       child: GestureDetector(
-        onTap: () => Navigator.push(context, AppPageRoute(page: const DailyQuestScreen())),
+        onTap: () => Navigator.push(
+          context,
+          AppPageRoute(page: const DailyQuestScreen()),
+        ),
         child: Container(
           padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
           decoration: BoxDecoration(
@@ -48,7 +51,8 @@ class DailyQuestWidget extends StatelessWidget {
             children: [
               // Icon
               Container(
-                width: 60.w, height: 60.w,
+                width: 60.w,
+                height: 60.w,
                 decoration: BoxDecoration(
                   color: const Color(0xFFD6E9F8),
                   borderRadius: BorderRadius.circular(16.r),
@@ -63,7 +67,8 @@ class DailyQuestWidget extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Nhiệm vụ hôm nay',
+                    Text(
+                      'Nhiệm vụ hôm nay',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 15.sp,
                         fontWeight: FontWeight.w800,
@@ -71,7 +76,8 @@ class DailyQuestWidget extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 2.h),
-                    Text('Hoàn thành nhiệm vụ để nhận thưởng',
+                    Text(
+                      'Hoàn thành nhiệm vụ để nhận thưởng',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.sp,
                         fontWeight: FontWeight.w600,
@@ -83,7 +89,10 @@ class DailyQuestWidget extends StatelessWidget {
                     SizedBox(height: 8.h),
                     // Progress Chip
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFD6E9F8),
                         borderRadius: BorderRadius.circular(12.r),
@@ -91,9 +100,14 @@ class DailyQuestWidget extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 14.sp),
+                          Icon(
+                            Icons.star_rounded,
+                            color: const Color(0xFFFFB300),
+                            size: 14.sp,
+                          ),
                           SizedBox(width: 4.w),
-                          Text('$completed/$total nhiệm vụ',
+                          Text(
+                            '$completed/$total nhiệm vụ',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 10.sp,
                               fontWeight: FontWeight.w700,
@@ -109,12 +123,17 @@ class DailyQuestWidget extends StatelessWidget {
               SizedBox(width: 10.w),
               // Arrow Button
               Container(
-                width: 42.w, height: 42.w,
+                width: 42.w,
+                height: 42.w,
                 decoration: const BoxDecoration(
                   color: Color(0xFF3498DB),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20.sp),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  color: Colors.white,
+                  size: 20.sp,
+                ),
               ),
             ],
           ),

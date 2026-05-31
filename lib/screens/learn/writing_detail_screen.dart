@@ -5,7 +5,7 @@ import '../../constants/app_colors.dart';
 import '../../models/khmer_writing.dart';
 import '../../widgets/app_header.dart';
 import '../../services/score_service.dart';
-import '../../services/scoring_service.dart';
+import '../../services/handwriting_tracing_service.dart';
 
 /// Trang chi tiết tập viết — Canvas lớn với chữ mẫu mờ
 class WritingDetailScreen extends StatefulWidget {
@@ -22,6 +22,8 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
   final List<List<Offset>> _strokes = [];
   List<Offset> _currentStroke = [];
   bool _showGuide = true;
+  bool _showFeedback = false;
+  List<dynamic> _feedbackSegments = []; // StrokeSegment list from tracing service
 
   KhmerWriting get _lesson => _lessons[_current];
   int get _doneCount => _lessons.where((l) => l.isLearned).length;
@@ -47,19 +49,29 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
   void _clearCanvas() => setState(() {
     _strokes.clear();
     _currentStroke.clear();
+    _showFeedback = false;
+    _feedbackSegments.clear();
   });
 
   Future<void> _markDone() async {
     final canvasBox = context.findRenderObject() as RenderBox?;
     final size = canvasBox?.size ?? const Size(300, 300);
 
-    final recognition = ScoringService.instance.recognizeWriting(
+    // Get tracing result with visual feedback
+    final tracingResult = HandwritingTracingService.instance.scoreTracing(
       character: _lesson.character,
-      strokes: _strokes,
+      userStrokes: _strokes,
       canvasSize: size,
     );
 
-    if (!recognition.passed) {
+    // Show visual feedback with colored strokes
+    setState(() {
+      _showFeedback = true;
+      _feedbackSegments = tracingResult.visualFeedback;
+    });
+
+    if (!tracingResult.passed) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -68,41 +80,45 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
             Row(children: [
               const Icon(Icons.cancel_rounded, color: Colors.white, size: 20),
               const SizedBox(width: 8),
-              Text('Chưa đạt! Điểm viết: ${recognition.finalScore.round()}%',
+              Text('Chưa đạt! Điểm viết: ${tracingResult.finalScore.round()}%',
                 style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
             ]),
             const SizedBox(height: 6),
-            ...recognition.tips.map((tip) => Text('• $tip',
-              style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.white.withOpacity(0.9)))),
+            Text('Nét đúng: ${tracingResult.insideCoverage.round()}% | Nét sai: ${tracingResult.outsideCoverage.round()}%',
+              style: GoogleFonts.plusJakartaSans(fontSize: 11, color: Colors.white.withValues(alpha: 0.9))),
+            const SizedBox(height: 4),
+            ...tracingResult.tips.map((tip) => Text('• $tip',
+              style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.white.withValues(alpha: 0.9)))),
           ],
         ),
         backgroundColor: AppColors.coral,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 4)));
+        duration: const Duration(seconds: 5)));
       return;
     }
 
     setState(() {
       _lesson.isLearned = true;
-      _lesson.starRating = recognition.stars;
+      _lesson.starRating = tracingResult.stars;
     });
-    
+
     try {
       final scoreService = await ScoreService.getInstance();
-      await scoreService.completeWritingLesson(_current, recognition.stars, lessonId: null);
+      await scoreService.completeWritingLesson(_current, tracingResult.stars, lessonId: null);
     } catch (e) {
       debugPrint('Error saving writing progress: $e');
     }
 
     _speak(_lesson.character);
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Row(children: [
         const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            'Hoàn thành "${_lesson.character}" (${recognition.finalScore.round()}%) - ${recognition.stars} ⭐!',
+            'Hoàn thành "${_lesson.character}" (${tracingResult.finalScore.round()}%) - ${tracingResult.stars} ⭐!',
             style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
           ),
         ),
@@ -115,7 +131,10 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
 
   void _next() {
     if (_current < _lessons.length - 1) {
-      setState(() { _current++; _clearCanvas(); });
+      setState(() {
+        _current++;
+        _clearCanvas();
+      });
     } else {
       _showCompletionDialog();
     }
@@ -123,7 +142,10 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
 
   void _prev() {
     if (_current > 0) {
-      setState(() { _current--; _clearCanvas(); });
+      setState(() {
+        _current--;
+        _clearCanvas();
+      });
     }
   }
 
@@ -373,7 +395,10 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
               color: accentColor.withValues(alpha: 0.08)))),
         // Drawing area
         GestureDetector(
-          onPanStart: (d) => setState(() => _currentStroke = [d.localPosition]),
+          onPanStart: (d) => setState(() {
+            _currentStroke = [d.localPosition];
+            _showFeedback = false; // Hide feedback when drawing
+          }),
           onPanUpdate: (d) => setState(() => _currentStroke.add(d.localPosition)),
           onPanEnd: (_) => setState(() {
             _strokes.add(List.from(_currentStroke));
@@ -381,7 +406,7 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
           }),
           child: CustomPaint(
             size: const Size(double.infinity, 320),
-            painter: _StrokePainter(_strokes, _currentStroke, accentColor))),
+            painter: _StrokePainter(_strokes, _currentStroke, accentColor, _showFeedback, _feedbackSegments))),
         // Top-left label
         Positioned(top: 10, left: 12,
           child: Container(
@@ -491,18 +516,35 @@ class _StrokePainter extends CustomPainter {
   final List<List<Offset>> strokes;
   final List<Offset> current;
   final Color color;
+  final bool showFeedback;
+  final List<dynamic> feedbackSegments;
 
-  _StrokePainter(this.strokes, this.current, this.color);
+  _StrokePainter(this.strokes, this.current, this.color, this.showFeedback, this.feedbackSegments);
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    for (final s in strokes) { _draw(canvas, s, paint); }
-    _draw(canvas, current, paint);
+    if (showFeedback && feedbackSegments.isNotEmpty) {
+      // Draw feedback with colored segments
+      for (final segment in feedbackSegments) {
+        final points = segment.points as List<Offset>;
+        final segmentColor = segment.color as Color;
+        final paint = Paint()
+          ..color = segmentColor
+          ..strokeWidth = 6
+          ..strokeCap = StrokeCap.round
+          ..style = PaintingStyle.stroke;
+        _draw(canvas, points, paint);
+      }
+    } else {
+      // Draw normal strokes
+      final paint = Paint()
+        ..color = color
+        ..strokeWidth = 4
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke;
+      for (final s in strokes) { _draw(canvas, s, paint); }
+      _draw(canvas, current, paint);
+    }
   }
 
   void _draw(Canvas canvas, List<Offset> pts, Paint p) {

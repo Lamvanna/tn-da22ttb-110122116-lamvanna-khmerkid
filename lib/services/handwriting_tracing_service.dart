@@ -544,25 +544,19 @@ class HandwritingTracingService {
 
   /// Tính số sao dựa trên điểm (nghiêm ngặt hơn)
   int _calculateStars(double score, [double passThreshold = 70.0]) {
-    if (score >= 95) return 3;  // Tăng từ 90
-    if (score >= 87) return 2;  // Tăng từ 80
-    if (score >= 80) return 1;  // Tăng từ 70
+    if (score >= 90) return 3;
+    if (score >= 80) return 2;
     if (score >= passThreshold) return 1;
     return 0;
   }
 
   /// Tạo feedback message
   String _generateFeedback(double finalScore, double inside, double outside, [double passThreshold = 70.0]) {
-    if (finalScore >= 95) {
+    if (finalScore >= 90) {
       return 'Xuất sắc! ⭐⭐⭐';
-    } else if (finalScore >= 87) {
-      return 'Rất tốt! ⭐⭐';
     } else if (finalScore >= 80) {
-      return 'Tốt! ⭐';
+      return 'Rất tốt! ⭐⭐';
     } else if (finalScore >= passThreshold) {
-      if (passThreshold <= 70.0 && finalScore >= 70.0) {
-        return 'Tốt! ⭐';
-      }
       return 'Đạt! ⭐';
     } else {
       return 'Chưa đạt - Cần luyện tập thêm';
@@ -573,7 +567,7 @@ class HandwritingTracingService {
   List<String> _generateTips(double finalScore, double inside, double outside, [double passThreshold = 70.0]) {
     final tips = <String>[];
 
-    if (finalScore >= 95) {
+    if (finalScore >= 90) {
       tips.add('Chữ viết của bạn rất đẹp! Hãy tiếp tục phát huy nhé!');
     } else if (finalScore >= passThreshold) {
       tips.add('Bạn đã viết đạt yêu cầu!');

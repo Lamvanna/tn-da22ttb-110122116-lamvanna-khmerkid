@@ -175,6 +175,32 @@ class HandwritingTracingService {
       );
     }
 
+    // Kiểm tra vẽ bậy (scribble detection) - Tổng chiều dài nét vẽ quá lớn
+    double totalPathLength = 0;
+    for (final stroke in userStrokes) {
+      for (int i = 1; i < stroke.length; i++) {
+        totalPathLength += (stroke[i] - stroke[i - 1]).distance;
+      }
+    }
+    
+    // Nếu tổng chiều dài vẽ gấp 5 lần chiều rộng canvas, coi như vẽ bậy
+    if (totalPathLength > canvasSize.width * 5) {
+      return TracingScoreResult(
+        insideCoverage: 0,
+        outsideCoverage: 100, // Đánh dấu là sai hoàn toàn
+        finalScore: 1,
+        passed: false,
+        stars: 0,
+        feedback: 'Không đạt ❌ - Bạn đang vẽ bậy!',
+        tips: [
+          'Có vẻ bạn đã gạch xóa hoặc vẽ quá nhiều nét thừa.',
+          'Hãy chỉ đồ nét một cách cẩn thận theo hình chữ mẫu.',
+          'Không nên vẽ ngoằn ngoèo trên màn hình.'
+        ],
+        visualFeedback: [],
+      );
+    }
+
     final insideCoverage = (analysis.insidePoints / totalPoints) * 100.0;
     final outsideCoverage = (analysis.outsidePoints / totalPoints) * 100.0;
 

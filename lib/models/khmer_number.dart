@@ -32,6 +32,24 @@ class KhmerNumber {
       isLearned: json['isLearned'] ?? false,
     );
   }
+
+  /// Số đọc bằng TIẾNG VIỆT theo [value] (vd "1" → "một").
+  /// Dùng để chấp nhận khi bé đọc số bằng tiếng Việt lúc luyện nói.
+  String get vietnameseWord {
+    const map = {
+      '0': 'không',
+      '1': 'một',
+      '2': 'hai',
+      '3': 'ba',
+      '4': 'bốn',
+      '5': 'năm',
+      '6': 'sáu',
+      '7': 'bảy',
+      '8': 'tám',
+      '9': 'chín',
+    };
+    return map[value.trim()] ?? '';
+  }
 }
 
 /// 10 số Khmer (0-9) + dữ liệu mẫu
@@ -39,15 +57,15 @@ class KhmerNumberData {
   KhmerNumberData._();
 
   static final List<KhmerNumber> numbers = [
-    KhmerNumber(character: '០', value: '0', khmerWord: 'សូន្យ', romanized: 'soun', pronunciation: 'soun'),
-    KhmerNumber(character: '១', value: '1', khmerWord: 'មួយ', romanized: 'muəj', pronunciation: 'muəj'),
-    KhmerNumber(character: '២', value: '2', khmerWord: 'ពីរ', romanized: 'piː', pronunciation: 'piː'),
-    KhmerNumber(character: '៣', value: '3', khmerWord: 'បី', romanized: 'bəj', pronunciation: 'bəj'),
-    KhmerNumber(character: '៤', value: '4', khmerWord: 'បួន', romanized: 'buən', pronunciation: 'buən'),
-    KhmerNumber(character: '៥', value: '5', khmerWord: 'ប្រាំ', romanized: 'pram', pronunciation: 'pram'),
-    KhmerNumber(character: '៦', value: '6', khmerWord: 'ប្រាំមួយ', romanized: 'pram muəj', pronunciation: 'pram muəj'),
-    KhmerNumber(character: '៧', value: '7', khmerWord: 'ប្រាំពីរ', romanized: 'pram piː', pronunciation: 'pram piː'),
-    KhmerNumber(character: '៨', value: '8', khmerWord: 'ប្រាំបី', romanized: 'pram bəj', pronunciation: 'pram bəj'),
-    KhmerNumber(character: '៩', value: '9', khmerWord: 'ប្រាំបួន', romanized: 'pram buən', pronunciation: 'pram buən'),
+    KhmerNumber(character: '០', value: '0', khmerWord: 'សូន្យ', romanized: 'soun', pronunciation: 'sôn'),
+    KhmerNumber(character: '១', value: '1', khmerWord: 'មួយ', romanized: 'muəj', pronunciation: 'muôi'),
+    KhmerNumber(character: '២', value: '2', khmerWord: 'ពីរ', romanized: 'piː', pronunciation: 'pi'),
+    KhmerNumber(character: '៣', value: '3', khmerWord: 'បី', romanized: 'bəj', pronunciation: 'bây'),
+    KhmerNumber(character: '៤', value: '4', khmerWord: 'បួន', romanized: 'buən', pronunciation: 'buôn'),
+    KhmerNumber(character: '៥', value: '5', khmerWord: 'ប្រាំ', romanized: 'pram', pronunciation: 'prăm'),
+    KhmerNumber(character: '៦', value: '6', khmerWord: 'ប្រាំមួយ', romanized: 'pram muəj', pronunciation: 'prăm-muôi'),
+    KhmerNumber(character: '៧', value: '7', khmerWord: 'ប្រាំពីរ', romanized: 'pram piː', pronunciation: 'prăm-pi'),
+    KhmerNumber(character: '៨', value: '8', khmerWord: 'ប្រាំបី', romanized: 'pram bəj', pronunciation: 'prăm-bây'),
+    KhmerNumber(character: '៩', value: '9', khmerWord: 'ប្រាំបួន', romanized: 'pram buən', pronunciation: 'prăm-buôn'),
   ];
 }

@@ -26,6 +26,9 @@ class KhmerSpeakWidget extends StatefulWidget {
   final String character;
   final String romanized;
   final String pronunciation;
+  /// Các cách đọc hợp lệ bổ sung (vd số: ["muôi","một","1"]; nguyên âm: ["a","aa"]).
+  /// Được gộp vào tập so khớp khi chấm điểm.
+  final List<String> acceptedAnswers;
   final VoidCallback? onComplete;
   final int passThreshold;
   final Color accentColor;
@@ -37,6 +40,7 @@ class KhmerSpeakWidget extends StatefulWidget {
     required this.character,
     this.romanized = '',
     this.pronunciation = '',
+    this.acceptedAnswers = const [],
     this.onComplete,
     this.passThreshold = 70,
     this.accentColor = const Color(0xFFD0584D),
@@ -326,6 +330,7 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
       confidence: _rawConfidence,
       romanized: widget.romanized,
       pronunciation: widget.pronunciation,
+      acceptedAnswers: widget.acceptedAnswers,
       passThreshold: widget.passThreshold,
     );
     final scoreResult = best.result;

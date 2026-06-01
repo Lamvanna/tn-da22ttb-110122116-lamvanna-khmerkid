@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_vowel.dart';
 import '../../services/auth_service.dart';
-import 'vowel_inline_listen.dart';
-import 'vowel_inline_speak.dart';
-import 'vowel_inline_write.dart';
+import '../../widgets/khmer_listen_widget.dart';
+import '../../widgets/khmer_speak_widget.dart';
+import '../../widgets/khmer_write_widget.dart';
 import '../../services/score_service.dart';
 import '../../services/lesson_service.dart';
 import '../../services/storage_service.dart';
+import '../../services/tts_service.dart';
 
 /// Chi tiết 1 nguyên âm — 3 bước inline: Nghe, Nói, Viết (giống phụ âm)
 class VowelDetailScreen extends StatefulWidget {
@@ -27,9 +27,6 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
   late Animation<double> _scaleAnim;
   List<KhmerVowel> _vowels = KhmerVowelData.vowels;
   bool _isLoading = false;
-  final FlutterTts _tts = FlutterTts();
-  bool _ttsReady = false;
-  bool _isPlaying = false;
   ScoreService? _score;
 
   // Track hoàn thành (0=nghe, 1=nói, 2=viết)
@@ -48,7 +45,6 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
       CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutBack));
     _animCtrl.forward();
     _loadScoreAndLessons();
-    _initTts();
   }
 
   Future<void> _loadScoreAndLessons() async {
@@ -84,14 +80,9 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
             fullList[i].isLearned = true;
             fullList[i].starRating = localVowelProgress[i]!;
           } else {
-            // 6 nguyên âm đầu tiên mặc định learned
-            if (i < 6) {
-              fullList[i].isLearned = true;
-              fullList[i].starRating = 3;
-            } else {
-              fullList[i].isLearned = false;
-              fullList[i].starRating = 0;
-            }
+            // Không mặc định đánh dấu đã học (isLearned = false) để tránh chưa học đã mở khóa
+            fullList[i].isLearned = false;
+            fullList[i].starRating = 0;
           }
         }
         if (mounted) {
@@ -167,8 +158,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
           }
           await storage.saveVowelProgress(i, fullList[i].starRating);
         } else {
-          fullList[i].isLearned = false;
-          fullList[i].starRating = 0;
+          // Giữ nguyên tiến trình local đã nạp từ bộ nhớ tạm, KHÔNG tự ý ghi đè về false
         }
       }
 
@@ -187,25 +177,6 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
         });
       }
     }
-  }
-
-  Future<void> _initTts() async {
-    final languages = await _tts.getLanguages;
-    final langList = (languages as List).map((l) => l.toString().toLowerCase()).toList();
-    final hasKhmer = langList.any((l) => l.contains('km') || l.contains('khmer'));
-    await _tts.setLanguage(hasKhmer ? 'km' : langList.any((l) => l.contains('vi')) ? 'vi-VN' : 'en-US');
-    await _tts.setSpeechRate(0.4);
-    await _tts.setVolume(1.0);
-    _tts.setCompletionHandler(() { if (mounted) setState(() => _isPlaying = false); });
-    _tts.setErrorHandler((_) { if (mounted) setState(() => _isPlaying = false); });
-    if (mounted) setState(() => _ttsReady = true);
-  }
-
-  Future<void> _speak(String text) async {
-    if (!_ttsReady || _isPlaying) return;
-    setState(() => _isPlaying = true);
-    await _tts.speak(text);
-    _markStepComplete(0);
   }
 
   void _markStepComplete(int step) {
@@ -296,16 +267,21 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
   }
 
   @override
-  void dispose() { _tts.stop(); _animCtrl.dispose(); super.dispose(); }
+  void dispose() { _animCtrl.dispose(); super.dispose(); }
 
   KhmerVowel get _v => _vowels.isNotEmpty ? _vowels[_idx] : KhmerVowelData.vowels[_idx];
   bool _isStepComplete(int step) {
     if (_vowels.isEmpty) return false;
     return _completedSteps[_idx]?.contains(step) ?? false;
   }
-  int get _completedCount => _completedSteps[_idx]?.length ?? 0;
 
-  bool _canGo(int i) => _vowels.isNotEmpty && i >= 0 && i < _vowels.length;
+  bool _canGo(int i) {
+    if (_vowels.isEmpty || i < 0 || i >= _vowels.length) return false;
+    if (i <= _idx) return true; // Can always go back
+    final currentLessonCompleted = _vowels[_idx].isLearned || (_completedSteps[_idx]?.length == 3);
+    if (i == _idx + 1) return currentLessonCompleted;
+    return false;
+  }
   void _goTo(int i) {
     if (!_canGo(i)) return;
     _animCtrl.reset();
@@ -411,7 +387,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
                           SizedBox(width: 6.w),
                           Expanded(child: Text('Nguyên âm ${_idx + 1}/${_vowels.length}',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 20.sp, fontWeight: FontWeight.w800, color: Colors.white))),
+                              fontSize: 24.sp, fontWeight: FontWeight.w800, color: Colors.white))),
                         ]),
                         Padding(
                           padding: EdgeInsets.only(left: 54.w, top: 8.h),
@@ -469,6 +445,11 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
     );
   }
 
+  Future<void> _playExample() async {
+    // Đọc TÊN nguyên âm kiểu Khmer ("srăk a") bằng giọng Việt, khớp với bước Nghe.
+    await TtsService.instance.speakVietnamese(_v.listenText);
+  }
+
   // ═══════════════════ MAIN CARD ═══════════════════
   Widget _buildMainCard() {
     return Container(
@@ -482,30 +463,104 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
           color: Colors.black.withValues(alpha: 0.06),
           blurRadius: 20.r, offset: Offset(0, 6.h))],
       ),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: EdgeInsets.all(48.w),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF1E88E5).withValues(alpha: 0.06)),
-              child: Text(_v.displayCharacter, style: GoogleFonts.battambang(
-                fontSize: 130.sp, fontWeight: FontWeight.w400,
-                color: const Color(0xFF1E88E5), height: 1.1)),
+      child: Column(
+        children: [
+          // ── Top: big character ──
+          Padding(
+            padding: EdgeInsets.fromLTRB(20.w, 56.h, 20.w, 0),
+            child: Column(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(40.w),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF1E88E5).withValues(alpha: 0.06)),
+                  child: Text(_v.displayCharacter, style: GoogleFonts.battambang(
+                    fontSize: 130.sp, fontWeight: FontWeight.w400,
+                    color: const Color(0xFF1E88E5), height: 1.1)),
+                ),
+                SizedBox(height: 10.h),
+                Container(
+                  width: 80.w, height: 3.h,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [
+                      const Color(0xFF1E88E5).withValues(alpha: 0.1),
+                      const Color(0xFF1E88E5),
+                      const Color(0xFF1E88E5).withValues(alpha: 0.1)]),
+                    borderRadius: BorderRadius.circular(2.r))),
+              ],
             ),
-            SizedBox(height: 24.h),
-            Container(
-              width: 100.w, height: 3.h,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [
-                  const Color(0xFF1E88E5).withValues(alpha: 0.1),
-                  const Color(0xFF1E88E5),
-                  const Color(0xFF1E88E5).withValues(alpha: 0.1)]),
-                borderRadius: BorderRadius.circular(2.r))),
-          ],
-        ),
+          ),
+          SizedBox(height: 14.h),
+          // ── Bottom: info row ──
+          Container(
+            margin: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEEF4FC),
+              borderRadius: BorderRadius.circular(18.r),
+              border: Border.all(color: const Color(0xFF1E88E5).withValues(alpha: 0.15)),
+              boxShadow: [BoxShadow(
+                color: const Color(0xFF1E88E5).withValues(alpha: 0.08),
+                blurRadius: 10.r, offset: Offset(0, 3.h))],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _v.example.isNotEmpty ? _v.example : _v.dependent,
+                        style: GoogleFonts.battambang(
+                          fontSize: 26.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1565C0)),
+                      ),
+                      SizedBox(height: 6.h),
+                      Row(
+                        children: [
+                          Icon(Icons.volume_up_rounded,
+                            size: 16.w, color: const Color(0xFF1E88E5)),
+                          SizedBox(width: 6.w),
+                          Flexible(
+                            child: Text(
+                              _v.exampleMeaning.isNotEmpty
+                                  ? '${_v.exampleMeaning} • "${_v.pronunciation}"'
+                                  : 'Phát âm: "${_v.pronunciation}"',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textSecondary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                // Nút nghe nhanh
+                GestureDetector(
+                  onTap: _playExample,
+                  child: Container(
+                    width: 56.w, height: 56.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                        colors: [Color(0xFF42A5F5), Color(0xFF1E88E5)]),
+                      boxShadow: [BoxShadow(
+                        color: const Color(0xFF1E88E5).withValues(alpha: 0.3),
+                        blurRadius: 10.r, offset: Offset(0, 3.h))],
+                    ),
+                    child: Icon(Icons.volume_up_rounded, color: Colors.white, size: 28.w),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -519,11 +574,59 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
         child: Stack(children: [
           Column(children: [
             if (_activeSheet == 1)
-              Expanded(child: VowelInlineListenContent(vowel: _v, onComplete: () => _markStepComplete(0))),
+              Expanded(
+                child: KhmerListenWidget(
+                  character: _v.character,
+                  romanized: _v.romanized,
+                  pronunciation: _v.pronunciation,
+                  // Nghe đọc TÊN nguyên âm kiểu Khmer: "srăk a", "srăk e"...
+                  // (đọc bằng giọng Việt, không đọc ký tự Khmer ra "a")
+                  speakTextOverride: _v.listenText,
+                  accentColor: AppColors.tertiary,
+                  accentColorDark: AppColors.tertiaryDark,
+                  surfaceColor: AppColors.tertiarySurface,
+                  onComplete: () => _markStepComplete(0),
+                ),
+              ),
             if (_activeSheet == 2)
-              Expanded(child: VowelInlineSpeakContent(vowel: _v, onComplete: () => _markStepComplete(1))),
+              Expanded(
+                child: KhmerSpeakWidget(
+                  character: _v.character,
+                  // Dùng âm SẠCH (vd "a") cho prompt + chấm điểm, tránh chú thích "(dài)"
+                  // làm hỏng so khớp khiến đọc "a"/"à" bị báo sai.
+                  romanized: _v.pronunciationClean,
+                  pronunciation: _v.pronunciationClean,
+                  // Chấp nhận đủ cách đọc hợp lệ: âm sạch tiếng Việt (vd "a"),
+                  // phiên âm Latin/IPA gốc (vd "aa"/"əə") và pronunciation đầy đủ.
+                  acceptedAnswers: [
+                    _v.pronunciationClean,
+                    _v.romanized,
+                    _v.pronunciation,
+                  ],
+                  accentColor: AppColors.coral,
+                  accentColorDark: AppColors.coralDark,
+                  surfaceColor: AppColors.coralSurface,
+                  passThreshold: 70, // Ngưỡng đạt 70% — đúng yêu cầu chuẩn
+                  onComplete: () => _markStepComplete(1),
+                ),
+              ),
             if (_activeSheet == 3)
-              Expanded(child: VowelInlineWriteContent(vowel: _v, onComplete: () => _markStepComplete(2))),
+              Expanded(
+                child: KhmerWriteWidget(
+                  character: _v.displayCharacter,
+                  accentColor: AppColors.primary,
+                  accentColorDark: AppColors.primaryDark,
+                  surfaceColor: AppColors.primarySurface,
+                  showStrokeGuide: false, // Nguyên âm không có dữ liệu mũi tên hướng nét
+                  enableOcr: false,
+                  minPointsRequired: 80, // Nguyên âm nét ngắn — giảm yêu cầu xuống 80 điểm cho đồng bộ
+                  minStrokesRequired: 1, // Tối thiểu 1 nét cho nguyên âm
+                  passThreshold: 60.0, // Ngưỡng đạt 60%
+                  outsideThreshold: 45.0, // Nét ra ngoài tối đa 45%
+                  toleranceRadius: 25.0, // Bán kính tolerance 25px ôm trọn nét vẽ
+                  onComplete: () => _markStepComplete(2),
+                ),
+              ),
           ]),
           Positioned(top: 8.h, right: 8.w,
             child: GestureDetector(
@@ -649,7 +752,19 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
       }))),
       SizedBox(width: 6.w),
       GestureDetector(
-        onTap: canNext ? () => _goTo(_idx + 1) : null,
+        onTap: () {
+          if (canNext) {
+            _goTo(_idx + 1);
+          } else if (_idx < _vowels.length - 1) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Vui lòng hoàn thành tất cả hoạt động (Nghe, Nói, Viết) trước khi học bài tiếp theo.'),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+        },
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
           decoration: BoxDecoration(

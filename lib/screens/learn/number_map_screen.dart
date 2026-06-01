@@ -147,8 +147,7 @@ class _NumberMapScreenState extends State<NumberMapScreen>
               // Đồng bộ ngược lại bộ nhớ tạm
               storage.saveNumberProgress(i, _items[i].starRating);
             } else {
-              _items[i].isLearned = false;
-              _items[i].starRating = 0;
+              // Giữ nguyên tiến trình local đã nạp từ bộ nhớ tạm, KHÔNG tự ý ghi đè về false
             }
           }
         });

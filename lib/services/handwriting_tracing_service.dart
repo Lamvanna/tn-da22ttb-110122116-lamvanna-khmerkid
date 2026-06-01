@@ -354,7 +354,8 @@ class HandwritingTracingService {
           break;
         case _MarkPosition.leftAndRight:
           centerX = cx;
-          radiusX = halfW * 1.25;           // Mở rộng chiều ngang để ôm cả trái và phải mà không bị phạt
+          radiusX = halfW * 1.35;           // Mở rộng chiều ngang để ôm cả trái và phải
+          radiusY = halfH * 1.35;           // Mở rộng chiều dọc vì chữ ៀ, ឿ có nét rất dài trên/dưới
           break;
         case _MarkPosition.aboveAndBelow:
           centerY = cy;

@@ -60,20 +60,46 @@ class HandwritingTracingService {
   static final HandwritingTracingService instance = HandwritingTracingService._();
 
   // ─── Configuration ─────────────────────────────────────────────────
-  static const double strokeWidth = 4.0;           // Độ dày nét vẽ
-  static const double templateStrokeWidth = 180.0; // Độ dày nét mẫu (font size)
-  static const double toleranceRadius = 10.0;      // Bán kính chấp nhận "gần đúng" (giảm từ 15.0 để nghiêm ngặt hơn)
-  static const double passThreshold = 80.0;        // Ngưỡng đạt (tăng từ 70.0)
-  static const int gridResolution = 64;            // Độ phân giải grid để tính coverage
-  static const int minPointsRequired = 200;        // Số điểm tối thiểu (tăng từ 100)
-  static const int minStrokesRequired = 2;         // Số nét tối thiểu
+  static const double strokeWidth = 4.0;
+  // Template scale: chữ mẫu hiển thị chiếm khoảng 60% chiều rộng canvas.
+  // KHÔNG dùng fixed fontSize vì guide widget dùng 200.sp (responsive).
+  static const double templateCanvasRatio = 0.62;  // Vùng template = 62% canvas
+  static const double toleranceRadius = 15.0;      // Mặc định khoan dung cho trẻ em
+  static const double passThreshold = 70.0;        // Đạt từ 70% trở lên
+  static const double outsideThreshold = 30.0;     // Nét ngoài cho phép tối đa 30%
+  static const int gridResolution = 64;
+  static const int minPointsRequired = 15;         // Khoan dung hơn cho trẻ em viết nhanh
+  static const int minStrokesRequired = 1;         // Cho phép viết 1 nét tối thiểu
+
+  /// Ký tự DOTTED CIRCLE (U+25CC) — dấu chấm tròn dùng làm chỗ neo hiển thị cho
+  /// các dấu phụ thuộc Khmer (vd: nguyên âm `ា`, `ិ`, `ុ`). KHÔNG strip khi sinh
+  /// template nữa: TextPainter cần render đầy đủ `◌ា` để căn vị trí dấu phụ
+  /// thuộc đúng như màn hình hiển thị — nhờ vậy template ellipse bao quanh
+  /// đúng vị trí thực của nét chính người dùng cần viết.
 
   /// Chấm điểm viết theo mẫu (Template Tracing)
   TracingScoreResult scoreTracing({
     required String character,
     required List<List<Offset>> userStrokes,
     required Size canvasSize,
+    int? minPointsOverride,
+    int? minStrokesOverride,
+    double? passThresholdOverride,
+    double? outsideThresholdOverride,
+    double? toleranceRadiusOverride,
   }) {
+    final int effectiveMinPoints = minPointsOverride ?? minPointsRequired;
+    final int effectiveMinStrokes = minStrokesOverride ?? minStrokesRequired;
+    final double effectivePassThreshold = passThresholdOverride ?? passThreshold;
+    final double effectiveOutsideThreshold = outsideThresholdOverride ?? outsideThreshold;
+    final double effectiveToleranceRadius = toleranceRadiusOverride ?? toleranceRadius;
+
+    // Dùng NGUYÊN chuỗi character (kể cả '◌') khi sinh template để TextPainter
+    // căn vị trí đúng như người dùng nhìn thấy. Nếu strip '◌' đi, ký tự phụ
+    // thuộc (vd ា) sẽ tự căn giữa canvas, lệch khỏi vị trí thực của nét →
+    // người vẽ đúng nét ở bên phải sẽ bị tính ra ngoài template.
+    final scoringCharacter = character;
+
     if (userStrokes.isEmpty) {
       return const TracingScoreResult(
         insideCoverage: 0,
@@ -87,9 +113,9 @@ class HandwritingTracingService {
       );
     }
 
-    // 1. Tạo template bitmap từ chữ mẫu
+    // 1. Tạo template bitmap từ NÉT CHÍNH của chữ mẫu (đã loại dấu hướng dẫn).
     final templateBitmap = _generateTemplateBitmap(
-      character: character,
+      character: scoringCharacter,
       canvasSize: canvasSize,
     );
 
@@ -98,6 +124,8 @@ class HandwritingTracingService {
       userStrokes: userStrokes,
       templateBitmap: templateBitmap,
       canvasSize: canvasSize,
+      toleranceRadiusOverride: effectiveToleranceRadius,
+      character: scoringCharacter,
     );
 
     // 3. Tính toán coverage
@@ -116,22 +144,21 @@ class HandwritingTracingService {
     }
 
     // Kiểm tra số nét tối thiểu (chữ Khmer thường có nhiều nét)
-    if (userStrokes.length < minStrokesRequired) {
+    if (userStrokes.length < effectiveMinStrokes) {
       return TracingScoreResult(
         insideCoverage: 0,
         outsideCoverage: 0,
         finalScore: 1, // Điểm tối thiểu là 1%
         passed: false,
         stars: 0,
-        feedback: 'Chưa đủ số nét! Chữ này cần ít nhất $minStrokesRequired nét.',
+        feedback: 'Chưa đủ số nét! Chữ này cần ít nhất $effectiveMinStrokes nét.',
         tips: ['Viết đầy đủ tất cả các nét của chữ cái.', 'Quan sát kỹ chữ mẫu để biết có bao nhiêu nét.'],
         visualFeedback: [],
       );
     }
 
     // Kiểm tra số điểm tối thiểu (tránh vẽ 1 nét nhỏ)
-    // Yêu cầu tối thiểu 200 điểm để đảm bảo viết đầy đủ
-    if (totalPoints < minPointsRequired) {
+    if (totalPoints < effectiveMinPoints) {
       return TracingScoreResult(
         insideCoverage: 0,
         outsideCoverage: 0,
@@ -142,7 +169,7 @@ class HandwritingTracingService {
         tips: [
           'Viết đầy đủ toàn bộ chữ cái, không chỉ một phần nhỏ.',
           'Viết chậm rãi và rõ ràng.',
-          'Cần ít nhất $minPointsRequired điểm (hiện tại: $totalPoints).'
+          'Cần ít nhất $effectiveMinPoints điểm (hiện tại: $totalPoints).'
         ],
         visualFeedback: [],
       );
@@ -153,35 +180,38 @@ class HandwritingTracingService {
 
     // 4. ĐIỀU KIỆN ĐẠT (NGHIÊM NGẶT HÓA):
     // - Phải có đủ số điểm và số nét (đã kiểm tra ở trên)
-    // - Nét trong (inside) phải >= 80% (tăng từ 70%)
-    // - Nét ngoài (outside) phải <= 20% (giảm từ 30%)
+    // - Nét trong (inside) phải >= effectivePassThreshold
+    // - Nét ngoài (outside) phải <= effectiveOutsideThreshold
+
+    final int roundedInside = insideCoverage.round();
+    final int roundedOutside = outsideCoverage.round();
+    final int roundedPassThreshold = effectivePassThreshold.round();
+    final int roundedOutsideThreshold = effectiveOutsideThreshold.round();
 
     bool passed = false;
     double finalScore = 1; // Điểm tối thiểu là 1% thay vì 0%
     String feedback = '';
     List<String> tips = [];
 
-    // Kiểm tra điều kiện 1: Nét ngoài > 20%
-    if (outsideCoverage > 20.0) {
+    // Kiểm tra điều kiện 1: Nét ngoài > effectiveOutsideThreshold
+    if (roundedOutside > roundedOutsideThreshold) {
       passed = false;
-      // Điểm từ 1-79 dựa trên tỷ lệ nét đúng, nhưng tối đa 79% vì fail
       finalScore = (insideCoverage * 0.79).clamp(1.0, 79.0);
       feedback = 'Không đạt ❌ - Viết quá nhiều ra ngoài chữ mẫu';
       tips = [
-        'Nét viết ra ngoài: ${outsideCoverage.round()}% (chỉ cho phép tối đa 20%)',
+        'Nét viết ra ngoài: $roundedOutside% (chỉ cho phép tối đa $roundedOutsideThreshold%)',
         'Hãy viết chính xác theo nét mẫu màu xanh.',
         'Tránh vẽ lan ra ngoài chữ mẫu.',
         'Viết chậm rãi và cẩn thận hơn.',
       ];
     }
-    // Kiểm tra điều kiện 2: Nét trong < 80%
-    else if (insideCoverage < 80.0) {
+    // Kiểm tra điều kiện 2: Nét trong < effectivePassThreshold
+    else if (roundedInside < roundedPassThreshold) {
       passed = false;
-      // Điểm từ 1-79 dựa trên % nét trong
       finalScore = insideCoverage.clamp(1.0, 79.0);
       feedback = 'Chưa đạt ⚠️ - Viết chưa đủ chính xác';
       tips = [
-        'Nét viết đúng: ${insideCoverage.round()}% (cần tối thiểu 80%)',
+        'Nét viết đúng: $roundedInside% (cần tối thiểu $roundedPassThreshold%)',
         'Hãy viết nhiều hơn trên nét mẫu.',
         'Viết chậm rãi và cẩn thận theo chữ mẫu.',
         'Đảm bảo mỗi nét đều nằm trên chữ mẫu.',
@@ -190,14 +220,13 @@ class HandwritingTracingService {
     // Đạt cả 2 điều kiện
     else {
       passed = true;
-      // Điểm = % nét trong (80-100)
-      finalScore = insideCoverage.clamp(80.0, 100.0);
-      feedback = _generateFeedback(finalScore, insideCoverage, outsideCoverage);
-      tips = _generateTips(finalScore, insideCoverage, outsideCoverage);
+      finalScore = insideCoverage.clamp(effectivePassThreshold, 100.0);
+      feedback = _generateFeedback(finalScore, insideCoverage, outsideCoverage, effectivePassThreshold);
+      tips = _generateTips(finalScore, insideCoverage, outsideCoverage, effectivePassThreshold);
     }
 
     // 5. Tính số sao
-    final stars = _calculateStars(finalScore);
+    final stars = _calculateStars(finalScore, effectivePassThreshold);
 
     return TracingScoreResult(
       insideCoverage: insideCoverage,
@@ -264,103 +293,96 @@ class HandwritingTracingService {
     return (coveredCount / totalTemplateCells) * 100.0;
   }
 
-  /// Tạo bitmap của chữ mẫu (template) bằng cách render chữ lên canvas ảo
-  /// và phát hiện chính xác vùng có pixel của chữ
   Map<String, dynamic> _generateTemplateBitmap({
     required String character,
     required Size canvasSize,
   }) {
-    // Tạo grid bitmap để đánh dấu vùng chữ mẫu
     final grid = List.generate(
       gridResolution,
       (_) => List.filled(gridResolution, false),
     );
 
-    // Tạo TextPainter để render chữ
-    final textSpan = TextSpan(
-      text: character,
-      style: const TextStyle(
-        fontSize: templateStrokeWidth,
-        fontWeight: FontWeight.w700,
-        fontFamily: 'Battambang',
-        color: Color(0xFF000000),
-      ),
-    );
-
-    final textPainter = TextPainter(
-      text: textSpan,
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-
-    // Tính offset để căn giữa
-    final textWidth = textPainter.width;
-    final textHeight = textPainter.height;
-    final offsetX = (canvasSize.width - textWidth) / 2;
-    final offsetY = (canvasSize.height - textHeight) / 2;
-
-    // Tạo PictureRecorder để render chữ lên canvas ảo
-    final recorder = PictureRecorder();
-    final canvas = Canvas(recorder);
-
-    // Vẽ chữ lên canvas với stroke để tạo vùng dày hơn
-    final paint = Paint()
-      ..color = const Color(0xFF000000)
-      ..style = PaintingStyle.fill;
-
-    // Vẽ chữ nhiều lần với offset nhỏ để tạo vùng dày (simulate stroke)
-    for (double dx = -2; dx <= 2; dx += 0.5) {
-      for (double dy = -2; dy <= 2; dy += 0.5) {
-        textPainter.paint(canvas, Offset(offsetX + dx, offsetY + dy));
-      }
-    }
-
-    // Kết thúc recording
-    final picture = recorder.endRecording();
-
-    // Đánh dấu các ô grid dựa trên vị trí chữ thực tế
     final cellWidth = canvasSize.width / gridResolution;
     final cellHeight = canvasSize.height / gridResolution;
 
-    // Tính bounding box chữ mẫu
-    final templateLeft = offsetX;
-    final templateRight = offsetX + textWidth;
-    final templateTop = offsetY;
-    final templateBottom = offsetY + textHeight;
-    final centerX = offsetX + textWidth / 2;
-    final centerY = offsetY + textHeight / 2;
+    // ──── Tính vùng template theo canvas ────────────────────────────
+    // Chữ mẫu hiển thị trên canvas chiếm ~62% chiều rộng/chiều cao.
+    // Căn giữa canvas — khớp với Center(child: Text(...)) trong widget.
+    final bool isDepMark = character.contains('◌') || _classifyDependentMark(character) != _MarkPosition.none;
+    final double dynamicRatio = isDepMark ? 0.55 : templateCanvasRatio;
 
-    // Đánh dấu các cell nằm trong vùng chữ mẫu
-    // Sử dụng phương pháp ellipse để xấp xỉ hình dạng chữ
-    // Thu nhỏ ellipse để nghiêm ngặt hơn
-    final radiusX = textWidth / 2.2;  // Giảm từ 2.0 để nghiêm ngặt hơn
-    final radiusY = textHeight / 2.2; // Giảm từ 2.0 để nghiêm ngặt hơn
+    final double halfW = canvasSize.width * dynamicRatio / 2;
+    final double halfH = canvasSize.height * dynamicRatio / 2;
+    final double cx = canvasSize.width / 2;
+    final double cy = canvasSize.height / 2;
+
+    double centerX = cx;
+    double centerY = cy;
+    double radiusX = halfW;
+    double radiusY = halfH;
+
+    // Apply vertical translation shift to centerY for dependent marks to center them beautifully and prevent cutoff
+    double shiftY = 0.0;
+    final markPos = _classifyDependentMark(character);
+    if (markPos == _MarkPosition.below) {
+      shiftY = -canvasSize.height * 0.08;
+    } else if (markPos == _MarkPosition.above) {
+      shiftY = canvasSize.height * 0.06;
+    }
+    centerY += shiftY;
+
+    // ──── Định vị chính xác theo phương vị dấu phụ thuộc ────────────
+    // Để khớp hoàn hảo với vị trí hiển thị của font Battambang trên màn hình,
+    // ta dịch chuyển tâm ellipse và thu nhỏ bán kính phù hợp cho từng vùng.
+    if (markPos != _MarkPosition.none) {
+      switch (markPos) {
+        case _MarkPosition.above:
+          centerY = cy + shiftY - halfH * 0.72;      // Loop 'ិ' nằm rất cao ở phía trên
+          radiusY = halfH * 0.45;           // Thu hẹp chiều cao ellipse để ôm khít loop
+          break;
+        case _MarkPosition.below:
+          centerY = cy + shiftY + halfH * 0.72;      // Vùng dấu dưới 'ុ'
+          radiusY = halfH * 0.45;
+          break;
+        case _MarkPosition.left:
+          centerX = cx - halfW * 0.72;      // Vùng dấu trái 'េ'
+          radiusX = halfW * 0.45;
+          break;
+        case _MarkPosition.right:
+          centerX = cx + halfW * 0.72;      // Vùng dấu phải 'ា'
+          radiusX = halfW * 0.45;
+          break;
+        case _MarkPosition.leftAndRight:
+          centerX = cx;
+          radiusX = halfW * 1.25;           // Mở rộng chiều ngang để ôm cả trái và phải mà không bị phạt
+          break;
+        case _MarkPosition.aboveAndBelow:
+          centerY = cy;
+          radiusY = halfH * 1.25;           // Mở rộng chiều dọc để ôm cả trên và dưới
+          break;
+        case _MarkPosition.none:
+          break;
+      }
+    }
 
     for (int row = 0; row < gridResolution; row++) {
       for (int col = 0; col < gridResolution; col++) {
         final cellCenterX = col * cellWidth + cellWidth / 2;
         final cellCenterY = row * cellHeight + cellHeight / 2;
-
-        // Kiểm tra cell có nằm trong ellipse bao quanh chữ không
         final normalizedX = (cellCenterX - centerX) / radiusX;
         final normalizedY = (cellCenterY - centerY) / radiusY;
-        final distanceSquared = normalizedX * normalizedX + normalizedY * normalizedY;
-
-        // Cell nằm trong ellipse nếu distance <= 1
-        if (distanceSquared <= 1.0) {
+        if (normalizedX * normalizedX + normalizedY * normalizedY <= 1.0) {
           grid[row][col] = true;
         }
       }
     }
 
-    picture.dispose();
-
     return {
       'grid': grid,
-      'offsetX': offsetX,
-      'offsetY': offsetY,
-      'textWidth': textWidth,
-      'textHeight': textHeight,
+      'offsetX': cx - halfW,
+      'offsetY': cy - halfH,
+      'textWidth': halfW * 2,
+      'textHeight': halfH * 2,
       'centerX': centerX,
       'centerY': centerY,
       'radiusX': radiusX,
@@ -373,14 +395,35 @@ class HandwritingTracingService {
     required List<List<Offset>> userStrokes,
     required Map<String, dynamic> templateBitmap,
     required Size canvasSize,
+    double? toleranceRadiusOverride,
+    required String character,
   }) {
     final grid = templateBitmap['grid'] as List<List<bool>>;
     final cellWidth = canvasSize.width / gridResolution;
     final cellHeight = canvasSize.height / gridResolution;
+    final double effectiveTolerance = toleranceRadiusOverride ?? toleranceRadius;
+
+    final double cx = canvasSize.width / 2;
+    final double cy = canvasSize.height / 2;
+    final bool isDepMark = character.contains('◌') || _classifyDependentMark(character) != _MarkPosition.none;
+    final double dynamicRatio = isDepMark ? 0.55 : templateCanvasRatio;
+
+    final double halfW = canvasSize.width * dynamicRatio / 2;
+    final double halfH = canvasSize.height * dynamicRatio / 2;
+
+    double shiftY = 0.0;
+    final markPos = _classifyDependentMark(character);
+    if (markPos == _MarkPosition.below) {
+      shiftY = -canvasSize.height * 0.08;
+    } else if (markPos == _MarkPosition.above) {
+      shiftY = canvasSize.height * 0.06;
+    }
+    final double shiftedCy = cy + shiftY;
 
     int insidePoints = 0;
     int outsidePoints = 0;
     int nearPoints = 0;
+    int neutralPointsCount = 0;
 
     final List<StrokeSegment> segments = [];
 
@@ -394,7 +437,7 @@ class HandwritingTracingService {
         final col = (point.dx / cellWidth).floor().clamp(0, gridResolution - 1);
         final row = (point.dy / cellHeight).floor().clamp(0, gridResolution - 1);
 
-        // Kiểm tra điểm này nằm trong/gần/ngoài template
+        // 1. Kiểm tra xem điểm có nằm trên chữ mẫu thực tế trước
         final isInside = grid[row][col];
         final isNear = !isInside && _isNearTemplate(
           point: point,
@@ -403,6 +446,7 @@ class HandwritingTracingService {
           row: row,
           cellWidth: cellWidth,
           cellHeight: cellHeight,
+          toleranceRadius: effectiveTolerance,
         );
 
         if (isInside) {
@@ -412,8 +456,19 @@ class HandwritingTracingService {
           nearPoints++;
           yellowPoints.add(point);
         } else {
-          outsidePoints++;
-          redPoints.add(point);
+          // 2. Nếu không thuộc nét chữ, kiểm tra xem có nằm trong vùng vòng tròn nét đứt không (đối với dấu phụ thuộc)
+          final double normX = (point.dx - cx) / halfW;
+          final double normY = (point.dy - shiftedCy) / halfH;
+          final bool isInsideDottedCircle = isDepMark && (normX * normX + normY * normY <= 1.15);
+
+          if (isInsideDottedCircle) {
+            neutralPointsCount++;
+            // Color it green for satisfying visual feedback (vẫn vẽ xanh nếu tô lên vòng tròn)
+            greenPoints.add(point);
+          } else {
+            outsidePoints++;
+            redPoints.add(point);
+          }
         }
       }
 
@@ -432,10 +487,17 @@ class HandwritingTracingService {
     // Coi điểm "gần" như là inside (với trọng số thấp hơn)
     // Giảm từ 0.7 xuống 0.5 để nghiêm ngặt hơn
     final adjustedInside = insidePoints + (nearPoints * 0.5).round();
+    int adjustedOutside = outsidePoints;
+
+    // Nếu người dùng không vẽ bất kỳ điểm nào trên hoặc gần nét chữ mẫu thực tế,
+    // toàn bộ điểm vẽ trên vòng tròn trung tâm sẽ bị coi là nét vẽ ngoài chữ mẫu (vì chưa viết nét chính).
+    if (insidePoints == 0 && nearPoints == 0) {
+      adjustedOutside += neutralPointsCount;
+    }
 
     return _StrokeAnalysis(
       insidePoints: adjustedInside,
-      outsidePoints: outsidePoints,
+      outsidePoints: adjustedOutside,
       segments: segments,
     );
   }
@@ -448,6 +510,7 @@ class HandwritingTracingService {
     required int row,
     required double cellWidth,
     required double cellHeight,
+    required double toleranceRadius,
   }) {
     // Kiểm tra các ô lân cận trong bán kính tolerance
     final checkRadius = (toleranceRadius / math.min(cellWidth, cellHeight)).ceil();
@@ -480,38 +543,44 @@ class HandwritingTracingService {
   }
 
   /// Tính số sao dựa trên điểm (nghiêm ngặt hơn)
-  int _calculateStars(double score) {
+  int _calculateStars(double score, [double passThreshold = 70.0]) {
     if (score >= 95) return 3;  // Tăng từ 90
     if (score >= 87) return 2;  // Tăng từ 80
     if (score >= 80) return 1;  // Tăng từ 70
+    if (score >= passThreshold) return 1;
     return 0;
   }
 
   /// Tạo feedback message
-  String _generateFeedback(double finalScore, double inside, double outside) {
+  String _generateFeedback(double finalScore, double inside, double outside, [double passThreshold = 70.0]) {
     if (finalScore >= 95) {
       return 'Xuất sắc! ⭐⭐⭐';
     } else if (finalScore >= 87) {
       return 'Rất tốt! ⭐⭐';
     } else if (finalScore >= 80) {
       return 'Tốt! ⭐';
+    } else if (finalScore >= passThreshold) {
+      if (passThreshold <= 70.0 && finalScore >= 70.0) {
+        return 'Tốt! ⭐';
+      }
+      return 'Đạt! ⭐';
     } else {
       return 'Chưa đạt - Cần luyện tập thêm';
     }
   }
 
   /// Tạo tips dựa trên kết quả
-  List<String> _generateTips(double finalScore, double inside, double outside) {
+  List<String> _generateTips(double finalScore, double inside, double outside, [double passThreshold = 70.0]) {
     final tips = <String>[];
 
     if (finalScore >= 95) {
       tips.add('Chữ viết của bạn rất đẹp! Hãy tiếp tục phát huy nhé!');
-    } else if (finalScore >= 80) {
-      tips.add('Bạn đã viết khá tốt!');
-      if (outside > 10) {
+    } else if (finalScore >= passThreshold) {
+      tips.add('Bạn đã viết đạt yêu cầu!');
+      if (outside > 15) {
         tips.add('Cố gắng viết sát hơn với nét mẫu để giảm nét ra ngoài.');
       }
-      if (inside < 90) {
+      if (inside < 85) {
         tips.add('Cố gắng viết nhiều hơn trên nét mẫu để tăng độ chính xác.');
       }
       tips.add('Viết chậm rãi và cẩn thận hơn để đạt điểm cao hơn.');
@@ -536,3 +605,66 @@ class _StrokeAnalysis {
     required this.segments,
   });
 }
+
+enum _MarkPosition {
+  above,
+  below,
+  left,
+  right,
+  leftAndRight,
+  aboveAndBelow,
+  none,
+}
+
+_MarkPosition _classifyDependentMark(String character) {
+  // Check double/compound positions first
+  if (character.contains('ោ') ||
+      character.contains('ើ') ||
+      character.contains('ឿ') ||
+      character.contains('ៀ') ||
+      character.contains('ៅ') ||
+      character.contains('េះ') ||
+      character.contains('ោះ') ||
+      character.contains('ើះ') ||
+      character.contains('ែះ') ||
+      character.contains('ៃះ')) {
+    return _MarkPosition.leftAndRight;
+  }
+
+  if (character.contains('ុំ') ||
+      character.contains('ុះ') ||
+      character.contains('ូះ')) {
+    return _MarkPosition.aboveAndBelow;
+  }
+
+  // Otherwise check single dependent marks.
+  if (character.contains('ិ') ||
+      character.contains('ី') ||
+      character.contains('ឹ') ||
+      character.contains('ឺ') ||
+      character.contains('ំ') ||
+      character.contains('៏')) {
+    return _MarkPosition.above;
+  }
+
+  if (character.contains('ុ') ||
+      character.contains('ូ') ||
+      character.contains('ួ') ||
+      character.contains('្')) {
+    return _MarkPosition.below;
+  }
+
+  if (character.contains('េ') ||
+      character.contains('ែ') ||
+      character.contains('ៃ')) {
+    return _MarkPosition.left;
+  }
+
+  if (character.contains('า') ||
+      character.contains('ះ')) {
+    return _MarkPosition.right;
+  }
+
+  return _MarkPosition.none;
+}
+

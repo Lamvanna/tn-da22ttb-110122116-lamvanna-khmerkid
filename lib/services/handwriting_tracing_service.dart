@@ -364,6 +364,40 @@ class HandwritingTracingService {
         case _MarkPosition.none:
           break;
       }
+
+      // --- Tùy chỉnh kích thước đặc biệt theo từng chữ (Custom Bounds) ---
+      final charStr = character.replaceAll('◌', '');
+      if (charStr == 'ៀ') {
+        // Nét móc vươn rất dài xuống dưới và nét phụ lên trên
+        radiusX = halfW * 1.45;
+        radiusY = halfH * 1.65;
+        centerY = cy + shiftY + halfH * 0.15; // Dịch tâm xuống một chút để ôm trọn đuôi
+      } else if (charStr == 'ឿ') {
+        // Nét kép trên và phải
+        radiusX = halfW * 1.4;
+        radiusY = halfH * 1.4;
+      } else if (charStr == 'ៅ') {
+        // Nét kép trái và phải (bên phải rất cao)
+        radiusX = halfW * 1.45;
+        radiusY = halfH * 1.4;
+        centerY = cy + shiftY - halfH * 0.1;
+      } else if (charStr == 'ី' || charStr == 'ឺ') {
+        // Dấu trên cao hơn bình thường một chút
+        radiusY = halfH * 0.55;
+        centerY = cy + shiftY - halfH * 0.78;
+      } else if (charStr == 'ូ') {
+        // Dấu dưới dài hơn bình thường
+        radiusY = halfH * 0.6;
+        centerY = cy + shiftY + halfH * 0.85;
+      } else if (charStr == 'ួ') {
+        // Dấu dưới rộng
+        radiusX = halfW * 0.6;
+        radiusY = halfH * 0.5;
+        centerY = cy + shiftY + halfH * 0.75;
+      } else if (charStr.contains('ះ')) {
+        // Các chữ kết hợp dấu ះ thường cần rộng hơn bên phải
+        radiusX = halfW * 1.45;
+      }
     }
 
     for (int row = 0; row < gridResolution; row++) {

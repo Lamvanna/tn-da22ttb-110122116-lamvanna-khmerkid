@@ -285,13 +285,6 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                           ),
                         ),
                         SizedBox(width: 14.w),
-                        Image.asset(
-                          'image/cúp hồ sơ.png',
-                          width: 28.w,
-                          height: 28.w,
-                          fit: BoxFit.contain,
-                        ),
-                        SizedBox(width: 8.w),
                         Expanded(
                           child: Text(
                             'Thành tích',

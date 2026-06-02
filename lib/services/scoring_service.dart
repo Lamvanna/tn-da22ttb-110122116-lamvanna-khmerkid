@@ -106,7 +106,7 @@ class ScoringService {
   // Mỗi chữ chỉ có 2-3 cách phát âm được chấp nhận (chuẩn + biến thể gần)
   static const Map<String, List<String>> acceptedPronunciations = {
     // Phụ âm Series 1 (A-series)
-    'ក': ['ka', 'ko', 'kor'],           // ka (chuẩn), ko/kor (biến thể)
+    'ក': ['ka', 'ko'],           // Chỉ 2 cách: ka (chuẩn), ko (biến thể)
     'ខ': ['kha', 'kho'],         // Loại bỏ: khor, khaa, khaw, ka, ko
     'គ': ['ko', 'kor'],          // Loại bỏ: koo, kou, go, gor, goo
     'ឃ': ['kho', 'khor'],        // Loại bỏ: khoo, khou, ko, kor
@@ -153,238 +153,6 @@ class ScoringService {
     'អ': ['a', 'o'],             // Loại bỏ: or, aa, aw, oo, ou
   };
 
-  // ═══════════════════════════════════════
-  // NGUYÊN ÂM KHMER - PHIÊN ÂM MỞ RỘNG
-  // Dùng cho Speech-to-Text
-  // Bao gồm:
-  // - Tên nguyên âm
-  // - Cách đọc tiếng Việt
-  // - Cách đọc khi ghép phụ âm giọng O
-  // - Cách đọc khi ghép phụ âm giọng Ô
-  // ═══════════════════════════════════════
-  static const Map<String, List<String>> acceptedVowelPronunciations = {
-    'អា': [
-      'a', 'aa', 'à', 'á',
-      'a dài',
-      'ia',
-      'srắc a', 'srac a', 'srak a'
-    ],
-
-    'អិ': [
-      'i', 'ì', 'í',
-      'i ngắn',
-      'ế',
-      'í',
-      'srắc i', 'srac i', 'srak i'
-    ],
-
-    'អី': [
-      'ii', 'ee',
-      'i dài',
-      'ây',
-      'i',
-      'srắc ii', 'srac ii', 'srak ii'
-    ],
-
-    'អឹ': [
-      'ư',
-      'ư ngắn',
-      'ấ',
-      'ú',
-      'srắc ư', 'srac ư', 'srak ư'
-    ],
-
-    'អឺ': [
-      'ưư',
-      'ư dài',
-      'ơ',
-      'u',
-      'ươ',
-      'srắc ưư', 'srac ưư', 'srak ưư'
-    ],
-
-    'អុ': [
-      'u', 'ú', 'ù',
-      'u ngắn',
-      'ố',
-      'ú',
-      'srắc u', 'srac u', 'srak u'
-    ],
-
-    'អូ': [
-      'uu',
-      'u dài',
-      'ô',
-      'u',
-      'srắc uu', 'srac uu', 'srak uu'
-    ],
-
-    'អួ': [
-      'ua',
-      'uô',
-      'uoa',
-      'ùa',
-      'úa',
-      'srắc ua', 'srac ua', 'srak ua'
-    ],
-
-    'អើ': [
-      'ơ',
-      'ớ',
-      'ờ',
-      'ơ dài',
-      'ơ',
-      'srắc ơ', 'srac ơ', 'srak ơ'
-    ],
-
-    'អឿ': [
-      'ưa',
-      'ươ',
-      'ừa',
-      'ứa',
-      'ua',
-      'srắc ưa', 'srac ưa', 'srak ưa'
-    ],
-
-    'អៀ': [
-      'ia',
-      'iê',
-      'ìa',
-      'ía',
-      'ia',
-      'srắc ia', 'srac ia', 'srak ia'
-    ],
-
-    'អេ': [
-      'ê',
-      'ế',
-      'ề',
-      'ee',
-      'ê',
-      'srắc ê', 'srac ê', 'srak ê'
-    ],
-
-    'អែ': [
-      'ae',
-      'è',
-      'é',
-      'eh',
-      'e',
-      'ê',
-      'srắc ae', 'srac ae', 'srak ae'
-    ],
-
-    'អៃ': [
-      'ai',
-      'ay',
-      'ài',
-      'ái',
-      'ây',
-      'srắc ai', 'srac ai', 'srak ai'
-    ],
-
-    'អោ': [
-      'ao',
-      'ào',
-      'áo',
-      'aw',
-      'ô',
-      'srắc ao', 'srac ao', 'srak ao'
-    ],
-
-    'អៅ': [
-      'au',
-      'àu',
-      'áu',
-      'aw',
-      'âu',
-      'srắc au', 'srac au', 'srak au'
-    ],
-
-    // ═════════════
-    // NGUYÊN ÂM ĐẶC BIỆT
-    // ═════════════
-
-    'អំ': [
-      'om',
-      'ôm',
-      'ăm',
-      'âm',
-      'am',
-      'um',
-      'oăm',
-      'srắc om', 'srac om', 'srak om'
-    ],
-
-    'អុំ': [
-      'um',
-      'ôm',
-      'ốm',
-      'ồm',
-      'um',
-      'srắc um', 'srac um', 'srak um'
-    ],
-
-    'អះ': [
-      'ah',
-      'ăh',
-      'ac',
-      'ak',
-      'ắc',
-      'ás',
-      'iás',
-      'srắc ah', 'srac ah', 'srak ah'
-    ],
-
-    'អាំ': [
-      'am',
-      'aam',
-      'àm',
-      'ám',
-      'ăm',
-      'oăm',
-      'srắc am', 'srac am', 'srak am'
-    ],
-
-    'អិះ': [
-      'ih',
-      'ic',
-      'ik',
-      'ít',
-      'ích',
-      'ís',
-      'srắc ih', 'srac ih', 'srak ih'
-    ],
-
-    'អុះ': [
-      'uh',
-      'uc',
-      'uk',
-      'út',
-      'úc',
-      'ús',
-      'srắc uh', 'srac uh', 'srak uh'
-    ],
-
-    'អេះ': [
-      'eh',
-      'êt',
-      'ết',
-      'ếc',
-      'ếs',
-      'srắc eh', 'srac eh', 'srak eh'
-    ],
-
-    'អោះ': [
-      'oh',
-      'ôt',
-      'ốc',
-      'ốt',
-      'uás',
-      'srắc oh', 'srac oh', 'srak oh'
-    ]
-  };
-
   // ─── Device Matrix Dynamic Calibration ────────────────────────────
   static double calibrateConfidence(double rawConfidence) {
     // GIẢM BOOST - Không nên boost quá nhiều
@@ -418,7 +186,6 @@ class ScoringService {
     required double confidence,
     String romanized = '',
     String pronunciation = '',
-    List<String> acceptedAnswers = const [],
     int passThreshold = defaultPassThreshold,
   }) {
     // Lọc rỗng & loại trùng, luôn đảm bảo có ít nhất 1 phần tử để chấm
@@ -438,7 +205,6 @@ class ScoringService {
         confidence: confidence,
         romanized: romanized,
         pronunciation: pronunciation,
-        acceptedAnswers: acceptedAnswers,
         passThreshold: passThreshold,
       );
       // Ưu tiên điểm thô cao hơn; nếu bằng nhau, ưu tiên bản đã pass
@@ -461,7 +227,6 @@ class ScoringService {
     required double confidence,
     String romanized = '',
     String pronunciation = '',
-    List<String> acceptedAnswers = const [],
     int passThreshold = defaultPassThreshold,
   }) {
     final spokenNorm = _normalize(recognizedText);
@@ -477,8 +242,7 @@ class ScoringService {
     }
 
     // Tập hợp các dạng phát âm Latin được chấp nhận cho chữ cái này:
-    //   • Bản đồ phát âm cứng (acceptedPronunciations) cho phụ âm
-    //   • Bản đồ phát âm cứng (acceptedVowelPronunciations) cho nguyên âm
+    //   • Bản đồ phát âm cứng (acceptedPronunciations)
     //   • romanized + pronunciation của CHÍNH chữ cái (lấy từ dữ liệu bài học)
     // Nhờ vậy mọi bài (kể cả bài 6 trở đi) đều có mục tiêu so khớp, không còn
     // phụ thuộc vào việc chữ cái có nằm trong bản đồ cứng hay không.
@@ -486,20 +250,10 @@ class ScoringService {
     if (acceptedPronunciations.containsKey(targetCharacter)) {
       latinForms.addAll(acceptedPronunciations[targetCharacter]!);
     }
-    // Tự động bổ sung bản đồ nguyên âm khi target là nguyên âm Khmer
-    if (acceptedVowelPronunciations.containsKey(targetCharacter)) {
-      latinForms.addAll(acceptedVowelPronunciations[targetCharacter]!);
-    }
-    for (final extra in [romanized, pronunciation, ...acceptedAnswers]) {
+    for (final extra in [romanized, pronunciation]) {
       final n = _normalize(extra);
       if (n.isNotEmpty) latinForms.add(n);
     }
-
-    // Phiên bản "bỏ dấu thanh tiếng Việt" của các dạng chấp nhận (à/á/ả/ã/ạ → a...).
-    // Dùng cho bước so khớp nương tay: bé đọc "à" vẫn khớp mục tiêu "a".
-    final Set<String> latinFormsLoose = latinForms.map(_normalizeLatin).toSet()
-      ..removeWhere((e) => e.isEmpty);
-    final String spokenLoose = _normalizeLatin(recognizedText);
 
     // Cân chuẩn độ tin cậy thông qua Ma trận Thiết bị
     final calibratedConfidence = calibrateConfidence(confidence);
@@ -516,16 +270,6 @@ class ScoringService {
     else if (latinForms.contains(spokenNorm)) {
       rawScore = 90.0; // Giảm từ 95.0 xuống 90.0 - không phải exact match
       matchMethod = 'accepted_pronunciation';
-    }
-    // 2b. Khớp NƯƠNG TAY (hợp trẻ em): bỏ dấu thanh tiếng Việt, hoặc lệch nhẹ phần
-    //     đuôi với ÂM NGẮN (≤3 ký tự). KHÔNG cho thay ký tự (a↔e, ka↔ta) để tránh
-    //     nhận nhầm nguyên âm/phụ âm khác — chỉ chấp nhận thêm/bớt ký tự ở đuôi (a↔aa).
-    else if (spokenLoose.isNotEmpty &&
-        (latinFormsLoose.contains(spokenLoose) ||
-            (spokenLoose.length <= 3 &&
-                latinFormsLoose.any((f) => _lenientShortMatch(spokenLoose, f))))) {
-      rawScore = 80.0;
-      matchMethod = 'lenient';
     }
     // 3. Đối sánh âm vị học đã chuẩn hóa (Phonetic Matching)
     else if (() {
@@ -544,7 +288,7 @@ class ScoringService {
 
       return false;
     }()) {
-      rawScore = 90.0;
+      rawScore = 85.0; // Giảm từ 90.0 xuống 85.0
       matchMethod = 'phonetic';
     }
     // 4. Đo lường tỷ lệ tương đồng Dice Coefficient
@@ -574,18 +318,17 @@ class ScoringService {
     }
 
     // Tính điểm Weighted (Confidence Weighting).
-    // QUAN TRỌNG: khi đã KHỚP VĂN BẢN rõ ràng (exact/accepted/phonetic/lenient) thì
-    // chính nội dung nhận diện là bằng chứng — KHÔNG hạ điểm theo confidence của máy,
-    // vì rất nhiều thiết bị Android trả confidence = 0 dù nghe đúng. Việc chống nhận
-    // bừa dựa vào CHẤT LƯỢNG so khớp (đã siết), không dựa vào confidence.
-    // Chỉ khớp mờ (dice) mới chịu trọng số confidence.
+    // NGHIÊM NGẶT HƠN: Luôn áp dụng confidence weight, kể cả với exact match
     double weightedScore;
-    if (matchMethod == 'dice') {
-      // Khớp mờ: cân theo confidence nhưng vẫn nương tay tối thiểu 85% điểm thô
-      weightedScore = math.max(rawScore * 0.85, rawScore * calibratedConfidence);
+    if (matchMethod == 'exact') {
+      // Exact match: vẫn tin tưởng nhưng giảm nhẹ nếu confidence thấp
+      weightedScore = rawScore * math.max(0.90, calibratedConfidence);
+    } else if (matchMethod == 'accepted_pronunciation' || matchMethod == 'phonetic') {
+      // Khớp tốt: áp dụng confidence nhẹ
+      weightedScore = rawScore * math.max(0.85, calibratedConfidence);
     } else {
-      // Khớp văn bản dứt khoát: tin nội dung, giữ nguyên điểm thô
-      weightedScore = rawScore;
+      // Khớp mờ (dice): áp dụng confidence đầy đủ
+      weightedScore = rawScore * calibratedConfidence;
     }
 
     // Rounding & Threshold Check
@@ -622,13 +365,7 @@ class ScoringService {
       passed: result.passed,
       stars: _accuracyToStars(result.weightedScore.round()),
       matchedTarget: character,
-      highlights: buildHighlights(
-        spoken, 
-        character, 
-        result.passed,
-        romanized: romanized,
-        pronunciation: pronunciation,
-      ),
+      highlights: buildHighlights(spoken, character, result.passed),
     );
   }
 
@@ -654,35 +391,12 @@ class ScoringService {
     required String character,
     required List<List<Offset>> strokes,
     required Size canvasSize,
-    int? minPointsOverride,
-    int? minStrokesOverride,
-    double? passThresholdOverride,
-    double? outsideThresholdOverride,
-    double? toleranceRadiusOverride,
   }) {
-    // Phân loại xem có phải dấu phụ thuộc (nguyên âm/coeng) hay không
-    final bool isDepMark = character.contains('◌') ||
-        character.runes.any((r) => r >= 0x17B6 && r <= 0x17D3);
-
-    if (!isDepMark) {
-      // Đối với Phụ âm và Số, sử dụng thuật toán nhận dạng hình dáng $1 DollarOne (Legacy) vô cùng chính xác
-      return recognizeWritingLegacy(
-        character: character,
-        strokes: strokes,
-        canvasSize: canvasSize,
-      );
-    }
-
-    // Đối với Nguyên âm phụ thuộc, sử dụng HandwritingTracingService mới để kiểm tra vùng chấm điểm
+    // Sử dụng HandwritingTracingService mới
     final tracingResult = HandwritingTracingService.instance.scoreTracing(
       character: character,
       userStrokes: strokes,
       canvasSize: canvasSize,
-      minPointsOverride: minPointsOverride,
-      minStrokesOverride: minStrokesOverride,
-      passThresholdOverride: passThresholdOverride,
-      outsideThresholdOverride: outsideThresholdOverride,
-      toleranceRadiusOverride: toleranceRadiusOverride,
     );
 
     // Chuyển đổi TracingScoreResult sang RecognitionResult để tương thích
@@ -856,7 +570,7 @@ class ScoringService {
     double iou = union > 0 ? (intersection / union) : 0.0;
 
     // Kiểm tra IoU quá thấp = viết bậy
-    if (iou < 0.15) { // Phục hồi lại ngưỡng 0.15 để tránh vẽ bậy lọt qua
+    if (iou < 0.12) { // Giảm từ 0.15 xuống 0.12
       return RecognitionResult(
         finalScore: (iou * 100).roundToDouble().clamp(0, 30),
         passed: false,
@@ -908,9 +622,8 @@ class ScoringService {
       );
     }
 
-    print('DEBUG SCORING_SERVICE - shapeScore: $shapeScore, dollarOneShapeScore: $dollarOneShapeScore, gridShapeScore: $gridShapeScore, iou: $iou');
-    // Fail early only if shape is completely unrelated (less than 43% boosted shapeScore)
-    if (shapeScore < 43.0) {
+    // Fail early only if shape is completely unrelated (less than 35% boosted shapeScore)
+    if (shapeScore < 35.0) {
       return RecognitionResult(
         finalScore: (shapeScore * 0.95).roundToDouble().clamp(0, 49),
         passed: false,
@@ -1052,14 +765,14 @@ class ScoringService {
       }
     }
 
-    // Encouraging passing criteria: 58% or above passes for kids (restored from 58%)
-    bool passed = roundedFinal >= 58;
+    // Encouraging passing criteria: 50% or above passes for kids (giảm từ 58%)
+    bool passed = roundedFinal >= 50;
     int stars = 0;
     if (roundedFinal >= 80) {
       stars = 3;
     } else if (roundedFinal >= 65) {
       stars = 2;
-    } else if (roundedFinal >= 58) {
+    } else if (roundedFinal >= 50) {
       stars = 1;
     }
 
@@ -1124,12 +837,7 @@ class ScoringService {
       );
     }
 
-    // Loại '◌' (DOTTED CIRCLE) khỏi chữ mẫu — đây là dấu hướng dẫn vị trí dấu
-    // phụ thuộc trong nguyên âm Khmer, KHÔNG phải ký tự OCR cần nhận diện.
-    final expectedStripped = expected.replaceAll('◌', '').trim();
-    final expectedClean = expectedStripped.isEmpty ? expected : expectedStripped;
-
-    final accuracy = quickScore(recognized, expectedClean);
+    final accuracy = quickScore(recognized, expected);
     final passed = accuracy >= 60;
     final stars = _accuracyToStars(accuracy);
 
@@ -1175,27 +883,17 @@ class ScoringService {
     return str;
   }
 
+  String _khmerInitial(String s) {
+    final normalized = _normalizeKhmer(s);
+    return normalized.isNotEmpty ? normalized[0] : '';
+  }
+
   String _normalizeLatin(String s) {
     var str = s.toLowerCase().trim().replaceAll(RegExp(r'\s+'), '');
 
-    // ═══ BƯỚC 1: Bảo tồn nguyên âm tiếng Việt quan trọng TRƯỚC khi xóa dấu ═══
-    // Các nguyên âm đặc biệt phải được mã hóa riêng để không bị gộp nhầm:
-    //   ơ/ớ/ờ/ợ/ở/ỡ → "ow"  (phân biệt với "o")
-    //   ô/ố/ồ/ộ/ổ/ỗ → "oh"  (phân biệt với "o")
-    //   ê/ế/ề/ệ/ể/ễ → "eh"  (phân biệt với "e")
-    //   ư/ứ/ừ/ự/ử/ữ → "uw"  (phân biệt với "u")
-    //   â/ấ/ầ/ậ/ẩ/ẫ → "aw"  (phân biệt với "a")
-    //   ă/ắ/ằ/ặ/ẳ/ẵ → "ax"  (phân biệt với "a")
-    str = str.replaceAll(RegExp(r'[ơờớợởỡ]'), 'ow');
-    str = str.replaceAll(RegExp(r'[ôồốộổỗ]'), 'oh');
-    str = str.replaceAll(RegExp(r'[êềếệểễ]'), 'eh');
-    str = str.replaceAll(RegExp(r'[ưừứựửữ]'), 'uw');
-    str = str.replaceAll(RegExp(r'[âầấậẩẫ]'), 'aw');
-    str = str.replaceAll(RegExp(r'[ăằắặẳẵ]'), 'ax');
-
-    // ═══ BƯỚC 2: Xóa dấu thanh cho các nguyên âm ĐƠN còn lại ═══
-    var withDiacritics = 'àáạảãèéẹẻẽìíịỉĩòóọỏõùúụủũỳýỵỷỹđ';
-    var withoutDiacritics = 'aaaaaeeeeeiiiiiooooouuuuuyyyyyd';
+    // Loại bỏ dấu tiếng Việt
+    var withDiacritics = 'àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ';
+    var withoutDiacritics = 'aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyydAAAAAAAAAAAAAAAAAEEEEEEEEEEEIIIIIOOOOOOOOOOOOOOOOOUUUUUUUUUUUYYYYYD';
     for (int i = 0; i < withDiacritics.length; i++) {
       str = str.replaceAll(withDiacritics[i], withoutDiacritics[i]);
     }
@@ -1203,24 +901,26 @@ class ScoringService {
     // Giữ lại chữ cái thường và số
     str = str.replaceAll(RegExp(r'[^a-z0-9]'), '');
 
-    // y ≡ i: trong tiếng Việt, 'y' và 'i' phát âm GIỐNG NHAU (vd "mỹ"/"mĩ",
-    // "kỹ"/"kĩ"). STT Google thường viết âm "i" thành "y" với dấu thanh (ý, ỳ,
-    // ỹ). Sau khi xoá dấu, gộp 'y' → 'i' để khớp đúng các target nguyên âm
-    // như 'i', 'ii', 'ei'.
-    str = str.replaceAll('y', 'i');
-
     // Các từ đồng âm gần âm phổ biến (đặc biệt khi fallback tiếng Việt)
-    if (str.startsWith('c')) str = 'k${str.substring(1)}';
-    if (str.startsWith('q')) str = 'k${str.substring(1)}';
-    if (str.startsWith('gi')) str = 'd${str.substring(2)}';
-    if (str.startsWith('v')) str = 'd${str.substring(1)}';
-    if (str.startsWith('tr')) str = 'ch${str.substring(2)}';
-    if (str.startsWith('ph')) str = 'f${str.substring(2)}';
+    if (str.startsWith('c')) str = 'k' + str.substring(1);
+    if (str.startsWith('q')) str = 'k' + str.substring(1);
+    if (str.startsWith('gi')) str = 'd' + str.substring(2);
+    if (str.startsWith('v')) str = 'd' + str.substring(1);
+    if (str.startsWith('tr')) str = 'ch' + str.substring(2);
+    if (str.startsWith('ph')) str = 'f' + str.substring(2);
+
+    // Chuẩn hóa các âm cuối tương tự
+    str = str.replaceAll('aw', 'o');
+    str = str.replaceAll('ao', 'o');
+    str = str.replaceAll('ow', 'o');
+    str = str.replaceAll('oh', 'o');
+    str = str.replaceAll('or', 'o');
 
     // Chuẩn hóa các phụ âm kép
     str = str.replaceAll('kh', 'k');
     str = str.replaceAll('ch', 'j');
     str = str.replaceAll('th', 't');
+    str = str.replaceAll('ph', 'f');
     str = str.replaceAll('ng', 'n');
     str = str.replaceAll('nh', 'n');
 
@@ -1249,30 +949,6 @@ class ScoringService {
 
     // Kiểm tra Levenshtein distance = 1
     return _levenshteinDistance(a, b) <= 1;
-  }
-
-  /// Khớp nương tay cho âm NGẮN: chấp nhận giống hệt, hoặc lệch đúng 1 ký tự thừa ở
-  /// ĐẦU/ĐUÔI NHƯNG ký tự thừa đó phải là:
-  ///   • kéo dài nguyên âm (trùng ký tự liền kề): "a"↔"aa", "ka"↔"kaa", hoặc
-  ///   • đuôi "r"/"h" (hay gặp trong phiên âm Khmer / STT tự thêm): "ko"↔"kor".
-  /// KHÔNG chấp nhận thêm ký tự KHÁC (a↔ae, ka↔kae) để tránh nhận nhầm âm khác.
-  bool _lenientShortMatch(String a, String b) {
-    if (a == b) return true;
-    if (a.isEmpty || b.isEmpty) return false;
-    if ((a.length - b.length).abs() != 1) return false;
-    final shorter = a.length < b.length ? a : b;
-    final longer = a.length < b.length ? b : a;
-    final isPrefix = longer.startsWith(shorter);
-    final isSuffix = longer.endsWith(shorter);
-    if (!isPrefix && !isSuffix) return false;
-    // Ký tự thừa: ở cuối nếu shorter là tiền tố; ở đầu nếu shorter là hậu tố.
-    final extra = isPrefix ? longer[longer.length - 1] : longer[0];
-    final neighbor = isPrefix
-        ? longer[longer.length - 2]
-        : longer[1];
-    if (extra == neighbor) return true; // kéo dài nguyên âm (aa, kaa)
-    if (isPrefix && (extra == 'r' || extra == 'h')) return true; // đuôi r/h
-    return false;
   }
 
   /// Tính khoảng cách Levenshtein (edit distance)
@@ -1317,53 +993,30 @@ class ScoringService {
   List<HighlightedWord> buildHighlights(
     String spoken,
     String target,
-    bool allCorrect, {
-    String romanized = '',
-    String pronunciation = '',
-    List<String> acceptedAnswers = const [],
-  }) {
+    bool allCorrect,
+  ) {
     if (allCorrect || target.isEmpty) {
       return [HighlightedWord(text: spoken, isCorrect: true)];
     }
 
-    // Tập hợp tất cả các dạng từ mục tiêu hợp lệ để so khớp
-    final Set<String> targetForms = {target};
-    if (acceptedPronunciations.containsKey(target)) {
-      targetForms.addAll(acceptedPronunciations[target]!);
-    }
-    if (acceptedVowelPronunciations.containsKey(target)) {
-      targetForms.addAll(acceptedVowelPronunciations[target]!);
-    }
-    for (final extra in [romanized, pronunciation, ...acceptedAnswers]) {
-      final n = extra.trim();
-      if (n.isNotEmpty) targetForms.add(n);
-    }
-
     // Tách từ để highlight từng từ
     final spokenWords = spoken.split(RegExp(r'\s+'));
+    final targetNorm = _normalize(target);
+    final targetPhonetic = _normalizePhonetic(target);
     
     return spokenWords.map((word) {
       final wordNorm = _normalize(word);
       final wordPhonetic = _normalizePhonetic(word);
       
-      bool isCorrect = false;
-      for (final t in targetForms) {
-        final tNorm = _normalize(t);
-        final tPhonetic = _normalizePhonetic(t);
-        
-        final simNorm = wordNorm.isNotEmpty && tNorm.isNotEmpty
-            ? StringSimilarity.compareTwoStrings(wordNorm, tNorm)
-            : 0.0;
-            
-        final simPhonetic = wordPhonetic.isNotEmpty && tPhonetic.isNotEmpty
-            ? StringSimilarity.compareTwoStrings(wordPhonetic, tPhonetic)
-            : 0.0;
-            
-        if (simNorm > 0.3 || simPhonetic > 0.4 || wordPhonetic == tPhonetic || wordNorm == tNorm) {
-          isCorrect = true;
-          break;
-        }
-      }
+      final simNorm = wordNorm.isNotEmpty && targetNorm.isNotEmpty
+          ? StringSimilarity.compareTwoStrings(wordNorm, targetNorm)
+          : 0.0;
+          
+      final simPhonetic = wordPhonetic.isNotEmpty && targetPhonetic.isNotEmpty
+          ? StringSimilarity.compareTwoStrings(wordPhonetic, targetPhonetic)
+          : 0.0;
+          
+      final isCorrect = simNorm > 0.3 || simPhonetic > 0.4 || wordPhonetic == targetPhonetic;
       return HighlightedWord(text: word, isCorrect: isCorrect);
     }).toList();
   }

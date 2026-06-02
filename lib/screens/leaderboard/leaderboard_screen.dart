@@ -72,9 +72,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         List<Map<String, dynamic>> realList = [];
         for (var item in list) {
           final stars = item['stars'] ?? item['totalStars'] ?? 0;
-          final itemId = item['_id']?.toString() ?? item['userId']?.toString() ?? '';
           realList.add({
-            'id': itemId,
             'name': item['name'] ?? 'Bé học sinh',
             'stars': stars,
             'avatar': item['avatar'] ?? 'image/Đại diện.png',
@@ -83,22 +81,16 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         }
 
         // Cập nhật thông tin bé
-        final myId = auth.userProfile?['_id']?.toString() ?? auth.userProfile?['id']?.toString() ?? '';
         final myName = storage.getUsername();
         final myAvatar = storage.getAvatarUrl();
         
         // Thêm chính mình vào danh sách để so sánh và sắp xếp
         bool meInList = false;
         for (var item in realList) {
-          final isSameId = myId.isNotEmpty && item['id'] == myId;
-          final isSameName = myId.isEmpty && item['name'] == myName;
-          if (isSameId || isSameName) {
+          if (item['name'] == myName) {
             item['isMe'] = true;
             item['avatar'] = myAvatar;
-            // Chỉ ghi đè số sao trọn đời nếu ở tab "Tất cả" (All time), các tab Tuần/Tháng giữ nguyên số sao tích lũy trong kỳ từ server
-            if (_selectedTab == 2) {
-              item['stars'] = _myStars;
-            }
+            item['stars'] = _myStars;
             meInList = true;
             break;
           }
@@ -106,9 +98,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         
         if (!meInList) {
           realList.add({
-            'id': myId,
             'name': myName,
-            'stars': _selectedTab == 2 ? _myStars : 0,
+            'stars': _myStars,
             'avatar': myAvatar,
             'isMe': true,
           });

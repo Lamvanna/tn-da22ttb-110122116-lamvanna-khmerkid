@@ -64,11 +64,11 @@ rankRouter.get('/monthly', rankController.getMonthlyRanking);
 // ========================================
 const uploadRouter = require('express').Router();
 uploadRouter.use(authenticate);
+uploadRouter.use(authorize('admin'));
 uploadRouter.use(uploadLimiter);
-// Cho phép học sinh upload ảnh đại diện (avatar) của mình lên Cloudinary
 uploadRouter.post('/image', uploadImage, uploadController.uploadImage);
-uploadRouter.post('/audio', authorize('admin'), uploadAudio, uploadController.uploadAudio);
-uploadRouter.delete('/:publicId', authorize('admin'), uploadController.deleteFile);
+uploadRouter.post('/audio', uploadAudio, uploadController.uploadAudio);
+uploadRouter.delete('/:publicId', uploadController.deleteFile);
 
 // ========================================
 // Admin Routes - /api/admin/*

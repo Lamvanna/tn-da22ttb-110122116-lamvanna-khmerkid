@@ -53,26 +53,6 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
     _feedbackSegments.clear();
   });
 
-  double get _guideShiftY {
-    final height = 320.0; // Fixed canvas height in WritingDetailScreen is 320
-    
-    final isBelow = _lesson.character.contains('ុ') ||
-        _lesson.character.contains('ូ') ||
-        _lesson.character.contains('ួ') ||
-        _lesson.character.contains('្');
-    if (isBelow) return -height * 0.08;
-    
-    final isAbove = _lesson.character.contains('ិ') ||
-        _lesson.character.contains('ី') ||
-        _lesson.character.contains('ឹ') ||
-        _lesson.character.contains('ឺ') ||
-        _lesson.character.contains('ំ') ||
-        _lesson.character.contains('៏');
-    if (isAbove) return height * 0.06;
-    
-    return 0.0;
-  }
-
   Future<void> _markDone() async {
     final canvasBox = context.findRenderObject() as RenderBox?;
     final size = canvasBox?.size ?? const Size(300, 300);
@@ -408,22 +388,11 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
           painter: _GridPainter()),
         // Guide character
         if (_showGuide)
-          Center(
-            child: Transform.translate(
-              offset: Offset(0, _guideShiftY),
-              child: Text(
-                _lesson.character,
-                style: GoogleFonts.battambang(
-                  fontSize: (_lesson.character.contains('◌') ||
-                          _lesson.character.runes.any((r) => r >= 0x17B6 && r <= 0x17D3))
-                      ? 155
-                      : 180,
-                  fontWeight: FontWeight.w700,
-                  color: accentColor.withValues(alpha: 0.08),
-                ),
-              ),
-            ),
-          ),
+          Center(child: Text(_lesson.character,
+            style: GoogleFonts.battambang(
+              fontSize: 180,
+              fontWeight: FontWeight.w700,
+              color: accentColor.withValues(alpha: 0.08)))),
         // Drawing area
         GestureDetector(
           onPanStart: (d) => setState(() {

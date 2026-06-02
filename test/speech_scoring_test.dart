@@ -19,14 +19,14 @@ void main() {
       expect(result.matchMethod, equals('exact'));
     });
 
-    test('Accepted pronunciations lookup (ក vs ko/kor) returns 90% and accepted_pronunciation method', () {
+    test('Accepted pronunciations lookup (ក vs ko/kor) returns 95% and accepted_pronunciation method', () {
       final resultKo = scoring.scorePronunciationSeparated(
         targetCharacter: 'ក',
         recognizedText: 'ko',
         confidence: 1.0,
       );
 
-      expect(resultKo.rawScore, equals(90.0));
+      expect(resultKo.rawScore, equals(95.0));
       expect(resultKo.passed, isTrue);
       expect(resultKo.matchMethod, equals('accepted_pronunciation'));
 
@@ -36,21 +36,22 @@ void main() {
         confidence: 1.0,
       );
 
-      expect(resultKor.rawScore, equals(90.0));
+      expect(resultKor.rawScore, equals(95.0));
       expect(resultKor.passed, isTrue);
       expect(resultKor.matchMethod, equals('accepted_pronunciation'));
     });
 
     test('Phonetic matching handles basic accent normalization', () {
-      // "kò" bỏ dấu thanh = "ko" (nằm trong accepted của ក) → khớp nương tay (lenient).
+      // Test phonetic accent equivalence
       final resultAccent = scoring.scorePronunciationSeparated(
         targetCharacter: 'ក',
         recognizedText: 'kò',
         confidence: 1.0,
       );
 
+      expect(resultAccent.rawScore, equals(90.0));
       expect(resultAccent.passed, isTrue);
-      expect(resultAccent.matchMethod, equals('lenient'));
+      expect(resultAccent.matchMethod, equals('phonetic'));
     });
 
     test('Dice coefficient similarity handles unrelated texts', () {
@@ -271,116 +272,6 @@ void main() {
         expect(best.result.rawScore, equals(0.0));
         expect(best.result.passed, isFalse);
       });
-    });
-  });
-
-  group('Nâng cấp nguyên âm/số/ghép vần (nương tay, acceptedAnswers)', () {
-    final scoring = ScoringService.instance;
-
-    test('Nguyên âm អា: đọc "a" được chấp nhận', () {
-      final r = scoring.scorePronunciationSeparated(
-        targetCharacter: 'អា',
-        recognizedText: 'a',
-        confidence: 0.0,
-        romanized: 'a',
-        pronunciation: 'a',
-        acceptedAnswers: ['a', 'aa'],
-        passThreshold: 30,
-      );
-      expect(r.passed, isTrue);
-    });
-
-    test('Nguyên âm អា: đọc "à" (có dấu) vẫn được chấp nhận', () {
-      final r = scoring.scorePronunciationSeparated(
-        targetCharacter: 'អា',
-        recognizedText: 'à',
-        confidence: 0.0,
-        romanized: 'a',
-        pronunciation: 'a',
-        acceptedAnswers: ['a', 'aa'],
-        passThreshold: 30,
-      );
-      expect(r.passed, isTrue);
-    });
-
-    test('Số ១: đọc Khmer "muôi" được chấp nhận', () {
-      final r = scoring.scorePronunciationSeparated(
-        targetCharacter: 'មួយ',
-        recognizedText: 'muôi',
-        confidence: 0.0,
-        romanized: 'muəj',
-        pronunciation: 'muôi',
-        acceptedAnswers: ['muôi', 'một', '1'],
-        passThreshold: 30,
-      );
-      expect(r.passed, isTrue);
-    });
-
-    test('Số ១: đọc tiếng Việt "một" được chấp nhận', () {
-      final r = scoring.scorePronunciationSeparated(
-        targetCharacter: 'មួយ',
-        recognizedText: 'một',
-        confidence: 0.0,
-        romanized: 'muəj',
-        pronunciation: 'muôi',
-        acceptedAnswers: ['muôi', 'một', '1'],
-        passThreshold: 30,
-      );
-      expect(r.passed, isTrue);
-    });
-
-    test('Ghép vần កា: đọc "ka" được chấp nhận', () {
-      final r = scoring.scorePronunciationSeparated(
-        targetCharacter: 'កា',
-        recognizedText: 'ka',
-        confidence: 0.0,
-        romanized: 'kaa',
-        pronunciation: 'kaa',
-        acceptedAnswers: ['kaa', 'ក', 'កា'],
-        passThreshold: 30,
-      );
-      expect(r.passed, isTrue);
-    });
-
-    test('Chống quá dễ: đọc vô nghĩa "xyzq" KHÔNG được chấp nhận', () {
-      final r = scoring.scorePronunciationSeparated(
-        targetCharacter: 'កា',
-        recognizedText: 'xyzq',
-        confidence: 0.9,
-        romanized: 'kaa',
-        pronunciation: 'kaa',
-        acceptedAnswers: ['kaa', 'ក', 'កា'],
-        passThreshold: 30,
-      );
-      expect(r.passed, isFalse);
-    });
-
-    test('Chống nhầm âm: đọc "a" KHÔNG khớp mục tiêu nguyên âm "e"', () {
-      final r = scoring.scorePronunciationSeparated(
-        targetCharacter: 'អែ',
-        recognizedText: 'a',
-        confidence: 0.9,
-        romanized: 'e',
-        pronunciation: 'e',
-        acceptedAnswers: ['e', 'ae'],
-        passThreshold: 30,
-      );
-      expect(r.passed, isFalse);
-    });
-
-    test('buildHighlights gắn nhãn đúng cho từ đồng âm được chấp nhận (ví dụ: Mùi với Số ១)', () {
-      final highlights = scoring.buildHighlights(
-        'Mùi',
-        '១',
-        false, // allCorrect = false để kích hoạt kiểm tra từng từ
-        romanized: 'muəj',
-        pronunciation: 'muôi',
-        acceptedAnswers: ['muôi', 'mùi', 'mũi', 'muỗi', 'muối', 'mui', 'mủi'],
-      );
-
-      expect(highlights.length, equals(1));
-      expect(highlights.first.text, equals('Mùi'));
-      expect(highlights.first.isCorrect, isTrue); // Phải đúng vì 'mùi' nằm trong acceptedAnswers
     });
   });
 }

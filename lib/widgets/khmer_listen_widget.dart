@@ -20,9 +20,6 @@ class KhmerListenWidget extends StatefulWidget {
   final String character;
   final String romanized;
   final String pronunciation;
-  /// Khi có giá trị: phát đúng chuỗi này bằng giọng tiếng Việt (vd "srăk a"),
-  /// BỎ QUA việc đọc ký tự Khmer. Dùng cho nguyên âm cần đọc tên "srăk + âm".
-  final String? speakTextOverride;
   final VoidCallback? onComplete;
   final bool showSpeedControl;
   final Color accentColor;
@@ -34,7 +31,6 @@ class KhmerListenWidget extends StatefulWidget {
     required this.character,
     this.romanized = '',
     this.pronunciation = '',
-    this.speakTextOverride,
     this.onComplete,
     this.showSpeedControl = true,
     this.accentColor = const Color(0xFF2F9656),
@@ -101,18 +97,11 @@ class _KhmerListenWidgetState extends State<KhmerListenWidget>
     setState(() => _playCount++);
 
     await _tts.setSpeed(_speed);
-
-    final override = widget.speakTextOverride;
-    if (override != null && override.trim().isNotEmpty) {
-      // Đọc đúng chuỗi tên (vd "srăk a") bằng giọng Việt, không đọc ký tự Khmer
-      await _tts.speakVietnamese(override);
-    } else {
-      await _tts.speakKhmerLetter(
-        character: widget.character,
-        pronunciation: widget.pronunciation,
-        romanized: widget.romanized,
-      );
-    }
+    await _tts.speakKhmerLetter(
+      character: widget.character,
+      pronunciation: widget.pronunciation,
+      romanized: widget.romanized,
+    );
 
     if (_playCount >= 1) widget.onComplete?.call();
   }

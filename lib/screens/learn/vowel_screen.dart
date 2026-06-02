@@ -145,7 +145,8 @@ class _VowelScreenState extends State<VowelScreen>
           // Đồng bộ ngược lại bộ nhớ tạm
           await storage.saveVowelProgress(i, _vowels[i].starRating);
         } else {
-          // Giữ nguyên tiến trình local đã nạp từ bộ nhớ tạm, KHÔNG tự ý ghi đè về false
+          _vowels[i].isLearned = false;
+          _vowels[i].starRating = 0;
         }
       }
       if (mounted) {

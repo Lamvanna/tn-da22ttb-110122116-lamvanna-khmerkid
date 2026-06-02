@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:async';
 import '../../constants/app_colors.dart';
-import '../../services/auth_service.dart';
 import '../achievements/achievements_screen.dart';
 import '../shop/shop_screen.dart';
 
@@ -23,24 +22,19 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
   // ── Data ──
   final List<_DailyQuest> _dailyQuests = [
     _DailyQuest(
-      id: 'mock_d1',
       icon: '📚', title: 'Học 3 bài học',
       subtitle: 'Hoàn thành 3 bài học bất kỳ',
       current: 2, total: 3, reward: 20,
       accentColor: const Color(0xFF1E88E5),
     ),
     _DailyQuest(
-      id: 'mock_d2',
       icon: '✏️', title: 'Luyện tập 2 lần',
       subtitle: 'Hoàn thành 2 bài luyện tập',
       current: 2, total: 2, reward: 15,
       accentColor: const Color(0xFF43A047),
       done: true,
-      isCompleted: true,
-      isClaimed: true,
     ),
     _DailyQuest(
-      id: 'mock_d3',
       icon: '🎧', title: 'Nghe phát âm 5 lần',
       subtitle: 'Nghe phát âm của bất kỳ 5 chữ',
       current: 3, total: 5, reward: 10,
@@ -50,19 +44,16 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
 
   final List<_WeeklyQuest> _weeklyQuests = [
     _WeeklyQuest(
-      id: 'mock_w1',
       icon: '🏆', title: 'Hoàn thành 10 bài',
       current: 0, total: 10, reward: 100,
       gradient: const [Color(0xFFFFB300), Color(0xFFFF8F00)],
     ),
     _WeeklyQuest(
-      id: 'mock_w2',
       icon: '🎯', title: 'Luyện tập 15 lần',
       current: 7, total: 15, reward: 80,
       gradient: const [Color(0xFFE53935), Color(0xFFD32F2F)],
     ),
     _WeeklyQuest(
-      id: 'mock_w3',
       icon: '👑', title: 'Đạt 3 ngày liên tiếp',
       current: 1, total: 3, reward: 120,
       gradient: const [Color(0xFF7C4DFF), Color(0xFF651FFF)],
@@ -76,12 +67,10 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
     _Achievement(icon: '🔥', title: 'Chuỗi ngày vàng', subtitle: '3 ngày liên tiếp', value: 3, color: const Color(0xFFE53935)),
   ];
 
-  bool _loadingMissions = true;
-
   int get _totalPoints {
     int pts = 0;
     for (final q in _dailyQuests) { if (q.done) pts += q.reward; }
-    for (final q in _weeklyQuests) { if (q.isClaimed) pts += q.reward; }
+    for (final q in _weeklyQuests) { if (q.current >= q.total) pts += q.reward; }
     return pts;
   }
 
@@ -92,149 +81,6 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(_calcRemaining);
     });
-    _loadMissions();
-    AuthService().fetchProfile().then((_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  String _getEmoji(String title) {
-    if (title.contains('☀️')) return '☀️';
-    if (title.contains('🎧')) return '🎧';
-    if (title.contains('🗣️') || title.contains('🗣')) return '🗣️';
-    if (title.contains('✍️') || title.contains('✍')) return '✍️';
-    if (title.contains('📖')) return '📖';
-    if (title.contains('🎮')) return '🎮';
-    if (title.contains('🎓')) return '🎓';
-    if (title.contains('🏆')) return '🏆';
-    if (title.contains('👑')) return '👑';
-    if (title.contains('📣')) return '📣';
-    if (title.contains('✒️') || title.contains('✒')) return '✒️';
-    if (title.contains('📚')) return '📚';
-    if (title.contains('✏️') || title.contains('✏')) return '✏️';
-    if (title.contains('🎯')) return '🎯';
-    return '🎁';
-  }
-
-  Future<void> _loadMissions() async {
-    if (!mounted) return;
-    setState(() => _loadingMissions = true);
-
-    try {
-      final backendList = await AuthService().fetchMissions();
-      if (backendList.isNotEmpty) {
-        final List<_DailyQuest> daily = [];
-        final List<_WeeklyQuest> weekly = [];
-
-        for (var item in backendList) {
-          final id = item['_id']?.toString() ?? '';
-          final title = item['title']?.toString() ?? 'Nhiệm vụ';
-          final desc = item['description']?.toString() ?? '';
-          final type = item['type']?.toString() ?? 'daily';
-          final current = item['progress'] as int? ?? 0;
-          final total = item['requirement'] as int? ?? 1;
-          final isCompleted = item['isCompleted'] as bool? ?? false;
-          final isClaimed = item['isClaimed'] as bool? ?? false;
-          
-          final rewardMap = item['reward'] as Map?;
-          final reward = rewardMap?['stars'] as int? ?? rewardMap?['xp'] as int? ?? 10;
-          
-          final icon = _getEmoji(title);
-
-          if (type == 'daily') {
-            Color accentColor = const Color(0xFF1E88E5);
-            if (title.contains('Nghe') || title.contains('Tai')) accentColor = const Color(0xFF7C4DFF);
-            else if (title.contains('Nói') || title.contains('Phát âm')) accentColor = const Color(0xFFFF9800);
-            else if (title.contains('Viết') || title.contains('Vẽ')) accentColor = const Color(0xFFE91E63);
-            else if (title.contains('Đọc')) accentColor = const Color(0xFF00BCD4);
-            else if (title.contains('Chơi') || title.contains('Game')) accentColor = const Color(0xFF43A047);
-
-            daily.add(_DailyQuest(
-              id: id,
-              icon: icon,
-              title: title,
-              subtitle: desc,
-              current: current,
-              total: total,
-              reward: reward,
-              accentColor: accentColor,
-              done: isClaimed,
-              isCompleted: isCompleted,
-              isClaimed: isClaimed,
-            ));
-          } else {
-            List<Color> gradient = const [Color(0xFFFFB300), Color(0xFFFF8F00)];
-            if (title.contains('Game') || title.contains('Trò chơi')) gradient = const [Color(0xFFE53935), Color(0xFFD32F2F)];
-            else if (title.contains('Nói') || title.contains('Phát âm')) gradient = const [Color(0xFF7C4DFF), Color(0xFF651FFF)];
-            else if (title.contains('Viết') || title.contains('Chữ')) gradient = const [Color(0xFF00BCD4), Color(0xFF0097A7)];
-
-            weekly.add(_WeeklyQuest(
-              id: id,
-              icon: icon,
-              title: title,
-              current: current,
-              total: total,
-              reward: reward,
-              gradient: gradient,
-              isCompleted: isCompleted,
-              isClaimed: isClaimed,
-            ));
-          }
-        }
-
-        if (mounted) {
-          setState(() {
-            _dailyQuests.clear();
-            _dailyQuests.addAll(daily);
-            _weeklyQuests.clear();
-            _weeklyQuests.addAll(weekly);
-            _loadingMissions = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() => _loadingMissions = false);
-        }
-      }
-    } catch (e) {
-      debugPrint('Error loading missions: $e');
-      if (mounted) {
-        setState(() => _loadingMissions = false);
-      }
-    }
-  }
-
-  Future<void> _claimReward(String missionId) async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final res = await AuthService().claimMissionReward(missionId);
-      if (res['success'] == true) {
-        messenger.showSnackBar(
-          SnackBar(
-            content: const Text('🎉 Nhận phần thưởng thành công! Bé giỏi quá! ⭐'),
-            backgroundColor: const Color(0xFF4CAF50),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-          ),
-        );
-        await _loadMissions();
-      } else {
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text('⚠️ Không thể nhận thưởng: ${res['message']}'),
-            backgroundColor: const Color(0xFFFF5252),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('Error claiming reward: $e');
-    }
   }
 
   void _calcRemaining() {
@@ -363,7 +209,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                     child: Row(children: [
                       Text('🔥', style: TextStyle(fontSize: 14.sp)),
                       SizedBox(width: 4.w),
-                      Text('${AuthService().userProfile?['streak'] ?? 0}',
+                      Text('3',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14.sp, fontWeight: FontWeight.w800, color: Colors.white)),
                     ]),
@@ -380,7 +226,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                     child: Row(children: [
                       Icon(Icons.star_rounded, color: const Color(0xFFFFD54F), size: 16.sp),
                       SizedBox(width: 4.w),
-                      Text('${AuthService().userProfile?['stars'] ?? 0}',
+                      Text('450',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14.sp, fontWeight: FontWeight.w800, color: Colors.white)),
                     ]),
@@ -615,7 +461,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
             ),
             SizedBox(width: 10.w),
             // Reward badge
-            quest.isClaimed
+            quest.done
                 ? Container(
                     padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
                     decoration: BoxDecoration(
@@ -632,53 +478,25 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                           fontSize: 11.sp, fontWeight: FontWeight.w800, color: const Color(0xFF43A047))),
                     ]),
                   )
-                : (quest.isCompleted && !quest.isClaimed)
-                    ? GestureDetector(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          _claimReward(quest.id);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft, end: Alignment.bottomRight,
-                              colors: [Color(0xFFFFCA28), Color(0xFFF57C00)]),
-                            borderRadius: BorderRadius.circular(14.r),
-                            boxShadow: [BoxShadow(
-                              color: const Color(0xFFF57C00).withValues(alpha: 0.3),
-                              blurRadius: 8.r, offset: Offset(0, 3.h))]),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.star_rounded, color: Colors.white, size: 22.sp),
-                              SizedBox(height: 1.h),
-                              Text('NHẬN',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11.sp, fontWeight: FontWeight.w900, color: Colors.white)),
-                            ],
-                          ),
-                        ),
-                      )
-                    : Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft, end: Alignment.bottomRight,
-                            colors: [Color(0xFFFFF8E1), Color(0xFFFFF3CD)]),
-                          borderRadius: BorderRadius.circular(14.r),
-                          border: Border.all(color: const Color(0xFFFFB300).withValues(alpha: 0.25)),
-                          boxShadow: [BoxShadow(
-                            color: const Color(0xFFFFB300).withValues(alpha: 0.10),
-                            blurRadius: 6.r, offset: Offset(0, 2.h))]),
-                        child: Column(children: [
-                          Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 22.sp),
-                          SizedBox(height: 1.h),
-                          Text('+${quest.reward}',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11.sp, fontWeight: FontWeight.w800, color: const Color(0xFFFF8F00))),
-                        ]),
-                      ),
+                : Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft, end: Alignment.bottomRight,
+                        colors: [Color(0xFFFFF8E1), Color(0xFFFFF3CD)]),
+                      borderRadius: BorderRadius.circular(14.r),
+                      border: Border.all(color: const Color(0xFFFFB300).withValues(alpha: 0.25)),
+                      boxShadow: [BoxShadow(
+                        color: const Color(0xFFFFB300).withValues(alpha: 0.10),
+                        blurRadius: 6.r, offset: Offset(0, 2.h))]),
+                    child: Column(children: [
+                      Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 22.sp),
+                      SizedBox(height: 1.h),
+                      Text('+${quest.reward}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.sp, fontWeight: FontWeight.w800, color: const Color(0xFFFF8F00))),
+                    ]),
+                  ),
           ],
         ),
       ),
@@ -760,60 +578,23 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
           ),
           const Spacer(),
           // Reward pill
-          quest.isClaimed
-              ? Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF43A047).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: const Color(0xFF43A047).withValues(alpha: 0.2))),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.check_circle_rounded, color: const Color(0xFF43A047), size: 14.sp),
-                    SizedBox(width: 4.w),
-                    Text('+${quest.reward}',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.sp, fontWeight: FontWeight.w800, color: const Color(0xFF43A047))),
-                  ]),
-                )
-              : (quest.isCompleted && !quest.isClaimed)
-                  ? GestureDetector(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        _claimReward(quest.id);
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft, end: Alignment.bottomRight,
-                            colors: [Color(0xFFFFD54F), Color(0xFFFFA000)]),
-                          borderRadius: BorderRadius.circular(12.r),
-                          boxShadow: [BoxShadow(
-                            color: const Color(0xFFFFA000).withValues(alpha: 0.25),
-                            blurRadius: 6.r, offset: Offset(0, 2.h))]),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          Icon(Icons.star_rounded, color: Colors.white, size: 14.sp),
-                          SizedBox(width: 4.w),
-                          Text('NHẬN',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11.sp, fontWeight: FontWeight.w900, color: Colors.white)),
-                        ]),
-                      ),
-                    )
-                  : Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF8E1),
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: const Color(0xFFFFB300).withValues(alpha: 0.3))),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 14.sp),
-                        SizedBox(width: 4.w),
-                        Text('+${quest.reward}',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11.sp, fontWeight: FontWeight.w800, color: const Color(0xFFFF8F00))),
-                      ]),
-                    ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              color: done ? const Color(0xFF43A047).withValues(alpha: 0.1) : const Color(0xFFFFF8E1),
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(
+                color: done ? const Color(0xFF43A047).withValues(alpha: 0.2) : const Color(0xFFFFB300).withValues(alpha: 0.3))),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(done ? Icons.check_circle_rounded : Icons.star_rounded,
+                color: done ? const Color(0xFF43A047) : const Color(0xFFFFB300), size: 14.sp),
+              SizedBox(width: 4.w),
+              Text('+${quest.reward}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11.sp, fontWeight: FontWeight.w800,
+                  color: done ? const Color(0xFF43A047) : const Color(0xFFFF8F00))),
+            ]),
+          ),
         ],
       ),
     );
@@ -936,48 +717,21 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
 // MODELS
 // ═══════════════════════════════════════════════════════════════
 class _DailyQuest {
-  final String id;
   final String icon, title, subtitle;
   final int current, total, reward;
   final Color accentColor;
   final bool done;
-  final bool isCompleted;
-  final bool isClaimed;
-
-  _DailyQuest({
-    required this.id,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.current,
-    required this.total,
-    required this.reward,
-    required this.accentColor,
-    this.done = false,
-    this.isCompleted = false,
-    this.isClaimed = false,
-  });
+  _DailyQuest({required this.icon, required this.title, required this.subtitle,
+    required this.current, required this.total, required this.reward,
+    required this.accentColor, this.done = false});
 }
 
 class _WeeklyQuest {
-  final String id;
   final String icon, title;
   final int current, total, reward;
   final List<Color> gradient;
-  final bool isCompleted;
-  final bool isClaimed;
-
-  _WeeklyQuest({
-    required this.id,
-    required this.icon,
-    required this.title,
-    required this.current,
-    required this.total,
-    required this.reward,
-    required this.gradient,
-    this.isCompleted = false,
-    this.isClaimed = false,
-  });
+  _WeeklyQuest({required this.icon, required this.title, required this.current,
+    required this.total, required this.reward, required this.gradient});
 }
 
 class _Achievement {

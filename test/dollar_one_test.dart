@@ -120,12 +120,6 @@ void main() {
         canvasSize: const Size(300, 300),
       );
 
-      print('DEBUG - Shape score: ${result.shapeScore}');
-      print('DEBUG - Stroke score: ${result.strokeScore}');
-      print('DEBUG - Direction score: ${result.directionScore}');
-      print('DEBUG - Final score: ${result.finalScore}');
-      print('DEBUG - Passed: ${result.passed}');
-
       // The shape score must be capped and fail early (< 42.0)
       expect(result.shapeScore, lessThan(42.0));
       expect(result.passed, isFalse);

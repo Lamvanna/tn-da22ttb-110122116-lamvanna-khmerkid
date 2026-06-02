@@ -158,7 +158,8 @@ class _LetterMapViewState extends State<LetterMapView>
             // Đồng bộ ngược lại bộ nhớ tạm
             await storage.saveLetterProgress(i, _letters[i].starRating);
           } else {
-            // Giữ nguyên tiến trình local đã nạp từ bộ nhớ tạm, KHÔNG tự ý ghi đè về false
+            _letters[i].isLearned = false;
+            _letters[i].starRating = 0;
           }
         }
       }

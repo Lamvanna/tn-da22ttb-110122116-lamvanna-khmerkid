@@ -1,193 +1,137 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:permission_handler/permission_handler.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_vowel.dart';
 import '../../services/scoring_service.dart';
-import '../../services/speech_service.dart';
-import '../../services/tts_service.dart';
 
-/// Sheet luyện nói nguyên âm
-/// Dùng cùng logic + ngưỡng đánh giá với KhmerSpeakWidget (consonant):
-///   • SpeechService (thay stt.SpeechToText cũ)
-///   • scoreBestAlternate — chấm tất cả alternates, chọn bản khớp nhất
-///   • passThreshold = 70%  (không đánh dấu đúng khi chưa đạt)
-///   • Hiển thị: văn bản nghe được / âm mục tiêu / % độ chính xác
+/// Sheet luyện nói nguyên âm — RESPONSIVE + Plus Jakarta Sans
 class VowelSpeakSheet extends StatefulWidget {
   final KhmerVowel vowel;
   final VoidCallback onComplete;
-  const VowelSpeakSheet({
-    super.key,
-    required this.vowel,
-    required this.onComplete,
-  });
-
+  const VowelSpeakSheet({super.key, required this.vowel, required this.onComplete});
   @override
-  State<VowelSpeakSheet> createState() => _VowelSpeakSheetState();
+  State<VowelSpeakSheet> createState() => _State();
 }
 
-class _VowelSpeakSheetState extends State<VowelSpeakSheet>
-    with TickerProviderStateMixin {
-  final SpeechService _speech = SpeechService.instance;
-  final TtsService _tts = TtsService.instance;
-  final ScoringService _scoring = ScoringService.instance;
-
+class _State extends State<VowelSpeakSheet> with SingleTickerProviderStateMixin {
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  final FlutterTts _tts = FlutterTts();
   late AnimationController _pulseCtrl;
-  late AnimationController _timerCtrl;
-
   bool _sttReady = false;
   bool _isListening = false;
-  bool _isStartingListening = false;
   bool _isPlayingExample = false;
-
   String _recognized = '';
-  List<String> _alternates = const [];
-  String _matchedText = '';
-
-  bool _hasResult = false;
-  PronunciationResult? _result;
-  double _rawConfidence = 0.0;
   String _statusMsg = '';
-
-  // Audio visualisation
-  double _audioLevel = 0.0;
-  final List<double> _audioLevelHistory = List.filled(20, 0.0);
-  int _audioLevelIndex = 0;
-
-  /// Pass threshold khớp yêu cầu: 70%
-  static const int _passThreshold = 70;
-
-  // ─── Lifecycle ────────────────────────────────────────────────
+  bool _hasResult = false;
+  bool _isCorrect = false;
+  int _score = 0;
+  String _selectedLocaleId = 'vi-VN';
 
   @override
   void initState() {
     super.initState();
-    _pulseCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1000));
-    _timerCtrl = AnimationController(
-        vsync: this, duration: SpeechService.defaultListenFor);
-    _initServices();
+    _pulseCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
+    _initTts();
+    _initSTT();
   }
 
-  Future<void> _initServices() async {
-    await _tts.init();
-
-    _speech.onResult = (text, confidence, isFinal, alternates) {
-      if (mounted) {
-        setState(() {
-          _recognized = text;
-          _alternates = alternates;
-          _rawConfidence = confidence;
-        });
-        if (isFinal) _onListeningDone();
-      }
-    };
-
-    _speech.onAudioLevel = (level) {
-      if (mounted && _isListening) {
-        setState(() {
-          _audioLevel = level;
-          _audioLevelHistory[_audioLevelIndex] = level;
-          _audioLevelIndex = (_audioLevelIndex + 1) % _audioLevelHistory.length;
-        });
-      }
-    };
-
-    _speech.onError = (err) {
-      if (mounted && _isListening) {
-        _pulseCtrl.stop();
-        _timerCtrl.stop();
-        setState(() {
-          _isListening = false;
-          if (_recognized.isEmpty) {
-            _statusMsg = 'Không nghe được. Nói to hơn!';
-          }
-        });
-        if (_recognized.isNotEmpty) _evaluate();
-      }
-    };
-
-    _speech.onStatus = (status) {
-      if (status == 'done' && mounted && _isListening) {
-        _onListeningDone();
-      }
-    };
-
-    final ok = await _speech.init();
-    if (mounted) {
-      setState(() {
-        _sttReady = ok;
-        if (!ok) _statusMsg = 'Đang khởi tạo nhận diện giọng nói...';
-      });
+  Future<void> _initTts() async {
+    final languages = await _tts.getLanguages;
+    final langList = (languages as List).map((l) => l.toString().toLowerCase()).toList();
+    final hasKhmer = langList.any((l) => l.contains('km') || l.contains('khmer'));
+    if (hasKhmer) { await _tts.setLanguage('km'); } else {
+      final hasVi = langList.any((l) => l.contains('vi'));
+      await _tts.setLanguage(hasVi ? 'vi-VN' : 'en-US');
     }
+    await _tts.setSpeechRate(0.4);
+    await _tts.setVolume(1.0);
+    _tts.setCompletionHandler(() { if (mounted) setState(() => _isPlayingExample = false); });
   }
 
-  void _onListeningDone() {
-    _pulseCtrl.stop();
-    _timerCtrl.stop();
-    if (mounted) setState(() => _isListening = false);
-    _evaluate();
+  Future<void> _playExample() async {
+    if (_isPlayingExample) return;
+    setState(() => _isPlayingExample = true);
+    final text = widget.vowel.pronunciation.isNotEmpty ? widget.vowel.pronunciation : widget.vowel.romanized;
+    await _tts.speak(text);
+  }
+
+  Future<void> _initSTT() async {
+    final status = await Permission.microphone.status;
+    if (status.isPermanentlyDenied) {
+      if (mounted) setState(() => _statusMsg = 'Quyền Mic bị chặn. Bé hãy bấm vào đây để mở Cài đặt!');
+      return;
+    }
+    final micStatus = await Permission.microphone.request();
+    if (!micStatus.isGranted) { if (mounted) setState(() => _statusMsg = 'Cần cấp quyền microphone!'); return; }
+    try {
+      _sttReady = await _speech.initialize(
+        onError: (err) { 
+          debugPrint('[STT Error] $err');
+          if (mounted && _isListening) { _pulseCtrl.stop(); setState(() { _isListening = false; if (_recognized.isEmpty) { _statusMsg = 'Không nghe được. Hãy nói to hơn!'; } else { _evaluate(); } }); } 
+        },
+        onStatus: (status) { if (status == 'done' && mounted && _isListening) { _pulseCtrl.stop(); setState(() => _isListening = false); _evaluate(); } },
+      );
+      if (_sttReady) {
+        try {
+          final systemLocale = await _speech.systemLocale();
+          if (systemLocale != null) {
+            _selectedLocaleId = systemLocale.localeId;
+          }
+          final locales = await _speech.locales();
+          bool foundKhmer = false;
+          for (final l in locales) {
+            if (l.localeId.toLowerCase().startsWith('km')) {
+              _selectedLocaleId = l.localeId;
+              foundKhmer = true;
+              break;
+            }
+          }
+          if (!foundKhmer) {
+            for (final l in locales) {
+              if (l.localeId.toLowerCase().startsWith('vi')) {
+                _selectedLocaleId = l.localeId;
+                break;
+              }
+            }
+          }
+        } catch (localeErr) {
+          debugPrint('STT Locales error: $localeErr');
+          _selectedLocaleId = 'km-KH';
+        }
+      }
+    } catch (e) {
+      debugPrint('STT Init error: $e');
+      _sttReady = false; 
+    }
+    if (mounted) setState(() {});
   }
 
   @override
-  void dispose() {
-    _speech.onResult = null;
-    _speech.onError = null;
-    _speech.onStatus = null;
-    _speech.onAudioLevel = null;
-    _speech.cancel();
-    _tts.stop();
-    _pulseCtrl.dispose();
-    _timerCtrl.dispose();
-    super.dispose();
-  }
-
-  // ─── Listening ────────────────────────────────────────────────
+  void dispose() { _speech.stop(); _tts.stop(); _pulseCtrl.dispose(); super.dispose(); }
 
   Future<void> _startListening() async {
-    if (_isStartingListening) return;
-    _isStartingListening = true;
+    await _tts.stop();
+    setState(() { _recognized = ''; _statusMsg = ''; _hasResult = false; _isListening = true; _isPlayingExample = false; });
+    _pulseCtrl.repeat(reverse: true);
     try {
-      await _tts.stop();
-      await Future.delayed(const Duration(milliseconds: 400));
-      if (!mounted) return;
-
-      setState(() {
-        _recognized = '';
-        _alternates = const [];
-        _matchedText = '';
-        _statusMsg = 'Đang khởi động mic...';
-        _hasResult = false;
-        _result = null;
-        _isListening = true;
-        _audioLevel = 0.0;
-        _audioLevelHistory.fillRange(0, _audioLevelHistory.length, 0.0);
-        _audioLevelIndex = 0;
-      });
-
-      _pulseCtrl.repeat(reverse: true);
-      _timerCtrl.forward(from: 0);
-
-      final ok = await _speech.startListening();
-      if (!mounted) return;
-      if (!ok) {
-        _pulseCtrl.stop();
-        _timerCtrl.stop();
-        setState(() {
-          _isListening = false;
-          _statusMsg = 'Không thể khởi động mic. Thử lại!';
-        });
-      } else {
-        setState(() => _statusMsg = '');
-      }
-    } finally {
-      _isStartingListening = false;
-    }
+      await _speech.stop();
+      await _speech.listen(
+        onResult: (result) {
+          if (mounted) { setState(() => _recognized = result.recognizedWords);
+            if (result.finalResult) { _pulseCtrl.stop(); setState(() => _isListening = false); _evaluate(); }
+          }
+        },
+        listenFor: const Duration(seconds: 10), pauseFor: const Duration(seconds: 4), localeId: _selectedLocaleId,
+      );
+    } catch (e) { _pulseCtrl.stop(); if (mounted) setState(() { _isListening = false; _statusMsg = 'Lỗi nhận diện. Thử lại!'; }); }
   }
 
   Future<void> _stopListening() async {
     _pulseCtrl.stop();
-    _timerCtrl.stop();
     await _speech.stop();
     if (mounted) {
       setState(() => _isListening = false);
@@ -196,10 +140,33 @@ class _VowelSpeakSheetState extends State<VowelSpeakSheet>
   }
 
   Future<void> _toggleListening() async {
-    if (_isStartingListening) return;
     if (!_sttReady) {
-      final ok = await _speech.init();
-      if (mounted) setState(() => _sttReady = ok);
+      final status = await Permission.microphone.status;
+      if (status.isPermanentlyDenied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Quyền Micro bị từ chối vĩnh viễn. Bé hãy mở cài đặt để cấp quyền!'),
+              action: SnackBarAction(
+                label: 'Cài đặt',
+                onPressed: () => openAppSettings(),
+              ),
+            ),
+          );
+        }
+        return;
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đang khởi tạo lại bộ ghi âm giọng nói...')),
+        );
+      }
+      await _initSTT();
+      if (!_sttReady && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Thiết bị chưa sẵn sàng cho Google Speech. Vui lòng thử lại!')),
+        );
+      }
       return;
     }
     if (_isListening) {
@@ -209,684 +176,159 @@ class _VowelSpeakSheetState extends State<VowelSpeakSheet>
     }
   }
 
-  // ─── Scoring ──────────────────────────────────────────────────
-
-  /// Chấm điểm giống KhmerSpeakWidget: dùng scoreBestAlternate,
-  /// ngưỡng 70%, KHÔNG đánh dấu passed khi thực sự sai.
   void _evaluate() {
     if (_hasResult) return;
-    if (_recognized.trim().isEmpty) {
-      setState(() => _statusMsg = 'Không nhận diện được. Nói to hơn!');
-      return;
-    }
-
-    final double calibConf =
-        ScoringService.calibrateConfidence(_rawConfidence);
-
-    // Dùng scoreBestAlternate để chọn bản alternates khớp nhất
-    final candidates = <String>[
-      if (_recognized.trim().isNotEmpty) _recognized.trim(),
-      ..._alternates,
-    ];
-
-    final PronunciationScoreResult scoreResult;
-    final best = _scoring.scoreBestAlternate(
-      targetCharacter: widget.vowel.character,
-      alternates: candidates,
-      confidence: _rawConfidence,
-      romanized: widget.vowel.pronunciationClean,
-      pronunciation: widget.vowel.pronunciationClean,
-      acceptedAnswers: [
-        widget.vowel.pronunciationClean,
-        widget.vowel.romanized,
-        widget.vowel.pronunciation,
-      ],
-      passThreshold: _passThreshold,
+    final spoken = _recognized.trim();
+    if (spoken.isEmpty) { setState(() => _statusMsg = 'Không nhận diện được. Hãy nói to hơn!'); return; }
+    final res = ScoringService.instance.scorePronunciation(
+      spoken: spoken,
+      character: widget.vowel.character,
+      romanized: widget.vowel.romanized,
+      pronunciation: widget.vowel.pronunciation,
+      passThreshold: 30, // Nương tay với trẻ nhỏ
     );
-
-    scoreResult = best.result;
-    _matchedText = best.matchedText;
-
-    // Loại bỏ trường hợp confidence quá thấp VÀ score thấp
-    final bool reallyUnclear =
-        calibConf < 0.35 && scoreResult.rawScore < 50.0;
-    if (reallyUnclear) {
-      setState(() {
-        _statusMsg = 'Chúng tôi nghe chưa rõ. Vui lòng đọc lại.';
-        _hasResult = true;
-        _result = null;
-      });
-      return;
-    }
-
-    final highlights = _scoring.buildHighlights(
-      _matchedText, 
-      widget.vowel.character, 
-      scoreResult.passed,
-      romanized: widget.vowel.pronunciationClean,
-      pronunciation: widget.vowel.pronunciationClean,
-      acceptedAnswers: [
-        widget.vowel.pronunciationClean,
-        widget.vowel.romanized,
-        widget.vowel.pronunciation,
-      ],
-    );
-
-    final pronunciationRes = PronunciationResult(
-      accuracy: scoreResult.weightedScore.round(),
-      passed: scoreResult.passed,
-      stars: _accuracyToStars(scoreResult.weightedScore.round()),
-      matchedTarget: widget.vowel.character,
-      highlights: highlights,
-    );
-
-    setState(() {
-      _result = pronunciationRes;
-      _hasResult = true;
-    });
-
-    // Chỉ gọi onComplete khi ĐẠT ngưỡng — không bao giờ đánh dấu sai là đúng
-    if (scoreResult.passed) {
-      widget.onComplete();
-    }
+    // Quy đổi điểm 0–100 sang thang 1–5 sao của sheet này
+    final acc = res.accuracy;
+    if (acc >= 90) { _score = 5; }
+    else if (acc >= 60) { _score = 4; }
+    else if (acc >= 40) { _score = 3; }
+    else if (acc >= 20) { _score = 2; }
+    else { _score = 1; }
+    _isCorrect = res.passed;
+    setState(() => _hasResult = true);
+    if (_isCorrect) widget.onComplete();
   }
-
-  int _accuracyToStars(int accuracy) {
-    if (accuracy >= 90) return 3;
-    if (accuracy >= 80) return 2;
-    if (accuracy >= _passThreshold) return 1;
-    return 0;
-  }
-
-  Future<void> _playExample() async {
-    if (_isPlayingExample) return;
-    setState(() => _isPlayingExample = true);
-    await _tts.speakVietnamese(widget.vowel.listenText);
-    if (mounted) setState(() => _isPlayingExample = false);
-  }
-
-  void _retry() {
-    setState(() {
-      _hasResult = false;
-      _result = null;
-      _rawConfidence = 0.0;
-      _recognized = '';
-      _alternates = const [];
-      _matchedText = '';
-      _statusMsg = '';
-    });
-  }
-
-  // ─── UI ───────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.72,
-      minChildSize: 0.45,
-      maxChildSize: 0.92,
+      initialChildSize: 0.65, minChildSize: 0.4, maxChildSize: 0.85,
       builder: (_, ctrl) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.sheetWarm,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
-        ),
-        child: ListView(
-          controller: ctrl,
-          padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 24.h),
-          children: [
-            // Drag handle
-            Center(
-              child: Container(
-                width: 48.w,
-                height: 5.h,
-                margin: EdgeInsets.only(bottom: 14.h),
-                decoration: BoxDecoration(
-                  color: AppColors.sheetWarmBorder,
-                  borderRadius: BorderRadius.circular(3.r),
-                ),
-              ),
-            ),
-
-            // Title
-            Center(
-              child: Text(
-                'Tập nói phát âm',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 22.sp,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.sheetBrown,
-                ),
-              ),
-            ),
-            SizedBox(height: 16.h),
-
-            // Character display
-            Center(
-              child: Container(
-                width: 110.w,
-                height: 110.w,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppColors.headerEnd, AppColors.headerAccent],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.headerAccent.withValues(alpha: 0.3),
-                      blurRadius: 16.r,
-                      offset: Offset(0, 6.h),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    widget.vowel.character,
-                    style: GoogleFonts.battambang(
-                      fontSize: 56.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      height: 1.1,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 8.h),
-
-            // Romanized badge
-            Center(
-              child: Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 20.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20.r),
-                  border: Border.all(color: AppColors.sheetWarmBorder),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 4.r,
-                      offset: Offset(0, 2.h),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  '"${widget.vowel.pronunciationClean}"',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.sheetBrown,
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 14.h),
-
-            // Listen example button
-            Center(
-              child: GestureDetector(
-                onTap: !_isPlayingExample && !_isListening
-                    ? _playExample
-                    : null,
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: 18.w, vertical: 8.h),
-                  decoration: BoxDecoration(
-                    color: AppColors.violetSurface,
-                    borderRadius: BorderRadius.circular(20.r),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _isPlayingExample
-                            ? Icons.volume_up_rounded
-                            : Icons.headphones_rounded,
-                        color: AppColors.violet,
-                        size: 18.sp,
-                      ),
-                      SizedBox(width: 6.w),
-                      Text(
-                        _isPlayingExample
-                            ? 'Đang phát...'
-                            : 'Nghe mẫu trước',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.violet,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 16.h),
-
-            // Timer countdown (when listening)
-            if (_isListening)
-              AnimatedBuilder(
-                animation: _timerCtrl,
-                builder: (context, _) => Column(
-                  children: [
-                    SizedBox(
-                      width: 200.w,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4.r),
-                        child: LinearProgressIndicator(
-                          value: _timerCtrl.value,
-                          minHeight: 4.h,
-                          backgroundColor: AppColors.secondary
-                              .withValues(alpha: 0.15),
-                          valueColor: AlwaysStoppedAnimation(
-                              AppColors.secondary),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      '${(SpeechService.defaultListenFor.inSeconds * (1 - _timerCtrl.value)).round()}s',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.secondary,
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                  ],
-                ),
-              ),
-
-            // Microphone button with waveform bars
-            Center(
-              child: GestureDetector(
-                onTap: _hasResult ? _retry : _toggleListening,
-                child: AnimatedBuilder(
-                  animation: _pulseCtrl,
-                  builder: (context, _) => _buildMicButton(),
-                ),
-              ),
-            ),
-            SizedBox(height: 8.h),
-
-            // Realtime transcript
-            if (_isListening && _recognized.isNotEmpty)
-              Center(
-                child: Container(
-                  margin: EdgeInsets.only(bottom: 8.h),
-                  padding: EdgeInsets.symmetric(
-                      horizontal: 14.w, vertical: 6.h),
-                  decoration: BoxDecoration(
-                    color: AppColors.sheetWarmBorder.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Text(
-                    '"$_recognized"',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.sheetBrown,
-                    ),
-                  ),
-                ),
-              ),
-
-            // Status message
-            if (!_hasResult)
-              Center(
-                child: Text(
-                  _isListening
-                      ? 'Đang nghe... Chạm để dừng'
-                      : _statusMsg.isNotEmpty
-                          ? _statusMsg
-                          : !_sttReady
-                              ? 'Đang khởi tạo...'
-                              : 'Chạm mic và đọc "${widget.vowel.pronunciationClean}"',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
-                    color: _isListening
-                        ? AppColors.errorRed
-                        : AppColors.sheetBrownLight,
-                  ),
-                ),
-              ),
-
-            // Result card
-            if (_hasResult) _buildResultCard(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ─── Mic button ───────────────────────────────────────────────
-
-  Widget _buildMicButton() {
-    final levelScale =
-        _isListening ? (1.0 + _audioLevel * 0.15) : 1.0;
-    Color micColor;
-    IconData micIcon;
-    if (_hasResult) {
-      micColor = (_result?.passed ?? false)
-          ? AppColors.successGreen
-          : AppColors.errorRed;
-      micIcon = Icons.refresh_rounded;
-    } else if (_isListening) {
-      micColor = AppColors.errorRed;
-      micIcon = Icons.stop_rounded;
-    } else {
-      micColor = _sttReady ? AppColors.successLight : AppColors.textHint;
-      micIcon = Icons.mic_rounded;
-    }
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 100),
-      width: 100.w * levelScale,
-      height: 100.w * levelScale,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [micColor, Color.lerp(micColor, Colors.black, 0.2) ?? Colors.black],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: micColor.withValues(
-              alpha: 0.35 +
-                  (_isListening
-                      ? 0.25 * _pulseCtrl.value + _audioLevel * 0.2
-                      : 0),
-            ),
-            blurRadius: (16 +
-                    (_isListening
-                        ? 12 * _pulseCtrl.value + _audioLevel * 8
-                        : 0))
-                .r,
-            offset: Offset(0, 4.h),
-          ),
-        ],
-      ),
-      child: Icon(micIcon, color: Colors.white, size: 34.sp),
-    );
-  }
-
-  // ─── Result Card ──────────────────────────────────────────────
-
-  Widget _buildResultCard() {
-    final r = _result;
-
-    // Confidence gate failed — nghe không rõ
-    if (r == null) {
-      return Container(
-        margin: EdgeInsets.only(top: 8.h),
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFF3E0),
-          borderRadius: BorderRadius.circular(20.r),
-          border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10.r,
-              offset: Offset(0, 4.h),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Icon(Icons.warning_amber_rounded,
-                    color: AppColors.secondary, size: 22.sp),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Text(
-                    'Chúng tôi nghe chưa rõ. Vui lòng đọc lại.',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.sheetBrown,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 10.h),
-            _buildDetailRow(
-                'Hệ thống nghe', _recognized.isNotEmpty ? '"$_recognized"' : '(không rõ)'),
-            SizedBox(height: 12.h),
-            _retryButton(),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      margin: EdgeInsets.only(top: 8.h),
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(
-          color: r.passed
-              ? AppColors.successGreen.withValues(alpha: 0.35)
-              : AppColors.errorRed.withValues(alpha: 0.35),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: (r.passed ? AppColors.successGreen : AppColors.errorRed)
-                .withValues(alpha: 0.10),
-            blurRadius: 14.r,
-            offset: Offset(0, 5.h),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Header: pass/fail + stars
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Text(r.passed ? '🎉' : '😅',
-                      style: TextStyle(fontSize: 22.sp)),
-                  SizedBox(width: 8.w),
-                  Text(
-                    r.passed ? 'Tuyệt vời!' : 'Chưa đạt',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w800,
-                      color: r.passed
-                          ? AppColors.successGreen
-                          : AppColors.errorDark,
-                    ),
-                  ),
-                ],
-              ),
-              // Stars
-              Row(
-                children: List.generate(
-                  3,
-                  (i) => Icon(
-                    i < r.stars
-                        ? Icons.star_rounded
-                        : Icons.star_outline_rounded,
-                    size: 20.w,
-                    color: i < r.stars
-                        ? AppColors.secondary
-                        : AppColors.sheetWarmBorder,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 10.h),
-          const Divider(color: Colors.black12, height: 1),
-          SizedBox(height: 10.h),
-
-          // Recognized text
-          _buildDetailRow(
-            'Hệ thống nghe',
-            _recognized.isNotEmpty ? '"$_recognized"' : '(không rõ)',
-          ),
-          SizedBox(height: 6.h),
-
-          // Expected text
-          _buildDetailRow(
-            'Âm mục tiêu',
-            '"${widget.vowel.pronunciationClean}"',
-            valueColor: AppColors.sheetBrown,
-          ),
-          SizedBox(height: 6.h),
-
-          // Accuracy percentage
-          _buildDetailRow(
-            'Độ chính xác',
-            '${r.accuracy}%',
-            valueColor: r.passed
-                ? AppColors.successGreen
-                : AppColors.errorDark,
-            bold: true,
-          ),
-
-          // Pass threshold note
-          SizedBox(height: 4.h),
-          Text(
-            r.passed
-                ? '✓ Đạt ngưỡng $_passThreshold% — hoàn thành!'
-                : '✗ Cần đạt ≥ $_passThreshold% để qua — hãy thử lại!',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: r.passed
-                  ? AppColors.successGreen
-                  : AppColors.errorRed,
-            ),
-          ),
-
+        decoration: BoxDecoration(color: AppColors.sheetWarm, borderRadius: BorderRadius.vertical(top: Radius.circular(28.r))),
+        child: ListView(controller: ctrl, padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 24.h), children: [
+          // Drag handle
+          Center(child: Container(width: 48.w, height: 5.h, margin: EdgeInsets.only(bottom: 14.h),
+            decoration: BoxDecoration(color: AppColors.sheetWarmBorder, borderRadius: BorderRadius.circular(3.r)))),
+          Center(child: Text('Tập nói phát âm', style: GoogleFonts.plusJakartaSans(fontSize: 22.sp, fontWeight: FontWeight.w800, color: AppColors.sheetBrown))),
           SizedBox(height: 14.h),
-
-          // Action buttons
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: _retry,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFF3E0),
-                      borderRadius: BorderRadius.circular(14.r),
-                      border: Border.all(color: AppColors.secondary),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'Thử lại',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.secondary,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              if (r.passed) ...[
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.successLight,
-                            AppColors.successGreen
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(14.r),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Hoàn thành ✅',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+          if (!_hasResult) ...[
+            // Character circle
+            Center(child: Container(width: 110.w, height: 110.w,
+              decoration: BoxDecoration(shape: BoxShape.circle,
+                gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppColors.headerEnd, AppColors.headerAccent]),
+                boxShadow: [BoxShadow(color: AppColors.headerAccent.withValues(alpha: 0.3), blurRadius: 16.r, offset: Offset(0, 6.h))]),
+              child: Center(child: Text(widget.vowel.character, style: GoogleFonts.battambang(fontSize: 56.sp, fontWeight: FontWeight.w700, color: Colors.white, height: 1.1))))),
+            SizedBox(height: 8.h),
+            Center(child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 6.h),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20.r), border: Border.all(color: AppColors.sheetWarmBorder),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4.r, offset: Offset(0, 2.h))]),
+              child: Text(widget.vowel.romanized, style: GoogleFonts.plusJakartaSans(fontSize: 20.sp, fontWeight: FontWeight.w800, color: AppColors.sheetBrown)))),
+            SizedBox(height: 14.h),
+            // Stars placeholder
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(3, (i) => Padding(padding: EdgeInsets.symmetric(horizontal: 3.w), child: Icon(Icons.star_outline_rounded, size: 30.sp, color: AppColors.sheetWarmBorder)))),
+            SizedBox(height: 14.h),
+            // Listen example
+            Center(child: GestureDetector(
+              onTap: !_isPlayingExample && !_isListening ? _playExample : null,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
+                decoration: BoxDecoration(color: AppColors.violetSurface, borderRadius: BorderRadius.circular(20.r)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(_isPlayingExample ? Icons.volume_up_rounded : Icons.headphones_rounded, color: AppColors.violet, size: 18.sp),
+                  SizedBox(width: 6.w),
+                  Text(_isPlayingExample ? 'Đang phát...' : 'Nghe mẫu trước', style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700, color: AppColors.violet)),
+                ])))),
+            SizedBox(height: 18.h),
+            // Mic with wave bars
+            Center(child: GestureDetector(
+              onTap: _toggleListening,
+              child: AnimatedBuilder(animation: _pulseCtrl, builder: (context, child) => SizedBox(width: 200.w, height: 100.h,
+                child: Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
+                  ...List.generate(4, (i) {
+                    final h = _isListening ? 12.0 + (20 + i * 6) * (0.4 + 0.6 * _pulseCtrl.value) : 8.0 + i * 3.0;
+                    return Container(width: 4.w, height: h, margin: EdgeInsets.symmetric(horizontal: 2.w),
+                      decoration: BoxDecoration(color: _isListening ? Color.lerp(AppColors.errorRed, AppColors.secondary, i / 3.0)! : AppColors.sheetWarmBorder, borderRadius: BorderRadius.circular(4.r)));
+                  }).reversed.toList(),
+                  SizedBox(width: 6.w),
+                  Container(
+                    width: _isListening ? 80.w + 8 * _pulseCtrl.value : 76.w,
+                    height: _isListening ? 80.w + 8 * _pulseCtrl.value : 76.w,
+                    decoration: BoxDecoration(shape: BoxShape.circle,
+                      gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
+                        colors: _isListening ? [AppColors.errorRed, AppColors.errorDark]
+                          : !_sttReady ? [AppColors.textHint, AppColors.textSecondary]
+                          : [AppColors.successLight, const Color(0xFF388E3C)]),
+                      boxShadow: [if (_sttReady) BoxShadow(color: (_isListening ? AppColors.errorRed : AppColors.successGreen).withValues(alpha: 0.4), blurRadius: 18.r, offset: Offset(0, 6.h))]),
+                    child: Icon(_isListening ? Icons.mic_rounded : Icons.mic_none_rounded, color: Colors.white, size: 36.sp)),
+                  SizedBox(width: 6.w),
+                  ...List.generate(4, (i) {
+                    final h = _isListening ? 12.0 + (20 + i * 6) * (0.4 + 0.6 * _pulseCtrl.value) : 8.0 + i * 3.0;
+                    return Container(width: 4.w, height: h, margin: EdgeInsets.symmetric(horizontal: 2.w),
+                      decoration: BoxDecoration(color: _isListening ? Color.lerp(AppColors.errorRed, AppColors.headerAccent, i / 3.0)! : AppColors.sheetWarmBorder, borderRadius: BorderRadius.circular(4.r)));
+                  }),
+                ]))))),
+            SizedBox(height: 8.h),
+            Center(child: Text(
+              !_sttReady ? 'Đang khởi tạo...' : _isListening ? (_recognized.isNotEmpty ? '"$_recognized"\n(Chạm để dừng)' : 'Đang nghe...\n(Chạm để dừng)') : _statusMsg.isNotEmpty ? _statusMsg : 'Bé chạm để nói',
+              textAlign: TextAlign.center, style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: _isListening ? AppColors.errorRed : AppColors.sheetBrownLight))),
+            if (_statusMsg.contains('Không') && !_isListening) ...[
+              SizedBox(height: 10.h),
+              Center(child: GestureDetector(onTap: () => setState(() => _statusMsg = ''),
+                child: Container(padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+                  decoration: BoxDecoration(color: AppColors.secondary, borderRadius: BorderRadius.circular(20.r)),
+                  child: Text('Thử lại', style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: Colors.white))))),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value,
-      {Color? valueColor, bool bold = false}) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 100.w,
-          child: Text(
-            label,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: bold ? 15.sp : 13.sp,
-              fontWeight: bold ? FontWeight.w800 : FontWeight.w700,
-              color: valueColor ?? AppColors.sheetBrown,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _retryButton() {
-    return GestureDetector(
-      onTap: _retry,
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: 12.h),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFF3E0),
-          borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: AppColors.secondary),
-        ),
-        child: Center(
-          child: Text(
-            'Thử lại',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColors.secondary,
-            ),
-          ),
-        ),
+          ],
+          // Result
+          if (_hasResult) ...[
+            Container(width: double.infinity, padding: EdgeInsets.symmetric(vertical: 28.h, horizontal: 20.w),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24.r),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12.r, offset: Offset(0, 4.h))]),
+              child: Column(children: [
+                Container(width: 70.w, height: 70.w,
+                  decoration: BoxDecoration(shape: BoxShape.circle,
+                    gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
+                      colors: _isCorrect ? [AppColors.successLighter, AppColors.successGreen] : [const Color(0xFFEF9A9A), AppColors.errorRed])),
+                  child: Center(child: Text(widget.vowel.character, style: GoogleFonts.battambang(fontSize: 36.sp, fontWeight: FontWeight.w700, color: Colors.white, height: 1.1)))),
+                SizedBox(height: 12.h),
+                Text(_isCorrect ? 'Tuyệt vời!' : 'Chưa chính xác', style: GoogleFonts.plusJakartaSans(fontSize: 24.sp, fontWeight: FontWeight.w800, color: _isCorrect ? const Color(0xFF2E7D32) : AppColors.errorDark)),
+                SizedBox(height: 4.h),
+                Text(_isCorrect ? 'Phát âm rất tốt!' : 'Hãy thử lại nhé!', style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w500, color: AppColors.sheetBrownLight)),
+                SizedBox(height: 14.h),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(3, (i) => Icon(i < _score ~/ 2 ? Icons.star_rounded : Icons.star_outline_rounded, size: 40.sp, color: i < _score ~/ 2 ? AppColors.secondary : AppColors.sheetWarmBorder))),
+                SizedBox(height: 14.h),
+                Container(padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  decoration: BoxDecoration(color: AppColors.surfaceContainerLow, borderRadius: BorderRadius.circular(14.r)),
+                  child: RichText(text: TextSpan(style: GoogleFonts.plusJakartaSans(fontSize: 15.sp, color: AppColors.textSecondary), children: [
+                    const TextSpan(text: 'Nghe được: '),
+                    TextSpan(text: '"$_recognized"', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.sheetBrown)),
+                  ]))),
+                if (_isCorrect) ...[
+                  SizedBox(height: 10.h),
+                  Container(padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                    decoration: BoxDecoration(color: const Color(0xFFFFF3E0), borderRadius: BorderRadius.circular(14.r)),
+                    child: Text('+10 XP ⭐', style: GoogleFonts.plusJakartaSans(fontSize: 18.sp, fontWeight: FontWeight.w800, color: AppColors.secondary))),
+                ],
+                SizedBox(height: 18.h),
+                Row(children: [
+                  Expanded(child: GestureDetector(
+                    onTap: () => setState(() { _hasResult = false; _recognized = ''; _statusMsg = ''; _score = 0; }),
+                    child: Container(padding: EdgeInsets.symmetric(vertical: 14.h),
+                      decoration: BoxDecoration(color: const Color(0xFFFFF3E0), borderRadius: BorderRadius.circular(16.r), border: Border.all(color: AppColors.secondary)),
+                      child: Center(child: Text('Thử lại', style: GoogleFonts.plusJakartaSans(fontSize: 15.sp, fontWeight: FontWeight.w700, color: AppColors.secondary)))))),
+                  if (_isCorrect) ...[
+                    SizedBox(width: 10.w),
+                    Expanded(child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(padding: EdgeInsets.symmetric(vertical: 14.h),
+                        decoration: BoxDecoration(gradient: LinearGradient(colors: [AppColors.successLight, AppColors.successGreen]), borderRadius: BorderRadius.circular(16.r)),
+                        child: Center(child: Text('Hoàn thành ✅', style: GoogleFonts.plusJakartaSans(fontSize: 15.sp, fontWeight: FontWeight.w700, color: Colors.white)))))),
+                  ],
+                ]),
+              ])),
+          ],
+        ]),
       ),
     );
   }

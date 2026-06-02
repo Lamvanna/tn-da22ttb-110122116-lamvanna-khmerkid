@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../data/khmer_stroke_templates.dart';
 
 /// ════════════════════════════════════════════════════════════════════
 /// Handwriting Tracing Service — Template-based Stroke Overlay Scoring
@@ -381,12 +380,12 @@ class HandwritingTracingService {
           break;
         case _MarkPosition.leftAndRight:
           centerX = cx;
-          radiusX = halfW * 0.72;           // Mở rộng chiều ngang để ôm cả trái và phải
-          radiusY = halfH * 0.72;           // Mở rộng chiều dọc vì chữ ៀ, ឿ có nét rất dài trên/dưới
+          radiusX = halfW * 1.35;           // Mở rộng chiều ngang để ôm cả trái và phải
+          radiusY = halfH * 1.35;           // Mở rộng chiều dọc vì chữ ៀ, ឿ có nét rất dài trên/dưới
           break;
         case _MarkPosition.aboveAndBelow:
           centerY = cy;
-          radiusY = halfH * 0.72;           // Mở rộng chiều dọc để ôm cả trên và dưới
+          radiusY = halfH * 1.25;           // Mở rộng chiều dọc để ôm cả trên và dưới
           break;
         case _MarkPosition.none:
           break;
@@ -396,17 +395,17 @@ class HandwritingTracingService {
       final charStr = character.replaceAll('◌', '');
       if (charStr == 'ៀ') {
         // Nét móc vươn rất dài xuống dưới và nét phụ lên trên
-        radiusX = halfW * 0.8;
-        radiusY = halfH * 0.9;
+        radiusX = halfW * 1.45;
+        radiusY = halfH * 1.65;
         centerY = cy + shiftY + halfH * 0.15; // Dịch tâm xuống một chút để ôm trọn đuôi
       } else if (charStr == 'ឿ') {
         // Nét kép trên và phải
-        radiusX = halfW * 0.8;
-        radiusY = halfH * 0.8;
+        radiusX = halfW * 1.4;
+        radiusY = halfH * 1.4;
       } else if (charStr == 'ៅ') {
         // Nét kép trái và phải (bên phải rất cao)
-        radiusX = halfW * 0.8;
-        radiusY = halfH * 0.8;
+        radiusX = halfW * 1.45;
+        radiusY = halfH * 1.4;
         centerY = cy + shiftY - halfH * 0.1;
       } else if (charStr == 'ី' || charStr == 'ឺ') {
         // Dấu trên cao hơn bình thường một chút
@@ -423,43 +422,21 @@ class HandwritingTracingService {
         centerY = cy + shiftY + halfH * 0.75;
       } else if (charStr.contains('ះ')) {
         // Các chữ kết hợp dấu ះ thường cần rộng hơn bên phải
-        radiusX = halfW * 0.8;
+        radiusX = halfW * 1.45;
       }
     }
 
-    final template = KhmerStrokeTemplateData.getTemplate(character);
-    final pointsToUse = template.pointsNoRotation;
-    for (final tp in pointsToUse) {
-      final double px;
-      final double py;
-      if (isDepMark) {
-        final double normX = tp.dx / 125.0;
-        final double normY = tp.dy / 125.0;
-        px = centerX + normX * radiusX;
-        py = centerY + normY * radiusY;
-      } else {
-        px = centerX + tp.dx * (radiusX / 125.0);
-        py = centerY + tp.dy * (radiusY / 125.0);
-      }
-      
-      final col = (px / cellWidth).floor();
-      final row = (py / cellHeight).floor();
-      
-      // Mark cells in a small radius around (row, col) to create the stroke shape
-      const rRange = 6;
-      for (int dr = -rRange; dr <= rRange; dr++) {
-        for (int dc = -rRange; dc <= rRange; dc++) {
-          final nr = row + dr;
-          final nc = col + dc;
-          if (nr >= 0 && nr < gridResolution && nc >= 0 && nc < gridResolution) {
-            if (dr * dr + dc * dc <= 36) { // rounded radius of ~6 cells (approx. 37px on 400x400 canvas)
-              grid[nr][nc] = true;
-            }
-          }
+    for (int row = 0; row < gridResolution; row++) {
+      for (int col = 0; col < gridResolution; col++) {
+        final cellCenterX = col * cellWidth + cellWidth / 2;
+        final cellCenterY = row * cellHeight + cellHeight / 2;
+        final normalizedX = (cellCenterX - centerX) / radiusX;
+        final normalizedY = (cellCenterY - centerY) / radiusY;
+        if (normalizedX * normalizedX + normalizedY * normalizedY <= 1.0) {
+          grid[row][col] = true;
         }
       }
     }
-
 
     return {
       'grid': grid,
@@ -507,6 +484,7 @@ class HandwritingTracingService {
     int insidePoints = 0;
     int outsidePoints = 0;
     int nearPoints = 0;
+    int neutralPointsCount = 0;
 
     final List<StrokeSegment> segments = [];
 
@@ -539,8 +517,19 @@ class HandwritingTracingService {
           nearPoints++;
           yellowPoints.add(point);
         } else {
-          outsidePoints++;
-          redPoints.add(point);
+          // 2. Nếu không thuộc nét chữ, kiểm tra xem có nằm trong vùng vòng tròn nét đứt không (đối với dấu phụ thuộc)
+          final double normX = (point.dx - cx) / halfW;
+          final double normY = (point.dy - shiftedCy) / halfH;
+          final bool isInsideDottedCircle = isDepMark && (normX * normX + normY * normY <= 1.15);
+
+          if (isInsideDottedCircle) {
+            neutralPointsCount++;
+            // Color it green for satisfying visual feedback (vẫn vẽ xanh nếu tô lên vòng tròn)
+            greenPoints.add(point);
+          } else {
+            outsidePoints++;
+            redPoints.add(point);
+          }
         }
       }
 
@@ -560,6 +549,12 @@ class HandwritingTracingService {
     // Giảm từ 0.7 xuống 0.5 để nghiêm ngặt hơn
     final adjustedInside = insidePoints + (nearPoints * 0.5).round();
     int adjustedOutside = outsidePoints;
+
+    // Nếu người dùng không vẽ bất kỳ điểm nào trên hoặc gần nét chữ mẫu thực tế,
+    // toàn bộ điểm vẽ trên vòng tròn trung tâm sẽ bị coi là nét vẽ ngoài chữ mẫu (vì chưa viết nét chính).
+    if (insidePoints == 0 && nearPoints == 0) {
+      adjustedOutside += neutralPointsCount;
+    }
 
     return _StrokeAnalysis(
       insidePoints: adjustedInside,
@@ -720,7 +715,7 @@ _MarkPosition _classifyDependentMark(String character) {
     return _MarkPosition.left;
   }
 
-  if (character.contains('ា') ||
+  if (character.contains('า') ||
       character.contains('ះ')) {
     return _MarkPosition.right;
   }

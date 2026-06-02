@@ -7,7 +7,6 @@ import '../../services/auth_service.dart';
 import '../../services/storage_service.dart';
 import '../../services/tts_service.dart';
 import '../../widgets/app_header.dart';
-import '../auth/login_screen.dart';
 
 /// Màn hình Cài đặt — Settings Screen
 /// Nhóm theo chức năng: Âm thanh & Giọng đọc · Chung · Dữ liệu · Giới thiệu.
@@ -119,8 +118,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           _buildOfflineToggle(),
                           _divider(),
                           _buildResetTile(),
-                          _divider(),
-                          _buildLogoutTile(),
                         ]),
                         const SizedBox(height: 22),
                         _sectionHeader(AppStrings.sectionServer,
@@ -544,76 +541,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           backgroundColor: AppColors.tertiary,
           behavior: SnackBarBehavior.floating,
         ),
-      );
-    }
-  }
-
-  // ─── Đăng xuất ────────────────────────────────────────────────────
-  Widget _buildLogoutTile() {
-    return _tile(
-      icon: Icons.logout_rounded,
-      color: AppColors.errorRed,
-      title: 'Đăng xuất',
-      desc: 'Đăng xuất tài khoản hiện tại khỏi thiết bị',
-      trailing: const Icon(Icons.chevron_right_rounded,
-          color: AppColors.textHint),
-      onTap: _confirmLogout,
-    );
-  }
-
-  Future<void> _confirmLogout() async {
-    _tap();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        icon: const Icon(Icons.logout_rounded,
-            color: AppColors.errorRed, size: 40),
-        title: const Text('Đăng xuất?',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-        content: const Text('Bạn có chắc chắn muốn đăng xuất tài khoản hiện tại không?',
-            style: TextStyle(fontSize: 14), textAlign: TextAlign.center),
-        actionsAlignment: MainAxisAlignment.spaceEvenly,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(AppStrings.cancel,
-                style: AppTextStyles.bodyMedium
-                    .copyWith(color: AppColors.textSecondary)),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-                backgroundColor: AppColors.errorRed),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Đăng xuất',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      if (!mounted) return;
-      // Show loading spinner dialog
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
-      );
-      
-      await AuthService().logout();
-      
-      if (!mounted) return;
-      // Dismiss spinner
-      Navigator.pop(context);
-      
-      // Navigate to Login Screen and clear navigation stack
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-        (route) => false,
       );
     }
   }

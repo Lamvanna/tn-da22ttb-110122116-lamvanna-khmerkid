@@ -5,7 +5,6 @@ import '../data/local/progress_local_datasource.dart';
 import '../data/local/sync_queue_datasource.dart';
 import '../data/remote/progress_remote_datasource.dart';
 import '../services/auth_service.dart';
-import '../services/storage_service.dart';
 
 /// Repository cho Tiến Độ Học — Offline-First, Database-Driven
 /// MongoDB = source of truth, Isar = local cache + offline support
@@ -226,51 +225,6 @@ class ProgressRepository {
   /// Save profile cache vào Isar
   Future<void> saveProfileCache(Map<String, dynamic> profile) async {
     await _localDS.saveProfileCache(_userId, profile);
-  }
-
-  /// Đồng bộ tiến độ từ local Isar sang SharedPreferences
-  Future<void> syncLocalProgressToSharedPreferences() async {
-    try {
-      final storage = await StorageService.getInstance();
-      
-      final consonants = await getProgressByType('consonant');
-      for (final p in consonants) {
-        await storage.saveLetterProgress(p['lessonOrder'] as int, p['stars'] as int);
-      }
-      
-      final vowels = await getProgressByType('vowel');
-      for (final p in vowels) {
-        await storage.saveVowelProgress(p['lessonOrder'] as int, p['stars'] as int);
-      }
-      
-      final numbers = await getProgressByType('number');
-      for (final p in numbers) {
-        await storage.saveNumberProgress(p['lessonOrder'] as int, p['stars'] as int);
-      }
-      
-      final readings = await getProgressByType('reading');
-      for (final p in readings) {
-        await storage.saveReadingProgress(p['lessonOrder'] as int, p['stars'] as int);
-      }
-      
-      final diacriticals = await getProgressByType('diacritical');
-      for (final p in diacriticals) {
-        await storage.saveDiacriticalProgress(p['lessonOrder'] as int, p['stars'] as int);
-      }
-      
-      final spellings = await getProgressByType('spelling');
-      for (final p in spellings) {
-        await storage.saveSpellingProgress(p['lessonOrder'] as int, p['stars'] as int);
-      }
-      
-      final writings = await getProgressByType('writing');
-      for (final p in writings) {
-        await storage.saveWritingProgress(p['lessonOrder'] as int, p['stars'] as int);
-      }
-      if (kDebugMode) print('[ProgressRepo] ✅ Synced local progress from Isar to StorageService SharedPreferences');
-    } catch (e) {
-      if (kDebugMode) print('[ProgressRepo] ⚠️ Error syncing Isar to SharedPreferences: $e');
-    }
   }
 
   /// Xóa dữ liệu khi logout

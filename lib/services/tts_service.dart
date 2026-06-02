@@ -29,7 +29,6 @@ class TtsService {
   bool _initialized = false;
   bool _isPlaying = false;
   bool _khmerSupported = false;
-  String _khmerLocale = 'km'; // Locale Khmer thực tế đã match (vd 'km-KH')
   TtsSpeed _speed = TtsSpeed.normal;
   bool _soundEnabled = true;
   bool _useAudioAssets = true; // Ưu tiên dùng file âm thanh chuẩn
@@ -111,7 +110,6 @@ class TtsService {
 
       if (_khmerSupported) {
         await _tts.setLanguage(matchedKhmer!);
-        _khmerLocale = matchedKhmer; // Lưu lại để khôi phục chính xác sau khi đọc tiếng Việt
       } else {
         String? viLang;
         for (final dynamic lang in languages) {
@@ -205,41 +203,6 @@ class TtsService {
     return result == 1;
   }
 
-  /// Đọc một chuỗi phiên âm TIẾNG VIỆT (vd "srăk a") bằng giọng vi-VN,
-  /// BỎ QUA ưu tiên Khmer và audio asset.
-  /// Dùng cho các trường hợp cần đọc đúng "tên" theo phiên âm Việt, không phải
-  /// đọc ký tự Khmer (vốn ra âm khác). Sau khi đọc xong sẽ khôi phục ngôn ngữ cũ.
-  Future<bool> speakVietnamese(String text) async {
-    if (!_soundEnabled) return false;
-    if (text.trim().isEmpty) return false;
-    if (!_initialized) await init();
-    if (_isPlaying) await stop();
-
-    try {
-      // Tạm chuyển sang vi-VN để đọc phiên âm Việt cho chuẩn
-      if (_khmerSupported) {
-        await _tts.setLanguage('vi-VN');
-      }
-      await _tts.setSpeechRate(_speedRate);
-      final result = await _tts.speak(text);
-      _isPlaying = result == 1;
-
-      if (result != 1) {
-        Future.delayed(const Duration(milliseconds: 1500), () {
-          if (_isPlaying) {
-            _isPlaying = false;
-            onComplete?.call();
-          }
-        });
-      }
-      return result == 1;
-    } finally {
-      // Khôi phục lại ngôn ngữ Khmer nếu thiết bị hỗ trợ
-      if (_khmerSupported) {
-        await _tts.setLanguage(_khmerLocale);
-      }
-    }
-  }
   /// Phát âm chữ Khmer letter với ưu tiên file âm thanh chuẩn
   ///
   /// QUAN TRỌNG: Đây là hàm CHÍNH để phát âm chữ Khmer.
@@ -253,10 +216,9 @@ class TtsService {
     String romanized = '',
   }) async {
     if (!_soundEnabled) return false;
-    if (!_initialized) await init(); // Đảm bảo TTS + AudioAsset đã sẵn sàng
 
     // ═══════════════════════════════════════════════════════════════
-    // BƯỚC 1: Ưu tiên tuyệt đối - Dùng file âm thanh chuẩn (nếu file CÓ THẬT)
+    // BƯỚC 1: Ưu tiên tuyệt đối - Dùng file âm thanh chuẩn
     // ═══════════════════════════════════════════════════════════════
     if (_useAudioAssets && _audioAsset.hasAudio(character)) {
       debugPrint('[TtsService] ✅ Using AUDIO ASSET (100% accurate): $character');

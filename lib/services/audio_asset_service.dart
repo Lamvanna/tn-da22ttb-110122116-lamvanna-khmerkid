@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart' show rootBundle, AssetManifest;
 import 'package:audioplayers/audioplayers.dart';
 
 /// ════════════════════════════════════════════════════════════════════
@@ -23,12 +22,6 @@ class AudioAssetService {
   final AudioPlayer _player = AudioPlayer();
   bool _isPlaying = false;
   bool _initialized = false;
-
-  /// Tập hợp các đường dẫn asset THỰC SỰ tồn tại (được build vào app).
-  /// Chỉ những file có trong đây mới được coi là "có audio".
-  /// Nhờ vậy khi chưa ghi âm file nào, hệ thống sẽ fallback sang TTS thay vì
-  /// thử phát file rỗng (gây ra việc "không có tiếng").
-  final Set<String> _availableAssets = {};
 
   // ─── Callbacks ──────────────────────────────────────────────────
   VoidCallback? onStart;
@@ -166,48 +159,11 @@ class AudioAssetService {
         }
       });
 
-      // Quét danh sách asset thực sự được build vào app để biết file nào tồn tại
-      await _loadAvailableAssets();
-
       _initialized = true;
-      debugPrint('[AudioAssetService] ✅ Initialized. '
-          'Audio files có sẵn: ${_availableAssets.length}');
+      debugPrint('[AudioAssetService] ✅ Initialized');
     } catch (e) {
       debugPrint('[AudioAssetService] ❌ Init error: $e');
       _initialized = false;
-    }
-  }
-
-  /// Đọc AssetManifest để biết chính xác file audio nào đã được đóng gói.
-  /// Chỉ những file có thật mới được thêm vào [_availableAssets].
-  Future<void> _loadAvailableAssets() async {
-    _availableAssets.clear();
-    try {
-      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
-      final allAssets = manifest.listAssets().toSet();
-
-      // Gộp tất cả đường dẫn audio đã khai báo trong các map
-      final declared = <String>{
-        ..._consonantAudioMap.values,
-        ..._vowelAudioMap.values,
-        ..._numberAudioMap.values,
-      };
-
-      for (final path in declared) {
-        if (allAssets.contains(path)) {
-          _availableAssets.add(path);
-        }
-      }
-
-      if (_availableAssets.isEmpty) {
-        debugPrint('[AudioAssetService] ℹ️ Chưa có file audio nào được đóng gói '
-            '→ sẽ dùng TTS cho tất cả. (Xem docs/AUDIO_FIX_GUIDE.md để thêm file)');
-      }
-    } catch (e) {
-      // Không đọc được manifest → coi như không có audio, fallback TTS toàn bộ
-      debugPrint('[AudioAssetService] ⚠️ Không đọc được AssetManifest: $e '
-          '→ fallback TTS toàn bộ');
-      _availableAssets.clear();
     }
   }
 
@@ -291,21 +247,15 @@ class AudioAssetService {
     return false;
   }
 
-  /// Kiểm tra xem có file âm thanh THỰC SỰ TỒN TẠI cho ký tự không.
-  /// Chỉ trả về true khi file đã được đóng gói vào app (có trong AssetManifest).
-  /// Khi chưa có file → trả về false → phía gọi sẽ fallback sang TTS.
+  /// Kiểm tra xem có file âm thanh cho ký tự không
   bool hasAudio(String character) {
-    final path = _mappedPath(character);
-    if (path == null) return false;
-    // Nếu chưa init xong (chưa quét manifest) thì coi như chưa có để an toàn fallback TTS
-    return _availableAssets.contains(path);
+    return _consonantAudioMap.containsKey(character) ||
+           _vowelAudioMap.containsKey(character) ||
+           _numberAudioMap.containsKey(character);
   }
 
-  /// Lấy đường dẫn file âm thanh đã khai báo trong map (không kiểm tra tồn tại).
-  String? getAudioPath(String character) => _mappedPath(character);
-
-  /// Đường dẫn khai báo trong map cho 1 ký tự (phụ âm/nguyên âm/số).
-  String? _mappedPath(String character) {
+  /// Lấy đường dẫn file âm thanh
+  String? getAudioPath(String character) {
     return _consonantAudioMap[character] ??
            _vowelAudioMap[character] ??
            _numberAudioMap[character];
@@ -328,18 +278,50 @@ class AudioAssetService {
 
   // ─── Validation & Testing ───────────────────────────────────────
 
-  /// Kiểm tra file âm thanh nào đã được đóng gói (dựa trên AssetManifest đã quét).
-  /// Trả về map: ký tự → có file thật hay không.
+  /// Kiểm tra tất cả file âm thanh có tồn tại không
   Future<Map<String, bool>> validateAllAudioFiles() async {
-    if (!_initialized) await init();
-
     final results = <String, bool>{};
-    for (final entry in {
-      ..._consonantAudioMap,
-      ..._vowelAudioMap,
-      ..._numberAudioMap,
-    }.entries) {
-      results[entry.key] = _availableAssets.contains(entry.value);
+
+    // Kiểm tra phụ âm
+    for (final entry in _consonantAudioMap.entries) {
+      try {
+        final cleanPath = entry.value.startsWith('assets/')
+            ? entry.value.substring(7)
+            : entry.value;
+        await _player.setSource(AssetSource(cleanPath));
+        results[entry.key] = true;
+      } catch (e) {
+        results[entry.key] = false;
+        debugPrint('[AudioAssetService] ⚠️ Missing: ${entry.key} → ${entry.value}');
+      }
+    }
+
+    // Kiểm tra nguyên âm
+    for (final entry in _vowelAudioMap.entries) {
+      try {
+        final cleanPath = entry.value.startsWith('assets/')
+            ? entry.value.substring(7)
+            : entry.value;
+        await _player.setSource(AssetSource(cleanPath));
+        results[entry.key] = true;
+      } catch (e) {
+        results[entry.key] = false;
+        debugPrint('[AudioAssetService] ⚠️ Missing: ${entry.key} → ${entry.value}');
+      }
+    }
+
+    // Kiểm tra số
+    for (final entry in _numberAudioMap.entries) {
+      try {
+        final cleanPath = entry.value.startsWith('assets/')
+            ? entry.value.substring(7)
+            : entry.value;
+        await _player.setSource(AssetSource(cleanPath));
+        results[entry.key] = true;
+      } catch (e) {
+        results[entry.key] = false;
+        debugPrint('[AudioAssetService] ⚠️ Missing: ${entry.key} → ${entry.value}');
+      }
     }
 
     final total = results.length;
@@ -347,10 +329,10 @@ class AudioAssetService {
     final missing = total - found;
 
     if (missing > 0) {
-      debugPrint('[AudioAssetService] 📊 Validation: $found/$total file có sẵn, thiếu $missing');
-      debugPrint('[AudioAssetService] ℹ️ Bình thường khi đang phát triển. Xem docs/AUDIO_FIX_GUIDE.md');
+      debugPrint('[AudioAssetService] 📊 Validation: $found/$total files found, $missing missing');
+      debugPrint('[AudioAssetService] ℹ️ This is expected during development. See docs/AUDIO_FIX_GUIDE.md');
     } else {
-      debugPrint('[AudioAssetService] ✅ Đủ $total file audio!');
+      debugPrint('[AudioAssetService] ✅ All $total audio files found!');
     }
 
     return results;

@@ -88,9 +88,6 @@ void main() {
         character: 'ក',
         userStrokes: strokes,
         canvasSize: canvasSize,
-        passThresholdOverride: 80.0,
-        outsideThresholdOverride: 20.0,
-        toleranceRadiusOverride: 10.0,
       );
 
       if (result.outsideCoverage > 20) {

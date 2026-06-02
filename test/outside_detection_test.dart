@@ -64,7 +64,7 @@ void main() {
       final double cx = canvasSize.width / 2;
       final double cy = canvasSize.height / 2;
 
-      final points = template.points.map((tp) {
+      final points = template.pointsNoRotation.map((tp) {
         final px = cx + tp.dx * (halfW / 125.0);
         final py = cy + tp.dy * (halfH / 125.0);
         return Offset(px, py);

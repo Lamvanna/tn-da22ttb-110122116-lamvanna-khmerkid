@@ -700,10 +700,8 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
                   character: _num.character,
                   romanized: _num.romanized,
                   pronunciation: _num.pronunciation,
-                  // Chấp nhận phát âm tiếng Việt phiên âm của chữ Khmer
-                  acceptedAnswers: [
-                    _num.pronunciation,
-                  ],
+                  // Chấp nhận phát âm tiếng Việt phiên âm của chữ Khmer + các từ đồng âm thường gặp
+                  acceptedAnswers: _num.acceptedPronunciations,
                   accentColor: AppColors.coral,
                   accentColorDark: AppColors.coralDark,
                   surfaceColor: AppColors.coralSurface,

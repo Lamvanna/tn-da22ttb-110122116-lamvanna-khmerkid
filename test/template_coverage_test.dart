@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:khmerkid/services/handwriting_tracing_service.dart';
+import 'package:khmerkid/data/khmer_stroke_templates.dart';
 
 void main() {
   group('Template Coverage Tests', () {
@@ -33,85 +34,88 @@ void main() {
     });
 
     test('Large strokes covering template should PASS', () {
-      // Vẽ nhiều nét phủ kín vùng chữ mẫu
-      final strokes = [
-        // Nét ngang
-        List.generate(50, (i) => Offset(150 + i * 2.0, 180)),
-        List.generate(50, (i) => Offset(150 + i * 2.0, 200)),
-        List.generate(50, (i) => Offset(150 + i * 2.0, 220)),
-        // Nét dọc
-        List.generate(50, (i) => Offset(180, 150 + i * 2.0)),
-        List.generate(50, (i) => Offset(200, 150 + i * 2.0)),
-        List.generate(50, (i) => Offset(220, 150 + i * 2.0)),
-      ];
+      final template = KhmerStrokeTemplateData.getTemplate('ក');
+      const double dynamicRatio = 0.62;
+      final double halfW = canvasSize.width * dynamicRatio / 2;
+      final double halfH = canvasSize.height * dynamicRatio / 2;
+      final double cx = canvasSize.width / 2;
+      final double cy = canvasSize.height / 2;
+
+      final points = template.pointsNoRotation.map((tp) {
+        return Offset(cx + tp.dx * (halfW / 125.0), cy + tp.dy * (halfH / 125.0));
+      }).toList();
 
       final result = service.scoreTracing(
         character: 'ក',
-        userStrokes: strokes,
+        userStrokes: [points],
         canvasSize: canvasSize,
+        minPointsOverride: 50,
+        minStrokesOverride: 1,
       );
 
       print('Large strokes - Inside: ${result.insideCoverage.round()}%, Outside: ${result.outsideCoverage.round()}%');
       print('Result: ${result.passed ? "PASS" : "FAIL"}, Score: ${result.finalScore.round()}%');
 
-      // Nhiều nét phủ kín phải PASS
-      if (result.insideCoverage >= 70 && result.outsideCoverage <= 30) {
-        expect(result.passed, true);
-      }
+      expect(result.passed, true);
     });
 
     test('Drawing only half of template should FAIL', () {
-      // Chỉ vẽ nửa trên của chữ
-      final strokes = [
-        List.generate(40, (i) => Offset(160 + i * 2.0, 170)),
-        List.generate(40, (i) => Offset(160 + i * 2.0, 180)),
-        List.generate(40, (i) => Offset(160 + i * 2.0, 190)),
-      ];
+      final template = KhmerStrokeTemplateData.getTemplate('ក');
+      const double dynamicRatio = 0.62;
+      final double halfW = canvasSize.width * dynamicRatio / 2;
+      final double halfH = canvasSize.height * dynamicRatio / 2;
+      final double cx = canvasSize.width / 2;
+      final double cy = canvasSize.height / 2;
+
+      final points = template.pointsNoRotation.map((tp) {
+        return Offset(cx + tp.dx * (halfW / 125.0), cy + tp.dy * (halfH / 125.0));
+      }).toList();
+
+      // Only draw the first 30% of the character template points
+      final partialPoints = points.sublist(0, (points.length * 0.3).toInt());
 
       final result = service.scoreTracing(
         character: 'ក',
-        userStrokes: strokes,
+        userStrokes: [partialPoints],
         canvasSize: canvasSize,
-        minPointsOverride: 200,
+        minPointsOverride: 100, // Override high to fail partial drawing
+        minStrokesOverride: 1,
       );
 
       print('Half template - Inside: ${result.insideCoverage.round()}%, Outside: ${result.outsideCoverage.round()}%');
       print('Result: ${result.passed ? "PASS" : "FAIL"}, Score: ${result.finalScore.round()}%');
 
-      // Chỉ vẽ một nửa không đủ
       expect(result.passed, false);
     });
 
     test('Full template coverage with good accuracy should PASS with high score', () {
-      // Vẽ đầy đủ toàn bộ chữ mẫu
-      final strokes = <List<Offset>>[];
+      final template = KhmerStrokeTemplateData.getTemplate('ក');
+      const double dynamicRatio = 0.62;
+      final double halfW = canvasSize.width * dynamicRatio / 2;
+      final double halfH = canvasSize.height * dynamicRatio / 2;
+      final double cx = canvasSize.width / 2;
+      final double cy = canvasSize.height / 2;
 
-      // Tạo lưới nét phủ kín vùng chữ mẫu (160-240 x 160-240)
-      for (int y = 160; y <= 240; y += 10) {
-        strokes.add(List.generate(40, (i) => Offset(160 + i * 2.0, y.toDouble())));
-      }
-      for (int x = 160; x <= 240; x += 10) {
-        strokes.add(List.generate(40, (i) => Offset(x.toDouble(), 160 + i * 2.0)));
-      }
+      final points = template.pointsNoRotation.map((tp) {
+        return Offset(cx + tp.dx * (halfW / 125.0), cy + tp.dy * (halfH / 125.0));
+      }).toList();
 
       final result = service.scoreTracing(
         character: 'ក',
-        userStrokes: strokes,
+        userStrokes: [points],
         canvasSize: canvasSize,
+        minPointsOverride: 50,
+        minStrokesOverride: 1,
       );
 
       print('Full coverage - Inside: ${result.insideCoverage.round()}%, Outside: ${result.outsideCoverage.round()}%');
       print('Result: ${result.passed ? "PASS" : "FAIL"}, Score: ${result.finalScore.round()}%, Stars: ${result.stars}');
 
-      // Phủ đầy đủ phải PASS với điểm cao
-      if (result.insideCoverage >= 70 && result.outsideCoverage <= 30) {
-        expect(result.passed, true);
-        expect(result.finalScore, greaterThan(70));
-      }
+      expect(result.passed, true);
+      expect(result.finalScore, greaterThan(80));
     });
 
     test('Very small stroke (< 20 points) should FAIL immediately', () {
-      // Nét rất nhỏ
       final strokes = [
         [
           const Offset(200, 200),
@@ -134,65 +138,72 @@ void main() {
     });
 
     test('Drawing with good coverage but too much outside should FAIL', () {
-      // Vẽ đầy đủ nhưng nhiều nét ra ngoài
-      final strokes = <List<Offset>>[];
+      final template = KhmerStrokeTemplateData.getTemplate('ក');
+      const double dynamicRatio = 0.62;
+      final double halfW = canvasSize.width * dynamicRatio / 2;
+      final double halfH = canvasSize.height * dynamicRatio / 2;
+      final double cx = canvasSize.width / 2;
+      final double cy = canvasSize.height / 2;
 
-      // Nét trong
-      for (int y = 170; y <= 230; y += 15) {
-        strokes.add(List.generate(30, (i) => Offset(170 + i * 2.0, y.toDouble())));
-      }
+      final points = template.pointsNoRotation.map((tp) {
+        return Offset(cx + tp.dx * (halfW / 125.0), cy + tp.dy * (halfH / 125.0));
+      }).toList();
 
-      // Nét ngoài (nhiều)
-      for (int y = 50; y <= 150; y += 20) {
-        strokes.add(List.generate(30, (i) => Offset(50 + i * 2.0, y.toDouble())));
-      }
+      // Outside stroke: 100 points far away
+      final outsideStroke = List.generate(100, (i) => Offset(10.0 + i * 2.0, 10.0));
 
       final result = service.scoreTracing(
         character: 'ក',
-        userStrokes: strokes,
+        userStrokes: [points, outsideStroke],
         canvasSize: canvasSize,
+        minPointsOverride: 50,
+        minStrokesOverride: 1,
       );
 
       print('Good coverage but outside - Inside: ${result.insideCoverage.round()}%, Outside: ${result.outsideCoverage.round()}%');
       print('Result: ${result.passed ? "PASS" : "FAIL"}');
 
-      if (result.outsideCoverage > 30) {
-        expect(result.passed, false);
-      }
+      expect(result.passed, false);
     });
 
     test('Comparing different coverage levels', () {
-      // Test 1: 25% coverage
-      final strokes1 = [
-        List.generate(20, (i) => Offset(180 + i * 2.0, 190)),
-        List.generate(20, (i) => Offset(180 + i * 2.0, 200)),
-      ];
+      final template = KhmerStrokeTemplateData.getTemplate('ក');
+      const double dynamicRatio = 0.62;
+      final double halfW = canvasSize.width * dynamicRatio / 2;
+      final double halfH = canvasSize.height * dynamicRatio / 2;
+      final double cx = canvasSize.width / 2;
+      final double cy = canvasSize.height / 2;
 
+      final points = template.pointsNoRotation.map((tp) {
+        return Offset(cx + tp.dx * (halfW / 125.0), cy + tp.dy * (halfH / 125.0));
+      }).toList();
+
+      // Test 1: 25% coverage with outside points
+      final partial25 = points.sublist(0, (points.length * 0.25).toInt());
+      final outside1 = List.generate(100, (i) => Offset(10.0 + i * 2.0, 10.0));
       final result1 = service.scoreTracing(
         character: 'ក',
-        userStrokes: strokes1,
+        userStrokes: [partial25, outside1],
         canvasSize: canvasSize,
-        minPointsOverride: 200,
+        minPointsOverride: 10,
+        minStrokesOverride: 1,
       );
 
       print('25% coverage - Score: ${result1.finalScore.round()}%, Passed: ${result1.passed}');
 
-      // Test 2: 75% coverage
-      final strokes2 = <List<Offset>>[];
-      for (int y = 165; y <= 235; y += 10) {
-        strokes2.add(List.generate(35, (i) => Offset(165 + i * 2.0, y.toDouble())));
-      }
-
+      // Test 2: 75% coverage with same outside points
+      final partial75 = points.sublist(0, (points.length * 0.75).toInt());
+      final outside2 = List.generate(100, (i) => Offset(10.0 + i * 2.0, 10.0));
       final result2 = service.scoreTracing(
         character: 'ក',
-        userStrokes: strokes2,
+        userStrokes: [partial75, outside2],
         canvasSize: canvasSize,
-        minPointsOverride: 200,
+        minPointsOverride: 10,
+        minStrokesOverride: 1,
       );
 
       print('75% coverage - Score: ${result2.finalScore.round()}%, Passed: ${result2.passed}');
 
-      // 75% coverage phải tốt hơn 25%
       expect(result2.finalScore, greaterThan(result1.finalScore));
     });
   });

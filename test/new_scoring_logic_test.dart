@@ -1,16 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:khmerkid/services/handwriting_tracing_service.dart';
+import 'package:khmerkid/data/khmer_stroke_templates.dart';
 
 void main() {
   group('New Scoring Logic Tests', () {
     final service = HandwritingTracingService.instance;
     const canvasSize = Size(400, 400);
 
+    // Helpers to get template points and outside points
+    List<Offset> getTemplatePoints() {
+      final template = KhmerStrokeTemplateData.getTemplate('ក');
+      const double dynamicRatio = 0.62;
+      final double halfW = canvasSize.width * dynamicRatio / 2;
+      final double halfH = canvasSize.height * dynamicRatio / 2;
+      final double cx = canvasSize.width / 2;
+      final double cy = canvasSize.height / 2;
+      return template.pointsNoRotation.map((tp) {
+        return Offset(cx + tp.dx * (halfW / 125.0), cy + tp.dy * (halfH / 125.0));
+      }).toList();
+    }
+
+    final points = getTemplatePoints();
+    final outside = List.generate(200, (i) => Offset(10.0 + i * 1.5, 10.0));
+
     test('Inside 70%, Outside 30% - Should PASS (boundary case)', () {
       final strokes = [
-        List.generate(70, (i) => Offset(180 + (i % 10) * 4.0, 180 + (i ~/ 10) * 4.0)),
-        List.generate(30, (i) => Offset(100 + i * 2.0, 100)),
+        points.sublist(0, 70),
+        outside.sublist(0, 30),
       ];
 
       final result = service.scoreTracing(
@@ -31,8 +48,8 @@ void main() {
 
     test('Inside 60%, Outside 40% - Should FAIL (inside < 70%)', () {
       final strokes = [
-        List.generate(60, (i) => Offset(180 + (i % 8) * 5.0, 180 + (i ~/ 8) * 5.0)),
-        List.generate(40, (i) => Offset(50 + i * 3.0, 50)),
+        points.sublist(0, 60),
+        outside.sublist(0, 40),
       ];
 
       final result = service.scoreTracing(
@@ -53,8 +70,8 @@ void main() {
 
     test('Inside 70%, Outside 35% - Should FAIL (outside > 30%)', () {
       final strokes = [
-        List.generate(70, (i) => Offset(180 + (i % 10) * 4.0, 180 + (i ~/ 10) * 4.0)),
-        List.generate(35, (i) => Offset(50 + i * 3.0, 50)),
+        points.sublist(0, 70),
+        outside.sublist(0, 35),
       ];
 
       final result = service.scoreTracing(
@@ -76,8 +93,8 @@ void main() {
 
     test('Inside 90%, Outside 10% - Should PASS with 3 stars', () {
       final strokes = [
-        List.generate(90, (i) => Offset(180 + (i % 10) * 4.0, 180 + (i ~/ 10) * 4.0)),
-        List.generate(10, (i) => Offset(150 + i * 2.0, 150)),
+        points.sublist(0, 90),
+        outside.sublist(0, 10),
       ];
 
       final result = service.scoreTracing(
@@ -99,8 +116,8 @@ void main() {
 
     test('Inside 80%, Outside 20% - Should PASS with 2 stars', () {
       final strokes = [
-        List.generate(80, (i) => Offset(180 + (i % 10) * 4.0, 180 + (i ~/ 10) * 4.0)),
-        List.generate(20, (i) => Offset(140 + i * 2.0, 140)),
+        points.sublist(0, 80),
+        outside.sublist(0, 20),
       ];
 
       final result = service.scoreTracing(
@@ -122,8 +139,8 @@ void main() {
 
     test('Inside 75%, Outside 25% - Should PASS with 1 star', () {
       final strokes = [
-        List.generate(75, (i) => Offset(180 + (i % 10) * 4.0, 180 + (i ~/ 10) * 4.0)),
-        List.generate(25, (i) => Offset(130 + i * 2.0, 130)),
+        points.sublist(0, 75),
+        outside.sublist(0, 25),
       ];
 
       final result = service.scoreTracing(
@@ -144,13 +161,9 @@ void main() {
     });
 
     test('Drawing along the template path should have high inside coverage', () {
-      final strokes = [
-        List.generate(50, (i) => Offset(100 + i * 4.0, 100)),
-      ];
-
       final result = service.scoreTracing(
         character: 'ក',
-        userStrokes: strokes,
+        userStrokes: [points],
         canvasSize: canvasSize,
         minPointsOverride: 20,
         minStrokesOverride: 1,
@@ -183,8 +196,8 @@ void main() {
 
     test('Feedback messages should match new logic', () {
       final strokes1 = [
-        List.generate(60, (i) => Offset(180 + (i % 8) * 5.0, 180 + (i ~/ 8) * 5.0)),
-        List.generate(40, (i) => Offset(50 + i * 3.0, 50)),
+        points.sublist(0, 60),
+        outside.sublist(0, 40),
       ];
 
       final result1 = service.scoreTracing(
@@ -207,8 +220,8 @@ void main() {
       }
 
       final strokes2 = [
-        List.generate(50, (i) => Offset(180 + (i % 10) * 4.0, 180 + (i ~/ 10) * 4.0)),
-        List.generate(50, (i) => Offset(50 + i * 3.0, 50)),
+        points.sublist(0, 50),
+        outside.sublist(0, 50),
       ];
 
       final result2 = service.scoreTracing(

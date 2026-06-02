@@ -50,6 +50,64 @@ class KhmerNumber {
     };
     return map[value.trim()] ?? '';
   }
+
+  /// Danh sách các từ đồng âm tiếng Việt thường gặp khi phát âm tiếng Khmer của số này,
+  /// giúp tránh việc Google STT nhận nhầm dấu thanh tiếng Việt (ví dụ: đọc "muôi" thành "mùi/mũi/muỗi")
+  List<String> get acceptedPronunciations {
+    switch (value.trim()) {
+      case '0': return ['sôn', 'sơn', 'xôn', 'son', 'sông'];
+      case '1': return ['muôi', 'mùi', 'mũi', 'muỗi', 'muối', 'mui', 'mủi'];
+      case '2': return ['pi', 'pin', 'bi', 'py', 'phí', 'phi'];
+      case '3': return ['bây', 'bay', 'bẩy', 'bẫy', 'bày', 'bầy', 'bấy'];
+      case '4': return ['buôn', 'buồn', 'buốn', 'buộn', 'buồng'];
+      case '5': return ['prăm', 'băm', 'răm', 'trăm', 'phăm', 'păm', 'chăm', 'dăm', 'nhăm', 'tăm', 'thăm', 'xăm', 'lăm'];
+      case '6':
+        const prefixes = ['prăm', 'băm', 'răm', 'trăm', 'phăm', 'păm', 'chăm', 'dăm', 'nhăm'];
+        const suffixes = ['muôi', 'mùi', 'mũi', 'muỗi', 'muối', 'mui', 'mủi'];
+        final list = <String>[];
+        for (final p in prefixes) {
+          for (final s in suffixes) {
+            list.add('$p-$s');
+            list.add('$p $s');
+          }
+        }
+        return list;
+      case '7':
+        const prefixes = ['prăm', 'băm', 'răm', 'trăm', 'phăm', 'păm', 'chăm', 'dăm', 'nhăm'];
+        const suffixes = ['pi', 'bi', 'py', 'phi', 'phí', 'pin', 'bị', 'bỉ', 'phì', 'phỉ', 'tì', 'ti'];
+        final list = <String>[];
+        for (final p in prefixes) {
+          for (final s in suffixes) {
+            list.add('$p-$s');
+            list.add('$p $s');
+          }
+        }
+        return list;
+      case '8':
+        const prefixes = ['prăm', 'băm', 'răm', 'trăm', 'phăm', 'păm', 'chăm', 'dăm', 'nhăm'];
+        const suffixes = ['bây', 'bay', 'bẩy', 'bẫy', 'bày', 'bầy', 'bấy', 'vây', 'vẩy', 'vẫy', 'mây', 'mẩy', 'mấy'];
+        final list = <String>[];
+        for (final p in prefixes) {
+          for (final s in suffixes) {
+            list.add('$p-$s');
+            list.add('$p $s');
+          }
+        }
+        return list;
+      case '9':
+        const prefixes = ['prăm', 'băm', 'răm', 'trăm', 'phăm', 'păm', 'chăm', 'dăm', 'nhăm'];
+        const suffixes = ['buôn', 'buồn', 'buốn', 'buộn', 'buồng', 'muôn', 'muộn'];
+        final list = <String>[];
+        for (final p in prefixes) {
+          for (final s in suffixes) {
+            list.add('$p-$s');
+            list.add('$p $s');
+          }
+        }
+        return list;
+      default: return [pronunciation];
+    }
+  }
 }
 
 /// 10 số Khmer (0-9) + dữ liệu mẫu

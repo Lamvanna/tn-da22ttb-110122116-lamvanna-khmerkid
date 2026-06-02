@@ -106,7 +106,7 @@ class ScoringService {
   // Mỗi chữ chỉ có 2-3 cách phát âm được chấp nhận (chuẩn + biến thể gần)
   static const Map<String, List<String>> acceptedPronunciations = {
     // Phụ âm Series 1 (A-series)
-    'ក': ['ka', 'ko'],           // Chỉ 2 cách: ka (chuẩn), ko (biến thể)
+    'ក': ['ka', 'ko', 'kor'],           // ka (chuẩn), ko/kor (biến thể)
     'ខ': ['kha', 'kho'],         // Loại bỏ: khor, khaa, khaw, ka, ko
     'គ': ['ko', 'kor'],          // Loại bỏ: koo, kou, go, gor, goo
     'ឃ': ['kho', 'khor'],        // Loại bỏ: khoo, khou, ko, kor
@@ -153,36 +153,236 @@ class ScoringService {
     'អ': ['a', 'o'],             // Loại bỏ: or, aa, aw, oo, ou
   };
 
-  // ─── Multiple Accepted Vowel Pronunciations Map ────────────────────
-  // Bản đồ phát âm chấp nhận cho 24 nguyên âm Khmer.
-  // Mỗi nguyên âm có 3-6 cách đọc hợp lệ: phiên âm Latin, tiếng Việt có dấu,
-  // tiếng Việt không dấu, và biến thể STT thường nhận.
+  // ═══════════════════════════════════════
+  // NGUYÊN ÂM KHMER - PHIÊN ÂM MỞ RỘNG
+  // Dùng cho Speech-to-Text
+  // Bao gồm:
+  // - Tên nguyên âm
+  // - Cách đọc tiếng Việt
+  // - Cách đọc khi ghép phụ âm giọng O
+  // - Cách đọc khi ghép phụ âm giọng Ô
+  // ═══════════════════════════════════════
   static const Map<String, List<String>> acceptedVowelPronunciations = {
-    // ══ Nguyên âm cơ bản ══
-    'អា': ['aa', 'a', 'à', 'á', 'ah'],                      // a dài
-    'អិ': ['e', 'i', 'ì', 'í', 'ê'],                        // i ngắn
-    'អី': ['ei', 'ây', 'ay', 'âi', 'ey'],                   // ây
-    'អឹ': ['ə', 'ơ', 'ớ', 'ờ', 'er'],                       // ơ ngắn
-    'អឺ': ['əə', 'ơ', 'ớ', 'ờ', 'ơơ', 'er'],               // ơ dài
-    'អុ': ['o', 'ô', 'ố', 'ồ', 'u'],                        // ô ngắn
-    'អូ': ['oo', 'u', 'ú', 'ù', 'uu'],                      // u dài
-    'អួ': ['uə', 'ua', 'uà', 'uá', 'ùa'],                  // ua
-    'អើ': ['əə', 'ơ', 'ớ', 'ờ', 'ơi', 'er'],               // ơ
-    'អឿ': ['ɨə', 'ưa', 'ừa', 'ứa', 'ưà'],                  // ưa
-    'អៀ': ['iə', 'ia', 'ìa', 'ía', 'ie'],                   // ia
-    'អេ': ['ee', 'ê', 'ế', 'ề', 'e'],                       // ê
-    'អែ': ['ae', 'e', 'è', 'é', 'ê', 'eh'],                 // e
-    'អៃ': ['aj', 'ai', 'ài', 'ái', 'ay'],                   // ai
-    'អោ': ['ao', 'ao', 'ào', 'áo', 'aw'],                   // ao
-    'អៅ': ['aw', 'au', 'àu', 'áu', 'ao'],                   // au
-    'អំ': ['ɑm', 'ăm', 'am', 'àm', 'ám', 'um'],             // ăm
-    'អុំ': ['om', 'ôm', 'ồm', 'ốm', 'um'],                  // ôm
-    'អះ': ['ah', 'ăh', 'ăc', 'ac', 'ak'],                   // ăh
-    'អាំ': ['am', 'am', 'àm', 'ám', 'ăm'],                  // am
-    'អិះ': ['eh', 'ih', 'ic', 'ik', 'ít'],                   // ih
-    'អុះ': ['oh', 'ôh', 'ôc', 'ốc', 'ốt'],                  // ôh
-    'អេះ': ['eh', 'êh', 'êt', 'ết', 'ếc'],                  // êh
-    'អោះ': ['oah', 'oăh', 'oăc', 'oac', 'oát'],             // oăh
+    'អា': [
+      'a', 'aa', 'à', 'á',
+      'a dài',
+      'ia',
+      'srắc a', 'srac a', 'srak a'
+    ],
+
+    'អិ': [
+      'i', 'ì', 'í',
+      'i ngắn',
+      'ế',
+      'í',
+      'srắc i', 'srac i', 'srak i'
+    ],
+
+    'អី': [
+      'ii', 'ee',
+      'i dài',
+      'ây',
+      'i',
+      'srắc ii', 'srac ii', 'srak ii'
+    ],
+
+    'អឹ': [
+      'ư',
+      'ư ngắn',
+      'ấ',
+      'ú',
+      'srắc ư', 'srac ư', 'srak ư'
+    ],
+
+    'អឺ': [
+      'ưư',
+      'ư dài',
+      'ơ',
+      'u',
+      'ươ',
+      'srắc ưư', 'srac ưư', 'srak ưư'
+    ],
+
+    'អុ': [
+      'u', 'ú', 'ù',
+      'u ngắn',
+      'ố',
+      'ú',
+      'srắc u', 'srac u', 'srak u'
+    ],
+
+    'អូ': [
+      'uu',
+      'u dài',
+      'ô',
+      'u',
+      'srắc uu', 'srac uu', 'srak uu'
+    ],
+
+    'អួ': [
+      'ua',
+      'uô',
+      'uoa',
+      'ùa',
+      'úa',
+      'srắc ua', 'srac ua', 'srak ua'
+    ],
+
+    'អើ': [
+      'ơ',
+      'ớ',
+      'ờ',
+      'ơ dài',
+      'ơ',
+      'srắc ơ', 'srac ơ', 'srak ơ'
+    ],
+
+    'អឿ': [
+      'ưa',
+      'ươ',
+      'ừa',
+      'ứa',
+      'ua',
+      'srắc ưa', 'srac ưa', 'srak ưa'
+    ],
+
+    'អៀ': [
+      'ia',
+      'iê',
+      'ìa',
+      'ía',
+      'ia',
+      'srắc ia', 'srac ia', 'srak ia'
+    ],
+
+    'អេ': [
+      'ê',
+      'ế',
+      'ề',
+      'ee',
+      'ê',
+      'srắc ê', 'srac ê', 'srak ê'
+    ],
+
+    'អែ': [
+      'ae',
+      'è',
+      'é',
+      'eh',
+      'e',
+      'ê',
+      'srắc ae', 'srac ae', 'srak ae'
+    ],
+
+    'អៃ': [
+      'ai',
+      'ay',
+      'ài',
+      'ái',
+      'ây',
+      'srắc ai', 'srac ai', 'srak ai'
+    ],
+
+    'អោ': [
+      'ao',
+      'ào',
+      'áo',
+      'aw',
+      'ô',
+      'srắc ao', 'srac ao', 'srak ao'
+    ],
+
+    'អៅ': [
+      'au',
+      'àu',
+      'áu',
+      'aw',
+      'âu',
+      'srắc au', 'srac au', 'srak au'
+    ],
+
+    // ═════════════
+    // NGUYÊN ÂM ĐẶC BIỆT
+    // ═════════════
+
+    'អំ': [
+      'om',
+      'ôm',
+      'ăm',
+      'âm',
+      'am',
+      'um',
+      'oăm',
+      'srắc om', 'srac om', 'srak om'
+    ],
+
+    'អុំ': [
+      'um',
+      'ôm',
+      'ốm',
+      'ồm',
+      'um',
+      'srắc um', 'srac um', 'srak um'
+    ],
+
+    'អះ': [
+      'ah',
+      'ăh',
+      'ac',
+      'ak',
+      'ắc',
+      'ás',
+      'iás',
+      'srắc ah', 'srac ah', 'srak ah'
+    ],
+
+    'អាំ': [
+      'am',
+      'aam',
+      'àm',
+      'ám',
+      'ăm',
+      'oăm',
+      'srắc am', 'srac am', 'srak am'
+    ],
+
+    'អិះ': [
+      'ih',
+      'ic',
+      'ik',
+      'ít',
+      'ích',
+      'ís',
+      'srắc ih', 'srac ih', 'srak ih'
+    ],
+
+    'អុះ': [
+      'uh',
+      'uc',
+      'uk',
+      'út',
+      'úc',
+      'ús',
+      'srắc uh', 'srac uh', 'srak uh'
+    ],
+
+    'អេះ': [
+      'eh',
+      'êt',
+      'ết',
+      'ếc',
+      'ếs',
+      'srắc eh', 'srac eh', 'srak eh'
+    ],
+
+    'អោះ': [
+      'oh',
+      'ôt',
+      'ốc',
+      'ốt',
+      'uás',
+      'srắc oh', 'srac oh', 'srak oh'
+    ]
   };
 
   // ─── Device Matrix Dynamic Calibration ────────────────────────────
@@ -344,7 +544,7 @@ class ScoringService {
 
       return false;
     }()) {
-      rawScore = 85.0; // Giảm từ 90.0 xuống 85.0
+      rawScore = 90.0;
       matchMethod = 'phonetic';
     }
     // 4. Đo lường tỷ lệ tương đồng Dice Coefficient
@@ -422,7 +622,13 @@ class ScoringService {
       passed: result.passed,
       stars: _accuracyToStars(result.weightedScore.round()),
       matchedTarget: character,
-      highlights: buildHighlights(spoken, character, result.passed),
+      highlights: buildHighlights(
+        spoken, 
+        character, 
+        result.passed,
+        romanized: romanized,
+        pronunciation: pronunciation,
+      ),
     );
   }
 
@@ -454,7 +660,20 @@ class ScoringService {
     double? outsideThresholdOverride,
     double? toleranceRadiusOverride,
   }) {
-    // Sử dụng HandwritingTracingService mới
+    // Phân loại xem có phải dấu phụ thuộc (nguyên âm/coeng) hay không
+    final bool isDepMark = character.contains('◌') ||
+        character.runes.any((r) => r >= 0x17B6 && r <= 0x17D3);
+
+    if (!isDepMark) {
+      // Đối với Phụ âm và Số, sử dụng thuật toán nhận dạng hình dáng $1 DollarOne (Legacy) vô cùng chính xác
+      return recognizeWritingLegacy(
+        character: character,
+        strokes: strokes,
+        canvasSize: canvasSize,
+      );
+    }
+
+    // Đối với Nguyên âm phụ thuộc, sử dụng HandwritingTracingService mới để kiểm tra vùng chấm điểm
     final tracingResult = HandwritingTracingService.instance.scoreTracing(
       character: character,
       userStrokes: strokes,
@@ -637,7 +856,7 @@ class ScoringService {
     double iou = union > 0 ? (intersection / union) : 0.0;
 
     // Kiểm tra IoU quá thấp = viết bậy
-    if (iou < 0.12) { // Giảm từ 0.15 xuống 0.12
+    if (iou < 0.15) { // Phục hồi lại ngưỡng 0.15 để tránh vẽ bậy lọt qua
       return RecognitionResult(
         finalScore: (iou * 100).roundToDouble().clamp(0, 30),
         passed: false,
@@ -689,8 +908,9 @@ class ScoringService {
       );
     }
 
-    // Fail early only if shape is completely unrelated (less than 35% boosted shapeScore)
-    if (shapeScore < 35.0) {
+    print('DEBUG SCORING_SERVICE - shapeScore: $shapeScore, dollarOneShapeScore: $dollarOneShapeScore, gridShapeScore: $gridShapeScore, iou: $iou');
+    // Fail early only if shape is completely unrelated (less than 43% boosted shapeScore)
+    if (shapeScore < 43.0) {
       return RecognitionResult(
         finalScore: (shapeScore * 0.95).roundToDouble().clamp(0, 49),
         passed: false,
@@ -832,14 +1052,14 @@ class ScoringService {
       }
     }
 
-    // Encouraging passing criteria: 50% or above passes for kids (giảm từ 58%)
-    bool passed = roundedFinal >= 50;
+    // Encouraging passing criteria: 58% or above passes for kids (restored from 58%)
+    bool passed = roundedFinal >= 58;
     int stars = 0;
     if (roundedFinal >= 80) {
       stars = 3;
     } else if (roundedFinal >= 65) {
       stars = 2;
-    } else if (roundedFinal >= 50) {
+    } else if (roundedFinal >= 58) {
       stars = 1;
     }
 
@@ -1097,30 +1317,53 @@ class ScoringService {
   List<HighlightedWord> buildHighlights(
     String spoken,
     String target,
-    bool allCorrect,
-  ) {
+    bool allCorrect, {
+    String romanized = '',
+    String pronunciation = '',
+    List<String> acceptedAnswers = const [],
+  }) {
     if (allCorrect || target.isEmpty) {
       return [HighlightedWord(text: spoken, isCorrect: true)];
     }
 
+    // Tập hợp tất cả các dạng từ mục tiêu hợp lệ để so khớp
+    final Set<String> targetForms = {target};
+    if (acceptedPronunciations.containsKey(target)) {
+      targetForms.addAll(acceptedPronunciations[target]!);
+    }
+    if (acceptedVowelPronunciations.containsKey(target)) {
+      targetForms.addAll(acceptedVowelPronunciations[target]!);
+    }
+    for (final extra in [romanized, pronunciation, ...acceptedAnswers]) {
+      final n = extra.trim();
+      if (n.isNotEmpty) targetForms.add(n);
+    }
+
     // Tách từ để highlight từng từ
     final spokenWords = spoken.split(RegExp(r'\s+'));
-    final targetNorm = _normalize(target);
-    final targetPhonetic = _normalizePhonetic(target);
     
     return spokenWords.map((word) {
       final wordNorm = _normalize(word);
       final wordPhonetic = _normalizePhonetic(word);
       
-      final simNorm = wordNorm.isNotEmpty && targetNorm.isNotEmpty
-          ? StringSimilarity.compareTwoStrings(wordNorm, targetNorm)
-          : 0.0;
-          
-      final simPhonetic = wordPhonetic.isNotEmpty && targetPhonetic.isNotEmpty
-          ? StringSimilarity.compareTwoStrings(wordPhonetic, targetPhonetic)
-          : 0.0;
-          
-      final isCorrect = simNorm > 0.3 || simPhonetic > 0.4 || wordPhonetic == targetPhonetic;
+      bool isCorrect = false;
+      for (final t in targetForms) {
+        final tNorm = _normalize(t);
+        final tPhonetic = _normalizePhonetic(t);
+        
+        final simNorm = wordNorm.isNotEmpty && tNorm.isNotEmpty
+            ? StringSimilarity.compareTwoStrings(wordNorm, tNorm)
+            : 0.0;
+            
+        final simPhonetic = wordPhonetic.isNotEmpty && tPhonetic.isNotEmpty
+            ? StringSimilarity.compareTwoStrings(wordPhonetic, tPhonetic)
+            : 0.0;
+            
+        if (simNorm > 0.3 || simPhonetic > 0.4 || wordPhonetic == tPhonetic || wordNorm == tNorm) {
+          isCorrect = true;
+          break;
+        }
+      }
       return HighlightedWord(text: word, isCorrect: isCorrect);
     }).toList();
   }

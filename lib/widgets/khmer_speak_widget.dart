@@ -351,8 +351,14 @@ class _KhmerSpeakWidgetState extends State<KhmerSpeakWidget>
       return;
     }
 
-    // Khớp highlights cho giao diện trực quan (dùng bản đã chọn)
-    final highlights = _scoring.buildHighlights(_matchedText, widget.character, scoreResult.passed);
+    final highlights = _scoring.buildHighlights(
+      _matchedText, 
+      widget.character, 
+      scoreResult.passed,
+      romanized: widget.romanized,
+      pronunciation: widget.pronunciation,
+      acceptedAnswers: widget.acceptedAnswers,
+    );
 
     // 4. Đồng bộ adapter PronunciationResult cho tính tương thích ngược của UI
     final pronunciationRes = PronunciationResult(

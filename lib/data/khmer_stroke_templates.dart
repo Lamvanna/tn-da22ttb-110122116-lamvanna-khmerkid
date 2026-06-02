@@ -11,11 +11,15 @@ class KhmerStrokeTemplate {
   final String character;
   final List<Offset> points; // Preprocessed 128 points
   final List<int> gridOccupancy; // 16x16 grid occupancy (256 elements of 0/1)
+  final List<Offset> rawPoints;
+  final List<Offset> pointsNoRotation; // Resampled, centered, scaled but NOT rotated
 
   KhmerStrokeTemplate({
     required this.character,
     required this.points,
     required this.gridOccupancy,
+    required this.rawPoints,
+    required this.pointsNoRotation,
   });
 }
 
@@ -49,10 +53,17 @@ class KhmerStrokeTemplateData {
     final preprocessedPoints = DollarOneRecognizer.preprocess(rawPoints);
     final gridOccupancy = computeGrid16x16(preprocessedPoints);
 
+    // Resample, scale, and translate to origin WITHOUT rotation
+    var ptsNoRot = DollarOneRecognizer.resample(rawPoints, 128);
+    ptsNoRot = DollarOneRecognizer.scaleToSquare(ptsNoRot, 250);
+    ptsNoRot = DollarOneRecognizer.translateToOrigin(ptsNoRot);
+
     final template = KhmerStrokeTemplate(
       character: character,
       points: preprocessedPoints,
       gridOccupancy: gridOccupancy,
+      rawPoints: rawPoints,
+      pointsNoRotation: ptsNoRot,
     );
     
     _templates[character] = template;
@@ -132,6 +143,58 @@ class KhmerStrokeTemplateData {
         const Offset(160, 80), const Offset(120, 120), const Offset(150, 180),
         const Offset(180, 210)
       ];
+    } else if (char.contains('◌') ||
+        char.runes.any((r) => r >= 0x17B6 && r <= 0x17C7)) {
+      // Build dynamic composite template based on dependent vowel components
+      // Left component
+      if (char.contains('េ') ||
+          char.contains('ែ') ||
+          char.contains('ៃ') ||
+          char.contains('ោ') ||
+          char.contains('ៅ') ||
+          char.contains('ៀ') ||
+          char.contains('ឿ')) {
+        pts.addAll([const Offset(70, 70), const Offset(60, 125), const Offset(70, 180)]);
+      }
+      // Right component
+      if (char.contains('ា') ||
+          char.contains('ោ') ||
+          char.contains('ៅ') ||
+          char.contains('ើ') ||
+          char.contains('ឿ') ||
+          char.contains('ៀ')) {
+        pts.addAll([const Offset(180, 70), const Offset(180, 125), const Offset(180, 180)]);
+      }
+      // Top component
+      if (char.contains('ិ') ||
+          char.contains('ី') ||
+          char.contains('ឹ') ||
+          char.contains('ឺ') ||
+          char.contains('ើ') ||
+          char.contains('ឿ') ||
+          char.contains('ៀ') ||
+          char.contains('ំ')) {
+        pts.addAll([const Offset(90, 70), const Offset(125, 50), const Offset(160, 70)]);
+      }
+      // Bottom component
+      if (char.contains('ុ') ||
+          char.contains('ូ') ||
+          char.contains('ួ') ||
+          char.contains('្')) {
+        pts.addAll([const Offset(125, 170), const Offset(125, 210)]);
+      }
+      // Right dots (ះ)
+      if (char.contains('ះ')) {
+        pts.addAll([const Offset(200, 110), const Offset(200, 140)]);
+      }
+
+      // If empty (e.g. somehow no match), fall back to center circle
+      if (pts.isEmpty) {
+        for (int i = 0; i < 360; i += 20) {
+          double rad = i * math.pi / 180.0;
+          pts.add(Offset(125 + 85 * math.cos(rad), 125 + 85 * math.sin(rad)));
+        }
+      }
     } else {
       // Generic beautiful spiral/circle fallback
       for (int i = 0; i < 360; i += 20) {
@@ -229,10 +292,15 @@ class KhmerStrokeTemplateData {
       if (points.isNotEmpty) {
         final preprocessed = DollarOneRecognizer.preprocess(points);
         final grid = computeGrid16x16(preprocessed);
+        var ptsNoRot = DollarOneRecognizer.resample(points, 128);
+        ptsNoRot = DollarOneRecognizer.scaleToSquare(ptsNoRot, 250);
+        ptsNoRot = DollarOneRecognizer.translateToOrigin(ptsNoRot);
         _templates[character] = KhmerStrokeTemplate(
           character: character,
           points: preprocessed,
           gridOccupancy: grid,
+          rawPoints: points,
+          pointsNoRotation: ptsNoRot,
         );
       }
     } catch (e) {

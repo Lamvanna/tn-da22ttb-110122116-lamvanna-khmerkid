@@ -260,7 +260,17 @@ class _VowelSpeakSheetState extends State<VowelSpeakSheet>
     }
 
     final highlights = _scoring.buildHighlights(
-        _matchedText, widget.vowel.character, scoreResult.passed);
+      _matchedText, 
+      widget.vowel.character, 
+      scoreResult.passed,
+      romanized: widget.vowel.pronunciationClean,
+      pronunciation: widget.vowel.pronunciationClean,
+      acceptedAnswers: [
+        widget.vowel.pronunciationClean,
+        widget.vowel.romanized,
+        widget.vowel.pronunciation,
+      ],
+    );
 
     final pronunciationRes = PronunciationResult(
       accuracy: scoreResult.weightedScore.round(),

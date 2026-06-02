@@ -367,5 +367,20 @@ void main() {
       );
       expect(r.passed, isFalse);
     });
+
+    test('buildHighlights gắn nhãn đúng cho từ đồng âm được chấp nhận (ví dụ: Mùi với Số ១)', () {
+      final highlights = scoring.buildHighlights(
+        'Mùi',
+        '១',
+        false, // allCorrect = false để kích hoạt kiểm tra từng từ
+        romanized: 'muəj',
+        pronunciation: 'muôi',
+        acceptedAnswers: ['muôi', 'mùi', 'mũi', 'muỗi', 'muối', 'mui', 'mủi'],
+      );
+
+      expect(highlights.length, equals(1));
+      expect(highlights.first.text, equals('Mùi'));
+      expect(highlights.first.isCorrect, isTrue); // Phải đúng vì 'mùi' nằm trong acceptedAnswers
+    });
   });
 }

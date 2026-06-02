@@ -697,17 +697,12 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
             if (_activeSheet == 2)
               Expanded(
                 child: KhmerSpeakWidget(
-                  // Số được đọc bằng TỪ Khmer → dùng khmerWord làm mục tiêu chấm
-                  character: _num.khmerWord.isNotEmpty ? _num.khmerWord : _num.character,
+                  character: _num.character,
                   romanized: _num.romanized,
                   pronunciation: _num.pronunciation,
-                  // Chấp nhận: phiên âm Khmer ("muôi"), từ tiếng Việt ("một"),
-                  // ký tự số Khmer ("០") và chữ số Ả-rập ("1").
+                  // Chấp nhận phát âm tiếng Việt phiên âm của chữ Khmer
                   acceptedAnswers: [
                     _num.pronunciation,
-                    _num.vietnameseWord,
-                    _num.value,
-                    _num.character,
                   ],
                   accentColor: AppColors.coral,
                   accentColorDark: AppColors.coralDark,
@@ -723,7 +718,7 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
                   accentColor: AppColors.primary,
                   accentColorDark: AppColors.primaryDark,
                   surfaceColor: AppColors.primarySurface,
-                  showStrokeGuide: false, // Số không có dữ liệu mũi tên hướng nét
+                  showStrokeGuide: true, // Hiển thị mũi tên hướng nét cho số
                   enableOcr: false,
                   onComplete: () => _markStepComplete(2),
                 ),

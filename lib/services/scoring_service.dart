@@ -153,6 +153,38 @@ class ScoringService {
     'អ': ['a', 'o'],             // Loại bỏ: or, aa, aw, oo, ou
   };
 
+  // ─── Multiple Accepted Vowel Pronunciations Map ────────────────────
+  // Bản đồ phát âm chấp nhận cho 24 nguyên âm Khmer.
+  // Mỗi nguyên âm có 3-6 cách đọc hợp lệ: phiên âm Latin, tiếng Việt có dấu,
+  // tiếng Việt không dấu, và biến thể STT thường nhận.
+  static const Map<String, List<String>> acceptedVowelPronunciations = {
+    // ══ Nguyên âm cơ bản ══
+    'អា': ['aa', 'a', 'à', 'á', 'ah'],                      // a dài
+    'អិ': ['e', 'i', 'ì', 'í', 'ê'],                        // i ngắn
+    'អី': ['ei', 'ây', 'ay', 'âi', 'ey'],                   // ây
+    'អឹ': ['ə', 'ơ', 'ớ', 'ờ', 'er'],                       // ơ ngắn
+    'អឺ': ['əə', 'ơ', 'ớ', 'ờ', 'ơơ', 'er'],               // ơ dài
+    'អុ': ['o', 'ô', 'ố', 'ồ', 'u'],                        // ô ngắn
+    'អូ': ['oo', 'u', 'ú', 'ù', 'uu'],                      // u dài
+    'អួ': ['uə', 'ua', 'uà', 'uá', 'ùa'],                  // ua
+    'អើ': ['əə', 'ơ', 'ớ', 'ờ', 'ơi', 'er'],               // ơ
+    'អឿ': ['ɨə', 'ưa', 'ừa', 'ứa', 'ưà'],                  // ưa
+    'អៀ': ['iə', 'ia', 'ìa', 'ía', 'ie'],                   // ia
+    'អេ': ['ee', 'ê', 'ế', 'ề', 'e'],                       // ê
+    'អែ': ['ae', 'e', 'è', 'é', 'ê', 'eh'],                 // e
+    'អៃ': ['aj', 'ai', 'ài', 'ái', 'ay'],                   // ai
+    'អោ': ['ao', 'ao', 'ào', 'áo', 'aw'],                   // ao
+    'អៅ': ['aw', 'au', 'àu', 'áu', 'ao'],                   // au
+    'អំ': ['ɑm', 'ăm', 'am', 'àm', 'ám', 'um'],             // ăm
+    'អុំ': ['om', 'ôm', 'ồm', 'ốm', 'um'],                  // ôm
+    'អះ': ['ah', 'ăh', 'ăc', 'ac', 'ak'],                   // ăh
+    'អាំ': ['am', 'am', 'àm', 'ám', 'ăm'],                  // am
+    'អិះ': ['eh', 'ih', 'ic', 'ik', 'ít'],                   // ih
+    'អុះ': ['oh', 'ôh', 'ôc', 'ốc', 'ốt'],                  // ôh
+    'អេះ': ['eh', 'êh', 'êt', 'ết', 'ếc'],                  // êh
+    'អោះ': ['oah', 'oăh', 'oăc', 'oac', 'oát'],             // oăh
+  };
+
   // ─── Device Matrix Dynamic Calibration ────────────────────────────
   static double calibrateConfidence(double rawConfidence) {
     // GIẢM BOOST - Không nên boost quá nhiều
@@ -245,13 +277,18 @@ class ScoringService {
     }
 
     // Tập hợp các dạng phát âm Latin được chấp nhận cho chữ cái này:
-    //   • Bản đồ phát âm cứng (acceptedPronunciations)
+    //   • Bản đồ phát âm cứng (acceptedPronunciations) cho phụ âm
+    //   • Bản đồ phát âm cứng (acceptedVowelPronunciations) cho nguyên âm
     //   • romanized + pronunciation của CHÍNH chữ cái (lấy từ dữ liệu bài học)
     // Nhờ vậy mọi bài (kể cả bài 6 trở đi) đều có mục tiêu so khớp, không còn
     // phụ thuộc vào việc chữ cái có nằm trong bản đồ cứng hay không.
     final Set<String> latinForms = {};
     if (acceptedPronunciations.containsKey(targetCharacter)) {
       latinForms.addAll(acceptedPronunciations[targetCharacter]!);
+    }
+    // Tự động bổ sung bản đồ nguyên âm khi target là nguyên âm Khmer
+    if (acceptedVowelPronunciations.containsKey(targetCharacter)) {
+      latinForms.addAll(acceptedVowelPronunciations[targetCharacter]!);
     }
     for (final extra in [romanized, pronunciation, ...acceptedAnswers]) {
       final n = _normalize(extra);
@@ -921,9 +958,24 @@ class ScoringService {
   String _normalizeLatin(String s) {
     var str = s.toLowerCase().trim().replaceAll(RegExp(r'\s+'), '');
 
-    // Loại bỏ dấu tiếng Việt
-    var withDiacritics = 'àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ';
-    var withoutDiacritics = 'aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyydAAAAAAAAAAAAAAAAAEEEEEEEEEEEIIIIIOOOOOOOOOOOOOOOOOUUUUUUUUUUUYYYYYD';
+    // ═══ BƯỚC 1: Bảo tồn nguyên âm tiếng Việt quan trọng TRƯỚC khi xóa dấu ═══
+    // Các nguyên âm đặc biệt phải được mã hóa riêng để không bị gộp nhầm:
+    //   ơ/ớ/ờ/ợ/ở/ỡ → "ow"  (phân biệt với "o")
+    //   ô/ố/ồ/ộ/ổ/ỗ → "oh"  (phân biệt với "o")
+    //   ê/ế/ề/ệ/ể/ễ → "eh"  (phân biệt với "e")
+    //   ư/ứ/ừ/ự/ử/ữ → "uw"  (phân biệt với "u")
+    //   â/ấ/ầ/ậ/ẩ/ẫ → "aw"  (phân biệt với "a")
+    //   ă/ắ/ằ/ặ/ẳ/ẵ → "ax"  (phân biệt với "a")
+    str = str.replaceAll(RegExp(r'[ơờớợởỡ]'), 'ow');
+    str = str.replaceAll(RegExp(r'[ôồốộổỗ]'), 'oh');
+    str = str.replaceAll(RegExp(r'[êềếệểễ]'), 'eh');
+    str = str.replaceAll(RegExp(r'[ưừứựửữ]'), 'uw');
+    str = str.replaceAll(RegExp(r'[âầấậẩẫ]'), 'aw');
+    str = str.replaceAll(RegExp(r'[ăằắặẳẵ]'), 'ax');
+
+    // ═══ BƯỚC 2: Xóa dấu thanh cho các nguyên âm ĐƠN còn lại ═══
+    var withDiacritics = 'àáạảãèéẹẻẽìíịỉĩòóọỏõùúụủũỳýỵỷỹđ';
+    var withoutDiacritics = 'aaaaaeeeeeiiiiiooooouuuuuyyyyyd';
     for (int i = 0; i < withDiacritics.length; i++) {
       str = str.replaceAll(withDiacritics[i], withoutDiacritics[i]);
     }
@@ -938,25 +990,17 @@ class ScoringService {
     str = str.replaceAll('y', 'i');
 
     // Các từ đồng âm gần âm phổ biến (đặc biệt khi fallback tiếng Việt)
-    if (str.startsWith('c')) str = 'k' + str.substring(1);
-    if (str.startsWith('q')) str = 'k' + str.substring(1);
-    if (str.startsWith('gi')) str = 'd' + str.substring(2);
-    if (str.startsWith('v')) str = 'd' + str.substring(1);
-    if (str.startsWith('tr')) str = 'ch' + str.substring(2);
-    if (str.startsWith('ph')) str = 'f' + str.substring(2);
-
-    // Chuẩn hóa các âm cuối tương tự
-    str = str.replaceAll('aw', 'o');
-    str = str.replaceAll('ao', 'o');
-    str = str.replaceAll('ow', 'o');
-    str = str.replaceAll('oh', 'o');
-    str = str.replaceAll('or', 'o');
+    if (str.startsWith('c')) str = 'k${str.substring(1)}';
+    if (str.startsWith('q')) str = 'k${str.substring(1)}';
+    if (str.startsWith('gi')) str = 'd${str.substring(2)}';
+    if (str.startsWith('v')) str = 'd${str.substring(1)}';
+    if (str.startsWith('tr')) str = 'ch${str.substring(2)}';
+    if (str.startsWith('ph')) str = 'f${str.substring(2)}';
 
     // Chuẩn hóa các phụ âm kép
     str = str.replaceAll('kh', 'k');
     str = str.replaceAll('ch', 'j');
     str = str.replaceAll('th', 't');
-    str = str.replaceAll('ph', 'f');
     str = str.replaceAll('ng', 'n');
     str = str.replaceAll('nh', 'n');
 

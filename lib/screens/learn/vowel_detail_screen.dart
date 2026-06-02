@@ -596,17 +596,14 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
                   // làm hỏng so khớp khiến đọc "a"/"à" bị báo sai.
                   romanized: _v.pronunciationClean,
                   pronunciation: _v.pronunciationClean,
-                  // Chấp nhận đủ cách đọc hợp lệ: âm sạch tiếng Việt (vd "a"),
-                  // phiên âm Latin/IPA gốc (vd "aa"/"əə") và pronunciation đầy đủ.
-                  acceptedAnswers: [
-                    _v.pronunciationClean,
-                    _v.romanized,
-                    _v.pronunciation,
-                  ],
+                  // Sử dụng allAcceptedPronunciations từ model — gộp TẤT CẢ biến thể
+                  // phát âm hợp lệ: pronunciationClean, romanized, pronunciation gốc,
+                  // dependent form, ký tự gốc, và biến thể không dấu tiếng Việt.
+                  acceptedAnswers: _v.allAcceptedPronunciations,
                   accentColor: AppColors.coral,
                   accentColorDark: AppColors.coralDark,
                   surfaceColor: AppColors.coralSurface,
-                  passThreshold: 70, // Ngưỡng đạt 70% — đúng yêu cầu chuẩn
+                  passThreshold: 60, // Ngưỡng 60% cho nguyên âm — âm ngắn, STT khó bắt chính xác
                   onComplete: () => _markStepComplete(1),
                 ),
               ),

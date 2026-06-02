@@ -56,6 +56,56 @@ class KhmerVowel {
     final base = pronunciationClean;
     return base.isNotEmpty ? 'srăk $base' : 'srăk';
   }
+
+  /// Danh sách tổng hợp TẤT CẢ các cách đọc hợp lệ cho nguyên âm này.
+  /// Gộp từ: pronunciationClean, pronunciation gốc, romanized, dependent,
+  /// và các biến thể tiếng Việt không dấu phổ biến mà STT hay nhận.
+  /// Dùng làm acceptedAnswers cho KhmerSpeakWidget để tăng độ chính xác.
+  List<String> get allAcceptedPronunciations {
+    final Set<String> forms = {};
+
+    // Âm thuần đã loại chú thích (vd "a", "ơ", "ê")
+    if (pronunciationClean.isNotEmpty) forms.add(pronunciationClean);
+
+    // Pronunciation gốc có chú thích (vd "a (dài)", "i (ngắn)")
+    if (pronunciation.isNotEmpty) forms.add(pronunciation);
+
+    // Phiên âm Latin/IPA (vd "aa", "ei", "ə")
+    if (romanized.isNotEmpty) forms.add(romanized);
+
+    // Dạng phụ thuộc (vd "កា", "កិ") — STT đôi khi nhận Khmer trực tiếp
+    if (dependent.isNotEmpty) forms.add(dependent);
+
+    // Ký tự gốc (vd "អា", "អិ")
+    forms.add(character);
+
+    // Biến thể âm không dấu phổ biến từ pronunciationClean
+    final clean = pronunciationClean.toLowerCase();
+    // Xóa dấu thanh tiếng Việt đơn giản
+    const diacriticMap = {
+      'à': 'a', 'á': 'a', 'ả': 'a', 'ã': 'a', 'ạ': 'a',
+      'è': 'e', 'é': 'e', 'ẻ': 'e', 'ẽ': 'e', 'ẹ': 'e',
+      'ì': 'i', 'í': 'i', 'ỉ': 'i', 'ĩ': 'i', 'ị': 'i',
+      'ò': 'o', 'ó': 'o', 'ỏ': 'o', 'õ': 'o', 'ọ': 'o',
+      'ù': 'u', 'ú': 'u', 'ủ': 'u', 'ũ': 'u', 'ụ': 'u',
+      'ỳ': 'y', 'ý': 'y', 'ỷ': 'y', 'ỹ': 'y', 'ỵ': 'y',
+      'ơ': 'ơ', 'ờ': 'ơ', 'ớ': 'ơ', 'ở': 'ơ', 'ỡ': 'ơ', 'ợ': 'ơ',
+      'ô': 'ô', 'ồ': 'ô', 'ố': 'ô', 'ổ': 'ô', 'ỗ': 'ô', 'ộ': 'ô',
+      'ê': 'ê', 'ề': 'ê', 'ế': 'ê', 'ể': 'ê', 'ễ': 'ê', 'ệ': 'ê',
+      'ư': 'ư', 'ừ': 'ư', 'ứ': 'ư', 'ử': 'ư', 'ữ': 'ư', 'ự': 'ư',
+      'â': 'â', 'ầ': 'â', 'ấ': 'â', 'ẩ': 'â', 'ẫ': 'â', 'ậ': 'â',
+      'ă': 'ă', 'ằ': 'ă', 'ắ': 'ă', 'ẳ': 'ă', 'ẵ': 'ă', 'ặ': 'ă',
+    };
+    String noDiacritics = '';
+    for (int i = 0; i < clean.length; i++) {
+      noDiacritics += diacriticMap[clean[i]] ?? clean[i];
+    }
+    if (noDiacritics != clean && noDiacritics.isNotEmpty) {
+      forms.add(noDiacritics);
+    }
+
+    return forms.toList();
+  }
 }
 
 /// Nguyên âm Khmer cơ bản — 18 nguyên âm chính

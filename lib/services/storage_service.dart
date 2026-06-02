@@ -15,12 +15,27 @@ class StorageService {
     return _instance!;
   }
 
+  /// Tạo khóa tiền tố theo userId để tránh rò rỉ dữ liệu giữa các tài khoản khác nhau
+  String _uKey(String baseKey) {
+    try {
+      final userProfileStr = _prefs?.getString('userProfile');
+      if (userProfileStr != null && userProfileStr.isNotEmpty) {
+        final profile = jsonDecode(userProfileStr) as Map<String, dynamic>;
+        final userId = profile['_id']?.toString() ?? profile['id']?.toString();
+        if (userId != null && userId.isNotEmpty) {
+          return '${userId}_$baseKey';
+        }
+      }
+    } catch (_) {}
+    return 'local_$baseKey';
+  }
+
   // ─── STARS / POINTS ──────────────────────────────────────────
   static const _keyStars = 'total_stars';
   static const _keyXp = 'total_xp';
 
-  int getStars() => _prefs?.getInt(_keyStars) ?? 0;
-  Future<void> setStars(int val) async => await _prefs?.setInt(_keyStars, val);
+  int getStars() => _prefs?.getInt(_uKey(_keyStars)) ?? 0;
+  Future<void> setStars(int val) async => await _prefs?.setInt(_uKey(_keyStars), val);
   Future<void> addStars(int amount) async {
     final current = getStars();
     await setStars(current + amount);
@@ -35,24 +50,24 @@ class StorageService {
     return false;
   }
 
-  int getXp() => _prefs?.getInt(_keyXp) ?? 0;
-  Future<void> setXp(int val) async => await _prefs?.setInt(_keyXp, val);
+  int getXp() => _prefs?.getInt(_uKey(_keyXp)) ?? 0;
+  Future<void> setXp(int val) async => await _prefs?.setInt(_uKey(_keyXp), val);
   Future<void> addXp(int amount) async {
     final current = getXp();
-    await _prefs?.setInt(_keyXp, current + amount);
+    await _prefs?.setInt(_uKey(_keyXp), current + amount);
   }
 
   // ─── STREAK ──────────────────────────────────────────────────
   static const _keyStreak = 'streak_days';
   static const _keyLastStudy = 'last_study_date';
 
-  int getStreak() => _prefs?.getInt(_keyStreak) ?? 0;
-  Future<void> setStreak(int val) async => await _prefs?.setInt(_keyStreak, val);
+  int getStreak() => _prefs?.getInt(_uKey(_keyStreak)) ?? 0;
+  Future<void> setStreak(int val) async => await _prefs?.setInt(_uKey(_keyStreak), val);
 
   Future<void> updateStreak() async {
     final now = DateTime.now();
     final todayStr = '${now.year}-${now.month}-${now.day}';
-    final lastStudy = _prefs?.getString(_keyLastStudy) ?? '';
+    final lastStudy = _prefs?.getString(_uKey(_keyLastStudy)) ?? '';
 
     if (lastStudy == todayStr) return; // Already studied today
 
@@ -66,8 +81,8 @@ class StorageService {
       streak = 1; // Reset streak
     }
 
-    await _prefs?.setInt(_keyStreak, streak);
-    await _prefs?.setString(_keyLastStudy, todayStr);
+    await _prefs?.setInt(_uKey(_keyStreak), streak);
+    await _prefs?.setString(_uKey(_keyLastStudy), todayStr);
   }
 
   // ─── LETTER PROGRESS ────────────────────────────────────────
@@ -75,7 +90,7 @@ class StorageService {
 
   /// Lưu tiến độ chữ cái: {index: starRating}
   Map<int, int> getLetterProgress() {
-    final json = _prefs?.getString(_keyLetterProgress);
+    final json = _prefs?.getString(_uKey(_keyLetterProgress));
     if (json == null) return {};
     final map = jsonDecode(json) as Map<String, dynamic>;
     return map.map((k, v) => MapEntry(int.parse(k), v as int));
@@ -84,7 +99,7 @@ class StorageService {
   Future<void> saveLetterProgress(int index, int stars) async {
     final progress = getLetterProgress();
     progress[index] = stars;
-    await _prefs?.setString(_keyLetterProgress,
+    await _prefs?.setString(_uKey(_keyLetterProgress),
         jsonEncode(progress.map((k, v) => MapEntry(k.toString(), v))));
   }
 
@@ -92,7 +107,7 @@ class StorageService {
   static const _keyVowelProgress = 'vowel_progress';
 
   Map<int, int> getVowelProgress() {
-    final json = _prefs?.getString(_keyVowelProgress);
+    final json = _prefs?.getString(_uKey(_keyVowelProgress));
     if (json == null) return {};
     final map = jsonDecode(json) as Map<String, dynamic>;
     return map.map((k, v) => MapEntry(int.parse(k), v as int));
@@ -101,7 +116,7 @@ class StorageService {
   Future<void> saveVowelProgress(int index, int stars) async {
     final progress = getVowelProgress();
     progress[index] = stars;
-    await _prefs?.setString(_keyVowelProgress,
+    await _prefs?.setString(_uKey(_keyVowelProgress),
         jsonEncode(progress.map((k, v) => MapEntry(k.toString(), v))));
   }
 
@@ -109,7 +124,7 @@ class StorageService {
   static const _keyReadingProgress = 'reading_progress';
 
   Map<int, int> getReadingProgress() {
-    final json = _prefs?.getString(_keyReadingProgress);
+    final json = _prefs?.getString(_uKey(_keyReadingProgress));
     if (json == null) return {};
     final map = jsonDecode(json) as Map<String, dynamic>;
     return map.map((k, v) => MapEntry(int.parse(k), v as int));
@@ -118,7 +133,7 @@ class StorageService {
   Future<void> saveReadingProgress(int index, int stars) async {
     final progress = getReadingProgress();
     progress[index] = stars;
-    await _prefs?.setString(_keyReadingProgress,
+    await _prefs?.setString(_uKey(_keyReadingProgress),
         jsonEncode(progress.map((k, v) => MapEntry(k.toString(), v))));
   }
 
@@ -126,7 +141,7 @@ class StorageService {
   static const _keyNumberProgress = 'number_progress';
 
   Map<int, int> getNumberProgress() {
-    final json = _prefs?.getString(_keyNumberProgress);
+    final json = _prefs?.getString(_uKey(_keyNumberProgress));
     if (json == null) return {};
     final map = jsonDecode(json) as Map<String, dynamic>;
     return map.map((k, v) => MapEntry(int.parse(k), v as int));
@@ -135,7 +150,7 @@ class StorageService {
   Future<void> saveNumberProgress(int index, int stars) async {
     final progress = getNumberProgress();
     progress[index] = stars;
-    await _prefs?.setString(_keyNumberProgress,
+    await _prefs?.setString(_uKey(_keyNumberProgress),
         jsonEncode(progress.map((k, v) => MapEntry(k.toString(), v))));
   }
 
@@ -143,7 +158,7 @@ class StorageService {
   static const _keyDiacriticalProgress = 'diacritical_progress';
 
   Map<int, int> getDiacriticalProgress() {
-    final json = _prefs?.getString(_keyDiacriticalProgress);
+    final json = _prefs?.getString(_uKey(_keyDiacriticalProgress));
     if (json == null) return {};
     final map = jsonDecode(json) as Map<String, dynamic>;
     return map.map((k, v) => MapEntry(int.parse(k), v as int));
@@ -152,7 +167,7 @@ class StorageService {
   Future<void> saveDiacriticalProgress(int index, int stars) async {
     final progress = getDiacriticalProgress();
     progress[index] = stars;
-    await _prefs?.setString(_keyDiacriticalProgress,
+    await _prefs?.setString(_uKey(_keyDiacriticalProgress),
         jsonEncode(progress.map((k, v) => MapEntry(k.toString(), v))));
   }
 
@@ -160,7 +175,7 @@ class StorageService {
   static const _keySpellingProgress = 'spelling_progress';
 
   Map<int, int> getSpellingProgress() {
-    final json = _prefs?.getString(_keySpellingProgress);
+    final json = _prefs?.getString(_uKey(_keySpellingProgress));
     if (json == null) return {};
     final map = jsonDecode(json) as Map<String, dynamic>;
     return map.map((k, v) => MapEntry(int.parse(k), v as int));
@@ -169,7 +184,7 @@ class StorageService {
   Future<void> saveSpellingProgress(int index, int stars) async {
     final progress = getSpellingProgress();
     progress[index] = stars;
-    await _prefs?.setString(_keySpellingProgress,
+    await _prefs?.setString(_uKey(_keySpellingProgress),
         jsonEncode(progress.map((k, v) => MapEntry(k.toString(), v))));
   }
 
@@ -177,7 +192,7 @@ class StorageService {
   static const _keyWritingProgress = 'writing_progress';
 
   Map<int, int> getWritingProgress() {
-    final json = _prefs?.getString(_keyWritingProgress);
+    final json = _prefs?.getString(_uKey(_keyWritingProgress));
     if (json == null) return {};
     final map = jsonDecode(json) as Map<String, dynamic>;
     return map.map((k, v) => MapEntry(int.parse(k), v as int));
@@ -186,7 +201,7 @@ class StorageService {
   Future<void> saveWritingProgress(int index, int stars) async {
     final progress = getWritingProgress();
     progress[index] = stars;
-    await _prefs?.setString(_keyWritingProgress,
+    await _prefs?.setString(_uKey(_keyWritingProgress),
         jsonEncode(progress.map((k, v) => MapEntry(k.toString(), v))));
   }
 
@@ -194,21 +209,21 @@ class StorageService {
   static const _keyVocabLearned = 'vocab_learned';
 
   Set<String> getLearnedVocab() {
-    final list = _prefs?.getStringList(_keyVocabLearned);
+    final list = _prefs?.getStringList(_uKey(_keyVocabLearned));
     return list?.toSet() ?? {};
   }
 
   Future<void> markVocabLearned(String wordKhmer) async {
     final set = getLearnedVocab();
     set.add(wordKhmer);
-    await _prefs?.setStringList(_keyVocabLearned, set.toList());
+    await _prefs?.setStringList(_uKey(_keyVocabLearned), set.toList());
   }
 
   // ─── TEST HISTORY ────────────────────────────────────────────
   static const _keyTestHistory = 'test_history';
 
   List<Map<String, dynamic>> getTestHistory() {
-    final json = _prefs?.getString(_keyTestHistory);
+    final json = _prefs?.getString(_uKey(_keyTestHistory));
     if (json == null) return [];
     return (jsonDecode(json) as List).cast<Map<String, dynamic>>();
   }
@@ -229,14 +244,14 @@ class StorageService {
     });
     // Keep last 50 results
     if (history.length > 50) history.removeRange(0, history.length - 50);
-    await _prefs?.setString(_keyTestHistory, jsonEncode(history));
+    await _prefs?.setString(_uKey(_keyTestHistory), jsonEncode(history));
   }
 
   // ─── GAME SCORES ────────────────────────────────────────────
   static const _keyGameScores = 'game_scores';
 
   Map<String, int> getGameScores() {
-    final json = _prefs?.getString(_keyGameScores);
+    final json = _prefs?.getString(_uKey(_keyGameScores));
     if (json == null) return {};
     return (jsonDecode(json) as Map<String, dynamic>)
         .map((k, v) => MapEntry(k, v as int));
@@ -246,23 +261,23 @@ class StorageService {
     final scores = getGameScores();
     final current = scores[gameName] ?? 0;
     if (score > current) scores[gameName] = score;
-    await _prefs?.setString(_keyGameScores, jsonEncode(scores));
+    await _prefs?.setString(_uKey(_keyGameScores), jsonEncode(scores));
   }
 
   // ─── SHOP ITEMS ──────────────────────────────────────────────
   static const _keyPurchasedItems = 'purchased_items';
 
   Set<String> getPurchasedItems() {
-    return _prefs?.getStringList(_keyPurchasedItems)?.toSet() ?? {};
+    return _prefs?.getStringList(_uKey(_keyPurchasedItems))?.toSet() ?? {};
   }
 
   Future<void> addPurchasedItem(String itemKey) async {
     final set = getPurchasedItems();
     set.add(itemKey);
-    await _prefs?.setStringList(_keyPurchasedItems, set.toList());
+    await _prefs?.setStringList(_uKey(_keyPurchasedItems), set.toList());
   }
 
-  // ─── SETTINGS ────────────────────────────────────────────────
+  // ─── SETTINGS (Giữ nguyên toàn cục để giữ cấu hình thiết bị) ─────────────────────────
   static const _keySoundEnabled = 'sound_enabled';
   static const _keyLanguage = 'app_language';
   static const _keyTtsSpeed = 'tts_speed';
@@ -295,55 +310,55 @@ class StorageService {
   static const _keyAvatar = 'avatar_index';
   static const _keyAvatarUrl = 'avatar_url';
 
-  String getUsername() => _prefs?.getString(_keyUsername) ?? 'Bé học giỏi';
+  String getUsername() => _prefs?.getString(_uKey(_keyUsername)) ?? 'Bé học giỏi';
   Future<void> setUsername(String name) async =>
-      await _prefs?.setString(_keyUsername, name);
+      await _prefs?.setString(_uKey(_keyUsername), name);
 
-  int getAvatarIndex() => _prefs?.getInt(_keyAvatar) ?? 0;
+  int getAvatarIndex() => _prefs?.getInt(_uKey(_keyAvatar)) ?? 0;
   Future<void> setAvatarIndex(int idx) async =>
-      await _prefs?.setInt(_keyAvatar, idx);
+      await _prefs?.setInt(_uKey(_keyAvatar), idx);
 
-  String getAvatarUrl() => _prefs?.getString(_keyAvatarUrl) ?? '';
+  String getAvatarUrl() => _prefs?.getString(_uKey(_keyAvatarUrl)) ?? '';
   Future<void> setAvatarUrl(String url) async =>
-      await _prefs?.setString(_keyAvatarUrl, url);
+      await _prefs?.setString(_uKey(_keyAvatarUrl), url);
 
   // ─── STUDY TIME ──────────────────────────────────────────────
   static const _keyTotalStudyMinutes = 'total_study_minutes';
   static const _keyDailyStudy = 'daily_study';
 
-  int getTotalStudyMinutes() => _prefs?.getInt(_keyTotalStudyMinutes) ?? 0;
+  int getTotalStudyMinutes() => _prefs?.getInt(_uKey(_keyTotalStudyMinutes)) ?? 0;
 
   Future<void> addStudyMinutes(int minutes) async {
     final total = getTotalStudyMinutes() + minutes;
-    await _prefs?.setInt(_keyTotalStudyMinutes, total);
+    await _prefs?.setInt(_uKey(_keyTotalStudyMinutes), total);
 
     // Daily
     final today = DateTime.now();
     final key = '${_keyDailyStudy}_${today.year}_${today.month}_${today.day}';
-    final daily = (_prefs?.getInt(key) ?? 0) + minutes;
-    await _prefs?.setInt(key, daily);
+    final daily = (_prefs?.getInt(_uKey(key)) ?? 0) + minutes;
+    await _prefs?.setInt(_uKey(key), daily);
   }
 
   int getDailyStudyMinutes() {
     final today = DateTime.now();
     final key = '${_keyDailyStudy}_${today.year}_${today.month}_${today.day}';
-    return _prefs?.getInt(key) ?? 0;
+    return _prefs?.getInt(_uKey(key)) ?? 0;
   }
 
   // ─── ACHIEVEMENTS ────────────────────────────────────────────
   static const _keyAchievements = 'achievements_unlocked';
 
   Set<String> getUnlockedAchievements() {
-    return _prefs?.getStringList(_keyAchievements)?.toSet() ?? {};
+    return _prefs?.getStringList(_uKey(_keyAchievements))?.toSet() ?? {};
   }
 
   Future<void> unlockAchievement(String id) async {
     final set = getUnlockedAchievements();
     set.add(id);
-    await _prefs?.setStringList(_keyAchievements, set.toList());
+    await _prefs?.setStringList(_uKey(_keyAchievements), set.toList());
   }
 
-  // ─── OFFLINE LESSONS CACHE ───────────────────────────────────
+  // ─── OFFLINE LESSONS CACHE (Tải xuống offline toàn cục) ───────────────────────────────────
   static const _keyCachedLessonsPrefix = 'cached_lessons_';
 
   String? getCachedLessons(String type) {
@@ -368,7 +383,7 @@ class StorageService {
       _keyGameScores, _keyAchievements, _keyTotalStudyMinutes,
     ];
     for (final k in keys) {
-      await _prefs?.remove(k);
+      await _prefs?.remove(_uKey(k));
     }
   }
 }

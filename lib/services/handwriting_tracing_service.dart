@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../data/khmer_stroke_templates.dart';
 
 /// ════════════════════════════════════════════════════════════════════
 /// Handwriting Tracing Service — Template-based Stroke Overlay Scoring
@@ -426,17 +427,29 @@ class HandwritingTracingService {
       }
     }
 
-    for (int row = 0; row < gridResolution; row++) {
-      for (int col = 0; col < gridResolution; col++) {
-        final cellCenterX = col * cellWidth + cellWidth / 2;
-        final cellCenterY = row * cellHeight + cellHeight / 2;
-        final normalizedX = (cellCenterX - centerX) / radiusX;
-        final normalizedY = (cellCenterY - centerY) / radiusY;
-        if (normalizedX * normalizedX + normalizedY * normalizedY <= 1.0) {
-          grid[row][col] = true;
+    final template = KhmerStrokeTemplateData.getTemplate(character);
+    for (final tp in template.points) {
+      final px = centerX + tp.dx * (radiusX / 125.0);
+      final py = centerY + tp.dy * (radiusY / 125.0);
+      
+      final col = (px / cellWidth).floor();
+      final row = (py / cellHeight).floor();
+      
+      // Mark cells in a small radius around (row, col) to create the stroke shape
+      const rRange = 6;
+      for (int dr = -rRange; dr <= rRange; dr++) {
+        for (int dc = -rRange; dc <= rRange; dc++) {
+          final nr = row + dr;
+          final nc = col + dc;
+          if (nr >= 0 && nr < gridResolution && nc >= 0 && nc < gridResolution) {
+            if (dr * dr + dc * dc <= 36) { // rounded radius of ~6 cells (approx. 37px on 400x400 canvas)
+              grid[nr][nc] = true;
+            }
+          }
         }
       }
     }
+
 
     return {
       'grid': grid,
@@ -715,7 +728,7 @@ _MarkPosition _classifyDependentMark(String character) {
     return _MarkPosition.left;
   }
 
-  if (character.contains('า') ||
+  if (character.contains('ា') ||
       character.contains('ះ')) {
     return _MarkPosition.right;
   }

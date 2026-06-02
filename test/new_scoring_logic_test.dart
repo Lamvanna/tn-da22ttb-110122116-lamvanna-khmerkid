@@ -143,9 +143,9 @@ void main() {
       }
     });
 
-    test('Drawing only in center should have high inside coverage', () {
+    test('Drawing along the template path should have high inside coverage', () {
       final strokes = [
-        List.generate(50, (i) => Offset(180 + (i % 10) * 3.0, 180 + (i ~/ 10) * 3.0)),
+        List.generate(50, (i) => Offset(100 + i * 4.0, 100)),
       ];
 
       final result = service.scoreTracing(

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:khmerkid/services/handwriting_tracing_service.dart';
 
+import 'package:khmerkid/data/khmer_stroke_templates.dart';
+
 void main() {
   group('Handwriting Outside Template Detection Tests', () {
     final service = HandwritingTracingService.instance;
@@ -54,11 +56,21 @@ void main() {
       expect(result.outsideCoverage, greaterThan(30));
     });
 
-    test('Drawing exactly on center should have high inside coverage', () {
-      final strokes = [
-        List.generate(20, (i) => Offset(180 + i * 2.0, 200)),
-        List.generate(20, (i) => Offset(200, 180 + i * 2.0)),
-      ];
+    test('Drawing exactly on template should have high inside coverage', () {
+      final template = KhmerStrokeTemplateData.getTemplate('ក');
+      const double dynamicRatio = 0.62;
+      final double halfW = canvasSize.width * dynamicRatio / 2;
+      final double halfH = canvasSize.height * dynamicRatio / 2;
+      final double cx = canvasSize.width / 2;
+      final double cy = canvasSize.height / 2;
+
+      final points = template.points.map((tp) {
+        final px = cx + tp.dx * (halfW / 125.0);
+        final py = cy + tp.dy * (halfH / 125.0);
+        return Offset(px, py);
+      }).toList();
+
+      final strokes = [points];
 
       final result = service.scoreTracing(
         character: 'ក',
@@ -68,9 +80,11 @@ void main() {
         minStrokesOverride: 1,
       );
 
-      print('Center drawing - Outside: ${result.outsideCoverage}%, Inside: ${result.insideCoverage}%');
+      print('On-template drawing - Outside: ${result.outsideCoverage}%, Inside: ${result.insideCoverage}%');
 
-      expect(result.insideCoverage, greaterThan(result.outsideCoverage));
+      expect(result.insideCoverage, greaterThan(80));
+      expect(result.outsideCoverage, lessThan(20));
+      expect(result.passed, true);
     });
 
     test('Drawing half inside, half outside should be detected correctly', () {

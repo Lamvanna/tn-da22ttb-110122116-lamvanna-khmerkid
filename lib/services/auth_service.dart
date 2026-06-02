@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show NetworkInterface, InternetAddressType;
+import 'dart:io' show NetworkInterface, InternetAddressType, File;
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
@@ -563,9 +563,46 @@ class AuthService extends ChangeNotifier {
     if (_accessToken == null) return false;
 
     try {
+      String? remoteAvatarUrl = avatar;
+      
+      // Nếu avatar là đường dẫn file cục bộ (không bắt đầu bằng http/https), ta cần tải lên Cloudinary trước
+      if (avatar != null && !avatar.startsWith('http://') && !avatar.startsWith('https://')) {
+        debugPrint('📤 Đang tải ảnh đại diện lên máy chủ: $avatar');
+        try {
+          final uploadUri = Uri.parse('$baseUrl/upload/image');
+          final request = http.MultipartRequest('POST', uploadUri);
+          request.headers['Authorization'] = 'Bearer $_accessToken';
+          
+          final file = File(avatar);
+          if (await file.exists()) {
+            request.files.add(await http.MultipartFile.fromPath('image', file.path));
+            
+            final streamedResponse = await request.send().timeout(_httpTimeout);
+            final response = await http.Response.fromStream(streamedResponse);
+            
+            if (response.statusCode == 200 || response.statusCode == 201) {
+              final responseData = jsonDecode(response.body);
+              final imageUrl = responseData['data']?['imageUrl'] ?? responseData['imageUrl'];
+              if (imageUrl != null) {
+                remoteAvatarUrl = imageUrl;
+                debugPrint('✅ Tải ảnh đại diện thành công. URL: $remoteAvatarUrl');
+              } else {
+                debugPrint('⚠️ Tải ảnh lên thành công nhưng không thấy link imageUrl trong phản hồi!');
+              }
+            } else {
+              debugPrint('❌ Tải ảnh lên thất bại. Mã trạng thái: ${response.statusCode}, Body: ${response.body}');
+            }
+          } else {
+            debugPrint('❌ File ảnh đại diện cục bộ không tồn tại: $avatar');
+          }
+        } catch (e) {
+          debugPrint('❌ Lỗi xảy ra trong quá trình tải ảnh lên: $e');
+        }
+      }
+
       final body = <String, dynamic>{};
       if (name != null) body['name'] = name;
-      if (avatar != null) body['avatar'] = avatar;
+      if (remoteAvatarUrl != null) body['avatar'] = remoteAvatarUrl;
 
       final response = await http.put(
         Uri.parse('$baseUrl/users/profile'),
@@ -619,6 +656,58 @@ class AuthService extends ChangeNotifier {
     } catch (e) {
       debugPrint('❌ Error fetching badges: $e');
       return [];
+    }
+  }
+
+  /// Lấy toàn bộ danh sách nhiệm vụ từ backend
+  Future<List<dynamic>> fetchMissions() async {
+    if (_accessToken == null) return [];
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/missions'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_accessToken',
+        },
+      ).timeout(_httpTimeout);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return responseData['data'] ?? [];
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ Error fetching missions: $e');
+      return [];
+    }
+  }
+
+  /// Nhận phần thưởng của nhiệm vụ
+  Future<Map<String, dynamic>> claimMissionReward(String missionId) async {
+    if (_accessToken == null) return {'success': false, 'message': 'Chưa đăng nhập'};
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/missions/claim'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_accessToken',
+        },
+        body: jsonEncode({'missionId': missionId}),
+      ).timeout(_httpTimeout);
+
+      final responseData = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        // Tải lại profile mới nhất để đồng bộ điểm và sao
+        await fetchProfile();
+        return {'success': true, 'data': responseData['data']};
+      } else {
+        return {'success': false, 'message': responseData['message'] ?? 'Lỗi nhận phần thưởng'};
+      }
+    } catch (e) {
+      debugPrint('❌ Error claiming mission reward: $e');
+      return {'success': false, 'message': 'Không thể kết nối máy chủ: $e'};
     }
   }
 
@@ -712,9 +801,43 @@ class AuthService extends ChangeNotifier {
       await storage.setStreak(profile['streak'] ?? 0);
       await storage.setAvatarUrl(profile['avatar'] ?? '');
 
+      // Đồng bộ các tiến độ bài học từ profile completedLessons sang SharedPreferences
+      final dynamic lp = profile['learningProgress'];
+      if (lp != null && lp['completedLessons'] != null) {
+        final completed = lp['completedLessons'] as List<dynamic>;
+        for (final item in completed) {
+          if (item is Map<String, dynamic>) {
+            final type = item['type']?.toString();
+            final order = (item['order'] as num?)?.toInt() ?? 0;
+            final stars = 3; // Mặc định 3 sao nếu đã hoàn thành bài học
+            
+            if (type == 'consonant') {
+              await storage.saveLetterProgress(order, stars);
+            } else if (type == 'vowel') {
+              await storage.saveVowelProgress(order, stars);
+            } else if (type == 'number') {
+              await storage.saveNumberProgress(order, stars);
+            } else if (type == 'reading') {
+              await storage.saveReadingProgress(order, stars);
+            } else if (type == 'diacritical') {
+              await storage.saveDiacriticalProgress(order, stars);
+            } else if (type == 'spelling') {
+              await storage.saveSpellingProgress(order, stars);
+            } else if (type == 'writing') {
+              await storage.saveWritingProgress(order, stars);
+            }
+          }
+        }
+      }
+
       // Lưu vào Isar ProfileCache
       try {
         await ProgressRepository.instance.saveProfileCache(profile);
+      } catch (_) {}
+
+      // Đồng bộ thêm tiến độ từ local Isar (nếu có sẵn) sang SharedPreferences
+      try {
+        await ProgressRepository.instance.syncLocalProgressToSharedPreferences();
       } catch (_) {}
 
       debugPrint('🔄 Đồng bộ profile từ server lên Local Storage thành công! (Name: ${profile['name']}, Stars: ${profile['stars']}, XP: ${profile['xp']}, Avatar: ${profile['avatar']})');

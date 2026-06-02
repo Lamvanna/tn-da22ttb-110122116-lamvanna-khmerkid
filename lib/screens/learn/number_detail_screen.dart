@@ -7,9 +7,10 @@ import '../../services/score_service.dart';
 import '../../services/lesson_service.dart';
 import '../../services/storage_service.dart';
 import '../../services/auth_service.dart';
-import 'number_inline_listen.dart';
-import 'number_inline_speak.dart';
-import 'number_inline_write.dart';
+import '../../services/tts_service.dart';
+import '../../widgets/khmer_listen_widget.dart';
+import '../../widgets/khmer_speak_widget.dart';
+import '../../widgets/khmer_write_widget.dart';
 
 /// Màn hình chi tiết số Khmer — Tích hợp 3 bước học inline (Nghe, Nói, Viết) tương tự nguyên âm
 class NumberDetailScreen extends StatefulWidget {
@@ -79,14 +80,9 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
             fullList[i].isLearned = true;
             fullList[i].starRating = localNumberProgress[i]!;
           } else {
-            // 5 số đầu tiên mặc định learned
-            if (i < 5) {
-              fullList[i].isLearned = true;
-              fullList[i].starRating = 3;
-            } else {
-              fullList[i].isLearned = false;
-              fullList[i].starRating = 0;
-            }
+            // Không mặc định đánh dấu đã học (isLearned = false) để tránh chưa học đã mở khóa
+            fullList[i].isLearned = false;
+            fullList[i].starRating = 0;
           }
         }
         if (mounted) {
@@ -162,8 +158,7 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
           }
           await storage.saveNumberProgress(i, fullList[i].starRating);
         } else {
-          fullList[i].isLearned = false;
-          fullList[i].starRating = 0;
+          // Giữ nguyên tiến trình local đã nạp từ bộ nhớ tạm, KHÔNG tự ý ghi đè về false
         }
       }
 
@@ -313,7 +308,13 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
     return _completedSteps[_idx]?.contains(step) ?? false;
   }
 
-  bool _canGo(int i) => _numbers.isNotEmpty && i >= 0 && i < _numbers.length;
+  bool _canGo(int i) {
+    if (_numbers.isEmpty || i < 0 || i >= _numbers.length) return false;
+    if (i <= _idx) return true; // Can always go back
+    final currentLessonCompleted = _numbers[_idx].isLearned || (_completedSteps[_idx]?.length == 3);
+    if (i == _idx + 1) return currentLessonCompleted;
+    return false;
+  }
   void _goTo(int i) {
     if (!_canGo(i)) return;
     _animCtrl.reset();
@@ -335,7 +336,7 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF0F4FF),
+        backgroundColor: AppColors.learnBackground,
         body: Center(
           child: CircularProgressIndicator(
             color: AppColors.primary,
@@ -344,7 +345,7 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
       );
     }
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4FF),
+      backgroundColor: AppColors.learnBackground,
       body: Column(children: [
         _buildHeader(),
         Expanded(
@@ -374,161 +375,184 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
     );
   }
 
-  // ═══════════════════ HEADER ═══════════════════
+  // ═══════════════════ HEADER (đồng bộ với trang Phụ âm) ═══════════════════
   Widget _buildHeader() {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-            begin: Alignment(-0.5, -1),
-            end: Alignment(0.5, 1),
-            colors: [Color(0xFF1565C0), Color(0xFF42A5F5), Color(0xFF29B6F6)]),
+        gradient: AppColors.learnHeaderGradient,
         borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(24.r),
-            bottomRight: Radius.circular(24.r)),
+          bottomLeft: Radius.circular(24.r),
+          bottomRight: Radius.circular(24.r),
+        ),
         boxShadow: [
           BoxShadow(
-              color: const Color(0xFF1565C0).withValues(alpha: 0.35),
-              blurRadius: 24.r,
-              offset: Offset(0, 8.h))
+            color: AppColors.headerDark.withValues(alpha: 0.35),
+            blurRadius: 24.r,
+            offset: Offset(0, 8.h),
+          ),
         ],
       ),
-      child: Stack(children: [
-        Positioned(
-            right: -40.w,
-            top: -30.h,
+      child: Stack(
+        children: [
+          Positioned(
+            right: -20.w,
+            top: -20.h,
             child: Container(
-                width: 120.w,
-                height: 120.w,
-                decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.06)))),
-        Positioned(
-            left: -25.w,
-            bottom: -20.h,
+              width: 100.w,
+              height: 100.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.06),
+              ),
+            ),
+          ),
+          Positioned(
+            left: -30.w,
+            bottom: -10.h,
             child: Container(
-                width: 80.w,
-                height: 80.w,
-                decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.04)))),
-        SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 6.h, 105.w, 32.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                          width: 36.w,
-                          height: 36.w,
-                          decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.12))),
-                          child: Icon(Icons.arrow_back_rounded,
-                              size: 20.w, color: Colors.white)),
+              width: 70.w,
+              height: 70.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.04),
+              ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(8.w, 6.h, 0, 10.h),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: Container(
+                                padding: EdgeInsets.all(8.w),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(Icons.arrow_back_rounded, size: 20.w),
+                              ),
+                              color: Colors.white,
+                              padding: EdgeInsets.zero,
+                              constraints: BoxConstraints(minWidth: 44.w, minHeight: 44.w),
+                            ),
+                            SizedBox(width: 6.w),
+                            Expanded(
+                              child: Text(
+                                'Số ${_num.value} ( ${_num.character} )',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 24.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Padding(
+                          padding: EdgeInsets.only(left: 54.w, top: 8.h),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.18),
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text('⭐', style: TextStyle(fontSize: 13.sp)),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      '${_score?.totalStars ?? 0}',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(width: 6.w),
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.18),
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text('🔥', style: TextStyle(fontSize: 13.sp)),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      '${_score?.streak ?? 0}',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(width: 12.w),
-                    Flexible(
-                        child: Text(
-                            'Số ${_num.value} ( ${_num.character} )',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.plusJakartaSans(
-                                fontSize: 20.sp,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white))),
-                  ],
-                ),
-              ],
+                  ),
+                  // Mascot
+                  Transform.translate(
+                    offset: Offset(-5.w, -5.h),
+                    child: SizedBox(
+                      width: 130.w,
+                      height: 75.h,
+                      child: OverflowBox(
+                        maxHeight: 200.w,
+                        maxWidth: 200.w,
+                        child: Image.asset(
+                          'assets/images/elephant_mascot.png',
+                          width: 200.w,
+                          height: 200.w,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        Positioned(
-          top: MediaQuery.of(context).padding.top + 4.h,
-          right: 16.w,
-          child: _buildHeaderStats(),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 
-  Widget _buildHeaderStats() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        // Stars
-        Container(
-          width: 60.w,
-          padding: EdgeInsets.symmetric(vertical: 4.h),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.16),
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.08),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('⭐', style: TextStyle(fontSize: 12.sp)),
-              SizedBox(width: 4.w),
-              Text(
-                '${_score?.totalStars ?? 0}',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  height: 1.0,
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 5.h),
-        // Streak
-        Container(
-          width: 60.w,
-          padding: EdgeInsets.symmetric(vertical: 4.h),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.16),
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.08),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('🔥', style: TextStyle(fontSize: 12.sp)),
-              SizedBox(width: 4.w),
-              Text(
-                '${_score?.streak ?? 0}',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  height: 1.0,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+  Future<void> _playExample() async {
+    await TtsService.instance.speakKhmerLetter(
+      character: _num.character,
+      pronunciation: _num.pronunciation,
+      romanized: _num.romanized,
     );
   }
 
-  // ═══════════════════ MAIN CARD ═══════════════════
+  // ═══════════════════ MAIN CARD (đồng bộ với trang Phụ âm) ═══════════════════
   Widget _buildMainCard() {
     return Container(
       width: double.infinity,
@@ -545,43 +569,106 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
               offset: Offset(0, 6.h))
         ],
       ),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: EdgeInsets.all(48.w),
-              decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.primary.withValues(alpha: 0.06)),
-              child: Text(_num.character,
-                  style: GoogleFonts.battambang(
-                      fontSize: 130.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                      height: 1.1)),
+      child: Column(
+        children: [
+          // ── Top: big number ──
+          Padding(
+            padding: EdgeInsets.fromLTRB(20.w, 56.h, 20.w, 0),
+            child: Column(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(40.w),
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.primary.withValues(alpha: 0.06)),
+                  child: Text(_num.character,
+                      style: GoogleFonts.battambang(
+                          fontSize: 130.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                          height: 1.1)),
+                ),
+                SizedBox(height: 10.h),
+                Container(
+                    width: 80.w,
+                    height: 3.h,
+                    decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: [
+                          AppColors.primary.withValues(alpha: 0.1),
+                          AppColors.primary,
+                          AppColors.primary.withValues(alpha: 0.1)
+                        ]),
+                        borderRadius: BorderRadius.circular(2.r))),
+              ],
             ),
-            SizedBox(height: 16.h),
-            Text(
-              '${_num.khmerWord} — ${_num.pronunciation}',
-              style: GoogleFonts.plusJakartaSans(
-                  fontSize: 22.sp,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF2D3748)),
+          ),
+          SizedBox(height: 14.h),
+          // ── Bottom: info row ──
+          Container(
+            margin: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEEF4FC),
+              borderRadius: BorderRadius.circular(18.r),
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+              boxShadow: [BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                blurRadius: 10.r, offset: Offset(0, 3.h))],
             ),
-            SizedBox(height: 24.h),
-            Container(
-                width: 100.w,
-                height: 3.h,
-                decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [
-                      AppColors.primary.withValues(alpha: 0.1),
-                      AppColors.primary,
-                      AppColors.primary.withValues(alpha: 0.1)
-                    ]),
-                    borderRadius: BorderRadius.circular(2.r))),
-          ],
-        ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _num.khmerWord,
+                        style: GoogleFonts.battambang(
+                          fontSize: 26.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1565C0)),
+                      ),
+                      SizedBox(height: 6.h),
+                      Row(
+                        children: [
+                          Icon(Icons.volume_up_rounded,
+                            size: 16.w, color: AppColors.primary),
+                          SizedBox(width: 6.w),
+                          Flexible(
+                            child: Text(
+                              'Số ${_num.value} • "${_num.pronunciation}"',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textSecondary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                GestureDetector(
+                  onTap: _playExample,
+                  child: Container(
+                    width: 56.w, height: 56.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                        colors: [Color(0xFF42A5F5), Color(0xFF1E88E5)]),
+                      boxShadow: [BoxShadow(
+                        color: const Color(0xFF1E88E5).withValues(alpha: 0.3),
+                        blurRadius: 10.r, offset: Offset(0, 3.h))],
+                    ),
+                    child: Icon(Icons.volume_up_rounded, color: Colors.white, size: 28.w),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -597,16 +684,45 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
           Column(children: [
             if (_activeSheet == 1)
               Expanded(
-                  child: NumberInlineListenContent(
-                      number: _num, onComplete: () => _markStepComplete(0))),
+                child: KhmerListenWidget(
+                  character: _num.character,
+                  romanized: _num.value,
+                  pronunciation: _num.pronunciation,
+                  accentColor: AppColors.tertiary,
+                  accentColorDark: AppColors.tertiaryDark,
+                  surfaceColor: AppColors.tertiarySurface,
+                  onComplete: () => _markStepComplete(0),
+                ),
+              ),
             if (_activeSheet == 2)
               Expanded(
-                  child: NumberInlineSpeakContent(
-                      number: _num, onComplete: () => _markStepComplete(1))),
+                child: KhmerSpeakWidget(
+                  character: _num.character,
+                  romanized: _num.romanized,
+                  pronunciation: _num.pronunciation,
+                  // Chấp nhận phát âm tiếng Việt phiên âm của chữ Khmer
+                  acceptedAnswers: [
+                    _num.pronunciation,
+                  ],
+                  accentColor: AppColors.coral,
+                  accentColorDark: AppColors.coralDark,
+                  surfaceColor: AppColors.coralSurface,
+                  passThreshold: 70, // Ngưỡng đạt 70% — đúng yêu cầu chuẩn
+                  onComplete: () => _markStepComplete(1),
+                ),
+              ),
             if (_activeSheet == 3)
               Expanded(
-                  child: NumberInlineWriteContent(
-                      number: _num, onComplete: () => _markStepComplete(2))),
+                child: KhmerWriteWidget(
+                  character: _num.character,
+                  accentColor: AppColors.primary,
+                  accentColorDark: AppColors.primaryDark,
+                  surfaceColor: AppColors.primarySurface,
+                  showStrokeGuide: true, // Hiển thị mũi tên hướng nét cho số
+                  enableOcr: false,
+                  onComplete: () => _markStepComplete(2),
+                ),
+              ),
           ]),
           Positioned(
             top: 8.h,
@@ -834,7 +950,19 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
               }))),
       SizedBox(width: 6.w),
       GestureDetector(
-        onTap: canNext ? () => _goTo(_idx + 1) : null,
+        onTap: () {
+          if (canNext) {
+            _goTo(_idx + 1);
+          } else if (_idx < _numbers.length - 1) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Vui lòng hoàn thành tất cả hoạt động (Nghe, Nói, Viết) trước khi học bài tiếp theo.'),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+        },
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
           decoration: BoxDecoration(

@@ -49,8 +49,16 @@ class _CoengScreenState extends State<CoengScreen>
 
   KhmerCoeng get _lesson => _lessons[_idx];
 
+  bool _canGo(int i) {
+    if (_lessons.isEmpty || i < 0 || i >= _lessons.length) return false;
+    if (i <= _idx) return true; // Can always go back
+    final currentLessonCompleted = _lesson.isLearned || (_completedSteps[_idx]?.length == 3);
+    if (i == _idx + 1) return currentLessonCompleted;
+    return false;
+  }
+
   void _goTo(int i) {
-    if (i < 0 || i >= _lessons.length) return;
+    if (!_canGo(i)) return;
     _animCtrl.reset();
     setState(() { _idx = i; _activeSheet = 0; });
     _animCtrl.forward();
@@ -379,20 +387,65 @@ class _CoengScreenState extends State<CoengScreen>
   }
 
   Widget _buildNavButtons() {
-    final hasPrev = _idx > 0; final hasNext = _idx < _lessons.length - 1;
-    return Row(children: [
-      if (hasPrev) Expanded(child: OutlinedButton.icon(onPressed: () => _goTo(_idx - 1),
-        icon: const Icon(Icons.arrow_back_rounded, size: 18),
-        label: Text('Bài trước', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13.sp)),
-        style: OutlinedButton.styleFrom(foregroundColor: AppColors.textSecondary, padding: EdgeInsets.symmetric(vertical: 14.h),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)), side: BorderSide(color: AppColors.surfaceContainerHighest)))),
-      if (hasPrev && hasNext) SizedBox(width: 12.w),
-      if (hasNext) Expanded(child: ElevatedButton.icon(onPressed: () => _goTo(_idx + 1),
-        icon: Text('Bài tiếp', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13.sp)),
-        label: const Icon(Icons.arrow_forward_rounded, size: 18),
-        style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white,
-          padding: EdgeInsets.symmetric(vertical: 14.h), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r))))),
-    ]);
+    final hasPrev = _idx > 0;
+    final hasNext = _idx < _lessons.length - 1;
+    final widgets = <Widget>[];
+
+    if (hasPrev) {
+      widgets.add(
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => _goTo(_idx - 1),
+            icon: const Icon(Icons.arrow_back_rounded, size: 18),
+            label: Text('Bài trước', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13.sp)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.textSecondary,
+              padding: EdgeInsets.symmetric(vertical: 14.h),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+              side: BorderSide(color: AppColors.surfaceContainerHighest),
+            ),
+          ),
+        ),
+      );
+    }
+    
+    if (hasPrev && hasNext) {
+      widgets.add(SizedBox(width: 12.w));
+    }
+    
+    if (hasNext) {
+      final canNext = _canGo(_idx + 1);
+      widgets.add(
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () {
+              if (canNext) {
+                _goTo(_idx + 1);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Vui lòng hoàn thành tất cả hoạt động (Nghe, Nói, Viết) trước khi học bài tiếp theo.'),
+                    backgroundColor: Colors.orange,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            },
+            icon: Text(canNext ? 'Bài tiếp' : 'Khóa', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13.sp)),
+            label: Icon(canNext ? Icons.arrow_forward_rounded : Icons.lock_rounded, size: 18),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: canNext ? AppColors.primary : AppColors.surfaceContainerLow,
+              foregroundColor: canNext ? Colors.white : AppColors.textHint,
+              padding: EdgeInsets.symmetric(vertical: 14.h),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+              elevation: canNext ? 2 : 0,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Row(children: widgets);
   }
 }
 

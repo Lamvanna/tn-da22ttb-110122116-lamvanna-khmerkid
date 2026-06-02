@@ -28,11 +28,10 @@ class KhmerStrokeTemplateData {
       return _templates[character]!;
     }
     
-    // Fallback/Default: Generate from StrokeGuideData if available
-    final guideStrokes = StrokeGuideData.getStrokes(character);
     List<Offset> rawPoints = [];
     
-    if (guideStrokes.isNotEmpty) {
+    if (StrokeGuideData.hasExplicitGuide(character)) {
+      final guideStrokes = StrokeGuideData.getStrokes(character);
       // Reconstruct path by connecting guide coordinates scaled to 250x250
       for (var s in guideStrokes) {
         double px = s[1] * 250.0;
@@ -67,17 +66,72 @@ class KhmerStrokeTemplateData {
 
   /// Fallback keypoints for vowels & numbers to ensure 100% offline-first reliability
   static List<Offset> _getDefaultPointsForVowelsAndNumbers(String char) {
+    final cleanChar = char.replaceAll('◌', '').trim();
     List<Offset> pts = [];
-    if (char == 'ា') { // Vowel Aa
+    if (cleanChar == 'ា') { // Vowel Aa (right)
       pts = [const Offset(30, 30), const Offset(220, 30), const Offset(220, 220)];
-    } else if (char == 'ិ') { // Vowel I
+    } else if (cleanChar == 'ិ') { // Vowel I (top)
       pts = [const Offset(30, 180), const Offset(125, 40), const Offset(220, 180)];
-    } else if (char == 'ី') { // Vowel Ii
+    } else if (cleanChar == 'ី') { // Vowel Ii (top)
       pts = [const Offset(30, 180), const Offset(125, 40), const Offset(220, 180), const Offset(220, 100)];
-    } else if (char == '១') { // Number 1
-      pts = [const Offset(125, 30), const Offset(125, 220)];
-    } else if (char == '២') { // Number 2
-      pts = [const Offset(30, 50), const Offset(220, 50), const Offset(30, 180), const Offset(220, 180)];
+    } else if (cleanChar == 'ុ') { // Vowel U (bottom)
+      pts = [const Offset(125, 125), const Offset(125, 220)];
+    } else if (cleanChar == 'េ') { // Vowel E (left)
+      pts = [const Offset(30, 30), const Offset(30, 220)];
+    } else if (cleanChar == '០') { // Number 0
+      for (int i = 0; i < 360; i += 20) {
+        double rad = i * math.pi / 180.0;
+        pts.add(Offset(125 + 75 * math.cos(rad), 125 + 75 * math.sin(rad)));
+      }
+    } else if (cleanChar == '១') { // Number 1
+      pts = [
+        const Offset(125, 125), const Offset(100, 100), const Offset(100, 70),
+        const Offset(125, 50), const Offset(150, 70), const Offset(150, 100),
+        const Offset(125, 120), const Offset(125, 200), const Offset(150, 220)
+      ];
+    } else if (cleanChar == '២') { // Number 2
+      pts = [
+        const Offset(50, 80), const Offset(80, 50), const Offset(120, 50),
+        const Offset(150, 80), const Offset(120, 120), const Offset(80, 150),
+        const Offset(50, 180), const Offset(100, 200), const Offset(180, 200)
+      ];
+    } else if (cleanChar == '៣') { // Number 3
+      pts = [
+        const Offset(50, 100), const Offset(90, 60), const Offset(130, 100),
+        const Offset(170, 60), const Offset(210, 100), const Offset(210, 180),
+        const Offset(130, 200), const Offset(50, 180)
+      ];
+    } else if (cleanChar == '៤') { // Number 4
+      pts = [
+        const Offset(60, 60), const Offset(60, 160), const Offset(180, 160),
+        const Offset(180, 60), const Offset(180, 200)
+      ];
+    } else if (cleanChar == '៥') { // Number 5
+      pts = [
+        const Offset(60, 60), const Offset(60, 160), const Offset(180, 160),
+        const Offset(180, 60), const Offset(140, 40), const Offset(100, 60)
+      ];
+    } else if (cleanChar == '៦') { // Number 6
+      pts = [
+        const Offset(180, 60), const Offset(120, 120), const Offset(80, 160),
+        const Offset(120, 200), const Offset(160, 160), const Offset(120, 120)
+      ];
+    } else if (cleanChar == '៧') { // Number 7
+      pts = [
+        const Offset(60, 80), const Offset(120, 50), const Offset(180, 80),
+        const Offset(150, 140), const Offset(120, 200)
+      ];
+    } else if (cleanChar == '៨') { // Number 8
+      pts = [
+        const Offset(125, 50), const Offset(70, 100), const Offset(125, 150),
+        const Offset(180, 100), const Offset(125, 50), const Offset(125, 200)
+      ];
+    } else if (cleanChar == '៩') { // Number 9
+      pts = [
+        const Offset(120, 120), const Offset(80, 80), const Offset(120, 40),
+        const Offset(160, 80), const Offset(120, 120), const Offset(150, 180),
+        const Offset(180, 210)
+      ];
     } else {
       // Generic beautiful spiral/circle fallback
       for (int i = 0; i < 360; i += 20) {

@@ -90,14 +90,9 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
               fullList[i].isLearned = true;
               fullList[i].starRating = localLetterProgress[i]!;
             } else {
-              // Bypass mặc định cho các bài đầu giống KhmerLetterData tĩnh gốc
-              if (i < 5 || (i >= 6 && i <= 8)) {
-                fullList[i].isLearned = true;
-                fullList[i].starRating = (i == 0 || i == 3) ? 5 : (i == 1 || i == 4) ? 4 : 3;
-              } else {
-                fullList[i].isLearned = false;
-                fullList[i].starRating = 0;
-              }
+              // Không mặc định đánh dấu đã học (isLearned = false) để tránh chưa học đã mở khóa
+              fullList[i].isLearned = false;
+              fullList[i].starRating = 0;
             }
           }
         }
@@ -175,8 +170,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
             }
             await storage.saveLetterProgress(i, fullList[i].starRating);
           } else {
-            fullList[i].isLearned = false;
-            fullList[i].starRating = 0;
+            // Giữ nguyên tiến trình local đã nạp từ bộ nhớ tạm, KHÔNG tự ý ghi đè về false
           }
         }
       }
@@ -862,7 +856,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                       accentColor: AppColors.coral,
                       accentColorDark: AppColors.coralDark,
                       surfaceColor: AppColors.coralSurface,
-                      passThreshold: 30, // Lenient for children
+                      passThreshold: 70, // Ngưỡng đạt 70% — đúng yêu cầu chuẩn
                       onComplete: () => _markStepComplete(1),
                     ),
                   ),
@@ -1052,7 +1046,19 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
         }))),
         SizedBox(width: 6.w),
         GestureDetector(
-          onTap: canNext ? () => _goTo(_idx + 1) : null,
+          onTap: () {
+            if (canNext) {
+              _goTo(_idx + 1);
+            } else if (_idx < _letters.length - 1) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Vui lòng hoàn thành tất cả hoạt động (Nghe, Nói, Viết) trước khi học bài tiếp theo.'),
+                  backgroundColor: Colors.orange,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          },
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
             decoration: BoxDecoration(

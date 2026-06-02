@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../data/khmer_stroke_templates.dart';
 
 /// ════════════════════════════════════════════════════════════════════
 /// Handwriting Tracing Service — Template-based Stroke Overlay Scoring
@@ -58,6 +59,13 @@ class StrokeSegment {
 class HandwritingTracingService {
   HandwritingTracingService._();
   static final HandwritingTracingService instance = HandwritingTracingService._();
+
+  static const Set<String> _khmerConsonants = {
+    'ក', 'ខ', 'គ', 'ឃ', 'ង', 'ច', 'ឆ', 'ជ', 'ឈ', 'ញ',
+    'ដ', 'ឋ', 'ឌ', 'ឍ', 'ណ', 'ត', 'ថ', 'ទ', 'ធ', 'ន',
+    'ប', 'ផ', 'ព', 'ភ', 'ម', 'យ', 'រ', 'ល', 'វ', 'ស',
+    'ហ', 'ឡ', 'អ'
+  };
 
   // ─── Configuration ─────────────────────────────────────────────────
   static const double strokeWidth = 4.0;
@@ -175,30 +183,35 @@ class HandwritingTracingService {
       );
     }
 
-    // Kiểm tra vẽ bậy (scribble detection) - Tổng chiều dài nét vẽ quá lớn
-    double totalPathLength = 0;
-    for (final stroke in userStrokes) {
-      for (int i = 1; i < stroke.length; i++) {
-        totalPathLength += (stroke[i] - stroke[i - 1]).distance;
+    final cleanChar = character.replaceAll('◌', '').trim();
+    final isConsonant = _khmerConsonants.contains(cleanChar);
+
+    // Kiểm tra vẽ bậy (scribble detection) - Tổng chiều dài nét vẽ quá lớn (Chỉ áp dụng cho nguyên âm, chữ số...)
+    if (!isConsonant) {
+      double totalPathLength = 0;
+      for (final stroke in userStrokes) {
+        for (int i = 1; i < stroke.length; i++) {
+          totalPathLength += (stroke[i] - stroke[i - 1]).distance;
+        }
       }
-    }
-    
-    // Nếu tổng chiều dài vẽ gấp 5 lần chiều rộng canvas, coi như vẽ bậy
-    if (totalPathLength > canvasSize.width * 5) {
-      return TracingScoreResult(
-        insideCoverage: 0,
-        outsideCoverage: 100, // Đánh dấu là sai hoàn toàn
-        finalScore: 1,
-        passed: false,
-        stars: 0,
-        feedback: 'Không đạt ❌ - Bạn đang vẽ bậy!',
-        tips: [
-          'Có vẻ bạn đã gạch xóa hoặc vẽ quá nhiều nét thừa.',
-          'Hãy chỉ đồ nét một cách cẩn thận theo hình chữ mẫu.',
-          'Không nên vẽ ngoằn ngoèo trên màn hình.'
-        ],
-        visualFeedback: [],
-      );
+      
+      // Nếu tổng chiều dài vẽ gấp 5 lần chiều rộng canvas, coi như vẽ bậy
+      if (totalPathLength > canvasSize.width * 5) {
+        return TracingScoreResult(
+          insideCoverage: 0,
+          outsideCoverage: 100, // Đánh dấu là sai hoàn toàn
+          finalScore: 1,
+          passed: false,
+          stars: 0,
+          feedback: 'Không đạt ❌ - Bạn đang vẽ bậy!',
+          tips: [
+            'Có vẻ bạn đã gạch xóa hoặc vẽ quá nhiều nét thừa.',
+            'Hãy chỉ đồ nét một cách cẩn thận theo hình chữ mẫu.',
+            'Không nên vẽ ngoằn ngoèo trên màn hình.'
+          ],
+          visualFeedback: [],
+        );
+      }
     }
 
     final insideCoverage = (analysis.insidePoints / totalPoints) * 100.0;
@@ -426,17 +439,46 @@ class HandwritingTracingService {
       }
     }
 
-    for (int row = 0; row < gridResolution; row++) {
-      for (int col = 0; col < gridResolution; col++) {
-        final cellCenterX = col * cellWidth + cellWidth / 2;
-        final cellCenterY = row * cellHeight + cellHeight / 2;
-        final normalizedX = (cellCenterX - centerX) / radiusX;
-        final normalizedY = (cellCenterY - centerY) / radiusY;
-        if (normalizedX * normalizedX + normalizedY * normalizedY <= 1.0) {
-          grid[row][col] = true;
+    final cleanChar = character.replaceAll('◌', '').trim();
+    final isConsonant = _khmerConsonants.contains(cleanChar);
+
+    if (isConsonant) {
+      for (int row = 0; row < gridResolution; row++) {
+        for (int col = 0; col < gridResolution; col++) {
+          final cellCenterX = col * cellWidth + cellWidth / 2;
+          final cellCenterY = row * cellHeight + cellHeight / 2;
+          final normalizedX = (cellCenterX - centerX) / radiusX;
+          final normalizedY = (cellCenterY - centerY) / radiusY;
+          if (normalizedX * normalizedX + normalizedY * normalizedY <= 1.0) {
+            grid[row][col] = true;
+          }
+        }
+      }
+    } else {
+      final template = KhmerStrokeTemplateData.getTemplate(character);
+      for (final tp in template.points) {
+        final px = centerX + tp.dx * (radiusX / 125.0);
+        final py = centerY + tp.dy * (radiusY / 125.0);
+        
+        final col = (px / cellWidth).floor();
+        final row = (py / cellHeight).floor();
+        
+        // Mark cells in a small radius around (row, col) to create the stroke shape
+        const rRange = 6;
+        for (int dr = -rRange; dr <= rRange; dr++) {
+          for (int dc = -rRange; dc <= rRange; dc++) {
+            final nr = row + dr;
+            final nc = col + dc;
+            if (nr >= 0 && nr < gridResolution && nc >= 0 && nc < gridResolution) {
+              if (dr * dr + dc * dc <= 36) { // rounded radius of ~6 cells (approx. 37px on 400x400 canvas)
+                grid[nr][nc] = true;
+              }
+            }
+          }
         }
       }
     }
+
 
     return {
       'grid': grid,
@@ -715,7 +757,7 @@ _MarkPosition _classifyDependentMark(String character) {
     return _MarkPosition.left;
   }
 
-  if (character.contains('า') ||
+  if (character.contains('ា') ||
       character.contains('ះ')) {
     return _MarkPosition.right;
   }

@@ -1,4 +1,3 @@
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -31,6 +30,11 @@ class KhmerWriteWidget extends StatefulWidget {
   final Color accentColor;
   final Color accentColorDark;
   final Color surfaceColor;
+  final int? minPointsRequired;
+  final int? minStrokesRequired;
+  final double? passThreshold;
+  final double? outsideThreshold;
+  final double? toleranceRadius;
 
   const KhmerWriteWidget({
     super.key,
@@ -41,6 +45,11 @@ class KhmerWriteWidget extends StatefulWidget {
     this.accentColor = const Color(0xFF3D7FCC),
     this.accentColorDark = const Color(0xFF24559A),
     this.surfaceColor = const Color(0xFFEAF2FC),
+    this.minPointsRequired,
+    this.minStrokesRequired,
+    this.passThreshold,
+    this.outsideThreshold,
+    this.toleranceRadius,
   });
 
   @override
@@ -135,6 +144,11 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
         character: widget.character,
         strokes: _strokes,
         canvasSize: size,
+        minPointsOverride: widget.minPointsRequired,
+        minStrokesOverride: widget.minStrokesRequired,
+        passThresholdOverride: widget.passThreshold,
+        outsideThresholdOverride: widget.outsideThreshold,
+        toleranceRadiusOverride: widget.toleranceRadius,
       );
 
       setState(() {
@@ -158,6 +172,34 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
     } finally {
       setState(() => _checking = false);
     }
+  }
+
+  double get _guideFontSize {
+    final bool isDepMark = widget.character.contains('◌') ||
+        widget.character.runes.any((r) => r >= 0x17B6 && r <= 0x17D3);
+    return isDepMark ? 220.sp : 260.sp;
+  }
+
+  double _getGuideShiftY(double height) {
+    final bool isDepMark = widget.character.contains('◌') ||
+        widget.character.runes.any((r) => r >= 0x17B6 && r <= 0x17D3);
+    if (!isDepMark) return 0.0;
+    
+    final isBelow = widget.character.contains('ុ') ||
+        widget.character.contains('ូ') ||
+        widget.character.contains('ួ') ||
+        widget.character.contains('្');
+    if (isBelow) return -height * 0.08;
+    
+    final isAbove = widget.character.contains('ិ') ||
+        widget.character.contains('ី') ||
+        widget.character.contains('ឹ') ||
+        widget.character.contains('ឺ') ||
+        widget.character.contains('ំ') ||
+        widget.character.contains('៏');
+    if (isAbove) return height * 0.06;
+    
+    return 0.0;
   }
 
   @override
@@ -371,44 +413,52 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
     final strokeData = StrokeGuideData.getStrokes(widget.character);
     return Padding(
       padding: EdgeInsets.fromLTRB(12.w, 4.h, 12.w, 8.h),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: AppColors.tertiary.withValues(alpha: 0.3),
-            width: 2.w,
-          ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(14.r),
-          child: Stack(
-            children: [
-              CustomPaint(
-                size: Size.infinite,
-                painter: _GuideLinePainterWidget(),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final height = constraints.maxHeight;
+          return Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.r),
+              border: Border.all(
+                color: AppColors.tertiary.withValues(alpha: 0.3),
+                width: 2.w,
               ),
-              Center(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 6.h),
-                  child: Text(
-                    widget.character,
-                    style: GoogleFonts.battambang(
-                      fontSize: 260.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.tertiary.withValues(alpha: 0.65),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14.r),
+              child: Stack(
+                children: [
+                  CustomPaint(
+                    size: Size.infinite,
+                    painter: _GuideLinePainterWidget(),
+                  ),
+                  Center(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 6.h),
+                      child: Transform.translate(
+                        offset: Offset(0, _getGuideShiftY(height)),
+                        child: Text(
+                          widget.character,
+                          style: GoogleFonts.battambang(
+                            fontSize: _guideFontSize,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.tertiary.withValues(alpha: 0.65),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  if (widget.showStrokeGuide)
+                    CustomPaint(
+                      size: Size.infinite,
+                      painter: _StrokeGuidePainterWidget(strokeData),
+                    ),
+                ],
               ),
-              if (widget.showStrokeGuide)
-                CustomPaint(
-                  size: Size.infinite,
-                  painter: _StrokeGuidePainterWidget(strokeData),
-                ),
-            ],
-          ),
-        ),
+            ),
+          );
+        }
       ),
     );
   }
@@ -416,43 +466,49 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
   Widget _buildCanvas() {
     return Padding(
       padding: EdgeInsets.fromLTRB(12.w, 4.h, 12.w, 8.h),
-      child: Container(
-        key: _canvasKey,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: _passed == null
-                ? const Color(0xFFD7CCC8)
-                : _passed!
-                    ? AppColors.tertiary
-                    : AppColors.coral,
-            width: 2.w,
-          ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(14.r),
-          child: Stack(
-            children: [
-              // Grid
-              CustomPaint(
-                size: Size.infinite,
-                painter: _GuideLinePainterWidget(),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final height = constraints.maxHeight;
+          return Container(
+            key: _canvasKey,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.r),
+              border: Border.all(
+                color: _passed == null
+                    ? const Color(0xFFD7CCC8)
+                    : _passed!
+                        ? AppColors.tertiary
+                        : AppColors.coral,
+                width: 2.w,
               ),
-              // Guide letter (very light)
-              Center(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 6.h),
-                  child: Text(
-                    widget.character,
-                    style: GoogleFonts.battambang(
-                      fontSize: 260.sp,
-                      fontWeight: FontWeight.w300,
-                      color: widget.accentColor.withValues(alpha: 0.1),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14.r),
+              child: Stack(
+                children: [
+                  // Grid
+                  CustomPaint(
+                    size: Size.infinite,
+                    painter: _GuideLinePainterWidget(),
+                  ),
+                  // Guide letter (very light)
+                  Center(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 6.h),
+                      child: Transform.translate(
+                        offset: Offset(0, _getGuideShiftY(height)),
+                        child: Text(
+                          widget.character,
+                          style: GoogleFonts.battambang(
+                            fontSize: _guideFontSize,
+                            fontWeight: FontWeight.w300,
+                            color: widget.accentColor.withValues(alpha: 0.1),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
               // Drawing surface
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
@@ -483,7 +539,7 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
                   bottom: 12.h,
                   child: AnimatedBuilder(
                     animation: _bounceCtrl,
-                    builder: (_, __) => Transform.scale(
+                    builder: (context, _) => Transform.scale(
                       scale: _passed!
                           ? 1.0 + 0.05 * math.sin(_bounceCtrl.value * math.pi)
                           : 1.0,
@@ -662,7 +718,8 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
             ],
           ),
         ),
-      ),
+      );
+    }),
     );
   }
 }

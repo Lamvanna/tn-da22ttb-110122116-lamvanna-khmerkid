@@ -238,7 +238,7 @@ class SpeechService {
           );
           if (result.finalResult) {
             _isListening = false;
-            final durationMs = DateTime.now().difference(_startTime!).inMilliseconds;
+            final durationMs = _startTime != null ? DateTime.now().difference(_startTime!).inMilliseconds : 0;
             _logSTTResult(result.recognizedWords, result.confidence, durationMs, alts);
           }
         },

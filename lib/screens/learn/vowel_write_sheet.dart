@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_vowel.dart';
 import '../../services/scoring_service.dart';
-import '../../data/khmer_stroke_templates.dart';
+import '../../services/score_service.dart';
+import '../../services/khmer_handwriting_service.dart';
+import '../../services/handwriting_websocket_client.dart';
 import 'dart:math' as math;
 
 /// Sheet tập viết nguyên âm
@@ -30,14 +33,29 @@ class VowelWriteSheet extends StatefulWidget {
 
 class _VowelWriteSheetState extends State<VowelWriteSheet>
     with SingleTickerProviderStateMixin {
+  // ── Drawing state ──────────────────────────────────────────────
   final List<List<Offset>> _strokes = [];
   List<Offset> _current = [];
+
+  /// Parallel list storing timestamped [StrokePoint]s for each stroke.
+  /// Indexed identically to [_strokes].
+  final List<List<StrokePoint>> _strokeTimestamps = [];
+  List<StrokePoint> _currentTimestamped = [];
+
+  // ── Recognition state ─────────────────────────────────────────
   bool? _passed;
   bool _checking = false;
   WritingResult? _result;
   RecognitionResult? _recResult;
   final GlobalKey _canvasKey = GlobalKey();
   late AnimationController _bounceCtrl;
+
+  /// Tier 2 backend analysis result (arrives asynchronously).
+  StrokeAnalysisResult? _backendResult;
+  StreamSubscription<StrokeAnalysisResult>? _backendSub;
+
+  /// Expected stroke count from StandardCharacter DB (fetched via WS).
+  int? _expectedStrokeCount;
 
   @override
   void initState() {
@@ -46,62 +64,201 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    // Preload font shape template for this vowel
-    KhmerStrokeTemplateData.loadDynamicFontTemplate(
-        widget.vowel.displayCharacter);
+
+    // ── Initialize Tier 1 (ML Kit) ──────────────────────────────
+    KhmerHandwritingService.instance.initialize().catchError((e) {
+      debugPrint('[VowelWriteSheet] ML Kit init error: $e');
+    });
+
+    // ── Initialize Tier 2 (WebSocket) ───────────────────────────
+    final wsClient = HandwritingWebSocketClient.instance;
+    wsClient.connect();
+
+    // Listen for background analysis results
+    _backendSub = wsClient.resultStream.listen((result) {
+      if (mounted) {
+        setState(() => _backendResult = result);
+      }
+    });
+
+    // Pre-fetch expected stroke count for anti-false filter
+    _fetchCharacterInfo();
+  }
+
+  Future<void> _fetchCharacterInfo() async {
+    try {
+      final info = await HandwritingWebSocketClient.instance
+          .getCharacterInfo(widget.vowel.displayCharacter);
+      if (info != null && mounted) {
+        setState(() => _expectedStrokeCount = info.totalStrokes);
+      }
+    } catch (e) {
+      debugPrint('[VowelWriteSheet] Character info fetch error: $e');
+    }
   }
 
   @override
   void dispose() {
+    _backendSub?.cancel();
     _bounceCtrl.dispose();
     super.dispose();
   }
 
   void _clear() => setState(() {
         _strokes.clear();
+        _strokeTimestamps.clear();
         _current = [];
+        _currentTimestamped = [];
         _passed = null;
         _result = null;
         _recResult = null;
+        _backendResult = null;
       });
 
-  /// Chấm điểm dùng ScoringService.recognizeWriting — cùng engine với consonant
+  /// ═══════════════════════════════════════════════════════════════════
+  /// Two-Tier Hybrid Recognition Pipeline
+  /// ═══════════════════════════════════════════════════════════════════
+  ///
+  /// 1. Tier 1 (ML Kit): Instant on-device recognition with
+  ///    anti-false recognition filters → pass/fail decision.
+  ///
+  /// 2. Tier 2 (WebSocket → Backend DTW): Asynchronous geometric
+  ///    analysis for detailed stroke correction feedback.
+  ///
+  /// Both tiers run when the child taps "Kiểm tra".
+  /// the feedback banner asynchronously when it arrives.
+  ///
+
   Future<void> _check() async {
     if (_checking || _strokes.isEmpty) return;
     setState(() => _checking = true);
 
+    final targetChar = widget.vowel.displayCharacter;
+
     try {
-      final canvasBox =
-          _canvasKey.currentContext?.findRenderObject() as RenderBox?;
-      final size = canvasBox?.size ?? const Size(300, 300);
+      // ── Tier 1: ML Kit on-device recognition ──────────────────
+      bool isTier1Correct = false;
+      bool finalPassed = false;
+      double finalScore = 0;
+      int finalStars = 0;
+      String finalFeedback = 'Hãy thử viết lại nét nguyên âm nhé! 💪';
+      List<String> finalTips = [];
 
-      // Dùng displayCharacter (ký tự hiển thị bỏ '◌') để khớp với template
-      final recognition = ScoringService.instance.recognizeWriting(
-        character: widget.vowel.displayCharacter,
-        strokes: _strokes,
-        canvasSize: size,
-        // Cấu hình riêng cho nguyên âm Khmer (khoan dung hơn, nét ngắn, dấu ghép):
-        minPointsOverride: 80,
-        minStrokesOverride: 1,
-        passThresholdOverride: 60.0,
-        outsideThresholdOverride: 45.0,
-        toleranceRadiusOverride: 25.0,
-      );
+      try {
+        final mlResult = await KhmerHandwritingService.instance
+            .recognizeAndValidate(
+          strokes: _strokeTimestamps,
+          targetCharacter: targetChar,
+          expectedStrokeCount: _expectedStrokeCount,
+        );
 
+        if (mlResult.isCorrect) {
+          isTier1Correct = true;
+          finalPassed = true;
+          finalScore = 85.0; // Base score — refined by Tier 2
+          finalStars = 2;
+          finalFeedback = mlResult.message;
+        } else {
+          if (mlResult.rejectionReason == RejectionReason.strokeCountMismatch) {
+            finalTips.add('Kiểm tra lại số nét viết nhé!');
+          }
+          if (mlResult.rejectionReason == RejectionReason.notInTopThree) {
+            finalTips.add('Quan sát mẫu chữ rồi viết lại cho giống nhé!');
+          }
+        }
+
+        debugPrint(
+          '[VowelWriteSheet] Tier 1 result: isCorrect=$isTier1Correct, '
+          'recognized=${mlResult.recognizedCharacter}, '
+          'confidence=${mlResult.confidence}',
+        );
+      } catch (e) {
+        debugPrint('[VowelWriteSheet] ML Kit error: $e');
+      }
+
+      // ── Tier 2: Send to backend for geometric analysis ────────
+      // We await the result synchronously to get the definitive evaluation
+      try {
+        final backendRes = await HandwritingWebSocketClient.instance.analyzeStrokes(
+          strokes: _strokeTimestamps,
+          targetCharacter: targetChar,
+        );
+        _backendResult = backendRes;
+
+        if (backendRes.success) {
+          if (isTier1Correct) {
+            // Tier 1 already passed. Use backend results to refine score/stars.
+            finalScore = backendRes.similarityScore.toDouble();
+            finalStars = backendRes.stars;
+            finalFeedback = backendRes.feedback;
+            finalPassed = backendRes.passed;
+          } else {
+            // Standalone combining vowels fail Tier 1 (ML Kit), so we rely 100% on Tier 2.
+            finalPassed = backendRes.passed;
+            finalScore = backendRes.similarityScore.toDouble();
+            finalStars = backendRes.stars;
+            finalFeedback = backendRes.feedback;
+          }
+        } else {
+          // If Tier 2 fails to analyze properly, default to failed unless Tier 1 was correct
+          if (!isTier1Correct) {
+            finalPassed = false;
+            finalScore = 30.0;
+            finalStars = 0;
+            finalFeedback = backendRes.feedback.isNotEmpty
+                ? backendRes.feedback
+                : 'Nét vẽ chưa đúng, con thử viết lại nhé! 💪';
+          }
+        }
+      } catch (e) {
+        debugPrint('[VowelWriteSheet] Tier 2 error: $e');
+        if (!isTier1Correct) {
+          finalPassed = false;
+          finalScore = 30.0;
+          finalStars = 0;
+          finalFeedback = 'Lỗi kết nối máy chủ phân tích. Hãy thử lại!';
+        }
+      }
+
+      // ── Save progress via ScoreService ─────────────────────────
+      try {
+        final scoreService = await ScoreService.getInstance();
+        await scoreService.completeWritingLesson(
+          0,
+          finalStars,
+          lessonId: null,
+          strokes: _strokes,
+          targetCharacter: targetChar,
+          passed: finalPassed,
+        );
+      } catch (e) {
+        debugPrint('[VowelWriteSheet] Score save error: $e');
+      }
+
+      // ── Update UI ──────────────────────────────────────────────
       final writingResult = WritingResult(
-        score: recognition.finalScore.round(),
-        passed: recognition.passed,
-        stars: recognition.stars,
-        feedback: recognition.feedback,
+        score: finalScore.round(),
+        passed: finalPassed,
+        stars: finalStars,
+        feedback: finalFeedback,
       );
 
       setState(() {
-        _recResult = recognition;
+        _recResult = RecognitionResult(
+          finalScore: finalScore,
+          passed: finalPassed,
+          shapeScore: finalScore,
+          strokeScore: finalScore,
+          directionScore: finalScore,
+          feedback: finalFeedback,
+          tips: finalTips,
+          stars: finalStars,
+        );
         _result = writingResult;
-        _passed = recognition.passed;
+        _passed = finalPassed;
       });
 
-      if (recognition.passed) {
+      if (finalPassed) {
         _bounceCtrl.forward(from: 0);
         widget.onComplete();
       }
@@ -134,6 +291,8 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
 
   @override
   Widget build(BuildContext context) {
+    final displayPassed = _backendResult != null ? _backendResult!.passed : (_passed ?? false);
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.82,
       decoration: BoxDecoration(
@@ -263,35 +422,60 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
                       painter: _GridPainter(),
                     ),
                     // Guide character (very light)
-                    Center(
-                      child: Transform.translate(
-                        offset: Offset(0, _guideShiftY),
-                        child: Text(
-                          widget.vowel.displayCharacter,
-                          style: GoogleFonts.battambang(
-                            fontSize: 220.sp,
-                            fontWeight: FontWeight.w300,
-                            color: AppColors.sheetWarmBorder
-                                .withValues(alpha: 0.3),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final height = constraints.maxHeight;
+                        final shiftY = _getGuideShiftY(height);
+                        return Center(
+                          child: Transform.translate(
+                            offset: Offset(0, shiftY),
+                            child: Text(
+                              widget.vowel.displayCharacter,
+                              style: GoogleFonts.battambang(
+                                fontSize: 220.sp,
+                                fontWeight: FontWeight.w300,
+                                color: AppColors.sheetWarmBorder
+                                    .withValues(alpha: 0.3),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
-                    // Drawing surface
+                    // Drawing surface — captures timestamps for Tier 2 analysis
                     GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onPanStart: (d) => setState(() {
+                        final now = DateTime.now().millisecondsSinceEpoch;
                         _current = [d.localPosition];
+                        _currentTimestamped = [
+                          StrokePoint(
+                            x: d.localPosition.dx,
+                            y: d.localPosition.dy,
+                            t: now,
+                          ),
+                        ];
                         _passed = null;
                         _result = null;
                         _recResult = null;
+                        _backendResult = null;
                       }),
-                      onPanUpdate: (d) =>
-                          setState(() => _current.add(d.localPosition)),
+                      onPanUpdate: (d) => setState(() {
+                        _current.add(d.localPosition);
+                        _currentTimestamped.add(
+                          StrokePoint(
+                            x: d.localPosition.dx,
+                            y: d.localPosition.dy,
+                            t: DateTime.now().millisecondsSinceEpoch,
+                          ),
+                        );
+                      }),
                       onPanEnd: (_) => setState(() {
                         if (_current.isNotEmpty) {
                           _strokes.add(List.from(_current));
+                          _strokeTimestamps.add(List.from(_currentTimestamped));
                           _current = [];
+                          _currentTimestamped = [];
                         }
                       }),
                       child: CustomPaint(
@@ -322,9 +506,13 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
                     onTap: _strokes.isNotEmpty
                         ? () => setState(() {
                               _strokes.removeLast();
+                              if (_strokeTimestamps.isNotEmpty) {
+                                _strokeTimestamps.removeLast();
+                              }
                               _passed = null;
                               _result = null;
                               _recResult = null;
+                              _backendResult = null;
                             })
                         : null,
                   ),
@@ -345,7 +533,7 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
                                 AppColors.successLight,
                                 AppColors.successGreen,
                               ])
-                            : _passed!
+                            : displayPassed
                                 ? const LinearGradient(colors: [
                                     AppColors.tertiary,
                                     AppColors.tertiaryDark,
@@ -359,7 +547,7 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
                           BoxShadow(
                             color: (_passed == null
                                     ? AppColors.successGreen
-                                    : _passed!
+                                    : displayPassed
                                         ? AppColors.tertiary
                                         : AppColors.coral)
                                 .withValues(alpha: 0.35),
@@ -385,7 +573,7 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
                             Icon(
                               _passed == null
                                   ? Icons.check_circle_outline_rounded
-                                  : _passed!
+                                  : displayPassed
                                       ? Icons.celebration_rounded
                                       : Icons.refresh_rounded,
                               size: 16.sp,
@@ -397,7 +585,7 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
                                 ? 'Đang chấm...'
                                 : _passed == null
                                     ? 'Kiểm tra'
-                                    : _passed!
+                                    : displayPassed
                                         ? 'Tuyệt vời! 🎉'
                                         : 'Làm lại',
                             style: GoogleFonts.plusJakartaSans(
@@ -435,216 +623,285 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
     final r = _result!;
     return AnimatedBuilder(
       animation: _bounceCtrl,
-      builder: (context, _) => Transform.scale(
-        scale: _passed!
-            ? 1.0 + 0.04 * math.sin(_bounceCtrl.value * math.pi)
-            : 1.0,
-        child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 20.w, vertical: 4.h),
-          padding:
-              EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
-          decoration: BoxDecoration(
-            color: _passed! ? AppColors.tertiarySurface : AppColors.coralSurface,
-            borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(
-              color: _passed!
-                  ? AppColors.tertiary.withValues(alpha: 0.35)
-                  : AppColors.coral.withValues(alpha: 0.35),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 10.r,
-                offset: Offset(0, 4.h),
+      builder: (context, _) {
+        final displayPassed = _backendResult != null ? _backendResult!.passed : _passed!;
+        final displayScore = _backendResult != null ? (displayPassed ? _backendResult!.similarityScore : 30) : r.score;
+        final displayStars = _backendResult != null ? (displayPassed ? _backendResult!.stars : 0) : r.stars;
+        final displayFeedback = _backendResult != null ? (displayPassed ? _backendResult!.feedback : (_passed! ? _backendResult!.feedback : r.feedback)) : r.feedback;
+
+        return Transform.scale(
+          scale: displayPassed
+              ? 1.0 + 0.04 * math.sin(_bounceCtrl.value * math.pi)
+              : 1.0,
+          child: Container(
+            margin: EdgeInsets.symmetric(horizontal: 20.w, vertical: 4.h),
+            padding:
+                EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+            decoration: BoxDecoration(
+              color: displayPassed ? AppColors.tertiarySurface : AppColors.coralSurface,
+              borderRadius: BorderRadius.circular(16.r),
+              border: Border.all(
+                color: displayPassed
+                    ? AppColors.tertiary.withValues(alpha: 0.35)
+                    : AppColors.coral.withValues(alpha: 0.35),
+                width: 1.5,
               ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Score header
-              Row(
-                children: [
-                  Text(_passed! ? '🎉' : '😅',
-                      style: TextStyle(fontSize: 18.sp)),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: Text(
-                      _passed!
-                          ? 'Tuyệt vời! ${r.score}%'
-                          : 'Chưa đạt! ${r.score}%',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w800,
-                        color: _passed!
-                            ? AppColors.tertiaryDark
-                            : AppColors.coralDark,
-                      ),
-                    ),
-                  ),
-                  if (_passed!)
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: List.generate(
-                        3,
-                        (i) => Icon(
-                          i < r.stars
-                              ? Icons.star_rounded
-                              : Icons.star_outline_rounded,
-                          size: 16.w,
-                          color: i < r.stars
-                              ? AppColors.secondary
-                              : AppColors.sheetWarmBorder,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 10.r,
+                  offset: Offset(0, 4.h),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Score header
+                Row(
+                  children: [
+                    Text(displayPassed ? '🎉' : '😅',
+                        style: TextStyle(fontSize: 18.sp)),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Text(
+                        displayPassed
+                            ? 'Tuyệt vời! $displayScore%'
+                            : 'Chưa đạt! $displayScore%',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w800,
+                          color: displayPassed
+                              ? AppColors.tertiaryDark
+                              : AppColors.coralDark,
                         ),
                       ),
                     ),
-                ],
-              ),
+                    if (displayPassed)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: List.generate(
+                          3,
+                          (i) => Icon(
+                            i < displayStars
+                                ? Icons.star_rounded
+                                : Icons.star_outline_rounded,
+                            size: 16.w,
+                            color: i < displayStars
+                                ? AppColors.secondary
+                                : AppColors.sheetWarmBorder,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
 
-              // Feedback from recognition engine
-              if (_recResult != null) ...[
                 SizedBox(height: 6.h),
                 Divider(
-                  color: (_passed! ? AppColors.tertiary : AppColors.coral)
+                  color: (displayPassed ? AppColors.tertiary : AppColors.coral)
                       .withValues(alpha: 0.15),
                   height: 1.h,
                 ),
                 SizedBox(height: 6.h),
-                ..._recResult!.feedback.split('\n').map((line) {
-                  final isCorrect = line.startsWith('✓');
-                  final isIncorrect = line.startsWith('✗');
-                  final isWarning = line.startsWith('△');
-                  final hasPrefix =
-                      isCorrect || isIncorrect || isWarning;
-                  final displayLine =
-                      hasPrefix ? line.substring(2) : line;
-                  if (displayLine.trim().isEmpty) {
-                    return const SizedBox.shrink();
-                  }
-                  return Padding(
-                    padding: EdgeInsets.symmetric(vertical: 2.h),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          isCorrect
-                              ? Icons.check_circle_rounded
-                              : isIncorrect
-                                  ? Icons.cancel_rounded
-                                  : Icons.info_rounded,
-                          size: 13.w,
-                          color: isCorrect
-                              ? Colors.green[700]
-                              : isIncorrect
-                                  ? Colors.red[700]
-                                  : Colors.orange[700],
-                        ),
-                        SizedBox(width: 6.w),
-                        Expanded(
-                          child: Text(
-                            displayLine,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
-                            ),
+
+                if (_backendResult != null) ...[
+                  // Detailed Tier 2 Geometric Analysis Results
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        _backendResult!.passed
+                            ? Icons.check_circle_rounded
+                            : Icons.info_rounded,
+                        size: 13.w,
+                        color: _backendResult!.passed
+                            ? Colors.green[700]
+                            : Colors.orange[700],
+                      ),
+                      SizedBox(width: 6.w),
+                      Expanded(
+                        child: Text(
+                          displayFeedback,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
                           ),
                         ),
-                      ],
-                    ),
-                  );
-                }),
-                if (!_passed! && _recResult!.tips.isNotEmpty) ...[
-                  SizedBox(height: 4.h),
-                  Text(
-                    'Gợi ý:',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.coralDark,
-                    ),
+                      ),
+                    ],
                   ),
-                  ..._recResult!.tips.map((tip) => Padding(
-                        padding:
-                            EdgeInsets.only(left: 4.w, top: 2.h),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('•',
-                                style: TextStyle(
-                                    fontSize: 12.sp,
-                                    color: AppColors.coral)),
-                            SizedBox(width: 6.w),
-                            Expanded(
-                              child: Text(
-                                tip,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.textSecondary,
-                                ),
+                  if (_backendResult!.errors.isNotEmpty) ...[
+                    SizedBox(height: 4.h),
+                    Text(
+                      'Gợi ý sửa nét:',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.coralDark,
+                      ),
+                    ),
+                    ..._backendResult!.errors.map((error) => Padding(
+                      padding: EdgeInsets.only(left: 4.w, top: 2.h),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('•',
+                              style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: AppColors.coral)),
+                          SizedBox(width: 6.w),
+                          Expanded(
+                            child: Text(
+                              error,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textSecondary,
                               ),
                             ),
-                          ],
-                        ),
-                      )),
-                ],
-              ],
-
-              // Complete button
-              if (_passed!) ...[
-                SizedBox(height: 10.h),
-                GestureDetector(
-                  onTap: () {
-                    final m = ScaffoldMessenger.of(context);
-                    Navigator.pop(context);
-                    m.showSnackBar(SnackBar(
-                      content: Text(
-                        '🎉 Viết tuyệt vời! +10 XP',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14.sp,
-                        ),
-                      ),
-                      backgroundColor: AppColors.successGreen,
-                      behavior: SnackBarBehavior.floating,
-                      margin: EdgeInsets.all(16.w),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14.r),
-                      ),
-                      duration: const Duration(seconds: 2),
-                    ));
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.successLight,
-                          AppColors.successGreen
+                          ),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(14.r),
+                    )),
+                  ],
+                ] else if (_recResult != null) ...[
+                  // Fallback to local Tier 1 feedback while waiting
+                  ..._recResult!.feedback.split('\n').map((line) {
+                    final isCorrect = line.startsWith('✓');
+                    final isIncorrect = line.startsWith('✗');
+                    final isWarning = line.startsWith('△');
+                    final hasPrefix =
+                        isCorrect || isIncorrect || isWarning;
+                    final displayLine =
+                        hasPrefix ? line.substring(2) : line;
+                    if (displayLine.trim().isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return Padding(
+                      padding: EdgeInsets.symmetric(vertical: 2.h),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            isCorrect
+                                ? Icons.check_circle_rounded
+                                : isIncorrect
+                                    ? Icons.cancel_rounded
+                                    : Icons.info_rounded,
+                            size: 13.w,
+                            color: isCorrect
+                                ? Colors.green[700]
+                                : isIncorrect
+                                    ? Colors.red[700]
+                                    : Colors.orange[700],
+                          ),
+                          SizedBox(width: 6.w),
+                          Expanded(
+                            child: Text(
+                              displayLine,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                  if (!displayPassed && _recResult!.tips.isNotEmpty) ...[
+                    SizedBox(height: 4.h),
+                    Text(
+                      'Gợi ý:',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.coralDark,
+                      ),
                     ),
-                    child: Center(
-                      child: Text(
-                        'Hoàn thành ✅',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                    ..._recResult!.tips.map((tip) => Padding(
+                          padding:
+                              EdgeInsets.only(left: 4.w, top: 2.h),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('•',
+                                  style: TextStyle(
+                                      fontSize: 12.sp,
+                                      color: AppColors.coral)),
+                              SizedBox(width: 6.w),
+                              Expanded(
+                                child: Text(
+                                  tip,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )),
+                  ],
+                ],
+
+                // Complete button
+                if (displayPassed) ...[
+                  SizedBox(height: 10.h),
+                  GestureDetector(
+                    onTap: () {
+                      final m = ScaffoldMessenger.of(context);
+                      Navigator.pop(context);
+                      m.showSnackBar(SnackBar(
+                        content: Text(
+                          '🎉 Viết tuyệt vời! +10 XP',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14.sp,
+                          ),
+                        ),
+                        backgroundColor: AppColors.successGreen,
+                        behavior: SnackBarBehavior.floating,
+                        margin: EdgeInsets.all(16.w),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                        ),
+                        duration: const Duration(seconds: 2),
+                      ));
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.successLight,
+                            AppColors.successGreen
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Hoàn thành ✅',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:ui';
 import 'auth_service.dart';
 import 'storage_service.dart';
 import '../repositories/progress_repository.dart';
@@ -101,7 +103,6 @@ class ScoreService {
 
     // Đồng bộ lên backend MongoDB Atlas
     await _syncListeningResult(100, lessonId: lessonId);
-    await _syncSpeakingResult(letterText, letterText, lessonId: lessonId);
     await _syncWritingResult(100, lessonId: lessonId);
 
     return {'stars': earnedStars, 'xp': earnedXp};
@@ -140,7 +141,6 @@ class ScoreService {
 
     // Đồng bộ lên backend MongoDB Atlas
     await _syncListeningResult(100, lessonId: lessonId);
-    await _syncSpeakingResult(vowelText, vowelText, lessonId: lessonId);
     await _syncWritingResult(100, lessonId: lessonId);
 
     return {'stars': earnedStars, 'xp': earnedXp};
@@ -210,7 +210,6 @@ class ScoreService {
 
     // Đồng bộ lên backend MongoDB Atlas
     await _syncListeningResult(100, lessonId: lessonId);
-    await _syncSpeakingResult(numberText, numberText, lessonId: lessonId);
     await _syncWritingResult(100, lessonId: lessonId);
 
     return {'stars': earnedStars, 'xp': earnedXp};
@@ -249,7 +248,6 @@ class ScoreService {
 
     // Đồng bộ lên backend MongoDB Atlas
     await _syncListeningResult(100, lessonId: lessonId);
-    await _syncSpeakingResult(diacriticalText, diacriticalText, lessonId: lessonId);
     await _syncWritingResult(100, lessonId: lessonId);
 
     return {'stars': earnedStars, 'xp': earnedXp};
@@ -288,41 +286,68 @@ class ScoreService {
 
     // Đồng bộ lên backend MongoDB Atlas
     await _syncListeningResult(100, lessonId: lessonId);
-    await _syncSpeakingResult(spellingText, spellingText, lessonId: lessonId);
     await _syncWritingResult(100, lessonId: lessonId);
 
     return {'stars': earnedStars, 'xp': earnedXp};
   }
 
-  /// Hoàn thành bài luyện viết Khmer
-  Future<Map<String, int>> completeWritingLesson(int writingIndex, int stars, {required String? lessonId}) async {
+  /// Hoàn thành bài luyện viết Khmer (hỗ trợ đánh giá AI 2 lớp)
+  Future<Map<String, dynamic>> completeWritingLesson(
+    int writingIndex,
+    int stars, {
+    required String? lessonId,
+    List<List<Offset>>? strokes,
+    String? targetCharacter,
+    bool passed = true,
+  }) async {
     int earnedStars = stars;
     int earnedXp = stars * 5;
 
     await _checkAchievements();
 
-    // Lưu cục bộ SharedPreferences (tương thích cũ)
-    await _storage.saveWritingProgress(writingIndex, stars);
-    await _storage.addStars(earnedStars);
-    await _storage.addXp(earnedXp);
-    await _storage.updateStreak();
+    // Đồng bộ lên backend trước để chạy đánh giá AI 2 lớp
+    final backendResult = await _syncWritingResult(
+      stars * 33, // Điểm số dự phòng từ số sao
+      lessonId: lessonId,
+      strokes: strokes,
+      targetCharacter: targetCharacter,
+    );
 
-    // Lưu vào Isar ProgressRepository (Isolated đa người dùng)
-    try {
-      await ProgressRepository.instance.completeLesson(
-        lessonId: lessonId ?? 'writing_$writingIndex',
-        lessonType: 'writing',
-        lessonOrder: writingIndex,
-        stars: stars,
-      );
-    } catch (e) {
-      debugPrint('⚠️ Error saving writing progress to Isar: $e');
+    bool finalPassed = passed;
+    if (backendResult != null) {
+      finalPassed = backendResult['passed'] ?? false;
+      earnedStars = (backendResult['stars'] as num?)?.toInt() ?? stars;
+      earnedXp = (backendResult['xpEarned'] as num?)?.toInt() ?? (earnedStars * 5);
     }
 
-    // Đồng bộ lên backend MongoDB Atlas
-    await _syncWritingResult(100, lessonId: lessonId);
+    if (finalPassed) {
+      // Lưu cục bộ SharedPreferences (tương thích cũ)
+      await _storage.saveWritingProgress(writingIndex, earnedStars);
+      await _storage.addStars(earnedStars);
+      await _storage.addXp(earnedXp);
+      await _storage.updateStreak();
 
-    return {'stars': earnedStars, 'xp': earnedXp};
+      // Lưu vào Isar ProgressRepository (Isolated đa người dùng)
+      try {
+        await ProgressRepository.instance.completeLesson(
+          lessonId: lessonId ?? 'writing_$writingIndex',
+          lessonType: 'writing',
+          lessonOrder: writingIndex,
+          stars: earnedStars,
+        );
+      } catch (e) {
+        debugPrint('⚠️ Error saving writing progress to Isar: $e');
+      }
+    } else {
+      earnedStars = 0;
+      earnedXp = 0;
+    }
+
+    return {
+      'stars': earnedStars,
+      'xp': earnedXp,
+      'backendResult': backendResult,
+    };
   }
 
   /// Hoàn thành bài kiểm tra
@@ -583,65 +608,17 @@ class ScoreService {
     }
   }
 
-  /// Đồng bộ kết quả Nói lên backend
-  Future<void> _syncSpeakingResult(String ref, String rec, {String? lessonId}) async {
-    try {
-      final authService = AuthService();
-      if (!authService.isAuthenticated) return;
 
-      final url = Uri.parse('${authService.baseUrl}/speaking/check');
-      if (kDebugMode) print('[ScoreService] Đồng bộ Speaking: $url ($ref -> $rec)');
 
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${authService.accessToken}',
-        },
-        body: jsonEncode({
-          'lessonId': lessonId,
-          'referenceText': ref,
-          'recognizedText': rec,
-          'audioUrl': '',
-        }),
-      );
-      if (kDebugMode) print('[ScoreService] Speaking Sync Status: ${response.statusCode}');
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        await authService.fetchProfile();
-      }
-    } catch (e) {
-      if (kDebugMode) print('[ScoreService] Error syncing speaking: $e');
-    }
-  }
-
-  /// Đồng bộ kết quả Viết lên backend
-  Future<void> _syncWritingResult(int score, {String? lessonId}) async {
-    try {
-      final authService = AuthService();
-      if (!authService.isAuthenticated) return;
-
-      final url = Uri.parse('${authService.baseUrl}/writing/check');
-      if (kDebugMode) print('[ScoreService] Đồng bộ Writing: $url');
-
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${authService.accessToken}',
-        },
-        body: jsonEncode({
-          'lessonId': lessonId,
-          'score': score,
-          'imageUrl': '',
-        }),
-      );
-      if (kDebugMode) print('[ScoreService] Writing Sync Status: ${response.statusCode}');
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        await authService.fetchProfile();
-      }
-    } catch (e) {
-      if (kDebugMode) print('[ScoreService] Error syncing writing: $e');
-    }
+  /// Đồng bộ kết quả Viết lên backend (hỗ trợ đánh giá 2 lớp bằng AI)
+  Future<Map<String, dynamic>?> _syncWritingResult(
+    int score, {
+    String? lessonId,
+    List<List<Offset>>? strokes,
+    String? targetCharacter,
+  }) async {
+    // Completely disabled backend writing sync - client-only canvas drawing is retained
+    return null;
   }
 
   /// Đồng bộ kết quả Đọc lên backend

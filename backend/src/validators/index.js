@@ -52,12 +52,7 @@ const listeningResultValidator = [
   body('totalQuestions').isInt({ min: 1 }).withMessage('Tổng số câu phải >= 1'),
 ];
 
-// ========================================
-// Speaking Validators
-// ========================================
-const speakingCheckValidator = [
-  body('referenceText').notEmpty().withMessage('Văn bản tham chiếu là bắt buộc'),
-];
+
 
 // ========================================
 // Writing Validators
@@ -105,7 +100,6 @@ module.exports = {
   createLessonValidator,
   updateLessonValidator,
   listeningResultValidator,
-  speakingCheckValidator,
   writingCheckValidator,
   readingResultValidator,
   gameResultValidator,

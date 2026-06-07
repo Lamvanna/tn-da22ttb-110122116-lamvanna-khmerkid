@@ -4,9 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:permission_handler/permission_handler.dart';
-
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
 import '../../models/khmer_reading.dart';
@@ -26,23 +23,6 @@ class _ReadingScreenState extends State<ReadingScreen>
   bool _ttsReady = false;
   late int _currentLesson;
   ScoreService? _score;
-
-  // Speech-to-Text dynamic listening
-  final stt.SpeechToText _speech = stt.SpeechToText();
-  bool _sttReady = false;
-  bool _isListeningSTT = false;
-  final Map<int, List<int>> _sttHighlights = {}; // Track [start, end] matched range per line
-  String _selectedLocaleId = 'km';
-  String _lastRecognizedText = '';
-  bool _sttResultShown = false;
-
-  // Playback state
-  bool _isPlayingBack = false;
-
-  // Karaoke guide for recording
-  int _guideLineIdx = 0;
-  int _guideWordIdx = -1;
-  Timer? _guideTimer;
 
   // Track currently playing line and word boundaries
   int? _playingLineIdx;
@@ -64,7 +44,6 @@ class _ReadingScreenState extends State<ReadingScreen>
     _currentLesson = widget.initialIndex;
     _loadScore();
     _initTts();
-    _initSTT();
     _listAnimCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -77,66 +56,7 @@ class _ReadingScreenState extends State<ReadingScreen>
   }
 
   Future<void> _initSTT() async {
-    try {
-      final status = await Permission.microphone.status;
-      if (status.isPermanentlyDenied) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Quyền Micro bị từ chối vĩnh viễn. Bé hãy mở cài đặt để cấp quyền!'),
-              action: SnackBarAction(
-                label: 'Cài đặt',
-                onPressed: () => openAppSettings(),
-              ),
-            ),
-          );
-        }
-        return;
-      }
-      final mic = await Permission.microphone.request();
-      if (!mic.isGranted) return;
-      
-      _sttReady = await _speech.initialize(
-        onError: (e) {
-          debugPrint("[STT] Error: $e");
-          if (mounted && _isListeningSTT) {
-            setState(() => _isListeningSTT = false);
-          }
-        },
-        onStatus: (s) {
-          debugPrint("[STT] Status: $s");
-          if (s == 'done' && mounted && _isListeningSTT) {
-            _finishRecording();
-          }
-        },
-      );
-      
-      if (_sttReady) {
-        try {
-          final locs = await _speech.locales();
-          bool foundKhmer = false;
-          for (final l in locs) {
-            if (l.localeId.toLowerCase().startsWith('km')) {
-              _selectedLocaleId = l.localeId;
-              foundKhmer = true;
-              break;
-            }
-          }
-          if (!foundKhmer) {
-            final systemLoc = await _speech.systemLocale();
-            if (systemLoc != null) {
-              _selectedLocaleId = systemLoc.localeId;
-            }
-          }
-        } catch (localeErr) {
-          debugPrint('STT Locales query error: $localeErr');
-          _selectedLocaleId = 'km-KH';
-        }
-        debugPrint("[STT] Selected locale: $_selectedLocaleId");
-      }
-    } catch (e) {
-      debugPrint("STT initialization failed: $e");
-    }
+    // Disabled due to speech recognition maintenance
   }
 
   Future<void> _initTts() async {
@@ -197,7 +117,6 @@ class _ReadingScreenState extends State<ReadingScreen>
     if (!_ttsReady) return;
     
     _isPlayingAll = false;
-    _stopSTT();
     await _tts.stop();
     
     final line = _lessons[_currentLesson].lines[idx];
@@ -216,7 +135,6 @@ class _ReadingScreenState extends State<ReadingScreen>
 
   Future<void> _speakAll() async {
     if (!_ttsReady) return;
-    _stopSTT();
     HapticFeedback.mediumImpact();
     
     setState(() {
@@ -291,699 +209,10 @@ class _ReadingScreenState extends State<ReadingScreen>
     });
   }
 
-  Future<void> _startSTT() async {
-    if (!_sttReady) {
-      await _initSTT();
-      if (!_sttReady) {
-        debugPrint('[STT] Not ready, cannot start');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Không thể khởi động nhận diện giọng nói')),
-          );
-        }
-        return;
-      }
-    }
-    
-    _stopTts();
-    
-    HapticFeedback.mediumImpact();
-    setState(() {
-      _isListeningSTT = true;
-      _isPlayingBack = false;
-      _sttHighlights.clear();
-      _lastRecognizedText = '';
-      _sttResultShown = false;
-      _clickedLines.clear();
-    });
-    
-    // Start speech recognition
-    try {
-      await _speech.stop();
-      await _speech.listen(
-        onResult: (r) {
-          if (mounted) {
-            _processSpeechResult(r.recognizedWords);
-            if (r.finalResult) {
-              _finishRecording();
-            }
-          }
-        },
-        listenFor: const Duration(seconds: 45),
-        pauseFor: const Duration(seconds: 15),
-        localeId: _selectedLocaleId,
-      );
-      // Start karaoke guide after STT starts
-      _startGuide();
-    } catch (e) {
-      debugPrint('[STT] Listen error: $e');
-      if (mounted) setState(() => _isListeningSTT = false);
-    }
-  }
-
-  Future<void> _finishRecording() async {
-    _stopGuide();
-    if (mounted) {
-      setState(() => _isListeningSTT = false);
-      if (!_sttResultShown) {
-        _sttResultShown = true;
-        Future.delayed(const Duration(milliseconds: 400), () {
-          if (mounted) _showSTTResultDialog();
-        });
-      }
-    }
-  }
-
-  Future<void> _stopSTT() async {
-    _stopGuide();
-    await _speech.stop();
-    if (mounted) setState(() => _isListeningSTT = false);
-  }
-
-  void _startGuide() {
-    _guideTimer?.cancel();
-    final lesson = _lessons[_currentLesson];
-    if (lesson.lines.isEmpty) return;
-    
-    setState(() {
-      _guideLineIdx = 0;
-      _guideWordIdx = 0;
-    });
-    
-    // Advance word every 1.5 seconds
-    _guideTimer = Timer.periodic(const Duration(milliseconds: 1500), (timer) {
-      if (!mounted || !_isListeningSTT) {
-        timer.cancel();
-        return;
-      }
-      
-      final lines = lesson.lines;
-      final currentWords = lines[_guideLineIdx].khmer
-          .split(RegExp(r'\s+'))
-          .where((w) => w.isNotEmpty)
-          .toList();
-      
-      setState(() {
-        _guideWordIdx++;
-        if (_guideWordIdx >= currentWords.length) {
-          // Move to next line
-          _guideLineIdx++;
-          _guideWordIdx = 0;
-          
-          if (_guideLineIdx >= lines.length) {
-            // Finished all lines - loop back
-            _guideLineIdx = 0;
-            _guideWordIdx = 0;
-          }
-        }
-      });
-    });
-  }
-
-  void _stopGuide() {
-    _guideTimer?.cancel();
-    _guideTimer = null;
-    if (mounted) {
-      setState(() {
-        _guideLineIdx = 0;
-        _guideWordIdx = -1;
-      });
-    }
-  }
-
-  void _processSpeechResult(String spokenText) {
-    if (spokenText.isEmpty) return;
-    _lastRecognizedText = spokenText;
-    
-    String clean(String s) => s.replaceAll(RegExp(r'[\s\u200b]'), '');
-    final cleanSpoken = clean(spokenText);
-    final lesson = _lessons[_currentLesson];
-    
-    setState(() {
-      
-      for (int i = 0; i < lesson.lines.length; i++) {
-        final line = lesson.lines[i];
-        final cleanLine = clean(line.khmer);
-        
-        if (cleanSpoken.contains(cleanLine)) {
-          _clickedLines.add(i);
-          _sttHighlights[i] = [0, line.khmer.length];
-        } else {
-          final match = _findLongestMatch(line.khmer, spokenText);
-          if (match != null && match[2] >= 2) {
-            _sttHighlights[i] = [match[0], match[1]];
-            if (match[2] >= line.khmer.length * 0.7) {
-              _clickedLines.add(i);
-            }
-          }
-        }
-      }
-    });
-    
-    _checkProgress();
-  }
-
-  List<int>? _findLongestMatch(String lineText, String spokenText) {
-    int bestStart = 0;
-    int bestEnd = 0;
-    int maxLen = 0;
-    
-    for (int start = 0; start < lineText.length; start++) {
-      for (int end = start + 2; end <= lineText.length; end++) {
-        final sub = lineText.substring(start, end);
-        if (spokenText.contains(sub)) {
-          final len = end - start;
-          if (len > maxLen) {
-            maxLen = len;
-            bestStart = start;
-            bestEnd = end;
-          }
-        }
-      }
-    }
-    
-    if (maxLen > 0) {
-      return [bestStart, bestEnd, maxLen];
-    }
-    return null;
-  }
-
-  void _showSTTResultDialog() {
-    final lesson = _lessons[_currentLesson];
-    final totalLines = lesson.lines.length;
-    final matchedLines = _clickedLines.length;
-    final accuracy = totalLines > 0 ? (matchedLines / totalLines * 100).round() : 0;
-    final passed = accuracy >= 70;
-
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.white,
-        elevation: 12,
-        clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28.r)),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 24.h),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Title
-                Text(
-                  'Kết quả thu âm 🎙️',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 22.sp,
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFF0F172A),
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                SizedBox(height: 18.h),
-
-                // Beautiful Custom Circular Progress Gauge
-                Container(
-                  width: 105.w,
-                  height: 105.w,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: (passed ? const Color(0xFF10B981) : const Color(0xFFF43F5E))
-                            .withValues(alpha: 0.12),
-                        blurRadius: 16.r,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: CustomPaint(
-                    painter: _CircularProgressPainter(
-                      progress: accuracy / 100.0,
-                      trackColor: const Color(0xFFF1F5F9),
-                      progressColors: passed
-                          ? [const Color(0xFF10B981), const Color(0xFF059669)]
-                          : [const Color(0xFFF43F5E), const Color(0xFFE11D48)],
-                    ),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '$accuracy%',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 26.sp,
-                              fontWeight: FontWeight.w900,
-                              color: passed ? const Color(0xFF047857) : const Color(0xFFBE123C),
-                              height: 1.0,
-                            ),
-                          ),
-                          SizedBox(height: 2.h),
-                          Text(
-                            'Hoàn thành',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 9.sp,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF94A3B8),
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 16.h),
-
-                // Highly Styled Encouragement Capsule Badge
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
-                  decoration: BoxDecoration(
-                    color: passed
-                        ? const Color(0xFFECFDF5)
-                        : const Color(0xFFFFF7ED),
-                    borderRadius: BorderRadius.circular(30.r),
-                    border: Border.all(
-                      color: passed ? const Color(0xFFA7F3D0) : const Color(0xFFFED7AA),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        passed ? '🏆' : '💪',
-                        style: TextStyle(fontSize: 16.sp),
-                      ),
-                      SizedBox(width: 6.w),
-                      Text(
-                        passed ? 'Tuyệt vời quá bé ơi!' : 'Cố gắng thêm nhé!',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w800,
-                          color: passed
-                              ? const Color(0xFF047857)
-                              : const Color(0xFFC2410C),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 6.h),
-                Text(
-                  'Bé đọc đúng $matchedLines / $totalLines dòng',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF64748B),
-                  ),
-                ),
-                SizedBox(height: 20.h),
-
-                // Speaking Bubble - Modern Child-Friendly design
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(16.w),
-                  decoration: BoxDecoration(
-                    color: _lastRecognizedText.isNotEmpty
-                        ? const Color(0xFFF8FAFC)
-                        : const Color(0xFFFFF5F5),
-                    borderRadius: BorderRadius.circular(20.r),
-                    border: Border.all(
-                      color: _lastRecognizedText.isNotEmpty
-                          ? const Color(0xFFE2E8F0)
-                          : const Color(0xFFFEE2E2),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.02),
-                        blurRadius: 8.r,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.mic_rounded,
-                            color: _lastRecognizedText.isNotEmpty
-                                ? const Color(0xFF6366F1)
-                                : const Color(0xFFEF4444),
-                            size: 18.sp,
-                          ),
-                          SizedBox(width: 6.w),
-                          Text(
-                            'Giọng của bé được nhận diện:',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 8.h),
-                      Text(
-                        _lastRecognizedText.isNotEmpty
-                            ? _lastRecognizedText
-                            : 'Bé ơi, hình như máy chưa nghe rõ giọng bé nè! Thử bấm "Thu lại" rồi đọc to hơn, rõ hơn một chút nha! 💕',
-                        style: _lastRecognizedText.isNotEmpty
-                            ? GoogleFonts.battambang(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF1E293B),
-                                height: 1.4,
-                              )
-                            : GoogleFonts.plusJakartaSans(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFFDC2626),
-                                height: 1.4,
-                              ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 12.h),
-
-                // Playback Button (using TTS for recognized words)
-                if (_lastRecognizedText.isNotEmpty)
-                  StatefulBuilder(
-                    builder: (context, setDialogState) {
-                      return GestureDetector(
-                        onTap: () async {
-                          if (_isPlayingBack) {
-                            await _tts.stop();
-                            setState(() => _isPlayingBack = false);
-                            setDialogState(() {});
-                          } else {
-                            setState(() => _isPlayingBack = true);
-                            setDialogState(() {});
-                            await _tts.speak(_lastRecognizedText);
-                            _tts.setCompletionHandler(() {
-                              if (mounted) {
-                                setState(() => _isPlayingBack = false);
-                                setDialogState(() {});
-                              }
-                            });
-                          }
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: double.infinity,
-                          padding: EdgeInsets.symmetric(vertical: 14.h),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: _isPlayingBack
-                                  ? [const Color(0xFFEF4444), const Color(0xFFDC2626)]
-                                  : [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
-                            ),
-                            borderRadius: BorderRadius.circular(16.r),
-                            boxShadow: [
-                              BoxShadow(
-                                color: (_isPlayingBack
-                                        ? const Color(0xFFEF4444)
-                                        : const Color(0xFF6366F1))
-                                    .withValues(alpha: 0.3),
-                                blurRadius: 8.r,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                _isPlayingBack ? Icons.stop_circle_rounded : Icons.play_circle_fill_rounded,
-                                color: Colors.white,
-                                size: 22.sp,
-                              ),
-                              SizedBox(width: 8.w),
-                              Text(
-                                _isPlayingBack ? 'Dừng phát' : '🔊 Nghe lại giọng vừa đọc',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  letterSpacing: 0.2,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                SizedBox(height: 22.h),
-
-                // Interactive Per-line results
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Chi tiết từng câu (Chạm để nghe mẫu):',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF475569),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 8.h),
-                ...List.generate(lesson.lines.length, (i) {
-                  final line = lesson.lines[i];
-                  final matched = _clickedLines.contains(i);
-                  return Padding(
-                    padding: EdgeInsets.only(bottom: 10.h),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          _speakLine(i);
-                        },
-                        borderRadius: BorderRadius.circular(18.r),
-                        child: Container(
-                          padding: EdgeInsets.all(12.w),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18.r),
-                            border: Border.all(
-                              color: matched
-                                  ? const Color(0xFFD1FAE5)
-                                  : const Color(0xFFFEE2E2),
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.015),
-                                blurRadius: 6.r,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              // Left Status Circle Badge
-                              Container(
-                                width: 34.w,
-                                height: 34.w,
-                                decoration: BoxDecoration(
-                                  color: matched
-                                      ? const Color(0xFFD1FAE5)
-                                      : const Color(0xFFFEE2E2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  matched ? Icons.check_circle_rounded : Icons.cancel_rounded,
-                                  color: matched ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                                  size: 20.sp,
-                                ),
-                              ),
-                              SizedBox(width: 12.w),
-
-                              // Text, transliteration & meaning details
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      line.khmer,
-                                      style: GoogleFonts.battambang(
-                                        fontSize: 18.sp,
-                                        fontWeight: FontWeight.w700,
-                                        color: matched ? const Color(0xFF047857) : const Color(0xFFBE123C),
-                                        height: 1.3,
-                                      ),
-                                    ),
-                                    SizedBox(height: 3.h),
-                                    SizedBox(height: 4.h),
-                                    Text(
-                                      line.romanized,
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF64748B),
-                                      ),
-                                    ),
-                                    SizedBox(height: 2.h),
-                                    Text(
-                                      line.meaning,
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.w500,
-                                        color: const Color(0xFF475569),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(width: 8.w),
-
-                              // Speaker icon action trigger
-                              Container(
-                                width: 28.w,
-                                height: 28.w,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFF1F5F9),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.volume_up_rounded,
-                                  color: const Color(0xFF64748B),
-                                  size: 15.sp,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-                SizedBox(height: 20.h),
-
-                // Actions buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          Navigator.pop(ctx);
-                        },
-                        style: OutlinedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(vertical: 14.h),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-                          side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.5),
-                          backgroundColor: const Color(0xFFF8FAFC),
-                        ),
-                        child: Text(
-                          'Đóng',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF475569),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16.r),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFE91E63).withValues(alpha: 0.25),
-                              blurRadius: 10.r,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            HapticFeedback.mediumImpact();
-                            Navigator.pop(ctx);
-                            _startSTT();
-                          },
-                          icon: Icon(Icons.mic_rounded, size: 18.sp, color: Colors.white),
-                          label: Text(
-                            'Thu lại',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFE91E63),
-                            padding: EdgeInsets.symmetric(vertical: 14.h),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-                            elevation: 0,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                if (passed) ...[
-                  SizedBox(height: 12.h),
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.25),
-                          blurRadius: 10.r,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        HapticFeedback.mediumImpact();
-                        Navigator.pop(ctx);
-                        if (_currentLesson < _lessons.length - 1) {
-                          _onLessonCompleted();
-                        }
-                      },
-                      icon: Icon(Icons.arrow_forward_rounded, size: 18.sp, color: Colors.white),
-                      label: Text(
-                        'Mở bài tiếp theo',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF10B981),
-                        padding: EdgeInsets.symmetric(vertical: 14.h),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-                        elevation: 0,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Future<void> _speakWord(int lineIdx, int wordIdx, String word) async {
     if (!_ttsReady) return;
     
     _isPlayingAll = false;
-    _stopSTT();
     await _tts.stop();
     
     HapticFeedback.lightImpact();
@@ -1038,34 +267,12 @@ class _ReadingScreenState extends State<ReadingScreen>
             _wordEnd != null &&
             _isWordInTtsRange(text, word, wordIdx, _wordStart!, _wordEnd!);
             
-        // 3. STT spoken recognized range check
-        final sttRange = _sttHighlights[lineIdx];
-        final isSttPlaying = _isListeningSTT && 
-            sttRange != null &&
-            _isWordInTtsRange(text, word, wordIdx, sttRange[0], sttRange[1]);
-        
-        // 4. Karaoke guide: current word to read
-        final isGuideActive = _isListeningSTT && _guideWordIdx >= 0;
-        final isGuideCurrent = isGuideActive && _guideLineIdx == lineIdx && _guideWordIdx == wordIdx;
-        final isGuidePassed = isGuideActive && (
-            lineIdx < _guideLineIdx || 
-            (lineIdx == _guideLineIdx && wordIdx < _guideWordIdx)
-        );
-            
         Color textColor = const Color(0xFF1E293B);
         Color bgColor = Colors.transparent;
         
-        if (isSttPlaying) {
-          textColor = const Color(0xFF4CAF50); // Green for STT matched
-          bgColor = const Color(0xFF4CAF50).withValues(alpha: 0.1);
-        } else if (isWordPlaying || isTtsPlaying) {
+        if (isWordPlaying || isTtsPlaying) {
           textColor = const Color(0xFF2979FF); // Blue for active speaking
           bgColor = const Color(0xFF2979FF).withValues(alpha: 0.1);
-        } else if (isGuideCurrent) {
-          textColor = const Color(0xFFFF6D00); // Orange for "read this now"
-          bgColor = const Color(0xFFFF6D00).withValues(alpha: 0.15);
-        } else if (isGuidePassed) {
-          textColor = const Color(0xFF90A4AE); // Grey for already passed
         }
         
         return GestureDetector(
@@ -1227,11 +434,9 @@ class _ReadingScreenState extends State<ReadingScreen>
   void _goTo(int idx) {
     if (idx < 0 || idx >= _lessons.length) return;
     _stopTts();
-    _stopSTT();
     setState(() {
       _currentLesson = idx;
       _clickedLines.clear();
-      _sttHighlights.clear();
       _isCompleting = false;
     });
     _listAnimCtrl.reset();
@@ -1241,8 +446,6 @@ class _ReadingScreenState extends State<ReadingScreen>
   @override
   void dispose() {
     _tts.stop();
-    _speech.stop();
-    _guideTimer?.cancel();
     _listAnimCtrl.dispose();
     super.dispose();
   }
@@ -1325,43 +528,7 @@ class _ReadingScreenState extends State<ReadingScreen>
                               color: const Color(0xFF1E293B),
                             ),
                           ),
-                          GestureDetector(
-                            onTap: _isListeningSTT ? _stopSTT : _startSTT,
-                            child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                              decoration: BoxDecoration(
-                                color: _isListeningSTT 
-                                    ? const Color(0xFFEF5350).withValues(alpha: 0.1)
-                                    : const Color(0xFFE91E63).withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(20.r),
-                                border: Border.all(
-                                  color: _isListeningSTT
-                                      ? const Color(0xFFEF5350).withValues(alpha: 0.3)
-                                      : const Color(0xFFE91E63).withValues(alpha: 0.3),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    _isListeningSTT ? Icons.stop_rounded : Icons.mic_rounded,
-                                    color: _isListeningSTT ? const Color(0xFFEF5350) : const Color(0xFFE91E63),
-                                    size: 18.sp,
-                                  ),
-                                  SizedBox(width: 4.w),
-                                  Text(
-                                    _isListeningSTT ? 'Đang thu' : 'Thu âm',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 13.sp,
-                                      fontWeight: FontWeight.w700,
-                                      color: _isListeningSTT ? const Color(0xFFEF5350) : const Color(0xFFE91E63),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                          SizedBox(width: 80.w),
                         ],
                       ),
                     ),
@@ -1637,9 +804,5 @@ class _CircularProgressPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _CircularProgressPainter oldDelegate) {
-    return oldDelegate.progress != progress ||
-        oldDelegate.trackColor != trackColor ||
-        oldDelegate.progressColors != progressColors;
-  }
+  bool shouldRepaint(covariant _CircularProgressPainter oldDelegate) => false;
 }

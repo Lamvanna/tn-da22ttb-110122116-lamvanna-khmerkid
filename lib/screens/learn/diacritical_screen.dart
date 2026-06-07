@@ -3,14 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
 import '../../models/khmer_diacritical.dart';
+import '../../widgets/khmer_write_widget.dart';
+import '../../widgets/khmer_speak_widget.dart';
+
 
 /// Màn hình học dấu Khmer cao cấp (đồng bộ 100% SpellingScreen)
-/// Tích hợp TTS (Nghe), STT (Luyện nói), Bảng vẽ (Tập viết)
+/// Tích hợp TTS (Nghe), Bảng vẽ (Tập viết)
 class DiacriticalScreen extends StatefulWidget {
   final int initialIndex;
   const DiacriticalScreen({super.key, this.initialIndex = 0});
@@ -226,7 +228,9 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
           _buildHeader(),
           Expanded(
             child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
+              physics: _activeSheet == 3
+                  ? const NeverScrollableScrollPhysics()
+                  : const BouncingScrollPhysics(),
               padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
               child: ScaleTransition(
                 scale: _scaleAnim,
@@ -711,16 +715,28 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
                   ),
                 if (_activeSheet == 2)
                   Expanded(
-                    child: _InlineSpeakContent(
-                      lesson: _lesson,
+                    child: KhmerSpeakWidget(
+                      targetWord: _lesson.example.isNotEmpty ? _lesson.example : _lesson.character,
+                      romanized: _lesson.romanized,
+                      meaning: _lesson.description,
+                      accentColor: const Color(0xFF1E88E5),
+                      accentColorDark: const Color(0xFF1565C0),
+                      surfaceColor: const Color(0xFFEEF4FC),
                       onComplete: () => _markStepComplete(1),
                     ),
                   ),
                 if (_activeSheet == 3)
                   Expanded(
-                    child: _InlineWriteContent(
-                      lesson: _lesson,
+                    child: KhmerWriteWidget(
+                      character: _lesson.example.isNotEmpty ? _lesson.example : _lesson.character,
+                      label: 'dấu',
+                      isCompound: true,
+                      showStrokeGuide: true, // hiển thị hướng nét nếu có guide data
+                      enableOcr: false,
                       onComplete: () => _markStepComplete(2),
+                      accentColor: AppColors.primary,
+                      accentColorDark: AppColors.primaryDark,
+                      surfaceColor: AppColors.primarySurface,
                     ),
                   ),
               ],
@@ -760,7 +776,7 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
       children: [
         Expanded(
           child: GestureDetector(
-            onTap: () => setState(() => _activeSheet = 1),
+            onTap: () => setState(() => _activeSheet = _activeSheet == 1 ? 0 : 1),
             child: _actionCard(
               imagePath: 'image/Nghe.png',
               label: 'Nghe',
@@ -771,24 +787,24 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
             ),
           ),
         ),
-        SizedBox(width: 10.w),
+        SizedBox(width: 8.w),
         Expanded(
           child: GestureDetector(
-            onTap: () => setState(() => _activeSheet = 2),
+            onTap: () => setState(() => _activeSheet = _activeSheet == 2 ? 0 : 2),
             child: _actionCard(
               imagePath: 'image/Mic.png',
               label: 'Nói',
-              sub: 'Luyện nói',
-              bgColor: const Color(0xFFFFF3E0),
-              accentColor: const Color(0xFFF57C00),
+              sub: 'Luyện phát âm',
+              bgColor: const Color(0xFFE3F2FD),
+              accentColor: const Color(0xFF1E88E5),
               stepIdx: 1,
             ),
           ),
         ),
-        SizedBox(width: 10.w),
+        SizedBox(width: 8.w),
         Expanded(
           child: GestureDetector(
-            onTap: () => setState(() => _activeSheet = 3),
+            onTap: () => setState(() => _activeSheet = _activeSheet == 3 ? 0 : 3),
             child: _actionCard(
               imagePath: 'image/Viết.png',
               label: 'Viết',
@@ -868,69 +884,130 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
   Widget _buildNavButtons() {
     final hasPrev = _idx > 0;
     final hasNext = _idx < _lessons.length - 1;
-    final widgets = <Widget>[];
-
-    if (hasPrev) {
-      widgets.add(
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () => _goTo(_idx - 1),
-            icon: const Icon(Icons.arrow_back_rounded, size: 18),
-            label: Text(
-              'Bài trước',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13.sp),
+    final canNext = _canGo(_idx + 1);
+    final labels = ['Nghe', 'Nói', 'Viết'];
+    final stepColors = [const Color(0xFF43A047), const Color(0xFF1E88E5), const Color(0xFF5E35B1)];
+    return Row(
+      children: [
+        GestureDetector(
+          onTap: hasPrev ? () => _goTo(_idx - 1) : null,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.r),
+              border: Border.all(color: const Color(0xFF1E88E5).withValues(alpha: 0.12)),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6.r, offset: Offset(0, 2.h))],
             ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.textSecondary,
-              padding: EdgeInsets.symmetric(vertical: 14.h),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
-              side: BorderSide(color: AppColors.surfaceContainerHighest),
-            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.chevron_left_rounded, color: hasPrev ? const Color(0xFF1E88E5) : AppColors.textHint, size: 18.w),
+              Text('Trước', style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700, color: hasPrev ? const Color(0xFF1E88E5) : AppColors.textHint)),
+            ]),
           ),
         ),
-      );
-    }
-    
-    if (hasPrev && hasNext) {
-      widgets.add(SizedBox(width: 12.w));
-    }
-    
-    if (hasNext) {
-      final canNext = _canGo(_idx + 1);
-      widgets.add(
+        SizedBox(width: 6.w),
         Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () {
-              if (canNext) {
-                _goTo(_idx + 1);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Vui lòng hoàn thành tất cả hoạt động (Nghe, Nói, Viết) trước khi học bài tiếp theo.'),
-                    backgroundColor: Colors.orange,
-                    duration: Duration(seconds: 2),
-                  ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(5, (i) {
+              if (i.isOdd) {
+                final stepI = i ~/ 2;
+                final prevDone = _isStepComplete(stepI);
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(3, (_) => Container(
+                    width: 4.w,
+                    height: 2.5.h,
+                    margin: EdgeInsets.symmetric(horizontal: 1.5.w),
+                    decoration: BoxDecoration(
+                      color: prevDone
+                          ? stepColors[stepI].withValues(alpha: 0.5)
+                          : const Color(0xFFE0E0E0),
+                      borderRadius: BorderRadius.circular(1.r),
+                    ),
+                  )),
                 );
               }
-            },
-            icon: Text(
-              canNext ? 'Bài tiếp' : 'Khóa',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13.sp),
-            ),
-            label: Icon(canNext ? Icons.arrow_forward_rounded : Icons.lock_rounded, size: 18),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: canNext ? AppColors.primary : AppColors.surfaceContainerLow,
-              foregroundColor: canNext ? Colors.white : AppColors.textHint,
-              padding: EdgeInsets.symmetric(vertical: 14.h),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
-              elevation: canNext ? 2 : 0,
-            ),
+              final stepI = i ~/ 2;
+              final done = _isStepComplete(stepI);
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 28.w,
+                    height: 28.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: done
+                            ? [stepColors[stepI], stepColors[stepI].withValues(alpha: 0.7)]
+                            : [const Color(0xFFE8E8E8), const Color(0xFFD8D8D8)],
+                      ),
+                      boxShadow: done
+                          ? [BoxShadow(color: stepColors[stepI].withValues(alpha: 0.35), blurRadius: 6.r, offset: Offset(0, 2.h))]
+                          : null,
+                    ),
+                    child: Center(
+                      child: done
+                          ? Icon(Icons.check_rounded, size: 14.w, color: Colors.white)
+                          : Text(
+                              '${stepI + 1}',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    labels[stepI],
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 9.sp,
+                      fontWeight: FontWeight.w700,
+                      color: done ? stepColors[stepI] : AppColors.textHint,
+                    ),
+                  ),
+                ],
+              );
+            }),
           ),
         ),
-      );
-    }
-
-    return Row(children: widgets);
+        SizedBox(width: 6.w),
+        GestureDetector(
+          onTap: () {
+            if (canNext) {
+              _goTo(_idx + 1);
+            } else if (hasNext) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Vui lòng hoàn thành tất cả hoạt động (Nghe, Nói, Viết) trước khi học bài tiếp theo.'),
+                  backgroundColor: Colors.orange,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          },
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              gradient: canNext ? const LinearGradient(colors: [Color(0xFF42A5F5), Color(0xFF1E88E5)]) : null,
+              color: canNext ? null : AppColors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(20.r),
+              boxShadow: canNext ? [BoxShadow(color: const Color(0xFF1E88E5).withValues(alpha: 0.35), blurRadius: 10.r, offset: Offset(0, 3.h))] : null,
+            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Text(canNext ? 'Tiếp theo' : 'Khóa', style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: canNext ? Colors.white : AppColors.textHint)),
+              SizedBox(width: 4.w),
+              Icon(canNext ? Icons.chevron_right_rounded : Icons.lock_rounded, color: canNext ? Colors.white : AppColors.textHint, size: 18.w),
+            ]),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -1217,344 +1294,6 @@ class _InlineListenContentState extends State<_InlineListenContent>
           style: GoogleFonts.battambang(fontSize: 18.sp, fontWeight: FontWeight.w700, color: c),
         ),
       ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// INLINE NÓI (STT)
-// ═══════════════════════════════════════════════════════════════
-class _InlineSpeakContent extends StatefulWidget {
-  final KhmerDiacritical lesson;
-  final VoidCallback onComplete;
-  const _InlineSpeakContent({required this.lesson, required this.onComplete});
-
-  @override
-  State<_InlineSpeakContent> createState() => _InlineSpeakContentState();
-}
-
-class _InlineSpeakContentState extends State<_InlineSpeakContent>
-    with SingleTickerProviderStateMixin {
-  final stt.SpeechToText _speech = stt.SpeechToText();
-  final FlutterTts _tts = FlutterTts();
-  bool _isListening = false;
-  String _spokenText = '';
-  bool _speechReady = false;
-  late AnimationController _pulseCtrl;
-  bool? _isCorrect;
-  String _selectedLocaleId = 'km';
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-    _initSpeech();
-  }
-
-  Future<void> _initSpeech() async {
-    final status = await Permission.microphone.status;
-    if (status.isPermanentlyDenied) {
-      if (mounted) setState(() => _spokenText = 'Quyền Mic bị chặn. Bé hãy bấm vào đây để mở Cài đặt!');
-      return;
-    }
-    final micStatus = await Permission.microphone.request();
-    if (!micStatus.isGranted) {
-      if (mounted) setState(() => _spokenText = 'Cần cấp quyền microphone!');
-      return;
-    }
-    try {
-      final available = await _speech.initialize(
-        onError: (val) => debugPrint('STT Error: $val'),
-        onStatus: (val) => debugPrint('STT Status: $val'),
-      );
-      if (mounted) setState(() => _speechReady = available);
-      if (available) {
-        try {
-          final systemLocale = await _speech.systemLocale();
-          if (systemLocale != null) {
-            _selectedLocaleId = systemLocale.localeId;
-          }
-          final locales = await _speech.locales();
-          bool foundKhmer = false;
-          for (final l in locales) {
-            if (l.localeId.toLowerCase().startsWith('km')) {
-              _selectedLocaleId = l.localeId;
-              foundKhmer = true;
-              break;
-            }
-          }
-          if (!foundKhmer) {
-            for (final l in locales) {
-              if (l.localeId.toLowerCase().startsWith('vi')) {
-                _selectedLocaleId = l.localeId;
-                break;
-              }
-            }
-          }
-        } catch (localeErr) {
-          debugPrint('STT Locales error: $localeErr');
-          _selectedLocaleId = 'km-KH';
-        }
-      }
-    } catch (e) {
-      debugPrint('Speech init failed: $e');
-    }
-  }
-
-  @override
-  void dispose() {
-    _speech.stop();
-    _tts.stop();
-    _pulseCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _startListening() async {
-    await _tts.stop();
-    setState(() {
-      _isListening = true;
-      _isCorrect = null;
-      _spokenText = 'Đang lắng nghe...';
-    });
-    _pulseCtrl.repeat(reverse: true);
-
-    try {
-      await _speech.stop();
-      await _speech.listen(
-        onResult: (val) {
-          if (mounted) {
-            setState(() {
-              _spokenText = val.recognizedWords;
-            });
-            if (val.finalResult) {
-              _stopListeningAndEvaluate();
-            }
-          }
-        },
-        localeId: _selectedLocaleId,
-      );
-    } catch (e) {
-      _pulseCtrl.stop();
-      if (mounted) setState(() { _isListening = false; _spokenText = 'Lỗi ghi âm. Bé nói lại nhé!'; });
-    }
-  }
-
-  Future<void> _stopListeningAndEvaluate() async {
-    await _speech.stop();
-    if (!mounted) return;
-    setState(() => _isListening = false);
-    _pulseCtrl.stop();
-
-    final target = widget.lesson.example.replaceAll('◌', '').trim();
-    final cleanSpoken = _spokenText.toLowerCase().trim();
-    final targetLower = target.toLowerCase();
-
-    bool match = false;
-    if (cleanSpoken.contains(targetLower) || targetLower.contains(cleanSpoken) && cleanSpoken.isNotEmpty) {
-      match = true;
-    } else {
-      match = true; // Fallback for positive feedback in educational context
-    }
-
-    setState(() {
-      _isCorrect = match;
-      if (match) {
-        widget.onComplete();
-      }
-    });
-
-    // Speak confirmation
-    await _tts.setLanguage('vi-VN');
-    await _tts.speak(match ? 'Rất tốt! Bạn nói chính xác.' : 'Hãy thử lại nhé!');
-  }
-
-  Future<void> _toggleListening() async {
-    if (!_speechReady) {
-      final status = await Permission.microphone.status;
-      if (status.isPermanentlyDenied) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Quyền Micro bị từ chối vĩnh viễn. Bé hãy mở cài đặt để cấp quyền!'),
-              action: SnackBarAction(
-                label: 'Cài đặt',
-                onPressed: () => openAppSettings(),
-              ),
-            ),
-          );
-        }
-        return;
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đang khởi tạo lại bộ ghi âm giọng nói...')),
-        );
-      }
-      await _initSpeech();
-      if (!_speechReady && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Thiết bị chưa sẵn sàng cho Google Speech. Vui lòng thử lại!')),
-        );
-      }
-      return;
-    }
-    if (_isListening) {
-      await _stopListeningAndEvaluate();
-    } else {
-      await _startListening();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.only(top: 18.h, bottom: 8.h),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.mic_rounded, color: AppColors.secondary, size: 20.w),
-              SizedBox(width: 8.w),
-              Text(
-                'Luyện nói Khmer',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFFE65100),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 130.w,
-                  height: 130.w,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                    border: Border.all(
-                      color:
-                          _isCorrect == null
-                              ? AppColors.secondary.withValues(alpha: 0.18)
-                              : _isCorrect!
-                              ? AppColors.tertiary
-                              : AppColors.coral,
-                      width: 3.w,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color:
-                            (_isCorrect == null
-                                    ? AppColors.secondary
-                                    : _isCorrect!
-                                    ? AppColors.tertiary
-                                    : AppColors.coral)
-                                .withValues(alpha: 0.12),
-                        blurRadius: 16.r,
-                        offset: Offset(0, 4.h),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      widget.lesson.example.isNotEmpty ? widget.lesson.example : widget.lesson.character,
-                      style: GoogleFonts.battambang(
-                        fontSize: 48.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 8.h),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color: AppColors.secondarySurface,
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Text(
-                    widget.lesson.exampleMeaning.isNotEmpty ? widget.lesson.exampleMeaning : 'Ký tự',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFFE65100),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                GestureDetector(
-                  onTap: _toggleListening,
-                  child: AnimatedBuilder(
-                    animation: _pulseCtrl,
-                    builder:
-                        (context, child) => Container(
-                          width: 80.w,
-                          height: 80.w,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _isListening ? AppColors.secondaryLight : AppColors.secondary,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.secondary.withValues(
-                                  alpha: 0.35 + (_isListening ? 0.25 * _pulseCtrl.value : 0),
-                                ),
-                                blurRadius:
-                                    (14 + (_isListening ? 10 * _pulseCtrl.value : 0)).r,
-                                offset: Offset(0, 4.h),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            _isListening ? Icons.mic_rounded : Icons.mic_none_rounded,
-                            color: Colors.white,
-                            size: 32.sp,
-                          ),
-                        ),
-                  ),
-                ),
-                SizedBox(height: 12.h),
-                Text(
-                  _isListening ? 'Đang lắng nghe... Chạm để dừng' : 'Chạm phím Mic để nói',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: _isListening ? AppColors.secondary : AppColors.textHint,
-                  ),
-                ),
-                SizedBox(height: 10.h),
-                Container(
-                  padding: EdgeInsets.all(12.w),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8F9FA),
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: const Color(0xFFE9ECEF)),
-                  ),
-                  child: Text(
-                    _spokenText.isEmpty ? 'Kết quả giọng nói của bạn sẽ hiển thị tại đây' : _spokenText,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
-                      color: _spokenText.isEmpty ? AppColors.textHint : AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

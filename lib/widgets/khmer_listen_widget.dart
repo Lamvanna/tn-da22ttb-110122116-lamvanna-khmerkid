@@ -203,7 +203,9 @@ class _KhmerListenWidgetState extends State<KhmerListenWidget>
                               size: 14.sp, color: widget.accentColor),
                           SizedBox(width: 6.w),
                           Text(
-                            'Phát âm: "${widget.romanized}"',
+                            widget.pronunciation.isNotEmpty && widget.pronunciation != widget.romanized
+                                ? 'Phát âm: "${widget.romanized}" [${widget.pronunciation}]'
+                                : 'Phát âm: "${widget.romanized}"',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w700,

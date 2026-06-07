@@ -3,10 +3,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 import '../services/scoring_service.dart';
-import '../services/ocr_service.dart';
+import '../services/score_service.dart';
 import '../data/stroke_guide_data.dart';
-import '../data/khmer_stroke_templates.dart';
+// import '../data/khmer_stroke_templates.dart';
 import 'dart:math' as math;
+import 'dart:async';
+import '../services/khmer_handwriting_service.dart';
+import '../services/handwriting_websocket_client.dart';
+
 
 /// ════════════════════════════════════════════════════════════════════
 /// KhmerWriteWidget — Widget VIẾT tái sử dụng
@@ -24,6 +28,7 @@ import 'dart:math' as math;
 
 class KhmerWriteWidget extends StatefulWidget {
   final String character;
+  final String label;
   final VoidCallback? onComplete;
   final bool showStrokeGuide;
   final bool enableOcr;
@@ -35,10 +40,12 @@ class KhmerWriteWidget extends StatefulWidget {
   final double? passThreshold;
   final double? outsideThreshold;
   final double? toleranceRadius;
+  final bool isCompound;
 
   const KhmerWriteWidget({
     super.key,
     required this.character,
+    this.label = 'chữ',
     this.onComplete,
     this.showStrokeGuide = true,
     this.enableOcr = false,
@@ -50,6 +57,7 @@ class KhmerWriteWidget extends StatefulWidget {
     this.passThreshold,
     this.outsideThreshold,
     this.toleranceRadius,
+    this.isCompound = false,
   });
 
   @override
@@ -58,12 +66,21 @@ class KhmerWriteWidget extends StatefulWidget {
 
 class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
     with SingleTickerProviderStateMixin {
+  bool get _isCompound => widget.isCompound || widget.character.trim().replaceAll('\u25CC', '').length > 1;
+
   final List<List<Offset>> _strokes = [];
   List<Offset> _current = [];
+  final List<List<StrokePoint>> _strokeTimestamps = [];
+  List<StrokePoint> _currentTimestamped = [];
+
   bool? _passed;
   bool _showHint = false;
   WritingResult? _result;
   RecognitionResult? _recResult;
+  StrokeAnalysisResult? _backendResult;
+  StreamSubscription<StrokeAnalysisResult>? _backendSub;
+  int? _expectedStrokeCount;
+
   bool _checking = false;
   final GlobalKey _canvasKey = GlobalKey();
 
@@ -76,93 +93,196 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    // Asynchronously preload the high-fidelity font shape template
-    KhmerStrokeTemplateData.loadDynamicFontTemplate(widget.character);
+
+    // Initialize Tier 1 (ML Kit)
+    KhmerHandwritingService.instance.initialize().catchError((e) {
+      debugPrint('[KhmerWriteWidget] ML Kit init error: $e');
+    });
+
+    // Initialize Tier 2 (WebSocket)
+    final wsClient = HandwritingWebSocketClient.instance;
+    wsClient.connect();
+
+    _backendSub = wsClient.resultStream.listen((result) {
+      if (mounted) {
+        setState(() => _backendResult = result);
+      }
+    });
+
+    _fetchCharacterInfo();
+  }
+
+  Future<void> _fetchCharacterInfo() async {
+    try {
+      final info = await HandwritingWebSocketClient.instance
+          .getCharacterInfo(widget.character);
+      if (info != null && mounted) {
+        setState(() => _expectedStrokeCount = info.totalStrokes);
+      }
+    } catch (e) {
+      debugPrint('[KhmerWriteWidget] Character info fetch error: $e');
+    }
   }
 
   @override
   void dispose() {
+    _backendSub?.cancel();
     _bounceCtrl.dispose();
     super.dispose();
   }
 
   void _clear() => setState(() {
         _strokes.clear();
+        _strokeTimestamps.clear();
         _current = [];
+        _currentTimestamped = [];
         _passed = null;
         _result = null;
         _recResult = null;
+        _backendResult = null;
       });
 
   Future<void> _check() async {
-    if (_checking) return;
+    if (_checking || _strokes.isEmpty) return;
     setState(() => _checking = true);
 
+    final targetChar = widget.character;
+
     try {
-      // Try OCR first if enabled
-      if (widget.enableOcr) {
-        final canvasBox =
-            _canvasKey.currentContext?.findRenderObject() as RenderBox?;
-        if (canvasBox != null) {
-          final size = canvasBox.size;
-          final pngPath = await OcrService.instance.saveStrokesAsPng(
-            strokes: _strokes,
-            width: size.width,
-            height: size.height,
-          );
-          if (pngPath != null) {
-            final ocrResult = await OcrService.instance.recognizeFromFile(
-              pngPath,
-              expectedText: widget.character,
-            );
-            if (ocrResult.ocrAvailable && ocrResult.recognizedText.isNotEmpty) {
-              final writingResult = ScoringService.instance.scoreWritingOcr(
-                recognized: ocrResult.recognizedText,
-                expected: widget.character,
-              );
-              setState(() {
-                _result = writingResult;
-                _passed = writingResult.passed;
-              });
-              if (writingResult.passed) {
-                _bounceCtrl.forward(from: 0);
-                widget.onComplete?.call();
-              }
-              setState(() => _checking = false);
-              return;
+      // ── Tier 1: ML Kit on-device recognition ──────────────────
+      bool isTier1Correct = false;
+      bool finalPassed = false;
+      double finalScore = 0;
+      int finalStars = 0;
+      String finalFeedback = 'Hãy thử viết lại nhé! 💪';
+      List<String> finalTips = [];
+
+      final bool isVowel = widget.character.contains('◌') ||
+          widget.character.runes.any((r) => r >= 0x17B6 && r <= 0x17D3);
+
+      try {
+        final mlResult = await KhmerHandwritingService.instance
+            .recognizeAndValidate(
+          strokes: _strokeTimestamps,
+          targetCharacter: targetChar,
+          expectedStrokeCount: _expectedStrokeCount,
+        );
+
+        if (mlResult.isCorrect) {
+          isTier1Correct = true;
+          finalPassed = true;
+          finalScore = 85.0; // Base score — refined by Tier 2
+          finalStars = 2;
+          finalFeedback = mlResult.message;
+        } else {
+          if (mlResult.rejectionReason == RejectionReason.strokeCountMismatch) {
+            finalTips.add('Kiểm tra lại số nét viết nhé!');
+          }
+          if (mlResult.rejectionReason == RejectionReason.notInTopThree) {
+            finalTips.add('Quan sát mẫu chữ rồi viết lại cho giống nhé!');
+          }
+        }
+
+        debugPrint(
+          '[KhmerWriteWidget] Tier 1 result: isCorrect=$isTier1Correct, '
+          'recognized=${mlResult.recognizedCharacter}, '
+          'confidence=${mlResult.confidence}',
+        );
+      } catch (e) {
+        debugPrint('[KhmerWriteWidget] ML Kit error: $e');
+      }
+
+      // ── Tier 2: Send to backend for geometric analysis ────────
+      // We await the result synchronously to get the definitive evaluation
+      try {
+        final backendRes = await HandwritingWebSocketClient.instance.analyzeStrokes(
+          strokes: _strokeTimestamps,
+          targetCharacter: targetChar,
+        );
+        _backendResult = backendRes;
+
+        if (backendRes.success) {
+          if (isTier1Correct) {
+            // Tier 1 already passed. Use backend results to refine score/stars.
+            finalScore = backendRes.similarityScore.toDouble();
+            finalStars = backendRes.stars;
+            finalFeedback = backendRes.feedback;
+            finalPassed = backendRes.passed;
+          } else {
+            if (isVowel || _isCompound) {
+              // Standalone combining vowels and compound characters relax Tier 1 (ML Kit), so we rely 100% on Tier 2.
+              finalPassed = backendRes.passed;
+              finalScore = backendRes.similarityScore.toDouble();
+              finalStars = backendRes.stars;
+              finalFeedback = backendRes.feedback;
+            } else {
+              // Consonants require BOTH Tier 1 and Tier 2 to pass
+              finalPassed = false;
+              finalScore = backendRes.similarityScore.toDouble();
+              finalStars = 0;
+              finalFeedback = backendRes.feedback;
             }
           }
+        } else {
+          // If Tier 2 fails to analyze properly, default to failed unless Tier 1 was correct
+          if (!isTier1Correct) {
+            finalPassed = false;
+            finalScore = 30.0;
+            finalStars = 0;
+            finalFeedback = backendRes.feedback.isNotEmpty
+                ? backendRes.feedback
+                : 'Nét vẽ chưa đúng, con thử viết lại nhé! 💪';
+          }
+        }
+      } catch (e) {
+        debugPrint('[KhmerWriteWidget] Tier 2 error: $e');
+        if (!isTier1Correct) {
+          finalPassed = false;
+          finalScore = 30.0;
+          finalStars = 0;
+          finalFeedback = 'Lỗi kết nối máy chủ phân tích. Hãy thử lại!';
         }
       }
 
-      // Fallback: advanced $1 shape recognizer with grid + direction analysis
-      final canvasBox =
-          _canvasKey.currentContext?.findRenderObject() as RenderBox?;
-      final size = canvasBox?.size ?? const Size(300, 300);
+      // ── Save progress via ScoreService ─────────────────────────
+      try {
+        final scoreService = await ScoreService.getInstance();
+        await scoreService.completeWritingLesson(
+          0, // dummy index
+          finalStars,
+          lessonId: null,
+          strokes: _strokes,
+          targetCharacter: targetChar,
+          passed: finalPassed,
+        );
+      } catch (e) {
+        debugPrint('[KhmerWriteWidget] Score save error: $e');
+      }
 
-      final recognition = ScoringService.instance.recognizeWriting(
-        character: widget.character,
-        strokes: _strokes,
-        canvasSize: size,
-        minPointsOverride: widget.minPointsRequired,
-        minStrokesOverride: widget.minStrokesRequired,
-        passThresholdOverride: widget.passThreshold,
-        outsideThresholdOverride: widget.outsideThreshold,
-        toleranceRadiusOverride: widget.toleranceRadius,
+      // ── Update UI ──────────────────────────────────────────────
+      final writingResult = WritingResult(
+        score: finalScore.round(),
+        passed: finalPassed,
+        stars: finalStars,
+        feedback: finalFeedback,
       );
 
       setState(() {
-        _recResult = recognition;
-        _result = WritingResult(
-          score: recognition.finalScore.round(),
-          passed: recognition.passed,
-          stars: recognition.stars,
-          feedback: recognition.feedback,
+        _recResult = RecognitionResult(
+          finalScore: finalScore,
+          passed: finalPassed,
+          shapeScore: finalScore,
+          strokeScore: finalScore,
+          directionScore: finalScore,
+          feedback: finalFeedback,
+          tips: finalTips,
+          stars: finalStars,
         );
-        _passed = recognition.passed;
+        _result = writingResult;
+        _passed = finalPassed;
       });
 
-      if (recognition.passed) {
+      if (finalPassed) {
         _bounceCtrl.forward(from: 0);
         widget.onComplete?.call();
       }
@@ -175,15 +295,17 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
   }
 
   double get _guideFontSize {
-    final bool isDepMark = widget.character.contains('◌') ||
-        widget.character.runes.any((r) => r >= 0x17B6 && r <= 0x17D3);
-    return isDepMark ? 220.sp : 260.sp;
+    final bool isStandaloneMark = widget.character.contains('◌') ||
+        (widget.character.length == 1 &&
+            widget.character.runes.any((r) => r >= 0x17B6 && r <= 0x17D3));
+    return isStandaloneMark ? 220.sp : 260.sp;
   }
 
   double _getGuideShiftY(double height) {
-    final bool isDepMark = widget.character.contains('◌') ||
-        widget.character.runes.any((r) => r >= 0x17B6 && r <= 0x17D3);
-    if (!isDepMark) return 0.0;
+    final bool isStandaloneMark = widget.character.contains('◌') ||
+        (widget.character.length == 1 &&
+            widget.character.runes.any((r) => r >= 0x17B6 && r <= 0x17D3));
+    if (!isStandaloneMark) return 0.0;
     
     final isBelow = widget.character.contains('ុ') ||
         widget.character.contains('ូ') ||
@@ -204,6 +326,13 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
 
   @override
   Widget build(BuildContext context) {
+    final bool isVowel = widget.character.contains('◌') ||
+        widget.character.runes.any((r) => r >= 0x17B6 && r <= 0x17D3);
+    final hasValidBackend = _backendResult != null && _backendResult!.success;
+    final displayPassed = hasValidBackend 
+        ? (isVowel ? _backendResult!.passed : (_backendResult!.passed && (_passed ?? false)))
+        : (_passed ?? false);
+
     return Column(
       children: [
         // ── Header ──
@@ -221,7 +350,7 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
               ),
               SizedBox(width: 8.w),
               Text(
-                _showHint ? 'Gợi ý viết' : 'Viết chữ',
+                _showHint ? 'Gợi ý viết ${widget.label}' : 'Viết ${widget.label}',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w800,
@@ -292,7 +421,7 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
                               widget.accentColor,
                               widget.accentColorDark,
                             ])
-                          : _passed!
+                          : displayPassed
                               ? const LinearGradient(colors: [
                                   AppColors.tertiary,
                                   AppColors.tertiaryDark,
@@ -306,7 +435,7 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
                         BoxShadow(
                           color: (_passed == null
                                   ? widget.accentColor
-                                  : _passed!
+                                  : displayPassed
                                       ? AppColors.tertiary
                                       : AppColors.coral)
                               .withValues(alpha: 0.3),
@@ -332,7 +461,7 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
                           Icon(
                             _passed == null
                                 ? Icons.check_circle_outline_rounded
-                                : _passed!
+                                : displayPassed
                                     ? Icons.celebration_rounded
                                     : Icons.refresh_rounded,
                             size: 16.sp,
@@ -344,7 +473,7 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
                               ? 'Đang chấm...'
                               : _passed == null
                                   ? 'Kiểm tra'
-                                  : _passed!
+                                  : displayPassed
                                       ? 'Tuyệt vời! 🎉'
                                       : 'Thử lại',
                           style: GoogleFonts.plusJakartaSans(
@@ -469,6 +598,12 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
       child: LayoutBuilder(
         builder: (context, constraints) {
           final height = constraints.maxHeight;
+          final bool isVowel = widget.character.contains('◌') ||
+              widget.character.runes.any((r) => r >= 0x17B6 && r <= 0x17D3);
+          final hasValidBackend = _backendResult != null && _backendResult!.success;
+          final displayPassed = hasValidBackend 
+              ? ((isVowel || _isCompound) ? _backendResult!.passed : (_backendResult!.passed && (_passed ?? false)))
+              : (_passed ?? false);
           return Container(
             key: _canvasKey,
             decoration: BoxDecoration(
@@ -477,7 +612,7 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
               border: Border.all(
                 color: _passed == null
                     ? const Color(0xFFD7CCC8)
-                    : _passed!
+                    : displayPassed
                         ? AppColors.tertiary
                         : AppColors.coral,
                 width: 2.w,
@@ -513,16 +648,36 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onPanStart: (d) => setState(() {
+                  final now = DateTime.now().millisecondsSinceEpoch;
                   _current = [d.localPosition];
+                  _currentTimestamped = [
+                    StrokePoint(
+                      x: d.localPosition.dx,
+                      y: d.localPosition.dy,
+                      t: now,
+                    ),
+                  ];
                   _passed = null;
                   _result = null;
+                  _recResult = null;
+                  _backendResult = null;
                 }),
-                onPanUpdate: (d) =>
-                    setState(() => _current.add(d.localPosition)),
+                onPanUpdate: (d) => setState(() {
+                  _current.add(d.localPosition);
+                  _currentTimestamped.add(
+                    StrokePoint(
+                      x: d.localPosition.dx,
+                      y: d.localPosition.dy,
+                      t: DateTime.now().millisecondsSinceEpoch,
+                    ),
+                  );
+                }),
                 onPanEnd: (_) => setState(() {
                   if (_current.isNotEmpty) {
                     _strokes.add(List.from(_current));
+                    _strokeTimestamps.add(List.from(_currentTimestamped));
                     _current = [];
+                    _currentTimestamped = [];
                   }
                 }),
                 child: SizedBox.expand(
@@ -537,118 +692,118 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
                   left: 12.w,
                   right: 12.w,
                   bottom: 12.h,
-                  child: AnimatedBuilder(
-                    animation: _bounceCtrl,
-                    builder: (context, _) => Transform.scale(
-                      scale: _passed!
-                          ? 1.0 + 0.05 * math.sin(_bounceCtrl.value * math.pi)
-                          : 1.0,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 14.w,
-                          vertical: 8.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _passed!
-                              ? AppColors.tertiarySurface
-                              : AppColors.coralSurface,
-                          borderRadius: BorderRadius.circular(16.r),
-                          border: Border.all(
-                            color: _passed!
-                                ? AppColors.tertiary.withValues(alpha: 0.35)
-                                : AppColors.coral.withValues(alpha: 0.35),
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 10.r,
-                              offset: Offset(0, 4.h),
+                  child: Builder(
+                    builder: (context) {
+                       final bool isVowel = widget.character.contains('◌') ||
+                           widget.character.runes.any((r) => r >= 0x17B6 && r <= 0x17D3);
+                       final hasValidBackend = _backendResult != null && _backendResult!.success;
+                       final displayPassed = hasValidBackend 
+                           ? ((isVowel || _isCompound) ? _backendResult!.passed : (_backendResult!.passed && _passed!))
+                           : _passed!;
+                      final displayScore = hasValidBackend ? (displayPassed ? _backendResult!.similarityScore.toDouble() : 30.0) : _result!.score;
+                      final displayStars = hasValidBackend ? (displayPassed ? _backendResult!.stars : 0) : _result!.stars;
+                      final displayFeedback = hasValidBackend ? (displayPassed ? _backendResult!.feedback : (_passed! ? _backendResult!.feedback : _result!.feedback)) : _result!.feedback;
+
+                      return AnimatedBuilder(
+                        animation: _bounceCtrl,
+                        builder: (context, _) => Transform.scale(
+                          scale: displayPassed
+                              ? 1.0 + 0.05 * math.sin(_bounceCtrl.value * math.pi)
+                              : 1.0,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 14.w,
+                              vertical: 8.h,
                             ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  _passed! ? '🎉' : '😅',
-                                  style: TextStyle(fontSize: 18.sp),
+                            decoration: BoxDecoration(
+                              color: displayPassed
+                                  ? AppColors.tertiarySurface
+                                  : AppColors.coralSurface,
+                              borderRadius: BorderRadius.circular(16.r),
+                              border: Border.all(
+                                color: displayPassed
+                                    ? AppColors.tertiary.withValues(alpha: 0.35)
+                                    : AppColors.coral.withValues(alpha: 0.35),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.08),
+                                  blurRadius: 10.r,
+                                  offset: Offset(0, 4.h),
                                 ),
-                                SizedBox(width: 8.w),
-                                Expanded(
-                                  child: Text(
-                                    _passed!
-                                        ? 'Tuyệt vời! ${_result!.score}%'
-                                        : 'Chưa đạt! ${_result!.score}%',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w800,
-                                      color: _passed!
-                                          ? AppColors.tertiaryDark
-                                          : AppColors.coralDark,
-                                    ),
-                                  ),
-                                ),
-                                if (_passed!) ...[
-                                  SizedBox(width: 4.w),
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: List.generate(
-                                      3,
-                                      (i) => Icon(
-                                        i < _result!.stars
-                                            ? Icons.star_rounded
-                                            : Icons.star_outline_rounded,
-                                        size: 18.w,
-                                        color: i < _result!.stars
-                                            ? AppColors.secondary
-                                            : AppColors.surfaceContainerHighest,
-                                      ),
-                                    ),
-                                  ),
-                                ],
                               ],
                             ),
-                            if (_recResult != null) ...[
-                              SizedBox(height: 6.h),
-                              Divider(
-                                color: (_passed! ? AppColors.tertiary : AppColors.coral).withValues(alpha: 0.15),
-                                height: 1.h,
-                              ),
-                              SizedBox(height: 6.h),
-                              // Feedback lines with visual check/cross markers
-                              ..._recResult!.feedback.split('\n').map((line) {
-                                final isCorrect = line.startsWith('✓');
-                                final isIncorrect = line.startsWith('✗');
-                                final isWarning = line.startsWith('△');
-                                final hasPrefix = isCorrect || isIncorrect || isWarning;
-                                final displayLine = hasPrefix ? line.substring(2) : line;
-                                return Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 2.h),
-                                  child: Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      displayPassed ? '🎉' : '😅',
+                                      style: TextStyle(fontSize: 18.sp),
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Expanded(
+                                      child: Text(
+                                        displayPassed
+                                            ? 'Tuyệt vời! $displayScore%'
+                                            : 'Chưa đạt! $displayScore%',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w800,
+                                          color: displayPassed
+                                              ? AppColors.tertiaryDark
+                                              : AppColors.coralDark,
+                                        ),
+                                      ),
+                                    ),
+                                    if (displayPassed) ...[
+                                      SizedBox(width: 4.w),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: List.generate(
+                                          3,
+                                          (i) => Icon(
+                                            i < displayStars
+                                                ? Icons.star_rounded
+                                                : Icons.star_outline_rounded,
+                                            size: 18.w,
+                                            color: i < displayStars
+                                                ? AppColors.secondary
+                                                : AppColors.surfaceContainerHighest,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                SizedBox(height: 6.h),
+                                Divider(
+                                  color: (displayPassed ? AppColors.tertiary : AppColors.coral).withValues(alpha: 0.15),
+                                  height: 1.h,
+                                ),
+                                SizedBox(height: 6.h),
+                                if (hasValidBackend) ...[
+                                  // Detailed Tier 2 Geometric Analysis Results
+                                  Row(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Icon(
-                                        isCorrect
+                                        _backendResult!.passed
                                             ? Icons.check_circle_rounded
-                                            : isIncorrect
-                                                ? Icons.cancel_rounded
-                                                : Icons.info_rounded,
+                                            : Icons.info_rounded,
                                         size: 14.w,
-                                        color: isCorrect
+                                        color: _backendResult!.passed
                                             ? Colors.green[700]
-                                            : isIncorrect
-                                                ? Colors.red[700]
-                                                : Colors.orange[700],
+                                            : Colors.orange[700],
                                       ),
                                       SizedBox(width: 8.w),
                                       Expanded(
                                         child: Text(
-                                          displayLine,
+                                          displayFeedback,
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 12.sp,
                                             fontWeight: FontWeight.w600,
@@ -658,61 +813,140 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
                                       ),
                                     ],
                                   ),
-                                );
-                              }),
-                              if (!_passed! && _recResult!.tips.isNotEmpty) ...[
-                                SizedBox(height: 4.h),
-                                Text(
-                                  'Gợi ý sửa:',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 11.sp,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.coralDark,
-                                  ),
-                                ),
-                                ..._recResult!.tips.map((tip) => Padding(
-                                  padding: EdgeInsets.only(left: 4.w, top: 2.h),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '•',
-                                        style: TextStyle(
-                                          fontSize: 14.sp,
-                                          color: AppColors.coral,
-                                        ),
+                                  if (_backendResult!.errors.isNotEmpty) ...[
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      'Gợi ý sửa nét:',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 11.sp,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.coralDark,
                                       ),
-                                      SizedBox(width: 6.w),
-                                      Expanded(
-                                        child: Text(
-                                          tip,
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 11.sp,
-                                            fontWeight: FontWeight.w500,
-                                            color: AppColors.textSecondary,
+                                    ),
+                                    ..._backendResult!.errors.map((error) => Padding(
+                                      padding: EdgeInsets.only(left: 4.w, top: 2.h),
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '•',
+                                            style: TextStyle(
+                                              fontSize: 14.sp,
+                                              color: AppColors.coral,
+                                            ),
                                           ),
-                                        ),
+                                          SizedBox(width: 6.w),
+                                          Expanded(
+                                            child: Text(
+                                              error,
+                                              style: GoogleFonts.plusJakartaSans(
+                                                fontSize: 11.sp,
+                                                fontWeight: FontWeight.w500,
+                                                color: AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ],
+                                    )),
+                                  ],
+                                ] else if (_recResult != null) ...[
+                                  // Fallback to local Tier 1 feedback while waiting
+                                  ..._recResult!.feedback.split('\n').map((line) {
+                                    final isCorrect = line.startsWith('✓');
+                                    final isIncorrect = line.startsWith('✗');
+                                    final isWarning = line.startsWith('△');
+                                    final hasPrefix = isCorrect || isIncorrect || isWarning;
+                                    final displayLine = hasPrefix ? line.substring(2) : line;
+                                    return Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 2.h),
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Icon(
+                                            isCorrect
+                                                ? Icons.check_circle_rounded
+                                                : isIncorrect
+                                                    ? Icons.cancel_rounded
+                                                    : Icons.info_rounded,
+                                            size: 14.w,
+                                            color: isCorrect
+                                                ? Colors.green[700]
+                                                : isIncorrect
+                                                    ? Colors.red[700]
+                                                    : Colors.orange[700],
+                                          ),
+                                          SizedBox(width: 8.w),
+                                          Expanded(
+                                            child: Text(
+                                              displayLine,
+                                              style: GoogleFonts.plusJakartaSans(
+                                                fontSize: 12.sp,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColors.textPrimary,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }),
+                                  if (!_passed! && _recResult!.tips.isNotEmpty) ...[
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      'Gợi ý sửa:',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 11.sp,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.coralDark,
+                                      ),
+                                    ),
+                                    ..._recResult!.tips.map((tip) => Padding(
+                                      padding: EdgeInsets.only(left: 4.w, top: 2.h),
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '•',
+                                            style: TextStyle(
+                                              fontSize: 14.sp,
+                                              color: AppColors.coral,
+                                            ),
+                                          ),
+                                          SizedBox(width: 6.w),
+                                          Expanded(
+                                            child: Text(
+                                              tip,
+                                              style: GoogleFonts.plusJakartaSans(
+                                                fontSize: 11.sp,
+                                                fontWeight: FontWeight.w500,
+                                                color: AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )),
+                                  ],
+                                ] else ...[
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    _result!.feedback,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: displayPassed
+                                          ? AppColors.tertiaryDark
+                                          : AppColors.coralDark,
+                                    ),
                                   ),
-                                )),
+                                ],
                               ],
-                            ] else ...[
-                              // Fallback display if OCR result
-                              SizedBox(height: 4.h),
-                              Text(
-                                _result!.feedback,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: _passed! ? AppColors.tertiaryDark : AppColors.coralDark,
-                                ),
-                              ),
-                            ],
-                          ],
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    }
                   ),
                 ),
             ],

@@ -12,7 +12,7 @@ import '../../widgets/khmer_listen_widget.dart';
 import '../../widgets/khmer_speak_widget.dart';
 import '../../widgets/khmer_write_widget.dart';
 
-/// Màn hình chi tiết số Khmer — Tích hợp 3 bước học inline (Nghe, Nói, Viết) tương tự nguyên âm
+/// Màn hình chi tiết số Khmer — Tích hợp 2 bước học inline (Nghe, Viết) tương tự nguyên âm
 class NumberDetailScreen extends StatefulWidget {
   final int initialIndex;
   const NumberDetailScreen({super.key, this.initialIndex = 0});
@@ -350,7 +350,9 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
         _buildHeader(),
         Expanded(
           child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
+            physics: _activeSheet == 3
+                ? const NeverScrollableScrollPhysics()
+                : const BouncingScrollPhysics(),
             padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
             child: ScaleTransition(
               scale: _scaleAnim,
@@ -697,17 +699,12 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
             if (_activeSheet == 2)
               Expanded(
                 child: KhmerSpeakWidget(
-                  character: _num.character,
+                  targetWord: _num.khmerWord.isNotEmpty ? _num.khmerWord : _num.character,
                   romanized: _num.romanized,
-                  pronunciation: _num.pronunciation,
-                  // Chấp nhận phát âm tiếng Việt phiên âm của chữ Khmer
-                  acceptedAnswers: [
-                    _num.pronunciation,
-                  ],
-                  accentColor: AppColors.coral,
-                  accentColorDark: AppColors.coralDark,
-                  surfaceColor: AppColors.coralSurface,
-                  passThreshold: 70, // Ngưỡng đạt 70% — đúng yêu cầu chuẩn
+                  meaning: 'Số ${_num.value}',
+                  accentColor: const Color(0xFF1E88E5),
+                  accentColorDark: const Color(0xFF1565C0),
+                  surfaceColor: const Color(0xFFEEF4FC),
                   onComplete: () => _markStepComplete(1),
                 ),
               ),
@@ -715,6 +712,7 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
               Expanded(
                 child: KhmerWriteWidget(
                   character: _num.character,
+                  label: 'số',
                   accentColor: AppColors.primary,
                   accentColorDark: AppColors.primaryDark,
                   surfaceColor: AppColors.primarySurface,
@@ -765,7 +763,7 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
             accentColor: const Color(0xFF43A047),
             stepIdx: 0),
       )),
-      SizedBox(width: 10.w),
+      SizedBox(width: 8.w),
       Expanded(
           child: GestureDetector(
         onTap: _showSpeakSheet,
@@ -773,11 +771,11 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
             imagePath: 'image/Mic.png',
             label: 'Nói',
             sub: 'Luyện phát âm',
-            bgColor: const Color(0xFFFFF3E0),
-            accentColor: const Color(0xFFF57C00),
+            bgColor: const Color(0xFFE3F2FD),
+            accentColor: const Color(0xFF1E88E5),
             stepIdx: 1),
       )),
-      SizedBox(width: 10.w),
+      SizedBox(width: 8.w),
       Expanded(
           child: GestureDetector(
         onTap: _showWriteSheet,
@@ -844,110 +842,94 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
     final canPrev = _canGo(_idx - 1);
     final canNext = _canGo(_idx + 1);
     final labels = ['Nghe', 'Nói', 'Viết'];
-    final stepColors = [
-      const Color(0xFF3D5AFE),
-      const Color(0xFFFF9100),
-      const Color(0xFF7C4DFF)
-    ];
+    final stepColors = [const Color(0xFF43A047), const Color(0xFF1E88E5), const Color(0xFF5E35B1)];
     return Row(children: [
       GestureDetector(
         onTap: canPrev ? () => _goTo(_idx - 1) : null,
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
           decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16.r),
-              border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.12)),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 6.r,
-                    offset: Offset(0, 2.h))
-              ]),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(color: const Color(0xFF1E88E5).withValues(alpha: 0.12)),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6.r, offset: Offset(0, 2.h))]),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(Icons.chevron_left_rounded,
-                color: canPrev ? AppColors.primary : AppColors.textHint,
-                size: 18.w),
-            Text('Trước',
-                style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w700,
-                    color: canPrev ? AppColors.primary : AppColors.textHint)),
+            Icon(Icons.chevron_left_rounded, color: canPrev ? const Color(0xFF1E88E5) : AppColors.textHint, size: 18.w),
+            Text('Trước', style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700, color: canPrev ? const Color(0xFF1E88E5) : AppColors.textHint)),
           ]),
         ),
       ),
       SizedBox(width: 6.w),
       Expanded(
-          child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(5, (i) {
-                if (i.isOdd) {
-                  final prevDone = _isStepComplete(i ~/ 2);
-                  return Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: List.generate(
-                          3,
-                          (_) => Container(
-                                width: 4.w,
-                                height: 2.5.h,
-                                margin:
-                                    EdgeInsets.symmetric(horizontal: 1.5.w),
-                                decoration: BoxDecoration(
-                                    color: prevDone
-                                        ? stepColors[i ~/ 2]
-                                            .withValues(alpha: 0.5)
-                                        : const Color(0xFFE0E0E0),
-                                    borderRadius: BorderRadius.circular(1.r)),
-                              )));
-                }
-                final stepI = i ~/ 2;
-                final done = _isStepComplete(stepI);
-                return Column(mainAxisSize: MainAxisSize.min, children: [
-                  Container(
-                      width: 28.w,
-                      height: 28.w,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: done
-                                ? [
-                                    stepColors[stepI],
-                                    stepColors[stepI].withValues(alpha: 0.7)
-                                  ]
-                                : [
-                                    const Color(0xFFE8E8E8),
-                                    const Color(0xFFD8D8D8)
-                                  ]),
-                        boxShadow: done
-                            ? [
-                                BoxShadow(
-                                    color: stepColors[stepI]
-                                        .withValues(alpha: 0.35),
-                                    blurRadius: 6.r,
-                                    offset: Offset(0, 2.h))
-                              ]
-                            : null,
-                      ),
-                      child: Center(
-                          child: done
-                              ? Icon(Icons.check_rounded,
-                                  size: 14.w, color: Colors.white)
-                              : Text('${stepI + 1}',
-                                  style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white)))),
-                  SizedBox(height: 2.h),
-                  Text(labels[stepI],
-                      style: GoogleFonts.plusJakartaSans(
-                          fontSize: 9.sp,
-                          fontWeight: FontWeight.w700,
-                          color: done ? stepColors[stepI] : AppColors.textHint)),
-                ]);
-              }))),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(5, (i) {
+            if (i.isOdd) {
+              final stepI = i ~/ 2;
+              final prevDone = _isStepComplete(stepI);
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(3, (_) => Container(
+                  width: 4.w,
+                  height: 2.5.h,
+                  margin: EdgeInsets.symmetric(horizontal: 1.5.w),
+                  decoration: BoxDecoration(
+                    color: prevDone
+                        ? stepColors[stepI].withValues(alpha: 0.5)
+                        : const Color(0xFFE0E0E0),
+                    borderRadius: BorderRadius.circular(1.r),
+                  ),
+                )),
+              );
+            }
+            final stepI = i ~/ 2;
+            final done = _isStepComplete(stepI);
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 28.w,
+                  height: 28.w,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: done
+                          ? [stepColors[stepI], stepColors[stepI].withValues(alpha: 0.7)]
+                          : [const Color(0xFFE8E8E8), const Color(0xFFD8D8D8)],
+                    ),
+                    boxShadow: done
+                        ? [BoxShadow(color: stepColors[stepI].withValues(alpha: 0.35), blurRadius: 6.r, offset: Offset(0, 2.h))]
+                        : null,
+                  ),
+                  child: Center(
+                    child: done
+                        ? Icon(Icons.check_rounded, size: 14.w, color: Colors.white)
+                        : Text(
+                            '${stepI + 1}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  labels[stepI],
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.w700,
+                    color: done ? stepColors[stepI] : AppColors.textHint,
+                  ),
+                ),
+              ],
+            );
+          }),
+        ),
+      ),
       SizedBox(width: 6.w),
       GestureDetector(
         onTap: () {
@@ -966,30 +948,14 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
           decoration: BoxDecoration(
-              gradient: canNext
-                  ? const LinearGradient(
-                      colors: [Color(0xFF42A5F5), Color(0xFF1E88E5)])
-                  : null,
-              color: canNext ? null : AppColors.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(20.r),
-              boxShadow: canNext
-                  ? [
-                      BoxShadow(
-                          color:
-                              const Color(0xFF1E88E5).withValues(alpha: 0.35),
-                          blurRadius: 10.r,
-                          offset: Offset(0, 3.h))
-                    ]
-                  : null),
+            gradient: canNext ? const LinearGradient(colors: [Color(0xFF42A5F5), Color(0xFF1E88E5)]) : null,
+            color: canNext ? null : AppColors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(20.r),
+            boxShadow: canNext ? [BoxShadow(color: const Color(0xFF1E88E5).withValues(alpha: 0.35), blurRadius: 10.r, offset: Offset(0, 3.h))] : null),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Text(canNext ? 'Tiếp theo' : 'Khóa',
-                style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w700,
-                    color: canNext ? Colors.white : AppColors.textHint)),
+            Text(canNext ? 'Tiếp theo' : 'Khóa', style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: canNext ? Colors.white : AppColors.textHint)),
             SizedBox(width: 4.w),
-            Icon(canNext ? Icons.chevron_right_rounded : Icons.lock_rounded,
-                color: canNext ? Colors.white : AppColors.textHint, size: 18.w),
+            Icon(canNext ? Icons.chevron_right_rounded : Icons.lock_rounded, color: canNext ? Colors.white : AppColors.textHint, size: 18.w),
           ]),
         ),
       ),

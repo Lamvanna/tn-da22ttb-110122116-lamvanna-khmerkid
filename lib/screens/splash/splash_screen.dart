@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:math' as math;
 import '../auth/login_screen.dart';
-import '../../data/khmer_stroke_templates.dart';
+// import '../../data/khmer_stroke_templates.dart';
 
 /// Màn hình khởi động - Background image + animated overlays
 class SplashScreen extends StatefulWidget {
@@ -24,8 +24,7 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // Preload all 33 high-fidelity Khmer consonant outline templates
-    _preloadTemplates();
+    // Preload templates removed since handwriting recognition is disabled
 
     // Fade in
     _fadeCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
@@ -54,20 +53,6 @@ class _SplashScreenState extends State<SplashScreen>
       if (!mounted) return;
       _navigateToLogin();
     });
-  }
-
-  Future<void> _preloadTemplates() async {
-    const consonants = [
-      'ក', 'ខ', 'គ', 'ឃ', 'ង', 'ច', 'ឆ', 'ជ', 'ឈ', 'ញ',
-      'ដ', 'ឋ', 'ឌ', 'ឍ', 'ណ', 'ត', 'ថ', 'ទ', 'ធ', 'ន',
-      'ប', 'ផ', 'ព', 'ភ', 'ម', 'យ', 'រ', 'ល', 'វ', 'ស',
-      'ហ', 'ឡ', 'អ'
-    ];
-    // Queue background preloading tasks in parallel
-    for (final c in consonants) {
-      KhmerStrokeTemplateData.loadDynamicFontTemplate(c);
-    }
-    debugPrint('[SplashScreen] ⚡ Successfully queued preloading of 33 Khmer consonant templates!');
   }
 
   void _navigateToLogin() {

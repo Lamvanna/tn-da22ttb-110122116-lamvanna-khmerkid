@@ -9,7 +9,8 @@
     "seed": "node src/seeders/seedAll.js",
     "seed:badges": "node src/seeders/seedBadges.js",
     "seed:missions": "node src/seeders/seedMissions.js",
-    "seed:lessons": "node src/seeders/seedLessons.js"
+    "seed:lessons": "node src/seeders/seedLessons.js",
+    "test": "jest"
   },
   "keywords": [
     "khmer",
@@ -35,9 +36,12 @@
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "multer-storage-cloudinary": "^4.0.0",
+    "opentype.js": "^2.0.0",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
-    "socket.io": "^4.8.0"
+    "socket.io": "^4.8.0",
+    "@google-cloud/speech": "^5.6.0",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.7"

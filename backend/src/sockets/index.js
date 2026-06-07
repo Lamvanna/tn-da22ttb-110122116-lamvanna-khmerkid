@@ -11,6 +11,7 @@
 const { Server } = require('socket.io');
 const { verifyAccessToken } = require('../utils/token');
 const { SOCKET_EVENTS } = require('../constants');
+const { registerWritingHandler } = require('./writingHandler');
 
 let ioInstance = null;
 
@@ -66,6 +67,9 @@ const initSocket = (httpServer) => {
 
     // Join general notification room
     socket.join('broadcast');
+
+    // ── Register domain-specific handlers ──────────────────────
+    registerWritingHandler(socket, io);
 
     // Handle ping/pong for diagnostics
     socket.on('ping', () => {

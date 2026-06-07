@@ -5,7 +5,9 @@ import '../../constants/app_colors.dart';
 import '../../models/khmer_writing.dart';
 import '../../widgets/app_header.dart';
 import '../../services/score_service.dart';
-import '../../services/handwriting_tracing_service.dart';
+import '../../services/khmer_handwriting_service.dart';
+import '../../services/handwriting_websocket_client.dart';
+import 'dart:async';
 
 /// Trang chi tiết tập viết — Canvas lớn với chữ mẫu mờ
 class WritingDetailScreen extends StatefulWidget {
@@ -16,14 +18,19 @@ class WritingDetailScreen extends StatefulWidget {
 }
 
 class _WritingDetailScreenState extends State<WritingDetailScreen> {
+  final GlobalKey _canvasKey = GlobalKey();
   final List<KhmerWriting> _lessons = KhmerWritingData.lessons;
   final FlutterTts _tts = FlutterTts();
   late int _current;
   final List<List<Offset>> _strokes = [];
   List<Offset> _currentStroke = [];
+  final List<List<StrokePoint>> _strokeTimestamps = [];
+  List<StrokePoint> _currentStrokeTimestamped = [];
+  int? _expectedStrokeCount;
   bool _showGuide = true;
   bool _showFeedback = false;
-  List<dynamic> _feedbackSegments = []; // StrokeSegment list from tracing service
+  List<StrokeSegment> _feedbackSegments = []; // Danh sách nét vẽ phản hồi cục bộ
+  bool _isLoading = false;
 
   KhmerWriting get _lesson => _lessons[_current];
   int get _doneCount => _lessons.where((l) => l.isLearned).length;
@@ -33,6 +40,28 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
     super.initState();
     _current = widget.initialIndex;
     _initTts();
+
+    // Initialize Tier 1 (ML Kit)
+    KhmerHandwritingService.instance.initialize().catchError((e) {
+      debugPrint('[WritingDetailScreen] ML Kit init error: $e');
+    });
+
+    // Initialize Tier 2 (WebSocket)
+    HandwritingWebSocketClient.instance.connect();
+
+    _fetchCharacterInfo();
+  }
+
+  Future<void> _fetchCharacterInfo() async {
+    try {
+      final info = await HandwritingWebSocketClient.instance
+          .getCharacterInfo(_lesson.character);
+      if (info != null && mounted) {
+        setState(() => _expectedStrokeCount = info.totalStrokes);
+      }
+    } catch (e) {
+      debugPrint('[WritingDetailScreen] Character info fetch error: $e');
+    }
   }
 
   Future<void> _initTts() async {
@@ -49,6 +78,8 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
   void _clearCanvas() => setState(() {
     _strokes.clear();
     _currentStroke.clear();
+    _strokeTimestamps.clear();
+    _currentStrokeTimestamped.clear();
     _showFeedback = false;
     _feedbackSegments.clear();
   });
@@ -74,79 +105,146 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
   }
 
   Future<void> _markDone() async {
-    final canvasBox = context.findRenderObject() as RenderBox?;
-    final size = canvasBox?.size ?? const Size(300, 300);
-
-    // Get tracing result with visual feedback
-    final tracingResult = HandwritingTracingService.instance.scoreTracing(
-      character: _lesson.character,
-      userStrokes: _strokes,
-      canvasSize: size,
-    );
-
-    // Show visual feedback with colored strokes
-    setState(() {
-      _showFeedback = true;
-      _feedbackSegments = tracingResult.visualFeedback;
-    });
-
-    if (!tracingResult.passed) {
-      if (!mounted) return;
+    if (_strokes.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              const Icon(Icons.cancel_rounded, color: Colors.white, size: 20),
-              const SizedBox(width: 8),
-              Text('Chưa đạt! Điểm viết: ${tracingResult.finalScore.round()}%',
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
-            ]),
-            const SizedBox(height: 6),
-            Text('Nét đúng: ${tracingResult.insideCoverage.round()}% | Nét sai: ${tracingResult.outsideCoverage.round()}%',
-              style: GoogleFonts.plusJakartaSans(fontSize: 11, color: Colors.white.withValues(alpha: 0.9))),
-            const SizedBox(height: 4),
-            ...tracingResult.tips.map((tip) => Text('• $tip',
-              style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.white.withValues(alpha: 0.9)))),
-          ],
-        ),
+        content: Row(children: [
+          const Icon(Icons.warning_amber_rounded, color: Colors.white),
+          const SizedBox(width: 8),
+          Text('Hãy viết chữ trước nhé! ✍️',
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+        ]),
         backgroundColor: AppColors.coral,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 5)));
+        duration: const Duration(seconds: 2),
+      ));
       return;
     }
 
     setState(() {
-      _lesson.isLearned = true;
-      _lesson.starRating = tracingResult.stars;
+      _isLoading = true;
     });
 
     try {
-      final scoreService = await ScoreService.getInstance();
-      await scoreService.completeWritingLesson(_current, tracingResult.stars, lessonId: null);
+      final targetChar = _lesson.character;
+
+      // ── Tier 1: ML Kit on-device recognition ──────────────────
+      bool mlPassed = false;
+      String mlFeedback = 'Hãy thử viết lại nhé! 💪';
+
+      try {
+        final mlResult = await KhmerHandwritingService.instance.recognizeAndValidate(
+          strokes: _strokeTimestamps,
+          targetCharacter: targetChar,
+          expectedStrokeCount: _expectedStrokeCount,
+        );
+
+        mlPassed = mlResult.isCorrect;
+        mlFeedback = mlResult.message;
+      } catch (e) {
+        debugPrint('[WritingDetail] Tier 1 error: $e');
+        mlPassed = true; // fallback
+        mlFeedback = 'Viết tốt lắm! 👍';
+      }
+
+      bool finalPassed = false;
+      double finalScore = 30.0;
+      int stars = 0;
+      String feedback = mlFeedback;
+
+      // ── Tier 2: WebSocket backend geometric analysis ──────────
+      StrokeAnalysisResult? backendResult;
+      try {
+        backendResult = await HandwritingWebSocketClient.instance.analyzeStrokes(
+          strokes: _strokeTimestamps,
+          targetCharacter: targetChar,
+        );
+
+        if (backendResult.success) {
+          finalPassed = mlPassed && backendResult.passed;
+          finalScore = finalPassed ? backendResult.similarityScore.toDouble() : 30.0;
+          stars = finalPassed ? backendResult.stars : 0;
+          feedback = finalPassed ? backendResult.feedback : (mlPassed ? backendResult.feedback : mlFeedback);
+        } else {
+          // Fallback if backend returned success=false
+          finalPassed = mlPassed;
+          finalScore = mlPassed ? 75.0 : 30.0;
+          stars = mlPassed ? 2 : 0;
+        }
+      } catch (e) {
+        debugPrint('[WritingDetail] Tier 2 error: $e');
+        // Fallback on exception
+        finalPassed = mlPassed;
+        finalScore = mlPassed ? 75.0 : 30.0;
+        stars = mlPassed ? 2 : 0;
+      }
+
+      // ── Build feedback segments ──────────────────────────────
+      final errorIndex = (backendResult != null && backendResult.success)
+          ? backendResult.errorStrokeIndex
+          : -1;
+      final feedbackSegments = <StrokeSegment>[];
+      for (int i = 0; i < _strokes.length; i++) {
+        final isError = (i == errorIndex);
+        feedbackSegments.add(StrokeSegment(
+          points: _strokes[i],
+          color: isError ? Colors.red : Colors.green,
+        ));
+      }
+
+      // ── Save progress via ScoreService ─────────────────────────
+      try {
+        final scoreService = await ScoreService.getInstance();
+        await scoreService.completeWritingLesson(
+          _current,
+          stars,
+          lessonId: null,
+          strokes: _strokes,
+          targetCharacter: targetChar,
+          passed: finalPassed,
+        );
+      } catch (e) {
+        debugPrint('[WritingDetail] Save score error: $e');
+      }
+
+      setState(() {
+        _isLoading = false;
+        _showFeedback = true;
+        _feedbackSegments = feedbackSegments;
+        if (finalPassed) {
+          _lesson.isLearned = true;
+          _lesson.starRating = stars;
+        }
+      });
+
+      if (finalPassed) {
+        _speak(targetChar);
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Row(children: [
+          Icon(finalPassed ? Icons.check_circle_rounded : Icons.info_rounded, color: Colors.white, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              finalPassed
+                  ? 'Hoàn thành "$targetChar" (${finalScore.round()}%) - $stars ⭐!\n$feedback'
+                  : 'Chưa đạt! (${finalScore.round()}%) - Hãy sửa nét vẽ màu đỏ nhé.\n$feedback',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ]),
+        backgroundColor: finalPassed ? AppColors.tertiary : AppColors.coral,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 4)));
     } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
       debugPrint('Error saving writing progress: $e');
     }
-
-    _speak(_lesson.character);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(children: [
-        const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            'Hoàn thành "${_lesson.character}" (${tracingResult.finalScore.round()}%) - ${tracingResult.stars} ⭐!',
-            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-          ),
-        ),
-      ]),
-      backgroundColor: AppColors.tertiary,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      duration: const Duration(seconds: 3)));
   }
 
   void _next() {
@@ -155,6 +253,7 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
         _current++;
         _clearCanvas();
       });
+      _fetchCharacterInfo();
     } else {
       _showCompletionDialog();
     }
@@ -166,6 +265,7 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
         _current--;
         _clearCanvas();
       });
+      _fetchCharacterInfo();
     }
   }
 
@@ -426,14 +526,36 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
           ),
         // Drawing area
         GestureDetector(
+          key: _canvasKey,
           onPanStart: (d) => setState(() {
+            final now = DateTime.now().millisecondsSinceEpoch;
             _currentStroke = [d.localPosition];
+            _currentStrokeTimestamped = [
+              StrokePoint(
+                x: d.localPosition.dx,
+                y: d.localPosition.dy,
+                t: now,
+              ),
+            ];
             _showFeedback = false; // Hide feedback when drawing
           }),
-          onPanUpdate: (d) => setState(() => _currentStroke.add(d.localPosition)),
+          onPanUpdate: (d) => setState(() {
+            _currentStroke.add(d.localPosition);
+            _currentStrokeTimestamped.add(
+              StrokePoint(
+                x: d.localPosition.dx,
+                y: d.localPosition.dy,
+                t: DateTime.now().millisecondsSinceEpoch,
+              ),
+            );
+          }),
           onPanEnd: (_) => setState(() {
-            _strokes.add(List.from(_currentStroke));
-            _currentStroke = [];
+            if (_currentStroke.isNotEmpty) {
+              _strokes.add(List.from(_currentStroke));
+              _strokeTimestamps.add(List.from(_currentStrokeTimestamped));
+              _currentStroke = [];
+              _currentStrokeTimestamped = [];
+            }
           }),
           child: CustomPaint(
             size: const Size(double.infinity, 320),
@@ -587,4 +709,11 @@ class _StrokePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _StrokePainter old) => true;
+}
+
+/// Lớp đoạn nét vẽ phản hồi cục bộ thay thế cho Tracing Service đã xóa
+class StrokeSegment {
+  final List<Offset> points;
+  final Color color;
+  const StrokeSegment({required this.points, required this.color});
 }

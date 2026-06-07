@@ -13,9 +13,10 @@ const authRoutes = require('./authRoutes');
 const userRoutes = require('./userRoutes');
 const lessonRoutes = require('./lessonRoutes');
 const progressRoutes = require('./progressRoutes');
-const templateRoutes = require('./templateRoutes');
-const { listeningRouter, speakingRouter, writingRouter, readingRouter } = require('./skillRoutes');
+const { listeningRouter, readingRouter } = require('./skillRoutes');
 const { gameRouter, missionRouter, badgeRouter, achievementRouter, rankRouter, uploadRouter, adminRouter } = require('./otherRoutes');
+const writingRoutes = require('./writingRoutes');
+const pronunciationRoute = require('./pronunciation.route');
 
 // ========================================
 // Mount Routes
@@ -24,11 +25,10 @@ router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/lessons', lessonRoutes);
 router.use('/progress', progressRoutes);
-router.use('/templates', templateRoutes);
 router.use('/listening', listeningRouter);
-router.use('/speaking', speakingRouter);
-router.use('/writing', writingRouter);
 router.use('/reading', readingRouter);
+router.use('/writing', writingRoutes);
+router.use('/pronunciation', pronunciationRoute);
 router.use('/games', gameRouter);
 router.use('/missions', missionRouter);
 router.use('/badges', badgeRouter);

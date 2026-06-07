@@ -9,7 +9,6 @@ const Lesson = require('../models/Lesson');
 const Badge = require('../models/Badge');
 const Mission = require('../models/Mission');
 const GameResult = require('../models/GameResult');
-const SpeakingResult = require('../models/SpeakingResult');
 const ListeningResult = require('../models/ListeningResult');
 const { sendSuccess } = require('../utils/response');
 const { MESSAGES } = require('../constants');

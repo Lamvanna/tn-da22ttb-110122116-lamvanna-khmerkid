@@ -12,7 +12,7 @@ import '../../services/lesson_service.dart';
 import '../../services/storage_service.dart';
 import '../../services/tts_service.dart';
 
-/// Chi tiết 1 nguyên âm — 3 bước inline: Nghe, Nói, Viết (giống phụ âm)
+/// Chi tiết 1 nguyên âm — 2 bước inline: Nghe, Viết (giống phụ âm)
 class VowelDetailScreen extends StatefulWidget {
   final int initialIndex;
   const VowelDetailScreen({super.key, this.initialIndex = 0});
@@ -591,30 +591,24 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
             if (_activeSheet == 2)
               Expanded(
                 child: KhmerSpeakWidget(
-                  character: _v.character,
-                  // Dùng âm SẠCH (vd "a") cho prompt + chấm điểm, tránh chú thích "(dài)"
-                  // làm hỏng so khớp khiến đọc "a"/"à" bị báo sai.
-                  romanized: _v.pronunciationClean,
-                  pronunciation: _v.pronunciationClean,
-                  // Sử dụng allAcceptedPronunciations từ model — gộp TẤT CẢ biến thể
-                  // phát âm hợp lệ: pronunciationClean, romanized, pronunciation gốc,
-                  // dependent form, ký tự gốc, và biến thể không dấu tiếng Việt.
-                  acceptedAnswers: _v.allAcceptedPronunciations,
-                  accentColor: AppColors.coral,
-                  accentColorDark: AppColors.coralDark,
-                  surfaceColor: AppColors.coralSurface,
-                  passThreshold: 60, // Ngưỡng 60% cho nguyên âm — âm ngắn, STT khó bắt chính xác
+                  targetWord: _v.displayCharacter,
+                  romanized: _v.romanized,
+                  meaning: _v.pronunciation,
+                  accentColor: const Color(0xFF1E88E5),
+                  accentColorDark: const Color(0xFF1565C0),
+                  surfaceColor: const Color(0xFFEEF4FC),
                   onComplete: () => _markStepComplete(1),
                 ),
               ),
             if (_activeSheet == 3)
               Expanded(
                 child: KhmerWriteWidget(
-                  character: _v.displayCharacter,
+                  // Strip ◌ (U+25CC dotted circle) — DB stores vowel marks without it
+                  character: _v.displayCharacter.replaceAll('\u25CC', ''),
                   accentColor: AppColors.primary,
                   accentColorDark: AppColors.primaryDark,
                   surfaceColor: AppColors.primarySurface,
-                  showStrokeGuide: false, // Nguyên âm không có dữ liệu mũi tên hướng nét
+                  showStrokeGuide: true, // Hiển thị mũi tên hướng nét cho nguyên âm
                   enableOcr: false,
                   minPointsRequired: 80, // Nguyên âm nét ngắn — giảm yêu cầu xuống 80 điểm cho đồng bộ
                   minStrokesRequired: 1, // Tối thiểu 1 nét cho nguyên âm
@@ -653,14 +647,14 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
           imagePath: 'image/Nghe.png', label: 'Nghe', sub: 'Nghe phát âm',
           bgColor: const Color(0xFFE8F5E9), accentColor: const Color(0xFF43A047), stepIdx: 0),
       )),
-      SizedBox(width: 10.w),
+      SizedBox(width: 8.w),
       Expanded(child: GestureDetector(
         onTap: _showSpeakSheet,
         child: _actionCard(
           imagePath: 'image/Mic.png', label: 'Nói', sub: 'Luyện phát âm',
-          bgColor: const Color(0xFFFFF3E0), accentColor: const Color(0xFFF57C00), stepIdx: 1),
+          bgColor: const Color(0xFFE3F2FD), accentColor: const Color(0xFF1E88E5), stepIdx: 1),
       )),
-      SizedBox(width: 10.w),
+      SizedBox(width: 8.w),
       Expanded(child: GestureDetector(
         onTap: _showWriteSheet,
         child: _actionCard(
@@ -706,7 +700,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
     final canPrev = _canGo(_idx - 1);
     final canNext = _canGo(_idx + 1);
     final labels = ['Nghe', 'Nói', 'Viết'];
-    final stepColors = [const Color(0xFF3D5AFE), const Color(0xFFFF9100), const Color(0xFF7C4DFF)];
+    final stepColors = [const Color(0xFF43A047), const Color(0xFF1E88E5), const Color(0xFF5E35B1)];
     return Row(children: [
       GestureDetector(
         onTap: canPrev ? () => _goTo(_idx - 1) : null,
@@ -724,29 +718,76 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
         ),
       ),
       SizedBox(width: 6.w),
-      Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(5, (i) {
-        if (i.isOdd) {
-          final prevDone = _isStepComplete(i ~/ 2);
-          return Row(mainAxisSize: MainAxisSize.min, children: List.generate(3, (_) => Container(
-            width: 4.w, height: 2.5.h, margin: EdgeInsets.symmetric(horizontal: 1.5.w),
-            decoration: BoxDecoration(color: prevDone ? stepColors[i ~/ 2].withValues(alpha: 0.5) : const Color(0xFFE0E0E0), borderRadius: BorderRadius.circular(1.r)),
-          )));
-        }
-        final stepI = i ~/ 2;
-        final done = _isStepComplete(stepI);
-        return Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(width: 28.w, height: 28.w, decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
-              colors: done ? [stepColors[stepI], stepColors[stepI].withValues(alpha: 0.7)] : [const Color(0xFFE8E8E8), const Color(0xFFD8D8D8)]),
-            boxShadow: done ? [BoxShadow(color: stepColors[stepI].withValues(alpha: 0.35), blurRadius: 6.r, offset: Offset(0, 2.h))] : null,
-          ), child: Center(child: done
-            ? Icon(Icons.check_rounded, size: 14.w, color: Colors.white)
-            : Text('${stepI + 1}', style: GoogleFonts.plusJakartaSans(fontSize: 12.sp, fontWeight: FontWeight.w800, color: Colors.white)))),
-          SizedBox(height: 2.h),
-          Text(labels[stepI], style: GoogleFonts.plusJakartaSans(fontSize: 9.sp, fontWeight: FontWeight.w700, color: done ? stepColors[stepI] : AppColors.textHint)),
-        ]);
-      }))),
+      Expanded(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(5, (i) {
+            if (i.isOdd) {
+              final stepI = i ~/ 2;
+              final prevDone = _isStepComplete(stepI);
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(3, (_) => Container(
+                  width: 4.w,
+                  height: 2.5.h,
+                  margin: EdgeInsets.symmetric(horizontal: 1.5.w),
+                  decoration: BoxDecoration(
+                    color: prevDone
+                        ? stepColors[stepI].withValues(alpha: 0.5)
+                        : const Color(0xFFE0E0E0),
+                    borderRadius: BorderRadius.circular(1.r),
+                  ),
+                )),
+              );
+            }
+            final stepI = i ~/ 2;
+            final done = _isStepComplete(stepI);
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 28.w,
+                  height: 28.w,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: done
+                          ? [stepColors[stepI], stepColors[stepI].withValues(alpha: 0.7)]
+                          : [const Color(0xFFE8E8E8), const Color(0xFFD8D8D8)],
+                    ),
+                    boxShadow: done
+                        ? [BoxShadow(color: stepColors[stepI].withValues(alpha: 0.35), blurRadius: 6.r, offset: Offset(0, 2.h))]
+                        : null,
+                  ),
+                  child: Center(
+                    child: done
+                        ? Icon(Icons.check_rounded, size: 14.w, color: Colors.white)
+                        : Text(
+                            '${stepI + 1}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  labels[stepI],
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.w700,
+                    color: done ? stepColors[stepI] : AppColors.textHint,
+                  ),
+                ),
+              ],
+            );
+          }),
+        ),
+      ),
       SizedBox(width: 6.w),
       GestureDetector(
         onTap: () {

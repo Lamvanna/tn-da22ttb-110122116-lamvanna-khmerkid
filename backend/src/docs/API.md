@@ -186,48 +186,6 @@ http://localhost:5000/api
 
 ---
 
-## 🗣️ 5. Skill - Speaking (`/api/speaking`)
-
-| Method | Endpoint | Description | Auth Required | Role |
-| :--- | :--- | :--- | :---: | :---: |
-| **POST** | `/speaking/check` | Chấm điểm phát âm bằng AI | ✅ | user |
-| **POST** | `/speaking/upload` | Upload file ghi âm trước khi check | ✅ | user |
-
-### 5.1 Chấm điểm phát âm (`POST /speaking/check`)
-- **Body Params:**
-  ```json
-  {
-    "lessonId": "60d0fe2c5311236168a109c2",
-    "audioUrl": "https://cloudinary.com/audio/user_record_123.mp3"
-  }
-  ```
-- **Response (200 OK):**
-  ```json
-  {
-    "success": true,
-    "message": "Kết quả phát âm đã được kiểm tra!",
-    "data": {
-      "score": 85,
-      "accuracy": 85,
-      "passed": true,
-      "wrongWords": ["ផ្ទះ"],
-      "suggestions": ["Phát âm tròn môi hơn khi phát âm âm bật pht-"],
-      "highlightedText": [
-        { "word": "ខ្ញុំ", "correct": true },
-        { "word": "ស្រឡាញ់", "correct": true },
-        { "word": "ផ្ទះ", "correct": false }
-      ],
-      "rewards": {
-        "xpGained": 20,
-        "starsGained": 2,
-        "levelUp": false
-      }
-    }
-  }
-  ```
-
----
-
 ## ✍️ 6. Skill - Writing (`/api/writing`)
 
 | Method | Endpoint | Description | Auth Required | Role |

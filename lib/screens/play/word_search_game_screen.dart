@@ -18,7 +18,7 @@ class WordSearchGameScreen extends StatefulWidget {
 
 class _WordSearchGameScreenState extends State<WordSearchGameScreen>
     with SingleTickerProviderStateMixin {
-  late List<_Level> _levels;
+  List<_Level> _levels = [];
   int _currentLevelIdx = 0;
   int _score = 0;
   List<Point<int>> _selectedPoints = [];
@@ -31,6 +31,13 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
   Timer? _timer;
   bool _gameStarted = false;
   bool _gameOver = false;
+
+  // Powerups State
+  int _hintsLeft = 2;
+  int _timePowerupsLeft = 2;
+  int _livesPowerupsLeft = 1;
+  int _doubleScorePowerupsLeft = 1;
+  bool _isDoubleScoreActive = false;
 
   late AnimationController _bubbleController;
   late Animation<double> _bubbleAnimation;
@@ -72,6 +79,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
           ['ឆ', 'ជ', 'ឈ', 'ញ', 'ដ'],
           ['ឋ', 'ឌ', 'ឍ', 'ណ', 'ត'],
           ['ថ', 'ទ', 'ធ', 'ន', 'ប'],
+          ['ផ', 'ព', 'ភ', 'ម', 'យ'],
         ],
         path: [
           const Point(1, 0),
@@ -92,6 +100,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
           ['ខ', '្ល', 'ា', 'ន', 'ប'],
           ['ផ', 'ព', 'ភ', 'ម', 'យ'],
           ['រ', 'ល', 'វ', 'ស', 'ហ'],
+          ['ឡ', 'អ', 'ក', 'ខ', 'គ'],
         ],
         path: [
           const Point(2, 0),
@@ -111,6 +120,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
           ['ឈ', 'ស', 'ញ', 'ដ', 'ឋ'],
           ['ឌ', '្វ', 'ឍ', 'ណ', 'ត'],
           ['ថ', 'ា', 'ទ', 'ធ', 'ន'],
+          ['ផ', 'ព', 'ភ', 'ម', 'យ'],
         ],
         path: [
           const Point(2, 1),
@@ -130,6 +140,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
           ['ី', 'ញ', 'ដ', 'ឋ', 'ឌ'],
           ['ឍ', 'ណ', 'ត', 'ថ', 'ទ'],
           ['ធ', 'ន', 'ប', 'ផ', 'ព'],
+          ['ឡ', 'អ', 'ក', 'ខ', 'គ'],
         ],
         path: [
           const Point(0, 0),
@@ -149,6 +160,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
           ['ក', 'ខ', 'គ', 'ឃ', 'ង'],
           ['ច', 'ឆ', 'ជ', '្ម', 'ញ'],
           ['ដ', 'ឋ', 'ឌ', 'ុំ', 'ឍ'],
+          ['ត', 'ថ', 'ទ', 'ធ', 'ន'],
         ],
         path: [
           const Point(2, 3),
@@ -175,6 +187,11 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
       _selectedPoints.clear();
       _isRoundCompleted = false;
       _gameOver = false;
+      _hintsLeft = 2;
+      _timePowerupsLeft = 2;
+      _livesPowerupsLeft = 1;
+      _doubleScorePowerupsLeft = 1;
+      _isDoubleScoreActive = false;
     });
     _startTimer();
   }
@@ -204,6 +221,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
       _lives = 0;
       _gameOver = true;
     });
+    _scoreService?.completeGame('Giải cứu thú rừng', _score, syncToBackend: true);
   }
 
   void _onCellTap(int row, int col) {
@@ -212,67 +230,166 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
     final currentLevel = _levels[_currentLevelIdx];
     final tappedPoint = Point(row, col);
 
-    final nextTargetIndex = _selectedPoints.length;
-    if (nextTargetIndex < currentLevel.path.length) {
-      final targetPoint = currentLevel.path[nextTargetIndex];
-
-      if (tappedPoint == targetPoint) {
-        // Bé ấn đúng!
+    setState(() {
+      if (_selectedPoints.contains(tappedPoint)) {
+        // Nếu ô đã được chọn, xóa ô đó và tất cả các ô sau nó
+        final idx = _selectedPoints.indexOf(tappedPoint);
+        _selectedPoints.removeRange(idx, _selectedPoints.length);
         HapticFeedback.lightImpact();
-        setState(() {
-          _selectedPoints.add(tappedPoint);
-        });
-
-        // Kiểm tra xem đã hoàn thành từ chưa
-        if (_selectedPoints.length == currentLevel.path.length) {
-          _timer?.cancel();
-          _onRoundSuccess();
-        }
       } else {
-        // Bé ấn sai nét -> Rung phản hồi báo sai, trừ 1 mạng
-        HapticFeedback.vibrate();
-        setState(() {
-          _selectedPoints.clear();
-          if (_lives > 1) {
-            _lives--;
-          } else {
-            _lives = 0;
-            _gameOver = true;
-            _timer?.cancel();
-          }
-        });
-        
-        if (!_gameOver) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Chưa đúng rồi! Bé bị mất 1 mạng tim 💔. Bé hãy tìm lại nhé!',
-                style: GoogleFonts.plusJakartaSans(
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-              backgroundColor: Colors.redAccent,
-              duration: const Duration(milliseconds: 1000),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              margin: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),
-            ),
-          );
+        // Nếu chưa được chọn và chưa chọn đủ số lượng chữ
+        if (_selectedPoints.length < currentLevel.path.length) {
+          _selectedPoints.add(tappedPoint);
+          HapticFeedback.lightImpact();
+        }
+      }
+    });
+  }
+
+  void _checkAnswer() {
+    if (_isRoundCompleted || _gameOver) return;
+
+    final currentLevel = _levels[_currentLevelIdx];
+    
+    // Kiểm tra xem các ô đã chọn có khớp hoàn toàn với đường dẫn đáp án không
+    bool isCorrect = true;
+    if (_selectedPoints.length != currentLevel.path.length) {
+      isCorrect = false;
+    } else {
+      for (int i = 0; i < currentLevel.path.length; i++) {
+        if (_selectedPoints[i] != currentLevel.path[i]) {
+          isCorrect = false;
+          break;
         }
       }
     }
+
+    if (isCorrect) {
+      _timer?.cancel();
+      _onRoundSuccess();
+    } else {
+      // Bé ấn sai nét -> Rung phản hồi báo sai, trừ 1 mạng
+      HapticFeedback.vibrate();
+      setState(() {
+        _selectedPoints.clear();
+        if (_lives > 1) {
+          _lives--;
+        } else {
+          _lives = 0;
+          _gameOver = true;
+          _timer?.cancel();
+        }
+      });
+      
+      if (_gameOver) {
+        _scoreService?.completeGame('Giải cứu thú rừng', _score, syncToBackend: true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Chưa đúng rồi! Bé bị mất 1 mạng tim 💔. Bé hãy tìm lại nhé!',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+            backgroundColor: Colors.redAccent,
+            duration: const Duration(milliseconds: 1000),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            margin: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildConfirmButton() {
+    final currentLevel = _levels[_currentLevelIdx];
+    final canConfirm = _selectedPoints.length == currentLevel.path.length && !_isRoundCompleted && !_gameOver;
+    return GestureDetector(
+      onTap: canConfirm ? _checkAnswer : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: EdgeInsets.symmetric(horizontal: 56.w, vertical: 14.h),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: canConfirm
+                ? [const Color(0xFF00E676), const Color(0xFF00C853)]
+                : [const Color(0xFFECEFF1), const Color(0xFFCFD8DC)]),
+          borderRadius: BorderRadius.circular(24.r),
+          border: Border.all(
+            color: canConfirm ? Colors.white.withOpacity(0.5) : Colors.white24,
+            width: 1.5,
+          ),
+          boxShadow: [
+            if (canConfirm) ...[
+              const BoxShadow(
+                color: Color(0xFF00A343),
+                offset: Offset(0, 4),
+                blurRadius: 0,
+              ),
+              BoxShadow(
+                color: const Color(0xFF00E676).withOpacity(0.3),
+                offset: const Offset(0, 6),
+                blurRadius: 10,
+              ),
+            ] else ...[
+              const BoxShadow(
+                color: Color(0xFFB0BEC5),
+                offset: Offset(0, 2),
+                blurRadius: 0,
+              ),
+            ]
+          ]),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Text('XÁC NHẬN',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w900,
+              color: canConfirm ? Colors.white : const Color(0xFF90A4AE),
+              letterSpacing: 0.5,
+              shadows: canConfirm
+                  ? [Shadow(color: Colors.black.withOpacity(0.2), offset: const Offset(0, 1.5))]
+                  : null,
+            )),
+          SizedBox(width: 10.w),
+          Container(
+            width: 22.w, height: 22.w,
+            decoration: BoxDecoration(
+              color: canConfirm ? Colors.white : const Color(0xFFB0BEC5),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Icon(Icons.check_rounded,
+                color: canConfirm ? const Color(0xFF00C853) : Colors.white,
+                size: 14.w,
+                weight: 900),
+            ),
+          ),
+        ]),
+      ),
+    );
   }
 
   void _onRoundSuccess() {
     HapticFeedback.heavyImpact();
     _timer?.cancel();
+    int addedScore = 15;
+    if (_isDoubleScoreActive) {
+      addedScore = 30;
+      _isDoubleScoreActive = false; // Reset multiplier after use
+    }
     setState(() {
       _isRoundCompleted = true;
-      _score += 15;
+      _score += addedScore;
     });
+
+    _scoreService?.completeGame('Giải cứu thú rừng', addedScore, syncToBackend: false);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -337,71 +454,105 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
 
   void _showGameFinishedDialog() {
     _timer?.cancel();
-    _score = 10;
-    _scoreService?.completeGame('word_search', 10);
+    _scoreService?.completeGame('Giải cứu thú rừng', _score, syncToBackend: true);
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+        backgroundColor: Colors.transparent,
         child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28.r),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 24.r,
+                offset: Offset(0, 10.h),
+              ),
+            ],
+          ),
           padding: EdgeInsets.all(24.w),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Container(
+                width: 90.w, height: 90.w,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFF3C4), Color(0xFFFFB300)],
+                    begin: Alignment.topCenter, end: Alignment.bottomCenter),
+                  border: Border.all(color: Colors.white, width: 3.w),
+                  boxShadow: [
+                    const BoxShadow(color: Color(0xFFD97706), offset: Offset(0, 4.5), blurRadius: 0),
+                    BoxShadow(color: Colors.black.withOpacity(0.15), offset: const Offset(0, 5), blurRadius: 5),
+                  ]),
+                child: Icon(Icons.emoji_events_rounded, color: Colors.white, size: 48.w),
+              ),
+              SizedBox(height: 20.h),
               Text(
-                '🏆 CHIẾN THẮNG! 🏆',
+                'CHIẾN THẮNG MỸ MÃN! 🏆',
+                textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 24.sp,
+                  fontSize: 20.sp,
                   fontWeight: FontWeight.w900,
                   color: const Color(0xFFFFB300),
                 ),
               ),
               SizedBox(height: 12.h),
               Text(
-                '🌳🐾🐯🐘🐟🐝',
-                style: TextStyle(fontSize: 32.sp),
-              ),
-              SizedBox(height: 16.h),
-              Text(
                 'Chúc mừng Bé đã giải cứu thành công toàn bộ thú rừng và hoàn thành thử thách xuất sắc!',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 15.sp,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
+                  height: 1.4,
                 ),
               ),
               SizedBox(height: 16.h),
-              Text(
-                'Tổng điểm đạt được: +$_score Điểm 🌟',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFFF0A030),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF8E1),
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                child: Text(
+                  'Tổng điểm đạt được: +$_score Điểm 🌟',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFFF0A030),
+                  ),
                 ),
               ),
               SizedBox(height: 24.h),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E7D32),
-                    padding: EdgeInsets.symmetric(vertical: 14.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF2E7D32), Color(0xFF4CAF50)],
                     ),
-                  ),
-                  child: Text(
-                    'Trở về thế giới trò chơi',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(color: const Color(0xFF1B5E20), width: 1.5),
+                    boxShadow: [
+                      const BoxShadow(color: Color(0xFF1B5E20), offset: Offset(0, 4), blurRadius: 0),
+                    ]),
+                  child: Center(
+                    child: Text(
+                      'Trở về thế giới trò chơi',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -415,24 +566,50 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (_levels.isEmpty) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    if (_levels[0].grid.length != 6) {
+      _initLevels();
+    }
     final currentLevel = _levels[_currentLevelIdx];
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFE8F5E9), Color(0xFFC8E6C9), Color(0xFFA5D6A7)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+      body: Stack(
+        children: [
+          // ── Background Gradient (Soft Pastel Sky to Mint) ──
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                colors: [Color(0xFFE0F7FA), Color(0xFFC8E6C9)],
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: !_gameStarted
-              ? _buildStartScreen()
-              : _gameOver
-                  ? _buildGameOverScreen()
-                  : _buildGamePlay(currentLevel),
-        ),
+          // ── Beautiful Rural Scenery Overlay Layer ──
+          Opacity(
+            opacity: 0.35,
+            child: Image.network(
+              'https://lh3.googleusercontent.com/aida-public/AB6AXuBoJptYW0FURDJyaNotaS25b4rd3BMGg54qWp9sofqqLryGPpHttzs3n7fWq_6hwuZxJbZWw9x27OLzQ0TcxJowDDF6psN04fEqfXpnKk-ciWw-Cwoe43jFvmY4md5yJxBlBws14RTo3W4ySrM_xsXMFWHWFze0YckgGbo39IyIZzHP1_VYzsMQ9pnnj7yNYMAlh84lig__sTm7yDHG2feGTJ-PkLHZu88Q6S4roim5toebUO4Yi_IuB3zhK39Ol-7QaiTaHvdFow',
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
+          ),
+          // ── Safe Area Content ──
+          SafeArea(
+            child: !_gameStarted
+                ? _buildStartScreen()
+                : _gameOver
+                    ? _buildGameOverScreen()
+                    : _buildGamePlay(currentLevel),
+          ),
+        ],
       ),
     );
   }
@@ -440,47 +617,202 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
   Widget _buildGamePlay(_Level level) {
     return Column(
       children: [
-        _buildHeader(level),
+        _buildHeaderStats(),
         Expanded(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: Column(
-                children: [
-                  SizedBox(height: 16.h),
+            padding: EdgeInsets.only(left: 16.w, right: 10.w, top: 8.h, bottom: 40.h),
+            child: Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Animal Card on the left
+                    Expanded(
+                      child: _buildRescueCard(level),
+                    ),
+                    SizedBox(width: 8.w),
+                    // Vertical Powerups Column next to the card
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildSmallVerticalPowerUpBtn(
+                          emoji: '🔍',
+                          count: _hintsLeft,
+                          onTap: _useHint,
+                          activeColors: [const Color(0xFFFFD54F), const Color(0xFFFFA000)],
+                          shadowColor: const Color(0xFFE65100),
+                        ),
+                        SizedBox(height: 8.h),
+                        _buildSmallVerticalPowerUpBtn(
+                          emoji: '⏰',
+                          count: _timePowerupsLeft,
+                          onTap: _useTimePowerup,
+                          activeColors: [const Color(0xFF4FC3F7), const Color(0xFF0288D1)],
+                          shadowColor: const Color(0xFF01579B),
+                        ),
+                        SizedBox(height: 8.h),
+                        _buildSmallVerticalPowerUpBtn(
+                          emoji: '❤️',
+                          count: _livesPowerupsLeft,
+                          onTap: _useLivesPowerup,
+                          activeColors: [const Color(0xFFFF8A80), const Color(0xFFE53935)],
+                          shadowColor: const Color(0xFFB71C1C),
+                        ),
+                        SizedBox(height: 8.h),
+                        _buildSmallVerticalPowerUpBtn(
+                          emoji: '⭐',
+                          count: _doubleScorePowerupsLeft,
+                          onTap: _useDoubleScorePowerup,
+                          activeColors: [const Color(0xFFB388FF), const Color(0xFF6200EA)],
+                          shadowColor: const Color(0xFF4527A0),
+                          isActiveGlow: _isDoubleScoreActive,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16.h),
 
-                  // 🐘 KHU VỰC THÚ CẦN GIẢI CỨU (Bubble Animation)
-                  AnimatedBuilder(
-                    animation: _bubbleAnimation,
-                    builder: (context, child) {
-                      return Transform.translate(
-                        offset: Offset(0, _bubbleAnimation.value),
-                        child: child,
-                      );
-                    },
-                    child: _buildRescueCard(level),
-                  ),
+                // 🧩 LƯỚI Ô CHỮ KHMER 5X5 (Full width, centered)
+                _buildWordGrid(level),
 
-                  SizedBox(height: 20.h),
+                SizedBox(height: 20.h),
 
-                  // 🧩 LƯỚI Ô CHỮ KHMER 5X5
-                  _buildWordGrid(level),
+                // ── Action Button (Confirm Button) ──
+                _buildConfirmButton(),
 
-                  SizedBox(height: 24.h),
-
-                  // 📝 HƯỚNG DẪN TỪNG CHỮ CÁI
-                  _buildProgressRow(level),
-
-                  SizedBox(height: 40.h),
-                ],
-              ),
+                SizedBox(height: 60.h),
+              ],
             ),
           ),
         ),
       ],
     );
   }
+
+  // ── Powerups Logic ──
+  void _useHint() {
+    if (_hintsLeft <= 0 || _isRoundCompleted || _gameOver) return;
+    final currentLevel = _levels[_currentLevelIdx];
+    
+    int correctLen = 0;
+    for (int i = 0; i < _selectedPoints.length; i++) {
+      if (i < currentLevel.path.length && _selectedPoints[i] == currentLevel.path[i]) {
+        correctLen++;
+      } else {
+        break;
+      }
+    }
+
+    if (correctLen < currentLevel.path.length) {
+      HapticFeedback.mediumImpact();
+      setState(() {
+        _hintsLeft--;
+        _selectedPoints = currentLevel.path.sublist(0, correctLen + 1);
+      });
+    }
+  }
+
+  void _useTimePowerup() {
+    if (_timePowerupsLeft <= 0 || _isRoundCompleted || _gameOver) return;
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _timePowerupsLeft--;
+      _timeLeft += 10;
+    });
+  }
+
+  void _useLivesPowerup() {
+    if (_livesPowerupsLeft <= 0 || _isRoundCompleted || _gameOver) return;
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _livesPowerupsLeft--;
+      if (_lives < 3) _lives++;
+    });
+  }
+
+  void _useDoubleScorePowerup() {
+    if (_doubleScorePowerupsLeft <= 0 || _isRoundCompleted || _gameOver || _isDoubleScoreActive) return;
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _doubleScorePowerupsLeft--;
+      _isDoubleScoreActive = true;
+    });
+  }
+
+  Widget _buildSmallVerticalPowerUpBtn({
+    required String emoji,
+    required int count,
+    required VoidCallback onTap,
+    required List<Color> activeColors,
+    required Color shadowColor,
+    bool isActiveGlow = false,
+  }) {
+    final hasItem = count > 0;
+    return GestureDetector(
+      onTap: hasItem && !_isRoundCompleted && !_gameOver ? onTap : null,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 44.w,
+            height: 44.w,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12.r),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                colors: isActiveGlow
+                    ? [const Color(0xFFFFD600), const Color(0xFFFF8F00)]
+                    : hasItem
+                        ? activeColors
+                        : [const Color(0xFFECEFF1), const Color(0xFFCFD8DC)]),
+              border: Border.all(
+                color: isActiveGlow ? Colors.white : Colors.white.withOpacity(0.6),
+                width: isActiveGlow ? 2.0 : 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: isActiveGlow
+                      ? const Color(0xFFFF8F00)
+                      : hasItem ? shadowColor : const Color(0xFFB0BEC5),
+                  offset: const Offset(0, 3), blurRadius: 0),
+                BoxShadow(color: Colors.black.withOpacity(0.1), offset: const Offset(0, 3), blurRadius: 3),
+              ]),
+            child: Center(
+              child: Text(emoji, style: TextStyle(fontSize: 20.sp)),
+            ),
+          ),
+          if (count > 0)
+            Positioned(
+              top: -3.h,
+              right: -3.w,
+              child: Container(
+                width: 18.w, height: 18.w,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEF4444), 
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 1.5.w),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 2, offset: const Offset(0, 1))
+                  ]),
+                child: Center(
+                  child: Text('$count',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 8.5.sp, 
+                      fontWeight: FontWeight.w900, 
+                      color: Colors.white,
+                      height: 1.0,
+                    )),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+
 
   Widget _buildStartScreen() {
     return Center(
@@ -489,104 +821,98 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Align(
+              alignment: Alignment.topLeft,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: 36.w, height: 36.w,
+                  margin: EdgeInsets.only(bottom: 16.h),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    border: Border.all(color: Colors.white, width: 1.5.w),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.08), offset: const Offset(0, 3), blurRadius: 6),
+                    ]),
+                  child: const Icon(Icons.arrow_back_rounded, color: Color(0xFF374151), size: 20)),
+              ),
+            ),
             Container(
-              width: 110.w,
-              height: 110.w,
+              width: 120.w, height: 120.w,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF2E7D32), Color(0xFF81C784)],
-                ),
+                  begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                  colors: [Color(0xFF81C784), Color(0xFF388E3C)]),
+                border: Border.all(color: Colors.white, width: 4.w),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF2E7D32).withOpacity(0.4),
-                    blurRadius: 30,
-                    spreadRadius: 5,
-                  ),
-                ],
+                    color: const Color(0xFF2E7D32).withOpacity(0.2),
+                    blurRadius: 24, spreadRadius: 2, offset: const Offset(0, 8)),
+                ]),
+              child: Center(
+                child: Text('🌲', style: TextStyle(fontSize: 60.sp)),
               ),
-              child: Icon(Icons.forest_rounded, size: 56.w, color: Colors.white),
             ),
             SizedBox(height: 24.h),
-            Text(
-              '🌲 Giải cứu thú rừng',
+            Text('Giải cứu thú rừng',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 26.sp,
-                fontWeight: FontWeight.w900,
-                color: const Color(0xFF1B5E20),
-              ),
-            ),
+                fontSize: 32.sp, fontWeight: FontWeight.w900, color: const Color(0xFF1B5E20),
+                shadows: [
+                  Shadow(color: Colors.white.withOpacity(0.8), offset: Offset(2.w, 2.h), blurRadius: 4),
+                ])),
             SizedBox(height: 12.h),
-            Text(
-              'Tìm các chữ cái Khmer để ghép thành tên\ncác loài thú và giải thoát chúng khỏi bong bóng!',
+            Text('Tìm các chữ cái Khmer để ghép thành tên\ncác loài thú và giải thoát chúng khỏi bong bóng!',
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade800,
-                height: 1.5,
-              ),
-            ),
+                fontSize: 16.sp, fontWeight: FontWeight.w700,
+                color: const Color(0xFF2E7D32), height: 1.5)),
             SizedBox(height: 32.h),
             Container(
               width: double.infinity,
               padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withOpacity(0.95),
                 borderRadius: BorderRadius.circular(24.r),
-                border: Border.all(color: const Color(0xFF81C784), width: 2.w),
+                border: Border.all(color: const Color(0xFFE8F5E9)),
                 boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF2E7D32).withOpacity(0.08),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _ruleRow('🦁', 'Tìm tên con thú trong lưới ô chữ'),
-                  SizedBox(height: 10.h),
-                  _ruleRow('⏱️', '30 giây cho mỗi lượt chơi'),
-                  SizedBox(height: 10.h),
-                  _ruleRow('💖', '3 mạng tim - Bấm sai nét sẽ bị trừ mạng'),
-                  SizedBox(height: 10.h),
-                  _ruleRow('🌟', 'Giải cứu thành công để nhận điểm thưởng'),
-                ],
-              ),
+                  BoxShadow(color: const Color(0xFF1B5E20).withOpacity(0.05), blurRadius: 16, offset: const Offset(0, 8))
+                ]),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                _ruleRow('🦁', 'Tìm tên con thú trong lưới ô chữ'),
+                SizedBox(height: 12.h),
+                _ruleRow('⏱️', '30 giây cho mỗi lượt chơi'),
+                SizedBox(height: 12.h),
+                _ruleRow('💖', '3 mạng tim - Bấm sai nét sẽ bị trừ mạng'),
+                SizedBox(height: 12.h),
+                _ruleRow('🏆', 'Giải cứu thành công để nhận điểm thưởng'),
+              ]),
             ),
             SizedBox(height: 40.h),
             GestureDetector(
               onTap: _startGame,
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 48.w, vertical: 16.h),
+                padding: EdgeInsets.symmetric(horizontal: 52.w, vertical: 16.h),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF2E7D32), Color(0xFF4CAF50)],
-                  ),
+                    begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                    colors: [Color(0xFF00E676), Color(0xFF00C853)]),
                   borderRadius: BorderRadius.circular(30.r),
-                  border: Border.all(color: const Color(0xFF1B5E20), width: 2.w),
+                  border: Border.all(color: Colors.white.withOpacity(0.4), width: 2),
                   boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF2E7D32).withOpacity(0.4),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  'BẮT ĐẦU CHƠI',
+                    const BoxShadow(color: Color(0xFF00A343), offset: Offset(0, 5), blurRadius: 0),
+                    BoxShadow(color: const Color(0xFF00C853).withOpacity(0.3), offset: const Offset(0, 6), blurRadius: 10),
+                  ]),
+                child: Text('BẮT ĐẦU CHƠI',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
+                    fontSize: 20.sp, fontWeight: FontWeight.w900, color: Colors.white,
+                    shadows: [
+                      Shadow(color: Colors.black.withOpacity(0.2), offset: const Offset(0, 1.5)),
+                    ])),
               ),
             ),
-          ],
-        ),
+          ]),
       ),
     );
   }
@@ -594,15 +920,15 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
   Widget _ruleRow(String emoji, String text) {
     return Row(
       children: [
-        Text(emoji, style: TextStyle(fontSize: 18.sp)),
+        Text(emoji, style: TextStyle(fontSize: 20.sp)),
         SizedBox(width: 12.w),
         Expanded(
           child: Text(
             text,
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1B5E20),
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF374151),
             ),
           ),
         ),
@@ -617,111 +943,78 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('😢', style: TextStyle(fontSize: 64.sp)),
-            SizedBox(height: 20.h),
-            Text(
-              'Hết lượt chơi rồi!',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 28.sp,
-                fontWeight: FontWeight.w900,
-                color: const Color(0xFFC62828),
-              ),
+            Container(
+              width: 120.w, height: 120.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFD54F), Color(0xFFFF8F00)]),
+                border: Border.all(color: Colors.white, width: 4.w),
+                boxShadow: [
+                  BoxShadow(color: const Color(0xFFE65100).withOpacity(0.2), blurRadius: 24, offset: const Offset(0, 8))
+                ]),
+              child: const Center(child: Text('🏆', style: TextStyle(fontSize: 60))),
             ),
-            SizedBox(height: 12.h),
-            Text(
-              'Bé đừng nản lòng nhé! Hãy thử lại để giải cứu các bạn thú rừng đáng yêu nhé.',
-              textAlign: TextAlign.center,
+            SizedBox(height: 16.h),
+            Text('KẾT THÚC HÀNH TRÌNH!',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade800,
-                height: 1.5,
-              ),
-            ),
-            SizedBox(height: 32.h),
+                fontSize: 26.sp, fontWeight: FontWeight.w900, color: const Color(0xFF1B5E20),
+                shadows: [
+                  Shadow(color: Colors.white.withOpacity(0.8), offset: Offset(2.w, 2.h), blurRadius: 4),
+                ])),
+            SizedBox(height: 24.h),
             Container(
               width: double.infinity,
               padding: EdgeInsets.all(24.w),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withOpacity(0.95),
                 borderRadius: BorderRadius.circular(24.r),
-                border: Border.all(color: const Color(0xFFFFCDD2), width: 2.w),
+                border: Border.all(color: const Color(0xFFE8F5E9)),
                 boxShadow: [
-                  BoxShadow(
-                    color: Colors.red.withOpacity(0.05),
-                    blurRadius: 10.r,
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  _statRow('⭐ Điểm số đạt được', '$_score'),
-                  SizedBox(height: 12.h),
-                  _statRow('🦁 Số thú giải cứu', '$_currentLevelIdx / ${_levels.length}'),
-                ],
-              ),
+                  BoxShadow(color: const Color(0xFF1B5E20).withOpacity(0.05), blurRadius: 16, offset: const Offset(0, 8))
+                ]),
+              child: Column(children: [
+                _statRow('⭐ Điểm số đạt được', '$_score'),
+                SizedBox(height: 12.h),
+                _statRow('🦁 Số thú giải cứu', '$_currentLevelIdx / ${_levels.length}'),
+              ]),
             ),
-            SizedBox(height: 40.h),
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 14.h),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16.r),
-                        border: Border.all(color: const Color(0xFFC62828), width: 2.w),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Thoát',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFFC62828),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+            SizedBox(height: 32.h),
+            Row(children: [
+              Expanded(child: GestureDetector(
+                onTap: () {
+                  _timer?.cancel();
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(color: const Color(0xFFCFD8DC)),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.05), offset: const Offset(0, 2), blurRadius: 2),
+                    ]),
+                  child: Center(child: Text('THOÁT', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w900, color: const Color(0xFF546E7A)))),
                 ),
-                SizedBox(width: 16.w),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: _startGame,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 14.h),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF2E7D32), Color(0xFF4CAF50)],
-                        ),
-                        borderRadius: BorderRadius.circular(16.r),
-                        border: Border.all(color: const Color(0xFF1B5E20), width: 2.w),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF2E7D32).withOpacity(0.3),
-                            blurRadius: 10.r,
-                            offset: Offset(0, 4.h),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Chơi lại',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+              )),
+              SizedBox(width: 12.w),
+              Expanded(child: GestureDetector(
+                onTap: _startGame,
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF00E676), Color(0xFF00C853)]),
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
+                    boxShadow: [
+                      const BoxShadow(color: Color(0xFF00A343), offset: Offset(0, 4), blurRadius: 0),
+                    ]),
+                  child: Center(child: Text('CHƠI LẠI', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w900, color: Colors.white))),
                 ),
-              ],
-            ),
+              )),
+            ]),
           ],
         ),
       ),
@@ -736,8 +1029,8 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
           label,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 15.sp,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF37474F),
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF374151),
           ),
         ),
         Text(
@@ -752,105 +1045,96 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
     );
   }
 
-  Widget _buildHeader(_Level level) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF2E7D32), Color(0xFF4CAF50)],
-        ),
-        borderRadius: BorderRadius.circular(20.r),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1B5E20).withOpacity(0.3),
-            blurRadius: 8.r,
-            offset: Offset(0, 4.h),
-          ),
-        ],
-      ),
+  Widget _buildHeaderStats() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            onPressed: () {
-              _timer?.cancel();
-              Navigator.pop(context);
-            },
-            icon: const Icon(Icons.close_rounded, color: Colors.white),
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.2),
-            ),
-          ),
-          SizedBox(width: 8.w),
           Row(
-            children: List.generate(3, (i) => Padding(
-              padding: EdgeInsets.only(right: 4.w),
-              child: Icon(
-                i < _lives ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                color: i < _lives ? const Color(0xFFFF1744) : Colors.white.withOpacity(0.4),
-                size: 22.w,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  _timer?.cancel();
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  width: 36.w, height: 36.w,
+                  margin: EdgeInsets.only(right: 8.w),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.9),
+                    border: Border.all(color: Colors.white, width: 1.5.w),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.06), offset: const Offset(0, 3), blurRadius: 6),
+                    ]),
+                  child: const Icon(Icons.arrow_back_rounded, color: Color(0xFF374151), size: 20)),
               ),
-            )),
-          ),
-          const Spacer(),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: _timeLeft <= 8
-                  ? const Color(0xFFFF1744).withOpacity(0.3)
-                  : Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.timer_rounded,
-                  color: _timeLeft <= 8 ? const Color(0xFFFF8A80) : Colors.white,
-                  size: 16.w,
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                    colors: [Color(0xFFFFF176), Color(0xFFFBC02D)]),
+                  borderRadius: BorderRadius.circular(20.r),
+                  border: Border.all(color: Colors.white, width: 1.5.w),
+                  boxShadow: [
+                    const BoxShadow(color: Color(0xFFF57F17), offset: Offset(0, 2), blurRadius: 0),
+                    BoxShadow(color: Colors.black.withOpacity(0.1), offset: const Offset(0, 3), blurRadius: 3),
+                  ]),
+                child: Row(children: [
+                  Icon(Icons.star_rounded, color: Colors.white, size: 18.w),
+                  SizedBox(width: 4.w),
+                  Text('$_score',
+                    style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w900, color: Colors.white)),
+                ]),
+              ),
+              SizedBox(width: 8.w),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(20.r),
+                  border: Border.all(color: Colors.white, width: 1.5.w),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.06), offset: const Offset(0, 3), blurRadius: 6),
+                  ]),
+                child: Row(
+                  children: List.generate(3, (i) => Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 1.5.w),
+                    child: Icon(
+                      i < _lives ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                      color: i < _lives ? const Color(0xFFEF5350) : const Color(0xFFB0BEC5),
+                      size: 16.w,
+                    ),
+                  )),
                 ),
-                SizedBox(width: 4.w),
-                Text(
-                  '$_timeLeft',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w900,
-                    color: _timeLeft <= 8 ? const Color(0xFFFF8A80) : Colors.white,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          SizedBox(width: 8.w),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16.r),
-              border: Border.all(color: const Color(0xFFFFD54F), width: 2.w),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                colors: _timeLeft <= 5
+                    ? [const Color(0xFFF87171), const Color(0xFFEF4444)]
+                    : [const Color(0xFF4DD0E1), const Color(0xFF00ACC1)]),
+              borderRadius: BorderRadius.circular(20.r),
+              border: Border.all(color: Colors.white, width: 1.5.w),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 4.r,
-                  offset: Offset(0, 2.h),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset('image/sao.png', width: 18.w, height: 18.h),
-                SizedBox(width: 5.w),
-                Text(
-                  '$_score',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFFF57C00),
-                  ),
-                ),
-              ],
-            ),
+                  color: _timeLeft <= 5 ? const Color(0xFFB91C1C) : const Color(0xFF00838F),
+                  offset: const Offset(0, 2), blurRadius: 0),
+                BoxShadow(color: Colors.black.withOpacity(0.1), offset: const Offset(0, 3), blurRadius: 3),
+              ]),
+            child: Row(children: [
+              Icon(Icons.access_time_filled_rounded, color: Colors.white, size: 16.w),
+              SizedBox(width: 6.w),
+              Text('${_timeLeft}s',
+                style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w900, color: Colors.white)),
+            ]),
           ),
         ],
       ),
@@ -860,16 +1144,21 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
   Widget _buildRescueCard(_Level level) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 38.h),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(color: const Color(0xFF81C784), width: 3.w),
+        border: Border.all(color: const Color(0xFFE8F5E9), width: 2.w),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2E7D32).withOpacity(0.12),
+            color: const Color(0xFF2E7D32).withOpacity(0.06),
             blurRadius: 12.r,
             offset: Offset(0, 6.h),
+          ),
+          BoxShadow(
+            color: const Color(0xFF1B5E20).withOpacity(0.04),
+            blurRadius: 24.r,
+            offset: Offset(0, 12.h),
           ),
         ],
       ),
@@ -880,16 +1169,20 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
             alignment: Alignment.center,
             children: [
               Container(
-                width: 80.w,
-                height: 80.w,
+                width: 125.w,
+                height: 125.w,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
+                    center: const Alignment(-0.3, -0.3),
+                    radius: 0.8,
                     colors: [
                       Colors.white,
-                      Colors.cyan.shade100,
-                      Colors.cyan.shade300,
+                      const Color(0xFFE0F7FA),
+                      const Color(0xFF4DD0E1).withOpacity(0.7),
+                      const Color(0xFF00ACC1).withOpacity(0.9),
                     ],
+                    stops: const [0.0, 0.3, 0.7, 1.0],
                   ),
                   border: Border.all(
                     color: Colors.white,
@@ -897,32 +1190,32 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.cyan.withOpacity(0.3),
+                      color: const Color(0xFF00ACC1).withOpacity(0.25),
                       blurRadius: 10.r,
-                      spreadRadius: 2.r,
+                      spreadRadius: 1.5.r,
                     ),
                   ],
                 ),
               ),
               Text(
                 level.emoji,
-                style: TextStyle(fontSize: 44.sp),
+                style: TextStyle(fontSize: 76.sp),
               ),
               if (!_isRoundCompleted)
                 // Lock overlay to show it is trapped!
                 Positioned(
-                  bottom: 2.h,
-                  right: 2.w,
+                  bottom: 4.h,
+                  right: 4.w,
                   child: Container(
-                    padding: EdgeInsets.all(5.w),
+                    padding: EdgeInsets.all(6.w),
                     decoration: const BoxDecoration(
-                      color: Colors.redAccent,
+                      color: Color(0xFFEF5350),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.lock_rounded,
                       color: Colors.white,
-                      size: 14.sp,
+                      size: 18.sp,
                     ),
                   ),
                 ),
@@ -931,34 +1224,24 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
           SizedBox(width: 16.w),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
                   'BÉ HÃY GIẢI CỨU:',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11.sp,
+                    fontSize: 13.sp,
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF2E7D32),
+                    color: const Color(0xFF66BB6A),
                     letterSpacing: 0.8,
                   ),
                 ),
-                SizedBox(height: 3.h),
+                SizedBox(height: 8.h),
                 Text(
-                  level.animalVietnamese,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 22.sp,
-                    fontWeight: FontWeight.w900,
+                  level.khmerWord,
+                  style: GoogleFonts.battambang(
+                    fontSize: 52.sp,
+                    fontWeight: FontWeight.bold,
                     color: const Color(0xFF1B5E20),
-                  ),
-                ),
-                SizedBox(height: 5.h),
-                Text(
-                  level.objective,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade700,
-                    height: 1.3,
                   ),
                 ),
               ],
@@ -973,181 +1256,182 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
     return Container(
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(28.r),
-        border: Border.all(color: const Color(0xFFA5D6A7), width: 2.w),
+        color: const Color(0xFFF1F8E9), // Clean, bright ivory/pastel grid board
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(color: const Color(0xFFC5E1A5), width: 3.w),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 18.r,
+            color: const Color(0xFF33691E).withOpacity(0.08),
+            blurRadius: 16.r,
             offset: Offset(0, 8.h),
           ),
         ],
       ),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: 25, // 5x5
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 5,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.0,
-        ),
-        itemBuilder: (context, index) {
-          final r = index ~/ 5;
-          final c = index % 5;
-          final letter = level.grid[r][c];
+      child: Stack(
+        children: [
+          // Pass 1: Grid of backgrounds (handles taps)
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 30, // 6 rows x 5 columns
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 5,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 1.0,
+            ),
+            itemBuilder: (context, index) {
+              final r = index ~/ 5;
+              final c = index % 5;
+              final point = Point(r, c);
+              final isSelected = _selectedPoints.contains(point);
 
-          final point = Point(r, c);
-          final isSelected = _selectedPoints.contains(point);
-          final selectionIndex = _selectedPoints.indexOf(point);
-
-          return GestureDetector(
-            onTap: () => _onCellTap(r, c),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              curve: Curves.bounceOut,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFF4CAF50) // Bright playful green
-                    : Colors.white,
-                borderRadius: BorderRadius.circular(20.r),
-                border: Border.all(
-                  color: isSelected
-                      ? const Color(0xFF1B5E20)
-                      : const Color(0xFFA5D6A7),
-                  width: isSelected ? 3.w : 2.w,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: isSelected
-                        ? const Color(0xFF1B5E20).withOpacity(0.4)
-                        : const Color(0xFFC8E6C9),
-                    offset: Offset(0, isSelected ? 2.h : 5.h),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Text(
-                      letter,
-                      style: GoogleFonts.battambang(
-                        fontSize: 24.sp,
-                        fontWeight: FontWeight.bold,
-                        color: isSelected
-                            ? Colors.white
-                            : const Color(0xFF1B5E20),
-                      ),
-                    ),
-                    if (isSelected)
-                      Positioned(
-                        top: 3.h,
-                        right: 3.w,
-                        child: Container(
-                          width: 16.w,
-                          height: 16.w,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
+              return GestureDetector(
+                onTap: () => _onCellTap(r, c),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 100),
+                  transform: Matrix4.translationValues(0, isSelected ? 3.h : 0, 0),
+                  decoration: BoxDecoration(
+                    gradient: isSelected
+                        ? const LinearGradient(
+                            colors: [Color(0xFF81C784), Color(0xFF4CAF50)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          )
+                        : const LinearGradient(
+                            colors: [Color(0xFFFFFFFF), Color(0xFFF5F5F5)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
                           ),
-                          child: Center(
-                            child: Text(
-                              '${selectionIndex + 1}',
-                              style: TextStyle(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.bold,
-                                color: const Color(0xFF1B5E20),
+                    borderRadius: BorderRadius.circular(14.r),
+                    border: Border.all(
+                      color: isSelected
+                          ? const Color(0xFF2E7D32)
+                          : const Color(0xFFE0E0E0),
+                      width: isSelected ? 2.w : 1.5.w,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isSelected
+                            ? const Color(0xFF2E7D32)
+                            : const Color(0xFFE0E0E0),
+                        offset: Offset(0, isSelected ? 1.h : 4.h),
+                      ),
+                      if (isSelected)
+                        BoxShadow(
+                          color: const Color(0xFF4CAF50).withOpacity(0.3),
+                          blurRadius: 6.r,
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+
+          // Pass 2: Connection Line Painter (placed between background and text)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: _GridConnectionPainter(
+                  selectedPoints: _selectedPoints,
+                  spacing: 10,
+                ),
+              ),
+            ),
+          ),
+
+          // Pass 3: Grid of texts & badges (foreground)
+          IgnorePointer(
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 30, // 6 rows x 5 columns
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 5,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 1.0,
+              ),
+              itemBuilder: (context, index) {
+                final r = index ~/ 5;
+                final c = index % 5;
+                final letter = level.grid[r][c];
+
+                final point = Point(r, c);
+                final isSelected = _selectedPoints.contains(point);
+                final selectionIndex = _selectedPoints.indexOf(point);
+
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 100),
+                  transform: Matrix4.translationValues(0, isSelected ? 3.h : 0, 0),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
+                    children: [
+                      Text(
+                        letter,
+                        style: GoogleFonts.battambang(
+                          fontSize: 26.sp,
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? Colors.white : const Color(0xFF374151),
+                          shadows: isSelected
+                              ? [
+                                  const Shadow(color: Color(0xFF2E7D32), offset: Offset(-1.2, -1.2), blurRadius: 0),
+                                  const Shadow(color: Color(0xFF2E7D32), offset: Offset(1.2, -1.2), blurRadius: 0),
+                                  const Shadow(color: Color(0xFF2E7D32), offset: Offset(1.2, 1.2), blurRadius: 0),
+                                  const Shadow(color: Color(0xFF2E7D32), offset: Offset(-1.2, 1.2), blurRadius: 0),
+                                ]
+                              : null,
+                        ),
+                      ),
+                      if (isSelected)
+                        Positioned(
+                          top: -6.h,
+                          left: -6.w,
+                          child: Container(
+                            width: 18.w,
+                            height: 18.w,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF81C784), Color(0xFF2E7D32)],
+                                begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                              ),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 1.5.w),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.15),
+                                  blurRadius: 2,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                '${selectionIndex + 1}',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 9.5.sp,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  height: 1.0,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildProgressRow(_Level level) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
-      decoration: BoxDecoration(
-        color: const Color(0xFF8D6E63), // Rustic wooden board brown
-        borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(color: const Color(0xFF5D4037), width: 4.w),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            offset: Offset(0, 6.h),
-            blurRadius: 8.r,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(
-            'Tấm Bảng Từ Của Bé 🪵',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 0.5,
-            ),
-          ),
-          SizedBox(height: 12.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(level.path.length, (idx) {
-              final targetPoint = level.path[idx];
-              final cellVal = level.grid[targetPoint.x][targetPoint.y];
-
-              final isFilled = _selectedPoints.length > idx;
-
-              return Container(
-                margin: EdgeInsets.symmetric(horizontal: 6.w),
-                width: 46.w,
-                height: 46.w,
-                decoration: BoxDecoration(
-                  color: isFilled ? const Color(0xFFFFD54F) : const Color(0xFF5D4037).withOpacity(0.5),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isFilled ? const Color(0xFFFFB300) : const Color(0xFF4E342E),
-                    width: 2.5.w,
+                    ],
                   ),
-                  boxShadow: [
-                    if (isFilled)
-                      BoxShadow(
-                        color: const Color(0xFFFFB300).withOpacity(0.4),
-                        blurRadius: 6.r,
-                        offset: Offset(0, 2.h),
-                      ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    isFilled ? cellVal : '?',
-                    style: GoogleFonts.battambang(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.bold,
-                      color: isFilled ? const Color(0xFF5D4037) : Colors.white.withOpacity(0.3),
-                    ),
-                  ),
-                ),
-              );
-            }),
+                );
+              },
+            ),
           ),
         ],
       ),
     );
   }
+
+
 }
 
 class _Level {
@@ -1168,4 +1452,70 @@ class _Level {
     required this.grid,
     required this.path,
   });
+}
+
+class _GridConnectionPainter extends CustomPainter {
+  final List<Point<int>> selectedPoints;
+  final double spacing;
+
+  _GridConnectionPainter({
+    required this.selectedPoints,
+    required this.spacing,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (selectedPoints.length < 2) return;
+
+    final cellWidth = (size.width - 4 * spacing) / 5;
+    final cellHeight = (size.height - 5 * spacing) / 6;
+
+    Offset getCenter(Point<int> p) {
+      final x = p.y * (cellWidth + spacing) + cellWidth / 2;
+      final y = p.x * (cellHeight + spacing) + cellHeight / 2;
+      return Offset(x, y);
+    }
+
+    final path = Path();
+    final firstCenter = getCenter(selectedPoints.first);
+    path.moveTo(firstCenter.dx, firstCenter.dy);
+
+    for (int i = 1; i < selectedPoints.length; i++) {
+      final center = getCenter(selectedPoints[i]);
+      path.lineTo(center.dx, center.dy);
+    }
+
+    // Layer 1: Broad soft glow (Mint-Teal theme)
+    final glowPaint1 = Paint()
+      ..color = const Color(0xFF26A69A).withOpacity(0.2)
+      ..strokeWidth = 20.w
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+
+    // Layer 2: Medium glow
+    final glowPaint2 = Paint()
+      ..color = const Color(0xFF26A69A).withOpacity(0.5)
+      ..strokeWidth = 12.w
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+
+    // Layer 3: Solid white inner line
+    final linePaint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 4.w
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawPath(path, glowPaint1);
+    canvas.drawPath(path, glowPaint2);
+    canvas.drawPath(path, linePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _GridConnectionPainter oldDelegate) {
+    return oldDelegate.selectedPoints != selectedPoints;
+  }
 }

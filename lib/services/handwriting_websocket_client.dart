@@ -216,6 +216,11 @@ class HandwritingWebSocketClient {
       return;
     }
 
+    // Clean up any existing socket before establishing a new one
+    if (_socket != null) {
+      disconnect();
+    }
+
     final authService = AuthService();
     if (!authService.isAuthenticated) {
       debugPrint('[HandwritingWS] Not authenticated. Cannot connect.');
@@ -225,7 +230,10 @@ class HandwritingWebSocketClient {
     final serverUrl = authService.baseUrl.replaceAll('/api', '');
     final token = authService.accessToken;
 
-    debugPrint('[HandwritingWS] Connecting to $serverUrl...');
+    final tokenSnippet = token != null && token.length > 24
+        ? '${token.substring(0, 12)}...${token.substring(token.length - 12)}'
+        : token;
+    debugPrint('[HandwritingWS] Connecting to $serverUrl with token: $tokenSnippet');
 
     _socket = io.io(
       serverUrl,
@@ -233,6 +241,7 @@ class HandwritingWebSocketClient {
           .setTransports(['websocket'])
           .enableAutoConnect()
           .enableReconnection()
+          .enableForceNewConnection() // Force creating a new Manager/socket to ensure updated auth token is used
           .setAuth({'token': 'Bearer $token'})
           .setQuery({'token': token})
           .build(),

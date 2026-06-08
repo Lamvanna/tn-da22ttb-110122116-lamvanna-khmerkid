@@ -390,18 +390,18 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
     return Scaffold(
       body: Stack(
         children: [
-          // ── Background Gradient (Sky to Forest) ──
+          // ── Background Gradient (Soft Pastel Sky to Mint) ──
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                colors: [Color(0xFF87CEEB), Color(0xFF228B22)],
+                colors: [Color(0xFFE0F7FA), Color(0xFFC8E6C9)],
               ),
             ),
           ),
           // ── Beautiful Rural Scenery Overlay Layer ──
           Opacity(
-            opacity: 0.8,
+            opacity: 0.35,
             child: Image.network(
               'https://lh3.googleusercontent.com/aida-public/AB6AXuBoJptYW0FURDJyaNotaS25b4rd3BMGg54qWp9sofqqLryGPpHttzs3n7fWq_6hwuZxJbZWw9x27OLzQ0TcxJowDDF6psN04fEqfXpnKk-ciWw-Cwoe43jFvmY4md5yJxBlBws14RTo3W4ySrM_xsXMFWHWFze0YckgGbo39IyIZzHP1_VYzsMQ9pnnj7yNYMAlh84lig__sTm7yDHG2feGTJ-PkLHZu88Q6S4roim5toebUO4Yi_IuB3zhK39Ol-7QaiTaHvdFow',
               width: double.infinity,
@@ -529,41 +529,87 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
   // GAMEPLAY UI
   // ═══════════════════════════════════════════
   Widget _buildGamePlay() {
-    return Column(children: [
-      // ── HeaderStats (Hearts, Score, Timer, Level) ──
-      _buildHeaderStats(),
-      
-      // ── Level Bar & Combo Pulsing indicator ──
-      _buildLevelBarRow(),
-      
-      // ── Main Content Area ──
-      Expanded(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-          child: Column(children: [
-            // ── Word Display Banner (Parchment Card) ──
-            _buildParchmentCard(),
-            SizedBox(height: 14.h),
+    return Column(
+      children: [
+        // ── HeaderStats (Hearts, Score, Timer, Level) ──
+        _buildHeaderStats(),
+        
+        // ── Level Bar & Combo Pulsing indicator ──
+        _buildLevelBarRow(),
+        
+        // ── Main Content Area ──
+        Expanded(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.only(left: 16.w, right: 10.w, top: 8.h, bottom: 8.h),
+            child: Column(
+              children: [
+                // Top Row: Parchment Card on left, Powerups Column on right
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: _buildParchmentCard(),
+                    ),
+                    SizedBox(width: 8.w),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildSmallVerticalPowerUpBtn(
+                          emoji: '🔍',
+                          count: _hintsLeft,
+                          onTap: _useHint,
+                          activeColors: [const Color(0xFFFFD54F), const Color(0xFFFFA000)],
+                          shadowColor: const Color(0xFFE65100),
+                        ),
+                        SizedBox(height: 8.h),
+                        _buildSmallVerticalPowerUpBtn(
+                          emoji: '⏰',
+                          count: _timePowerupsLeft,
+                          onTap: _useTimePowerup,
+                          activeColors: [const Color(0xFF4FC3F7), const Color(0xFF0288D1)],
+                          shadowColor: const Color(0xFF01579B),
+                        ),
+                        SizedBox(height: 8.h),
+                        _buildSmallVerticalPowerUpBtn(
+                          emoji: '❤️',
+                          count: _livesPowerupsLeft,
+                          onTap: _useLivesPowerup,
+                          activeColors: [const Color(0xFFFF8A80), const Color(0xFFE53935)],
+                          shadowColor: const Color(0xFFB71C1C),
+                        ),
+                        SizedBox(height: 8.h),
+                        _buildSmallVerticalPowerUpBtn(
+                          emoji: '⭐',
+                          count: _doubleScorePowerupsLeft,
+                          onTap: _useDoubleScorePowerup,
+                          activeColors: [const Color(0xFFB388FF), const Color(0xFF6200EA)],
+                          shadowColor: const Color(0xFF4527A0),
+                          isActiveGlow: _isDoubleScoreActive,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                SizedBox(height: 14.h),
 
-            // ── Letter Selection Rows ──
-            _buildSelectionTiles(),
-            SizedBox(height: 14.h),
+                // ── Workspace Formula (Wooden Board) ──
+                _buildWoodenBoard(),
+                SizedBox(height: 14.h),
 
-            // ── Workspace Formula (Wooden Board) ──
-            _buildWoodenBoard(),
-            SizedBox(height: 20.h),
+                // ── Letter Selection Rows ──
+                _buildSelectionTiles(),
+                SizedBox(height: 20.h),
 
-            // ── Action Button (Confirm Button) ──
-            _buildConfirmButton(),
-            SizedBox(height: 16.h),
-          ]),
+                // ── Action Button (Confirm Button) ──
+                _buildConfirmButton(),
+                SizedBox(height: 16.h),
+              ],
+            ),
+          ),
         ),
-      ),
-
-      // ── Footer Navigation (Power-up Shelf) ──
-      _buildPowerUpFooter(),
-    ]);
+      ],
+    );
   }
 
   Widget _buildHeaderStats() {
@@ -584,15 +630,12 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                   margin: EdgeInsets.only(right: 8.w),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFFFFFF), Color(0xFFE2E8F0)],
-                      begin: Alignment.topCenter, end: Alignment.bottomCenter),
-                    border: Border.all(color: Colors.white, width: 2.w),
+                    color: Colors.white.withOpacity(0.9),
+                    border: Border.all(color: Colors.white, width: 1.5.w),
                     boxShadow: [
-                      const BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(0, 3), blurRadius: 0),
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.12), offset: const Offset(0, 4), blurRadius: 4),
+                      BoxShadow(color: Colors.black.withOpacity(0.06), offset: const Offset(0, 3), blurRadius: 6),
                     ]),
-                  child: const Icon(Icons.arrow_back_rounded, color: Color(0xFF475569), size: 20)),
+                  child: const Icon(Icons.arrow_back_rounded, color: Color(0xFF374151), size: 20)),
               ),
               // Star score badge (yellow 3D)
               Container(
@@ -600,15 +643,15 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                    colors: [Color(0xFFFCD34D), Color(0xFFF59E0B)]),
+                    colors: [Color(0xFFFFF176), Color(0xFFFBC02D)]),
                   borderRadius: BorderRadius.circular(20.r),
-                  border: Border.all(color: Colors.white, width: 2.w),
+                  border: Border.all(color: Colors.white, width: 1.5.w),
                   boxShadow: [
-                    const BoxShadow(color: Color(0xFFD97706), offset: Offset(0, 3), blurRadius: 0),
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.15), offset: const Offset(0, 4), blurRadius: 4),
+                    const BoxShadow(color: Color(0xFFF57F17), offset: Offset(0, 2), blurRadius: 0),
+                    BoxShadow(color: Colors.black.withOpacity(0.1), offset: const Offset(0, 3), blurRadius: 3),
                   ]),
                 child: Row(children: [
-                  Icon(Icons.star_rounded, color: const Color(0xFFFFEB3B), size: 18.w),
+                  Icon(Icons.star_rounded, color: Colors.white, size: 18.w),
                   SizedBox(width: 4.w),
                   Text('$_score',
                     style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w900, color: Colors.white)),
@@ -619,17 +662,20 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
+                  color: Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(20.r),
-                  border: Border.all(color: Colors.white, width: 2.w),
+                  border: Border.all(color: Colors.white, width: 1.5.w),
                   boxShadow: [
-                    BoxShadow(color: Colors.white.withValues(alpha: 0.3), offset: const Offset(0, 2), blurRadius: 0),
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.08), offset: const Offset(0, 3), blurRadius: 3),
+                    BoxShadow(color: Colors.black.withOpacity(0.06), offset: const Offset(0, 3), blurRadius: 6),
                   ]),
                 child: Row(
                   children: List.generate(3, (i) => Padding(
                     padding: EdgeInsets.symmetric(horizontal: 1.5.w),
-                    child: Text(i < _lives ? '❤️' : '🤍', style: TextStyle(fontSize: 16.sp)),
+                    child: Icon(
+                      i < _lives ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                      color: i < _lives ? const Color(0xFFEF5350) : const Color(0xFFB0BEC5),
+                      size: 16.w,
+                    ),
                   )),
                 ),
               ),
@@ -644,14 +690,14 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                 begin: Alignment.topCenter, end: Alignment.bottomCenter,
                 colors: _timeLeft <= 5
                     ? [const Color(0xFFF87171), const Color(0xFFEF4444)]
-                    : [const Color(0xFF60A5FA), const Color(0xFF2563EB)]),
+                    : [const Color(0xFF4DD0E1), const Color(0xFF00ACC1)]),
               borderRadius: BorderRadius.circular(20.r),
-              border: Border.all(color: Colors.white, width: 2.w),
+              border: Border.all(color: Colors.white, width: 1.5.w),
               boxShadow: [
                 BoxShadow(
-                  color: _timeLeft <= 5 ? const Color(0xFFB91C1C) : const Color(0xFF1D4ED8),
-                  offset: const Offset(0, 3), blurRadius: 0),
-                BoxShadow(color: Colors.black.withValues(alpha: 0.15), offset: const Offset(0, 4), blurRadius: 4),
+                  color: _timeLeft <= 5 ? const Color(0xFFB91C1C) : const Color(0xFF00838F),
+                  offset: const Offset(0, 2), blurRadius: 0),
+                BoxShadow(color: Colors.black.withOpacity(0.1), offset: const Offset(0, 3), blurRadius: 3),
               ]),
             child: Row(children: [
               Icon(Icons.access_time_filled_rounded, color: Colors.white, size: 16.w),
@@ -676,62 +722,71 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
           child: Container(
             height: 32.h,
             decoration: BoxDecoration(
-              color: Colors.blue.shade900.withValues(alpha: 0.3),
+              color: const Color(0xFFE0F2F1),
               borderRadius: BorderRadius.circular(16.r),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 2.5),
+              border: Border.all(color: Colors.white.withOpacity(0.9), width: 2.w),
               boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.15), offset: const Offset(0, 2), blurRadius: 4),
+                BoxShadow(color: Colors.black.withOpacity(0.05), offset: const Offset(0, 2), blurRadius: 4),
               ]),
-            child: Stack(clipBehavior: Clip.none, children: [
-              // Progress Fill
-              FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: progress,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                      colors: [Color(0xFF93C5FD), Color(0xFF3B82F6), Color(0xFF2563EB)]),
-                    borderRadius: BorderRadius.circular(14.r),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1),
-                    boxShadow: [
-                      BoxShadow(color: Colors.white.withValues(alpha: 0.3), blurRadius: 3),
-                    ]),
-                ),
-              ),
-              // Level text overlay
-              Center(
-                child: Text('Level $_level',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13.sp, fontWeight: FontWeight.w900, color: Colors.white,
-                    shadows: [
-                      Shadow(color: Colors.black.withValues(alpha: 0.6), offset: const Offset(0, 1), blurRadius: 2),
-                    ])),
-              ),
-              // Floating star at progress edge (Premium 3D badge - Shrunk slightly to 35.h to fit perfectly)
-              Positioned(
-                left: (progress * 100 - 5).clamp(0, 92).w,
-                top: -3.h,
-                child: Container(
-                  width: 35.h, height: 35.h,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFFF3C4), Color(0xFFFFB300)],
-                      begin: Alignment.topCenter, end: Alignment.bottomCenter),
-                    border: Border.all(color: Colors.white, width: 2.w),
-                    boxShadow: [
-                      const BoxShadow(color: Color(0xFFD97706), offset: Offset(0, 2.5), blurRadius: 0),
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.15), offset: const Offset(0, 3), blurRadius: 3),
-                    ]),
-                  child: Icon(Icons.star_rounded, color: Colors.white, size: 20.h),
-                ),
-              ),
-            ]),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final barWidth = constraints.maxWidth;
+                final starSize = 34.h;
+                // Center the star exactly on the right edge of the progress fill
+                final starLeft = (progress * barWidth - starSize / 2).clamp(0.0, barWidth - starSize);
+
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // Progress Fill
+                    FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: progress,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                            colors: [Color(0xFF4DD0E1), Color(0xFF00ACC1)]),
+                          borderRadius: BorderRadius.circular(14.r),
+                          boxShadow: [
+                            BoxShadow(color: Colors.white.withOpacity(0.2), blurRadius: 3),
+                          ]),
+                      ),
+                    ),
+                    // Level text overlay
+                    Center(
+                      child: Text('Level $_level',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.sp, fontWeight: FontWeight.w900, color: const Color(0xFF006064),
+                        )),
+                    ),
+                    // Floating star at progress edge
+                    Positioned(
+                      left: starLeft,
+                      top: -3.h,
+                      child: Container(
+                        width: starSize, height: starSize,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFFF176), Color(0xFFFBC02D)],
+                            begin: Alignment.topCenter, end: Alignment.bottomCenter),
+                          border: Border.all(color: Colors.white, width: 1.5.w),
+                          boxShadow: [
+                            const BoxShadow(color: Color(0xFFF57F17), offset: Offset(0, 2), blurRadius: 0),
+                            BoxShadow(color: Colors.black.withOpacity(0.1), offset: const Offset(0, 3), blurRadius: 3),
+                          ]),
+                        child: Icon(Icons.star_rounded, color: Colors.white, size: 20.h),
+                      ),
+                    ),
+                  ],
+                );
+              }
+            ),
           ),
         ),
         SizedBox(width: 8.w),
-        // Combo Box (Always-Visible Gamified HUD Element - Original Height 32.h)
+        // Combo Box
         Container(
           padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
           width: 82.w,
@@ -743,24 +798,22 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                     begin: Alignment.topCenter, end: Alignment.bottomCenter,
                     colors: [Color(0xFFFB923C), Color(0xFFF59E0B)]),
                   borderRadius: BorderRadius.circular(20.r),
-                  border: Border.all(color: Colors.white, width: 2.w),
+                  border: Border.all(color: Colors.white, width: 1.5.w),
                   boxShadow: [
-                    const BoxShadow(color: Color(0xFFD97706), offset: Offset(0, 3), blurRadius: 0),
-                    BoxShadow(color: Colors.orange.withValues(alpha: 0.4), blurRadius: 10),
+                    const BoxShadow(color: Color(0xFFD97706), offset: Offset(0, 2), blurRadius: 0),
+                    BoxShadow(color: Colors.orange.withOpacity(0.2), blurRadius: 10),
                   ])
               : BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
+                  color: Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(20.r),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1.5.w),
+                  border: Border.all(color: const Color(0xFFCFD8DC), width: 1.5.w),
                 ),
           child: Text('🔥 x$_combo',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 10.5.sp,
               fontWeight: FontWeight.w900,
-              color: _combo >= 2 ? Colors.white : Colors.white.withValues(alpha: 0.5),
-              shadows: _combo >= 2 ? [
-                Shadow(color: Colors.black.withValues(alpha: 0.4), offset: const Offset(0, 1)),
-              ] : null)),
+              color: _combo >= 2 ? Colors.white : const Color(0xFF78909C),
+            )),
         ),
       ]),
     );
@@ -775,12 +828,20 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
           width: double.infinity,
           padding: EdgeInsets.fromLTRB(16.w, 24.h, 16.w, 16.h),
           decoration: BoxDecoration(
-            color: const Color(0xFFFDF5E6), 
-            border: Border.all(color: const Color(0xFFD4A373), width: 7.w),
-            borderRadius: BorderRadius.circular(16.r),
+            color: Colors.white, 
+            border: Border.all(color: const Color(0xFFE8F5E9), width: 2.w),
+            borderRadius: BorderRadius.circular(24.r),
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 12, offset: const Offset(0, 6)),
-              BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, 12)),
+              BoxShadow(
+                color: const Color(0xFF33691E).withOpacity(0.06),
+                blurRadius: 12.r,
+                offset: Offset(0, 6.h),
+              ),
+              BoxShadow(
+                color: const Color(0xFF1B5E20).withOpacity(0.04),
+                blurRadius: 24.r,
+                offset: Offset(0, 12.h),
+              ),
             ]),
           child: Row(children: [
             // Left: Meaning styled 3D
@@ -796,8 +857,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                       fontWeight: FontWeight.w900,
                       color: const Color(0xFFE11D48),
                       shadows: [
-                        Shadow(color: const Color(0xFF881337), offset: Offset(2.w, 2.h), blurRadius: 0),
-                        Shadow(color: Colors.black.withValues(alpha: 0.3), offset: Offset(0, 4.h), blurRadius: 5),
+                        Shadow(color: Colors.black.withOpacity(0.12), offset: const Offset(0, 2), blurRadius: 3),
                       ]),
                   ),
                   if (_showResult) ...[
@@ -830,13 +890,13 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                   height: 130.w,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: const Color(0xFFE6D2B5), width: 2),
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(color: const Color(0xFFECEFF1), width: 1.5),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6),
+                      BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6),
                     ]),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10.r),
+                    borderRadius: BorderRadius.circular(14.r),
                     child: _buildIllustrationWidget(),
                   ),
                 ),
@@ -855,10 +915,10 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                       padding: EdgeInsets.all(6.w),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFF60A5FA),
+                        color: const Color(0xFF4DD0E1),
                         border: Border.all(color: Colors.white, width: 1.5.w),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 4, offset: const Offset(0, 2)),
+                          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2)),
                         ]),
                       child: const Icon(Icons.volume_up_rounded, color: Colors.white, size: 14),
                     ),
@@ -875,14 +935,17 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
           right: 0,
           child: Center(
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 5.h),
+              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 6.h),
               decoration: BoxDecoration(
-                color: const Color(0xFF9333EA), 
-                borderRadius: BorderRadius.circular(8.r),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFB388FF), Color(0xFF6200EA)],
+                  begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                ),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: Colors.white.withOpacity(0.4), width: 1),
                 boxShadow: [
-                  const BoxShadow(color: Color(0xFF6B21A8), offset: Offset(0, 4), blurRadius: 0),
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.25), offset: const Offset(0, 4), blurRadius: 6),
+                  const BoxShadow(color: Color(0xFF4527A0), offset: Offset(0, 3), blurRadius: 0),
+                  BoxShadow(color: Colors.black.withOpacity(0.15), offset: const Offset(0, 4), blurRadius: 4),
                 ]),
               child: Text('TỪ CẦN GHÉP',
                 style: GoogleFonts.plusJakartaSans(
@@ -899,17 +962,22 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
       width: double.infinity,
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+        color: const Color(0xFFECEFF1), 
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(color: const Color(0xFFCFD8DC), width: 2.w),
       ),
       child: Column(children: [
         // Row 1: Consonants
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
             margin: EdgeInsets.only(bottom: 8.h),
-            decoration: BoxDecoration(color: const Color(0xFF1E3A8A).withValues(alpha: 0.4), borderRadius: BorderRadius.circular(8.r)),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF42A5F5), Color(0xFF1E88E5)],
+              ),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
             child: Text('PHỤ ÂM', style: GoogleFonts.plusJakartaSans(fontSize: 10.sp, fontWeight: FontWeight.w900, color: Colors.white))),
         ]),
         SingleChildScrollView(
@@ -921,20 +989,12 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
               final isSel = _selectedConsonant == con;
               final isCorrect = _showResult && con == _currentSyllable.consonant;
               final isWrong = _showResult && isSel && con != _currentSyllable.consonant;
-              final colorIdx = _consonantChoices.indexOf(con) % 5;
-              final colors = [
-                const Color(0xFFAA00FF), 
-                const Color(0xFF2979FF), 
-                const Color(0xFF00E676), 
-                const Color(0xFFFFD600), 
-                const Color(0xFFFF1744), 
-              ];
 
               return Padding(
                 padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 6.h),
                 child: ThreeDTile(
                   text: con,
-                  color: colors[colorIdx],
+                  color: const Color(0xFF42A5F5), // Cohesive Consonant color
                   isSelected: isSel,
                   isCorrect: isCorrect,
                   isWrong: isWrong,
@@ -944,13 +1004,18 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
             }).toList(),
           ),
         ),
-        SizedBox(height: 10.h),
+        SizedBox(height: 12.h),
         // Row 2: Vowels
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
             margin: EdgeInsets.only(bottom: 8.h),
-            decoration: BoxDecoration(color: const Color(0xFF7F1D1D).withValues(alpha: 0.4), borderRadius: BorderRadius.circular(8.r)),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFFB74D), Color(0xFFF57C00)],
+              ),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
             child: Text('NGUYÊN ÂM', style: GoogleFonts.plusJakartaSans(fontSize: 10.sp, fontWeight: FontWeight.w900, color: Colors.white))),
         ]),
         SingleChildScrollView(
@@ -962,19 +1027,12 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
               final isSel = _selectedVowel == vow;
               final isCorrect = _showResult && vow == _currentSyllable.vowel;
               final isWrong = _showResult && isSel && vow != _currentSyllable.vowel;
-              final colors = [
-                const Color(0xFF2979FF), 
-                const Color(0xFFAA00FF), 
-                const Color(0xFF00E676), 
-                const Color(0xFFFFD600), 
-              ];
-              final colorIdx = _vowelChoices.indexOf(vow) % 4;
 
               return Padding(
                 padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 6.h),
                 child: ThreeDTile(
                   text: 'អ$vow',
-                  color: colors[colorIdx],
+                  color: const Color(0xFFFFB74D), // Cohesive Vowel color
                   isSelected: isSel,
                   isCorrect: isCorrect,
                   isWrong: isWrong,
@@ -992,42 +1050,43 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
     final showCombined = _selectedConsonant != null && _selectedVowel != null;
     String combinedText = '';
     if (showCombined) {
-      if (_selectedConsonant == 'ក' && _selectedVowel == 'ា') combinedText = 'កា';
+      if (_selectedConsonant == 'ក' && _selectedVowel == 'ា') combinedText = 'កา';
       else if (_selectedConsonant == 'ម' && _selectedVowel == 'ា') combinedText = 'មា';
       else if (_selectedConsonant == 'ត' && _selectedVowel == 'ា') combinedText = 'តា';
-      else if (_selectedConsonant == 'ប' && _selectedVowel == 'ា') combinedText = 'បា';
+      else if (_selectedConsonant == 'ប' && _selectedVowel == 'ា') combinedText = 'បา';
       else if (_selectedConsonant == 'ស' && _selectedVowel == 'ា') combinedText = 'សា';
       else combinedText = '$_selectedConsonant$_selectedVowel';
     }
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 22.h),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft, end: Alignment.bottomRight,
-          colors: [Color(0xFF8B4513), Color(0xFF5D2E0A)]), 
-        border: Border.all(color: const Color(0xFF3D1E07), width: 5.w),
+        color: const Color(0xFFF1F8E9), // Clean, bright ivory/pastel grid board
         borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(color: const Color(0xFFC5E1A5), width: 3.w),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.35), blurRadius: 10, offset: const Offset(0, 5)),
-          BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 20, offset: const Offset(0, 10), spreadRadius: -5),
+          BoxShadow(
+            color: const Color(0xFF33691E).withOpacity(0.08),
+            blurRadius: 16.r,
+            offset: Offset(0, 8.h),
+          ),
         ]),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildWorkspaceSlot(_selectedConsonant, const Color(0xFF8C34FF), 'Phụ âm'),
-          SizedBox(width: 8.w),
-          Text('+', style: GoogleFonts.plusJakartaSans(fontSize: 22.sp, fontWeight: FontWeight.w900, color: Colors.white)),
-          SizedBox(width: 8.w),
-          _buildWorkspaceSlot(_selectedVowel != null ? 'អ$_selectedVowel' : null, const Color(0xFF2979FF), 'Nguyên âm'),
-          SizedBox(width: 8.w),
-          Text('=', style: GoogleFonts.plusJakartaSans(fontSize: 22.sp, fontWeight: FontWeight.w900, color: Colors.white)),
-          SizedBox(width: 8.w),
+          _buildWorkspaceSlot(_selectedConsonant, const Color(0xFF42A5F5), 'P'),
+          SizedBox(width: 12.w),
+          Text('+', style: GoogleFonts.plusJakartaSans(fontSize: 28.sp, fontWeight: FontWeight.w900, color: const Color(0xFF558B2F))),
+          SizedBox(width: 12.w),
+          _buildWorkspaceSlot(_selectedVowel != null ? 'អ$_selectedVowel' : null, const Color(0xFFFFB74D), 'N'),
+          SizedBox(width: 12.w),
+          Text('=', style: GoogleFonts.plusJakartaSans(fontSize: 28.sp, fontWeight: FontWeight.w900, color: const Color(0xFF558B2F))),
+          SizedBox(width: 12.w),
           _buildWorkspaceSlot(
             showCombined ? combinedText : null,
-            const Color(0xFF00E676),
-            'Kết quả',
+            const Color(0xFF66BB6A),
+            'K',
             isResult: true,
             isGlowing: _showResult && _lastCorrect,
           ),
@@ -1038,34 +1097,47 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
 
   Widget _buildWorkspaceSlot(String? char, Color color, String placeholder, {bool isResult = false, bool isGlowing = false}) {
     return Container(
-      width: 58.w,
-      height: 58.w,
+      width: 68.w,
+      height: 68.w,
       decoration: BoxDecoration(
-        color: char != null ? color : Colors.black.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(14.r),
+        color: char != null ? color : const Color(0xFFECEFF1),
+        borderRadius: BorderRadius.circular(16.r),
         border: isGlowing
-            ? Border.all(color: const Color(0xFF69F0AE), width: 3.5.w)
-            : Border.all(color: char != null ? Colors.white.withValues(alpha: 0.4) : const Color(0xFF3D1E07), width: 2.w),
+            ? Border.all(color: const Color(0xFF00E676), width: 3.w)
+            : Border.all(
+                color: char != null ? Colors.white.withOpacity(0.5) : const Color(0xFFCFD8DC),
+                width: 2.w,
+              ),
         boxShadow: [
           if (isGlowing)
-            BoxShadow(color: const Color(0xFF00E676).withValues(alpha: 0.6), blurRadius: 12, spreadRadius: 2),
+            BoxShadow(color: const Color(0xFF00E676).withOpacity(0.5), blurRadius: 12, spreadRadius: 2),
           if (char != null)
-            const BoxShadow(color: Colors.black26, offset: Offset(0, 3), blurRadius: 2),
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              offset: const Offset(0, 3),
+              blurRadius: 4,
+            )
+          else
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              offset: const Offset(0, 2),
+              blurRadius: 2,
+            )
         ]),
       child: Center(
         child: char != null
             ? Text(char,
                 style: GoogleFonts.battambang(
-                  fontSize: isResult ? 20.sp : 24.sp,
+                  fontSize: isResult ? 24.sp : 28.sp,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                   shadows: [
-                    Shadow(color: Colors.black.withValues(alpha: 0.3), offset: const Offset(0, 1.5)),
+                    Shadow(color: Colors.black.withOpacity(0.15), offset: const Offset(0, 1.5)),
                   ]))
-            : Text(placeholder.substring(0, 1),
+            : Text(placeholder,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13.sp, fontWeight: FontWeight.w900,
-                  color: Colors.white.withValues(alpha: 0.18))),
+                  fontSize: 18.sp, fontWeight: FontWeight.w900,
+                  color: const Color(0xFFB0BEC5))),
       ),
     );
   }
@@ -1075,36 +1147,63 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
     return GestureDetector(
       onTap: canConfirm ? _checkAnswer : null,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        padding: EdgeInsets.symmetric(horizontal: 52.w, vertical: 14.h),
+        duration: const Duration(milliseconds: 150),
+        padding: EdgeInsets.symmetric(horizontal: 56.w, vertical: 14.h),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter, end: Alignment.bottomCenter,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: canConfirm
-                ? [const Color(0xFF4ADE80), const Color(0xFF16A34A)]
-                : [Colors.grey.shade400, Colors.grey.shade600]),
-          borderRadius: BorderRadius.circular(22.r),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
+                ? [const Color(0xFF00E676), const Color(0xFF00C853)]
+                : [const Color(0xFFECEFF1), const Color(0xFFCFD8DC)]),
+          borderRadius: BorderRadius.circular(24.r),
+          border: Border.all(
+            color: canConfirm ? Colors.white.withOpacity(0.5) : Colors.white24,
+            width: 1.5,
+          ),
           boxShadow: [
-            BoxShadow(
-              color: canConfirm ? const Color(0xFF15803D) : Colors.grey.shade800,
-              offset: const Offset(0, 6), blurRadius: 0),
-            BoxShadow(color: Colors.black.withValues(alpha: 0.2), offset: const Offset(0, 8), blurRadius: 10),
+            if (canConfirm) ...[
+              const BoxShadow(
+                color: Color(0xFF00A343),
+                offset: Offset(0, 4),
+                blurRadius: 0,
+              ),
+              BoxShadow(
+                color: const Color(0xFF00E676).withOpacity(0.3),
+                offset: const Offset(0, 6),
+                blurRadius: 10,
+              ),
+            ] else ...[
+              const BoxShadow(
+                color: Color(0xFFB0BEC5),
+                offset: Offset(0, 2),
+                blurRadius: 0,
+              ),
+            ]
           ]),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Text('XÁC NHẬN',
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 18.sp, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.5,
-              shadows: [
-                Shadow(color: Colors.black.withValues(alpha: 0.4), offset: const Offset(0, 1.5)),
-              ])),
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w900,
+              color: canConfirm ? Colors.white : const Color(0xFF90A4AE),
+              letterSpacing: 0.5,
+              shadows: canConfirm
+                  ? [Shadow(color: Colors.black.withOpacity(0.2), offset: const Offset(0, 1.5))]
+                  : null,
+            )),
           SizedBox(width: 10.w),
           Container(
             width: 22.w, height: 22.w,
-            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: canConfirm ? Colors.white : const Color(0xFFB0BEC5),
+              shape: BoxShape.circle,
+            ),
             child: Center(
               child: Icon(Icons.check_rounded,
-                color: canConfirm ? const Color(0xFF16A34A) : Colors.grey, size: 14.w, weight: 900),
+                color: canConfirm ? const Color(0xFF00C853) : Colors.white,
+                size: 14.w,
+                weight: 900),
             ),
           ),
         ]),
@@ -1112,94 +1211,46 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
     );
   }
 
-  Widget _buildPowerUpFooter() {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 16.h),
-      child: GridView.count(
-        crossAxisCount: 4,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisSpacing: 10.w,
-        childAspectRatio: 0.95,
-        children: [
-          _buildPowerUpBtn(
-            emoji: '🔍',
-            title: 'Kính lúp',
-            count: _hintsLeft,
-            onTap: _useHint,
-          ),
-          _buildPowerUpBtn(
-            emoji: '⏰',
-            title: '+10 Giây',
-            count: _timePowerupsLeft,
-            onTap: _useTimePowerup,
-          ),
-          _buildPowerUpBtn(
-            emoji: '❤️',
-            title: '+1 Mạng',
-            count: _livesPowerupsLeft,
-            onTap: _useLivesPowerup,
-          ),
-          _buildPowerUpBtn(
-            emoji: '⭐',
-            title: 'X2 Điểm',
-            count: _doubleScorePowerupsLeft,
-            onTap: _useDoubleScorePowerup,
-            isActiveGlow: _isDoubleScoreActive,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPowerUpBtn({
+  Widget _buildSmallVerticalPowerUpBtn({
     required String emoji,
-    required String title,
     required int count,
     required VoidCallback onTap,
+    required List<Color> activeColors,
+    required Color shadowColor,
     bool isActiveGlow = false,
   }) {
     final hasItem = count > 0;
     return GestureDetector(
-      onTap: hasItem && !_showResult ? onTap : null,
+      onTap: hasItem && !_showResult && !_gameOver ? onTap : null,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           AnimatedContainer(
             duration: const Duration(milliseconds: 150),
-            width: double.infinity,
-            height: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 4.w),
+            width: 44.w,
+            height: 44.w,
             decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12.r),
               gradient: LinearGradient(
                 begin: Alignment.topCenter, end: Alignment.bottomCenter,
                 colors: isActiveGlow
                     ? [const Color(0xFFFFD600), const Color(0xFFFF8F00)]
                     : hasItem
-                        ? [const Color(0xFF60A5FA), const Color(0xFF2563EB)]
-                        : [Colors.grey.shade400, Colors.grey.shade600]),
-              borderRadius: BorderRadius.circular(16.r),
+                        ? activeColors
+                        : [const Color(0xFFECEFF1), const Color(0xFFCFD8DC)]),
               border: Border.all(
-                color: isActiveGlow ? Colors.white : Colors.white.withValues(alpha: 0.4),
-                width: isActiveGlow ? 2.5 : 1.5),
+                color: isActiveGlow ? Colors.white : Colors.white.withOpacity(0.6),
+                width: isActiveGlow ? 2.0 : 1.2),
               boxShadow: [
                 BoxShadow(
                   color: isActiveGlow
                       ? const Color(0xFFFF8F00)
-                      : hasItem ? const Color(0xFF1D4ED8) : Colors.grey.shade800,
-                  offset: const Offset(0, 3.5), blurRadius: 0),
-                BoxShadow(color: Colors.black.withValues(alpha: 0.15), offset: const Offset(0, 3), blurRadius: 4),
+                      : hasItem ? shadowColor : const Color(0xFFB0BEC5),
+                  offset: const Offset(0, 3), blurRadius: 0),
+                BoxShadow(color: Colors.black.withOpacity(0.1), offset: const Offset(0, 3), blurRadius: 3),
               ]),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(emoji, style: TextStyle(fontSize: 22.sp)),
-                SizedBox(height: 3.h),
-                Text(title,
-                  maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 9.sp, fontWeight: FontWeight.w900, color: Colors.white)),
-              ],
+            child: Center(
+              child: Text(emoji, style: TextStyle(fontSize: 20.sp)),
             ),
           ),
           if (count > 0)
@@ -1207,17 +1258,22 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
               top: -3.h,
               right: -3.w,
               child: Container(
-                width: 20.w, height: 20.w,
+                width: 18.w, height: 18.w,
                 decoration: BoxDecoration(
                   color: const Color(0xFFEF4444), 
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2.w),
+                  border: Border.all(color: Colors.white, width: 1.5.w),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 3, offset: const Offset(0, 1))
+                    BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 2, offset: const Offset(0, 1))
                   ]),
                 child: Center(
                   child: Text('$count',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 9.sp, fontWeight: FontWeight.w900, color: Colors.white)),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 8.5.sp, 
+                      fontWeight: FontWeight.w900, 
+                      color: Colors.white,
+                      height: 1.0,
+                    )),
                 ),
               ),
             ),
@@ -1240,30 +1296,30 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: const LinearGradient(
-                colors: [Color(0xFFFCD34D), Color(0xFFF59E0B)]),
+                colors: [Color(0xFFFFD54F), Color(0xFFFF8F00)]),
               border: Border.all(color: Colors.white, width: 4.w),
               boxShadow: [
-                BoxShadow(color: const Color(0xFFD97706).withValues(alpha: 0.4), blurRadius: 24, offset: const Offset(0, 8))
+                BoxShadow(color: const Color(0xFFE65100).withOpacity(0.2), blurRadius: 24, offset: const Offset(0, 8))
               ]),
             child: const Center(child: Text('🏆', style: TextStyle(fontSize: 60))),
           ),
           SizedBox(height: 16.h),
           Text('KẾT THÚC HÀNH TRÌNH!',
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 26.sp, fontWeight: FontWeight.w900, color: Colors.white,
+              fontSize: 26.sp, fontWeight: FontWeight.w900, color: const Color(0xFF1B5E20),
               shadows: [
-                Shadow(color: const Color(0xFF1B5E20), offset: Offset(2.w, 2.h), blurRadius: 4),
+                Shadow(color: Colors.white.withOpacity(0.8), offset: Offset(2.w, 2.h), blurRadius: 4),
               ])),
           SizedBox(height: 24.h),
           Container(
             width: double.infinity,
             padding: EdgeInsets.all(24.w),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.25),
+              color: Colors.white.withOpacity(0.95),
               borderRadius: BorderRadius.circular(24.r),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+              border: Border.all(color: const Color(0xFFE8F5E9)),
               boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 16, offset: const Offset(0, 4))
+                BoxShadow(color: const Color(0xFF1B5E20).withOpacity(0.05), blurRadius: 16, offset: const Offset(0, 4))
               ]),
             child: Column(children: [
               _statRow('⭐ Điểm tích lũy', '$_score'),
@@ -1284,10 +1340,13 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
               child: Container(
                 padding: EdgeInsets.symmetric(vertical: 14.h),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
+                  color: Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.3))),
-                child: Center(child: Text('THOÁT', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w900, color: const Color(0xFF1A237E)))),
+                  border: Border.all(color: const Color(0xFFCFD8DC)),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.05), offset: const Offset(0, 2), blurRadius: 2),
+                  ]),
+                child: Center(child: Text('THOÁT', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w900, color: const Color(0xFF546E7A)))),
               ),
             )),
             SizedBox(width: 12.w),
@@ -1297,11 +1356,11 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                 padding: EdgeInsets.symmetric(vertical: 14.h),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF4ADE80), Color(0xFF16A34A)]),
+                    colors: [Color(0xFF00E676), Color(0xFF00C853)]),
                   borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
+                  border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
                   boxShadow: [
-                    const BoxShadow(color: Color(0xFF15803D), offset: Offset(0, 4), blurRadius: 0),
+                    const BoxShadow(color: Color(0xFF00A343), offset: Offset(0, 4), blurRadius: 0),
                   ]),
                 child: Center(child: Text('CHƠI LẠI', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w900, color: Colors.white))),
               ),
@@ -1315,9 +1374,9 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
   Widget _statRow(String label, String value) {
     return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
       Text(label, style: GoogleFonts.plusJakartaSans(
-        fontSize: 15.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1A237E))),
+        fontSize: 15.sp, fontWeight: FontWeight.w800, color: const Color(0xFF374151))),
       Text(value, style: GoogleFonts.plusJakartaSans(
-        fontSize: 18.sp, fontWeight: FontWeight.w900, color: const Color(0xFFD97706))),
+        fontSize: 18.sp, fontWeight: FontWeight.w900, color: const Color(0xFFE65100))),
     ]);
   }
 }

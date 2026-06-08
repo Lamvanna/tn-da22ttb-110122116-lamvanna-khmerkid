@@ -189,6 +189,7 @@ function registerWritingHandler(socket, io) {
 
         // Find expected strokes for each individual character component
         const componentStrokeCounts = [];
+        const componentStandardStrokes = [];
         const parts = [...cleanCharacter].filter(c => c !== '\u17D2');
         for (const charPart of parts) {
           const doc = await StandardCharacter.findOne({
@@ -197,6 +198,7 @@ function registerWritingHandler(socket, io) {
           }).lean();
           if (doc && doc.standardStrokes) {
             componentStrokeCounts.push(doc.standardStrokes.length);
+            componentStandardStrokes.push(...doc.standardStrokes);
           } else {
             // Fallback for diacritics / unrecognized parts:
             // Diacritics usually take 1 stroke, others 2.
@@ -210,6 +212,7 @@ function registerWritingHandler(socket, io) {
           userStrokes: sanitizedUserStrokes,
           character: targetCharacter,
           componentStrokeCounts,
+          componentStandardStrokes,
         });
       } else {
         if (standardDoc.type === 'vowel') {

@@ -40,6 +40,7 @@ const initSocket = (httpServer) => {
       }
 
       if (!token) {
+        console.warn('⚠️ [Socket Auth] No token provided in handshake');
         return next(new Error('Authentication error: Token not provided'));
       }
 
@@ -47,6 +48,9 @@ const initSocket = (httpServer) => {
       if (token.startsWith('Bearer ')) {
         token = token.slice(7, token.length).trim();
       }
+
+      const tokenSnippet = token.substring(0, 12) + '...' + token.substring(token.length - 12);
+      console.log(`🔌 [Socket Auth] Verifying token: ${tokenSnippet}`);
 
       const decoded = verifyAccessToken(token);
       socket.user = decoded; // { id, email, role }

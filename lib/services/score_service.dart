@@ -534,7 +534,7 @@ class ScoreService {
       String gameType = 'catch_letter';
       if (gameName.contains('catch') || gameName == 'Bắt chữ Khmer') {
         gameType = 'catch_letter';
-      } else if (gameName.contains('match') || gameName == 'Nối từ') {
+      } else if (gameName.contains('match') || gameName == 'Nối từ' || gameName.contains('Giải cứu') || gameName.contains('word_search')) {
         gameType = 'match_word';
       } else if (gameName.contains('arrange') || gameName == 'Sắp xếp chữ') {
         gameType = 'arrange_letter';

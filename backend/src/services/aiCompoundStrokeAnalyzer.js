@@ -105,6 +105,153 @@ function isStrokeLoop(stroke) {
   return Math.abs(totalAngle) > 4.5;
 }
 
+function isStrokeScribble(stroke) {
+  if (stroke.length < 4) return false;
+  const bb = boundingBox(stroke);
+  const diag = Math.sqrt(bb.width * bb.width + bb.height * bb.height);
+  if (diag < 5) return false; // Too small to be a scribble
+  const len = pathLength(stroke);
+  const ratio = len / diag;
+  return ratio > 3.8;
+}
+
+const DIRECTION_REVERSE_THRESHOLD = -0.3;
+const DTW_MAX_DISTANCE = 130;
+
+function dtwDistance(s1, s2) {
+  const n = s1.length;
+  const m = s2.length;
+  if (n === 0 || m === 0) return Infinity;
+
+  const D = Array.from({ length: n + 1 }, () =>
+    new Float64Array(m + 1).fill(Infinity)
+  );
+  D[0][0] = 0;
+
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j <= m; j++) {
+      const cost = dist(s1[i - 1], s2[j - 1]);
+      D[i][j] = cost + Math.min(D[i - 1][j], D[i][j - 1], D[i - 1][j - 1]);
+    }
+  }
+
+  let pathLen = 0;
+  let i = n, j = m;
+  while (i > 0 || j > 0) {
+    pathLen++;
+    if (i === 0) { j--; continue; }
+    if (j === 0) { i--; continue; }
+    const options = [
+      { cost: D[i - 1][j - 1], ni: i - 1, nj: j - 1 },
+      { cost: D[i - 1][j], ni: i - 1, nj: j },
+      { cost: D[i][j - 1], ni: i, nj: j - 1 },
+    ];
+    options.sort((a, b) => a.cost - b.cost);
+    i = options[0].ni;
+    j = options[0].nj;
+  }
+
+  return pathLen > 0 ? D[n][m] / pathLen : D[n][m];
+}
+
+function dtwToSimilarity(dtwDist) {
+  if (dtwDist <= 0) return 100;
+  if (dtwDist >= DTW_MAX_DISTANCE) return 0;
+  return Math.round(100 * (1 - dtwDist / DTW_MAX_DISTANCE));
+}
+
+function dominantDirection(points) {
+  if (points.length < 2) return { dx: 0, dy: 0 };
+
+  const sorted = [...points].sort((a, b) => a.t - b.t);
+  const first = sorted[0];
+  const last = sorted[sorted.length - 1];
+
+  const dx = last.x - first.x;
+  const dy = last.y - first.y;
+  const mag = Math.sqrt(dx * dx + dy * dy);
+
+  if (mag === 0) return { dx: 0, dy: 0 };
+  return { dx: dx / mag, dy: dy / mag };
+}
+
+function cosineSimilarity(a, b) {
+  const dot = a.dx * b.dx + a.dy * b.dy;
+  const magA = Math.sqrt(a.dx * a.dx + a.dy * a.dy);
+  const magB = Math.sqrt(b.dx * b.dx + b.dy * b.dy);
+  if (magA === 0 || magB === 0) return 0;
+  return dot / (magA * magB);
+}
+
+function segmentDirectionAnalysis(userPts, stdPts) {
+  const n = Math.min(userPts.length, stdPts.length) - 1;
+  if (n <= 0) return { avgCosine: 0, reversedSegments: 0, totalSegments: 0 };
+
+  const SMOOTH_WINDOW = 2;
+  let cosineSum = 0;
+  let reversedCount = 0;
+  let validSegments = 0;
+
+  for (let i = 0; i < n; i++) {
+    const uEnd = Math.min(i + SMOOTH_WINDOW, userPts.length - 1);
+    const sEnd = Math.min(i + SMOOTH_WINDOW, stdPts.length - 1);
+
+    const uDir = {
+      dx: userPts[uEnd].x - userPts[i].x,
+      dy: userPts[uEnd].y - userPts[i].y,
+    };
+    const sDir = {
+      dx: stdPts[sEnd].x - stdPts[i].x,
+      dy: stdPts[sEnd].y - stdPts[i].y,
+    };
+
+    const uMag = Math.sqrt(uDir.dx * uDir.dx + uDir.dy * uDir.dy);
+    const sMag = Math.sqrt(sDir.dx * sDir.dx + sDir.dy * sDir.dy);
+    if (uMag < 0.01 || sMag < 0.01) continue;
+
+    const cos = cosineSimilarity(uDir, sDir);
+    cosineSum += cos;
+    validSegments++;
+    if (cos < DIRECTION_REVERSE_THRESHOLD) {
+      reversedCount++;
+    }
+  }
+
+  return {
+    avgCosine: validSegments > 0 ? cosineSum / validSegments : 0,
+    reversedSegments: reversedCount,
+    totalSegments: validSegments,
+  };
+}
+
+function matchStrokes(userStrokes, stdStrokes) {
+  const used = new Set();
+  const pairs = [];
+
+  for (let si = 0; si < stdStrokes.length; si++) {
+    const stdCenter = centroid(stdStrokes[si]);
+    let bestIdx = -1;
+    let bestDist = Infinity;
+
+    for (let ui = 0; ui < userStrokes.length; ui++) {
+      if (used.has(ui)) continue;
+      const userCenter = centroid(userStrokes[ui]);
+      const d = dist(stdCenter, userCenter);
+      if (d < bestDist) {
+        bestDist = d;
+        bestIdx = ui;
+      }
+    }
+
+    if (bestIdx >= 0) {
+      pairs.push({ userIdx: bestIdx, stdIdx: si, distance: bestDist });
+      used.add(bestIdx);
+    }
+  }
+
+  return pairs;
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // Preprocessing & Normalization
 // ═══════════════════════════════════════════════════════════════════════
@@ -225,7 +372,7 @@ function directionToScore(avgCosine) {
 // Main Compound Analyzer
 // ═══════════════════════════════════════════════════════════════════════
 
-function analyzeCompoundStrokes({ userStrokes, character = '', componentStrokeCounts = [] }) {
+function analyzeCompoundStrokes({ userStrokes, character = '', componentStrokeCounts = [], componentStandardStrokes = [] }) {
   if (!userStrokes || userStrokes.length === 0) {
     return {
       success: false,
@@ -254,7 +401,7 @@ function analyzeCompoundStrokes({ userStrokes, character = '', componentStrokeCo
 
   if (componentStrokeCounts && componentStrokeCounts.length > 0) {
     totalStdStrokes = componentStrokeCounts.reduce((a, b) => a + b, 0);
-    minExpected = Math.max(componentStrokeCounts.length, Math.ceil(totalStdStrokes * 0.6));
+    minExpected = Math.max(componentStrokeCounts.length + 1, Math.ceil(totalStdStrokes * 0.6));
     maxExpected = totalStdStrokes + Math.max(2, componentStrokeCounts.length * 2);
   }
 
@@ -272,7 +419,7 @@ function analyzeCompoundStrokes({ userStrokes, character = '', componentStrokeCo
   const resampledUser = normUser.map((s) => resampleStroke(s, RESAMPLE_COUNT));
 
   // Loop detection check
-  const loopChars = ['០', 'ំ', 'ះ', 'ៈ', '៎', '៏', '៌', '៍', 'ឹ', 'ឺ', 'ូ'];
+  const loopChars = ['០', 'ំ', 'ះ', 'ៈ', '៎', '៏', '៌', '៍', 'ឹ', 'ឺ', 'ូ', 'ិ', 'ី'];
   const isLoopAllowed = loopChars.some((lc) => cleanChar.includes(lc));
 
   let hasUnexpectedLoop = false;
@@ -280,6 +427,20 @@ function analyzeCompoundStrokes({ userStrokes, character = '', componentStrokeCo
     for (const stroke of resampledUser) {
       if (isStrokeLoop(stroke)) {
         hasUnexpectedLoop = true;
+        break;
+      }
+    }
+  }
+
+  const rawDiag = Math.sqrt(rawBB.width * rawBB.width + rawBB.height * rawBB.height);
+  const totalPathLen = userStrokes.reduce((sum, s) => sum + pathLength(s), 0);
+  const entireRatio = rawDiag > 0 ? (totalPathLen / rawDiag) : 0;
+
+  let hasScribble = entireRatio > 4.0 && rawDiag > 10;
+  if (!hasScribble) {
+    for (const stroke of normUser) {
+      if (isStrokeScribble(stroke)) {
+        hasScribble = true;
         break;
       }
     }
@@ -308,6 +469,15 @@ function analyzeCompoundStrokes({ userStrokes, character = '', componentStrokeCo
     });
   }
 
+  if (hasScribble) {
+    shapeScore = Math.min(shapeScore, 15);
+    errors.push('Nét vẽ có dấu hiệu nguệch ngoạc hoặc lặp nét nhiều lần');
+    issues.push({
+      type: 'scribble',
+      detail: 'Con không nên vẽ nguệch ngoạc hoặc lặp nét nhiều lần nhé! Hãy viết nắn nót theo từng nét chữ mẫu. ✏️',
+    });
+  }
+
   // Tiny drawing check
   if (rawMaxDim < 30) {
     const penalty = Math.max(10, Math.round(rawMaxDim * 2.5));
@@ -322,12 +492,12 @@ function analyzeCompoundStrokes({ userStrokes, character = '', componentStrokeCo
   // Aspect ratio skew check (single line spanning screen)
   if (rawMaxDim >= 30) {
     const ratio = rawBB.width / (rawBB.height || 1);
-    if (ratio > 8.0 || ratio < 0.125) {
-      shapeScore = Math.max(20, shapeScore - 30);
-      errors.push('Nét vẽ bị lệch tỷ lệ quá mức');
+    if (ratio > 2.5 || ratio < 0.33) {
+      shapeScore = Math.min(shapeScore, 15);
+      errors.push('Nét vẽ bị lệch tỷ lệ quá mức hoặc quá dẹt');
       issues.push({
         type: 'aspect_ratio',
-        detail: 'Con hãy viết chữ ghép cân đối và đẹp hơn nhé!',
+        detail: 'Con hãy viết chữ ghép cân đối và đẹp hơn nhé! ✏️',
       });
     }
   }
@@ -376,6 +546,14 @@ function analyzeCompoundStrokes({ userStrokes, character = '', componentStrokeCo
     directionScore = Math.min(directionScore, 20);
   }
 
+  if (hasScribble) {
+    directionScore = Math.min(directionScore, 20);
+  }
+
+  if (issues.some(iss => iss.type === 'aspect_ratio')) {
+    directionScore = Math.min(directionScore, 20);
+  }
+
   // Jaggedness check
   if (avgSmoothCos < 0.45 || totalNegatives > userStrokes.length * 4) {
     errors.push('Nét vẽ bị run hoặc quá ngoằn ngoèo');
@@ -383,6 +561,84 @@ function analyzeCompoundStrokes({ userStrokes, character = '', componentStrokeCo
       type: 'smoothness',
       detail: 'Con hãy viết chậm lại và vẽ nét thật mượt mà nhé! ✏️',
     });
+  }
+
+  // 3b. Optional template-based shape matching if standard strokes of components are provided
+  let templateShapeScore = 100;
+  let templateDirectionScore = 100;
+  let hasTemplateMatch = false;
+
+  if (componentStandardStrokes && componentStandardStrokes.length > 0) {
+    hasTemplateMatch = true;
+    const normStd = normalizeStrokes(componentStandardStrokes);
+    const resampledStd = normStd.map((s) => resampleStroke(s, RESAMPLE_COUNT));
+
+    const pairs = matchStrokes(resampledUser, resampledStd);
+    let totalShapeScore = 0;
+    let totalDirScore = 0;
+    let pairedCount = 0;
+
+    for (const pair of pairs) {
+      const uStroke = resampledUser[pair.userIdx];
+      const sStroke = resampledStd[pair.stdIdx];
+
+      // Translate standard stroke to align its centroid with the user stroke centroid
+      const uCentroid = centroid(uStroke);
+      const sCentroid = centroid(sStroke);
+      const alignedStdStroke = sStroke.map((p) => ({
+        x: p.x - sCentroid.x + uCentroid.x,
+        y: p.y - sCentroid.y + uCentroid.y,
+        t: p.t,
+      }));
+
+      const dtwDist = dtwDistance(uStroke, alignedStdStroke);
+      let shapeSim = dtwToSimilarity(dtwDist);
+
+      const userDir = dominantDirection(uStroke);
+      const stdDir = dominantDirection(alignedStdStroke);
+      const dominantCos = cosineSimilarity(userDir, stdDir);
+      const segAnalysis = segmentDirectionAnalysis(uStroke, alignedStdStroke);
+      let dirScore = directionToScore(segAnalysis.avgCosine);
+
+      totalShapeScore += shapeSim;
+      totalDirScore += dirScore;
+      pairedCount++;
+    }
+
+    const expectedCount = resampledStd.length;
+    const actualCount = resampledUser.length;
+    const unmatchedStdCount = expectedCount - pairedCount;
+    const extraUserCount = actualCount - pairedCount;
+
+    let matchPenalty = pairedCount > 0 ? (totalShapeScore / pairedCount) : 0;
+    if (unmatchedStdCount > 0) {
+      matchPenalty = Math.max(0, matchPenalty - (unmatchedStdCount * 40));
+    }
+    if (extraUserCount > 0) {
+      matchPenalty = Math.max(0, matchPenalty - (extraUserCount * 45));
+    }
+
+    let avgDirScore = pairedCount > 0 ? (totalDirScore / pairedCount) : 0;
+    if (unmatchedStdCount > 0) {
+      avgDirScore = Math.max(0, avgDirScore - (unmatchedStdCount * 20));
+    }
+
+    templateShapeScore = Math.round(matchPenalty);
+    templateDirectionScore = Math.round(avgDirScore);
+
+    // Apply template shape matching to clamp/reduce scores if drawn shapes mismatch
+    shapeScore = Math.min(shapeScore, templateShapeScore);
+    directionScore = Math.min(directionScore, templateDirectionScore);
+
+    if (templateShapeScore < 60) {
+      shapeScore = Math.min(shapeScore, 15);
+      directionScore = Math.min(directionScore, 20);
+      errors.push('Hình dạng nét vẽ không đúng với chữ ghép mẫu');
+      issues.push({
+        type: 'shape_mismatch',
+        detail: 'Nét vẽ chưa giống chữ mẫu lắm, con hãy viết nắn nót hơn nhé! ✏️',
+      });
+    }
   }
 
   // 4. Composite Similarity Score
@@ -400,8 +656,8 @@ function analyzeCompoundStrokes({ userStrokes, character = '', componentStrokeCo
 
   if (issues.length > 0) {
     // Sort issues by priority
-    const priority = { loop: 0, incomplete: 1, size: 2, distribution: 3, smoothness: 4, aspect_ratio: 5 };
-    issues.sort((a, b) => (priority[a.type] ?? 4) - (priority[b.type] ?? 4));
+    const priority = { scribble: 0, loop: 1, incomplete: 2, aspect_ratio: 3, size: 4, distribution: 5, shape_mismatch: 6, smoothness: 7 };
+    issues.sort((a, b) => (priority[a.type] ?? 5) - (priority[b.type] ?? 5));
     feedback = issues[0].detail;
   } else {
     if (finalScore >= 85) {
@@ -428,6 +684,7 @@ function analyzeCompoundStrokes({ userStrokes, character = '', componentStrokeCo
       expectedCountRange: [minExpected, maxExpected],
       avgSmoothCos,
       totalNegatives,
+      entireRatio,
     },
   };
 }

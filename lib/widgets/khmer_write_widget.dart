@@ -298,10 +298,21 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
     final bool isStandaloneMark = widget.character.contains('◌') ||
         (widget.character.length == 1 &&
             widget.character.runes.any((r) => r >= 0x17B6 && r <= 0x17D3));
-    return isStandaloneMark ? 220.sp : 260.sp;
+    if (isStandaloneMark) return 220.sp;
+    
+    // Subscripts (coeng containing \u17D2) are vertically stacked, so we scale them down to prevent overlap/cutoff
+    if (widget.character.contains('\u17D2')) {
+      return 185.sp;
+    }
+    return 260.sp;
   }
 
   double _getGuideShiftY(double height) {
+    // Shift down slightly for subscripts/coeng vertical stacks to pull them to visual center
+    if (widget.character.contains('\u17D2')) {
+      return height * 0.015;
+    }
+
     final bool isStandaloneMark = widget.character.contains('◌') ||
         (widget.character.length == 1 &&
             widget.character.runes.any((r) => r >= 0x17B6 && r <= 0x17D3));

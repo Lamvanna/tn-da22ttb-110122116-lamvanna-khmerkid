@@ -148,6 +148,7 @@ class _PlayScreenState extends State<PlayScreen> {
         color: const Color(0xFFD32F2F),
         stars: 15,
         btn: 'Chơi ngay',
+        locked: true,
         objective: 'Chinh phục toàn diện 4 kỹ năng tích hợp (Nghe - Nói - Đọc - Viết) thông qua bàn cờ thám hiểm.',
         gameplay: 'Bé đổ xúc xắc để Voi con di chuyển qua Rừng phụ âm, Đầm lầy nguyên âm, Động phát âm và Đỉnh núi viết chữ, dứt điểm bằng trận chiến Boss Vua Bóng Tối hoáng tráng!',
         importance: 'Hoạt động như một bài kiểm tra tổng hợp cuối chương (Summative Assessment) cực kỳ hấp dẫn, không áp lực mà kích thích tương tác toàn diện.',
@@ -163,6 +164,7 @@ class _PlayScreenState extends State<PlayScreen> {
         color: const Color(0xFF7B1FA2),
         stars: 20,
         btn: 'Chơi ngay',
+        locked: true,
         objective: 'Ghi nhớ và viết đúng các Chân chữ (Châng) - phần khó nhất và dễ viết sai nhất trong tiếng Khmer cấp độ tiểu học.',
         gameplay: 'Bé đóng vai nhà khảo cổ đi tìm cổ vật chữ chôn giấu dưới các khối đá. Hệ thống đưa ra từ vựng bị khuyết chân chữ. Bé dùng kính lúp tìm kiếm và búa gõ khai quật chân chữ đúng.',
         importance: 'Lên lớp 2, lớp 3 bắt đầu viết từ ghép phức tạp có chân chữ. Trò chơi thám hiểm đầy kịch tính này giúp trẻ ghi nhớ chân chữ vô cùng dễ dàng.',
@@ -178,6 +180,7 @@ class _PlayScreenState extends State<PlayScreen> {
         color: const Color(0xFF00ACC1),
         stars: 15,
         btn: 'Chơi ngay',
+        locked: true,
         objective: 'Luyện phản xạ phân biệt nhanh 33 phụ âm thuộc hai hàng giọng cực kỳ dễ nhầm lẫn: Giọng O (អ hàng 1) và Giọng Ô (អូ hàng 2).',
         gameplay: 'Voi con thám hiểm vượt cổng rừng xanh. Phụ âm cổ xuất hiện kèm phát âm mẫu. Bé chạm chọn đúng cổng Giọng O (អ) hoặc Giọng Ô (អូ) để Voi con phóng qua an toàn.',
         importance: 'Phân biệt hàng giọng O và Ô là bước ngoặt quyết định của việc ghép vần tiếng Khmer. Trò chơi giúp hình thành phản xạ thính giác và thị giác vô cùng nhạy bén.',
@@ -209,6 +212,35 @@ class _PlayScreenState extends State<PlayScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
         margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showLockedMessage(BuildContext context) {
+    HapticFeedback.mediumImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.lock_rounded, color: Colors.white, size: 20.sp),
+            SizedBox(width: 10.w),
+            Flexible(
+              child: Text(
+                'Trò chơi này chưa được mở khóa! Hãy hoàn thành các trò chơi trước đó nhé! 🔒',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.grey.shade700,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+        margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        duration: const Duration(seconds: 3),
       ),
     );
   }
@@ -555,154 +587,203 @@ class _PlayScreenState extends State<PlayScreen> {
 
   // ── Timeline Row ──
   Widget _buildGameRow(_GameZone game, {bool isLast = false}) {
+    final bool isLocked = game.locked;
+    final bool isComingSoon = game.targetScreen == null;
+    final bool isDisabled = isLocked || isComingSoon;
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Container(
-        margin: EdgeInsets.only(bottom: 14.h),
-        padding: EdgeInsets.all(14.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 12.r,
-              offset: Offset(0, 4.h),
+      child: Stack(
+        children: [
+          Container(
+            margin: EdgeInsets.only(bottom: 14.h),
+            padding: EdgeInsets.all(14.w),
+            decoration: BoxDecoration(
+              color: isLocked ? const Color(0xFFF5F5F5) : Colors.white,
+              borderRadius: BorderRadius.circular(20.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isLocked ? 0.02 : 0.04),
+                  blurRadius: 12.r,
+                  offset: Offset(0, 4.h),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Game thumbnail without frame, larger size
-            Container(
-              width: 110.w,
-              height: 80.h,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14.r),
-              ),
-              child: game.img != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(14.r),
-                      child: Image.asset(game.img!, fit: BoxFit.cover),
-                    )
-                  : Container(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Game thumbnail
+                Stack(
+                  children: [
+                    Container(
+                      width: 110.w,
+                      height: 80.h,
                       decoration: BoxDecoration(
-                        color: game.color.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14.r),
                       ),
-                      child: Icon(game.icon, color: game.color, size: 36.sp),
+                      child: game.img != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(14.r),
+                              child: ColorFiltered(
+                                colorFilter: isLocked
+                                    ? const ColorFilter.mode(Colors.grey, BlendMode.saturation)
+                                    : const ColorFilter.mode(Colors.transparent, BlendMode.dst),
+                                child: Image.asset(game.img!, fit: BoxFit.cover),
+                              ),
+                            )
+                          : Container(
+                              decoration: BoxDecoration(
+                                color: game.color.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(14.r),
+                              ),
+                              child: Icon(game.icon, color: game.color, size: 36.sp),
+                            ),
                     ),
-            ),
-            SizedBox(width: 12.w),
-            // Detail content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    game.title,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: 3.h),
-                  Text(
-                    game.sub,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  // Clean borderless Status Row!
-                  Row(
-                    children: [
-                      () {
-                        final isComingSoon = game.targetScreen == null;
-                        final isNotStarted = game.prog == 0.0;
-                        final isCompleted = game.prog >= 1.0;
-
-                        String text = 'Đang chinh phục';
-                        Color textColor = const Color(0xFFF57C00);
-                        IconData icon = Icons.trending_up_rounded;
-
-                        if (isComingSoon) {
-                          text = 'Sắp ra mắt';
-                          textColor = Colors.grey.shade500;
-                          icon = Icons.lock_outline_rounded;
-                        } else if (isNotStarted) {
-                          text = 'Chưa chơi';
-                          textColor = Colors.grey.shade500;
-                          icon = Icons.play_circle_outline_rounded;
-                        } else if (isCompleted) {
-                          text = 'Đã hoàn thành';
-                          textColor = const Color(0xFF43A047);
-                          icon = Icons.check_circle_outline_rounded;
-                        }
-
-                        return Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(icon, size: 14.sp, color: textColor),
-                            SizedBox(width: 4.w),
-                            Text(
-                              text,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11.5.sp,
-                                fontWeight: FontWeight.w700,
-                                color: textColor,
+                    // Lock icon overlay on thumbnail
+                    if (isLocked)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.35),
+                            borderRadius: BorderRadius.circular(14.r),
+                          ),
+                          child: Center(
+                            child: Container(
+                              padding: EdgeInsets.all(6.w),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.9),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.lock_rounded,
+                                color: Colors.grey.shade600,
+                                size: 20.sp,
                               ),
                             ),
-                          ],
-                        );
-                      }(),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () => _showGameIntroDialog(context, game),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                          decoration: BoxDecoration(
-                            color: game.targetScreen == null
-                                ? game.color.withValues(alpha: 0.4)
-                                : game.color,
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (game.targetScreen == null)
-                                Padding(
-                                  padding: EdgeInsets.only(right: 4.w),
-                                  child: Icon(
-                                    Icons.lock_rounded,
-                                    size: 12.sp,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              Text(
-                                game.targetScreen == null ? 'Sắp ra mắt' : game.btn,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
                           ),
                         ),
                       ),
+                  ],
+                ),
+                SizedBox(width: 12.w),
+                // Detail content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        game.title,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w800,
+                          color: isLocked ? AppColors.textSecondary : AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 3.h),
+                      Text(
+                        game.sub,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w500,
+                          color: isLocked ? AppColors.textHint : AppColors.textSecondary,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      // Status Row
+                      Row(
+                        children: [
+                          () {
+                            String text;
+                            Color textColor;
+                            IconData icon;
+
+                            if (isLocked) {
+                              text = 'Chưa mở khóa';
+                              textColor = Colors.grey.shade500;
+                              icon = Icons.lock_outline_rounded;
+                            } else if (isComingSoon) {
+                              text = 'Sắp ra mắt';
+                              textColor = Colors.grey.shade500;
+                              icon = Icons.lock_outline_rounded;
+                            } else if (game.prog == 0.0) {
+                              text = 'Chưa chơi';
+                              textColor = Colors.grey.shade500;
+                              icon = Icons.play_circle_outline_rounded;
+                            } else if (game.prog >= 1.0) {
+                              text = 'Đã hoàn thành';
+                              textColor = const Color(0xFF43A047);
+                              icon = Icons.check_circle_outline_rounded;
+                            } else {
+                              text = 'Đang chinh phục';
+                              textColor = const Color(0xFFF57C00);
+                              icon = Icons.trending_up_rounded;
+                            }
+
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(icon, size: 14.sp, color: textColor),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  text,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11.5.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: textColor,
+                                  ),
+                                ),
+                              ],
+                            );
+                          }(),
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: isLocked
+                                ? () => _showLockedMessage(context)
+                                : () => _showGameIntroDialog(context, game),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                              decoration: BoxDecoration(
+                                color: isDisabled
+                                    ? Colors.grey.shade400
+                                    : game.color,
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (isDisabled)
+                                    Padding(
+                                      padding: EdgeInsets.only(right: 4.w),
+                                      child: Icon(
+                                        Icons.lock_rounded,
+                                        size: 12.sp,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  Text(
+                                    isLocked
+                                        ? 'Chưa mở'
+                                        : (isComingSoon ? 'Sắp ra mắt' : game.btn),
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1021,6 +1102,7 @@ class _GameZone {
   final IconData icon;
   final double prog;
   final Color color;
+  final bool locked;
 
   // New fields for rich educational descriptions
   final String objective;
@@ -1042,6 +1124,7 @@ class _GameZone {
     required this.gameplay,
     required this.importance,
     this.targetScreen,
+    this.locked = false,
   });
 }
 

@@ -193,13 +193,9 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
 
   void _startTimer() {
     _timer?.cancel();
-    if (_currentLevelIdx == 0) {
-      setState(() {
-        _timeLeft = 999;
-      });
-      return;
-    }
-    _timeLeft = 60;
+    setState(() {
+      _timeLeft = 40;
+    });
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
@@ -238,13 +234,7 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
     });
   }
 
-  void _clearSelection() {
-    if (_isRoundCompleted) return;
-    HapticFeedback.mediumImpact();
-    setState(() {
-      _selectedWords.clear();
-    });
-  }
+
 
   void _checkAnswer() {
     if (_isRoundCompleted || _gameOver) return;
@@ -494,6 +484,7 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
         _currentLevelIdx++;
       });
       _loadLevel(_currentLevelIdx);
+      _startTimer();
     } else {
       _showGameFinishedDialog();
     }
@@ -803,12 +794,7 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
 
                                     SizedBox(height: 24.h),
 
-                                    // 📜 THANH CẤU TRÚC CÂU KHMER (Sentence Frame Bar)
-                                    _buildSentenceFrameBar(currentLevel),
-
-                                    SizedBox(height: 16.h),
-
-                                    // 📜 KHU VỰC THẢ CHỮ (Sentence Slots)
+                                    // 📜 KHU VỰC THẢ CHỮ & CẤU TRÚC NGỮ PHÁP KHMER (Sentence Slots)
                                     _buildSentenceSlots(currentLevel),
 
                                     SizedBox(height: 24.h),
@@ -1195,12 +1181,26 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.9),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.white, Color(0xFFFFEBEE)],
+                  ),
                   borderRadius: BorderRadius.circular(20.r),
-                  border: Border.all(color: Colors.white, width: 1.5.w),
+                  border: Border.all(color: const Color(0xFFFFCDD2), width: 1.5.w),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.06), offset: const Offset(0, 3), blurRadius: 6),
-                  ]),
+                    const BoxShadow(
+                      color: Color(0xFFEF9A9A),
+                      offset: Offset(0, 2),
+                      blurRadius: 0,
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      offset: const Offset(0, 3),
+                      blurRadius: 3,
+                    ),
+                  ],
+                ),
                 child: Row(
                   children: List.generate(3, (i) => Padding(
                     padding: EdgeInsets.symmetric(horizontal: 1.5.w),
@@ -1220,14 +1220,14 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                colors: _timeLeft <= 5 && _currentLevelIdx != 0
+                colors: _timeLeft <= 5
                     ? [const Color(0xFFF87171), const Color(0xFFEF4444)]
                     : [const Color(0xFF4DD0E1), const Color(0xFF00ACC1)]),
               borderRadius: BorderRadius.circular(20.r),
               border: Border.all(color: Colors.white, width: 1.5.w),
               boxShadow: [
                 BoxShadow(
-                  color: _timeLeft <= 5 && _currentLevelIdx != 0
+                  color: _timeLeft <= 5
                       ? const Color(0xFFB91C1C)
                       : const Color(0xFF00838F),
                   offset: const Offset(0, 2), blurRadius: 0),
@@ -1236,7 +1236,7 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
             child: Row(children: [
               Icon(Icons.access_time_filled_rounded, color: Colors.white, size: 16.w),
               SizedBox(width: 6.w),
-              Text(_currentLevelIdx == 0 ? '∞' : '${_timeLeft}s',
+              Text('${_timeLeft}s',
                 style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w900, color: Colors.white)),
             ]),
           ),
@@ -1335,6 +1335,151 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
   }
 
   Widget _buildSentenceSlots(_SentenceLevel level) {
+    List<Widget> wrapChildren = [];
+    for (int idx = 0; idx < level.correctWords.length; idx++) {
+      final isSlotFilled = _selectedWords.length > idx;
+      final word = isSlotFilled ? _selectedWords[idx] : '';
+      final wordType = level.wordTypes[idx];
+      final isMismatched = _mismatchIndex == idx;
+
+      Color borderCol;
+      Color textCol;
+      List<Color> gradientColors;
+      Color shadowCol;
+      double shadowHeight = 0;
+
+      final lightColor = _getWordTypeLightColor(wordType);
+      final darkColor = _getWordTypeDarkColor(wordType);
+      final baseColor = _getWordTypeColor(wordType);
+      final vnLabel = _getWordTypeLabel(wordType);
+
+      if (isMismatched) {
+        gradientColors = [const Color(0xFFFFEBEE), const Color(0xFFFFCDD2)];
+        borderCol = const Color(0xFFEF5350);
+        textCol = const Color(0xFFC62828);
+        shadowCol = const Color(0xFFEF5350).withValues(alpha: 0.3);
+        shadowHeight = 3.h;
+      } else if (isSlotFilled) {
+        gradientColors = [baseColor.withValues(alpha: 0.9), baseColor];
+        borderCol = darkColor;
+        textCol = Colors.white;
+        shadowCol = borderCol.withValues(alpha: 0.4);
+        shadowHeight = 4.h;
+      } else {
+        gradientColors = [];
+        borderCol = Colors.transparent;
+        textCol = Colors.transparent;
+        shadowCol = Colors.transparent;
+        shadowHeight = 0;
+      }
+
+      if (isMismatched || isSlotFilled) {
+        wrapChildren.add(
+          Container(
+            width: 96.w,
+            height: 100.w,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: gradientColors,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.circular(20.r),
+              border: Border.all(
+                color: borderCol,
+                width: 3.w,
+              ),
+              boxShadow: [
+                if (shadowHeight > 0)
+                  BoxShadow(
+                    color: shadowCol,
+                    offset: Offset(0, shadowHeight),
+                    blurRadius: 0,
+                  ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  word,
+                  style: GoogleFonts.battambang(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.bold,
+                    color: textCol,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  '($vnLabel)',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w700,
+                    color: textCol.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      } else {
+        wrapChildren.add(
+          CustomPaint(
+            painter: DashedBorderPainter(
+              color: baseColor.withValues(alpha: 0.6),
+              borderRadius: 20.r,
+              strokeWidth: 2.5.w,
+              dashLength: 6.w,
+              gap: 4.w,
+            ),
+            child: Container(
+              width: 96.w,
+              height: 100.w,
+              decoration: BoxDecoration(
+                color: lightColor.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '${idx + 1}',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 24.sp,
+                      fontWeight: FontWeight.w900,
+                      color: darkColor.withValues(alpha: 0.8),
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    '($vnLabel)',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10.5.sp,
+                      fontWeight: FontWeight.w800,
+                      color: darkColor.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+
+      if (idx < level.correctWords.length - 1) {
+        wrapChildren.add(
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4.w),
+            child: Icon(
+              Icons.arrow_forward_rounded,
+              color: const Color(0xFF8D6E63).withValues(alpha: 0.7),
+              size: 22.sp,
+            ),
+          ),
+        );
+      }
+    }
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(vertical: 22.h, horizontal: 14.w),
@@ -1361,79 +1506,14 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
               letterSpacing: 0.5,
             ),
           ),
-          SizedBox(height: 16.h),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 12.w,
-            runSpacing: 12.h,
-            children: List.generate(level.correctWords.length, (idx) {
-              final isSlotFilled = _selectedWords.length > idx;
-              final word = isSlotFilled ? _selectedWords[idx] : '';
-              final wordType = level.wordTypes[idx];
-              final isMismatched = _mismatchIndex == idx;
-
-              Color borderCol;
-              Color textCol;
-              List<Color> gradientColors;
-              Color shadowCol;
-              double shadowHeight = 0;
-
-              if (isMismatched) {
-                gradientColors = [const Color(0xFFFFEBEE), const Color(0xFFFFCDD2)];
-                borderCol = const Color(0xFFEF5350);
-                textCol = const Color(0xFFC62828);
-                shadowCol = const Color(0xFFEF5350).withValues(alpha: 0.3);
-                shadowHeight = 3.h;
-              } else if (isSlotFilled) {
-                final baseColor = _getWordTypeColor(wordType);
-                gradientColors = [baseColor.withValues(alpha: 0.9), baseColor];
-                borderCol = _getWordTypeDarkColor(wordType);
-                textCol = Colors.white;
-                shadowCol = borderCol.withValues(alpha: 0.4);
-                shadowHeight = 4.h;
-              } else {
-                final lightColor = _getWordTypeLightColor(wordType);
-                gradientColors = [lightColor.withValues(alpha: 0.4), lightColor.withValues(alpha: 0.6)];
-                borderCol = _getWordTypeColor(wordType).withValues(alpha: 0.4);
-                textCol = _getWordTypeColor(wordType).withValues(alpha: 0.6);
-                shadowCol = Colors.transparent;
-                shadowHeight = 0;
-              }
-
-              return Container(
-                constraints: BoxConstraints(minWidth: 90.w),
-                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: gradientColors,
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                  borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(
-                    color: borderCol,
-                    width: isSlotFilled ? 3.w : 2.w,
-                  ),
-                  boxShadow: [
-                    if (shadowHeight > 0)
-                      BoxShadow(
-                        color: shadowCol,
-                        offset: Offset(0, shadowHeight),
-                        blurRadius: 0,
-                      ),
-                  ],
-                ),
-                child: Text(
-                  isSlotFilled ? word : '?',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.battambang(
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.bold,
-                    color: textCol,
-                  ),
-                ),
-              );
-            }),
+          SizedBox(height: 18.h),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: wrapChildren,
+            ),
           ),
         ],
       ),
@@ -1442,81 +1522,100 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
 
   Widget _buildWordBlocks(_SentenceLevel level) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Padding(
-          padding: EdgeInsets.only(left: 8.w, bottom: 12.h),
-          child: Text(
-            'Khối đá chữ cổ gợi ý (Chạm để chọn/hủy):',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF004D40),
+        Center(
+          child: Padding(
+            padding: EdgeInsets.only(bottom: 16.h),
+            child: Text(
+              '💎 Khối đá chữ cổ gợi ý (Chạm để chọn/hủy):',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF004D40),
+                letterSpacing: 0.5,
+              ),
             ),
           ),
         ),
-        Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 12.w,
-          runSpacing: 12.h,
-          children: _shuffledWords.map((word) {
-            final isSelected = _selectedWords.contains(word);
-            final meaning = level.wordMeanings[word] ?? '';
+        Center(
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 14.w,
+            runSpacing: 14.h,
+            children: _shuffledWords.map((word) {
+              final isSelected = _selectedWords.contains(word);
+              final meaning = level.wordMeanings[word] ?? '';
 
-            final correctIdx = level.correctWords.indexOf(word);
-            final type = correctIdx != -1 ? level.wordTypes[correctIdx] : WordType.object;
-            final baseColor = _getWordTypeColor(type);
-            final darkColor = _getWordTypeDarkColor(type);
+              final correctIdx = level.correctWords.indexOf(word);
+              final type = correctIdx != -1 ? level.wordTypes[correctIdx] : WordType.object;
+              final baseColor = _getWordTypeColor(type);
+              final darkColor = _getWordTypeDarkColor(type);
 
-            return GestureDetector(
-              onTap: () => _onWordTap(word),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 100),
-                transform: Matrix4.translationValues(0, isSelected ? 3.h : 0, 0),
-                padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
-                decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFFECEFF1) : Colors.white,
-                  borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(
-                    color: isSelected ? const Color(0xFFB0BEC5) : baseColor,
-                    width: 3.w,
+              return GestureDetector(
+                onTap: () => _onWordTap(word),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 100),
+                  transform: Matrix4.translationValues(0, isSelected ? 4.h : 0, 0),
+                  constraints: BoxConstraints(minWidth: 100.w, minHeight: 80.h, maxWidth: 125.w),
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 12.h),
+                  decoration: BoxDecoration(
+                    color: isSelected ? const Color(0xFFECEFF1) : Colors.white,
+                    borderRadius: BorderRadius.circular(20.r),
+                    border: Border.all(
+                      color: isSelected ? const Color(0xFFCFD8DC) : baseColor,
+                      width: 3.5.w,
+                    ),
+                    boxShadow: [
+                      if (!isSelected)
+                        BoxShadow(
+                          color: darkColor,
+                          offset: Offset(0, 5.h),
+                          blurRadius: 0,
+                        )
+                      else
+                        BoxShadow(
+                          color: const Color(0xFFCFD8DC).withValues(alpha: 0.5),
+                          offset: Offset(0, 1.h),
+                          blurRadius: 0,
+                        ),
+                    ],
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isSelected ? const Color(0xFFB0BEC5).withValues(alpha: 0.5) : darkColor.withValues(alpha: 0.7),
-                      offset: Offset(0, isSelected ? 1.h : 4.h),
-                      blurRadius: 0,
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      word,
-                      style: GoogleFonts.battambang(
-                        fontSize: 22.sp,
-                        fontWeight: FontWeight.bold,
-                        color: isSelected ? const Color(0xFF90A4AE) : darkColor,
-                      ),
-                    ),
-                    if (meaning.isNotEmpty)
-                      Padding(
-                        padding: EdgeInsets.only(top: 2.h),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
                         child: Text(
-                          meaning,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w800,
-                            color: isSelected ? const Color(0xFFB0BEC5) : darkColor.withValues(alpha: 0.7),
+                          word,
+                          style: GoogleFonts.battambang(
+                            fontSize: 22.sp,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? const Color(0xFF90A4AE) : const Color(0xFF1F2937),
                           ),
                         ),
                       ),
-                  ],
+                      if (meaning.isNotEmpty) ...[
+                        SizedBox(height: 4.h),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            meaning,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w800,
+                              color: isSelected ? const Color(0xFFB0BEC5) : const Color(0xFF4B5563),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }).toList(),
+              );
+            }).toList(),
+          ),
         ),
       ],
     );
@@ -1524,202 +1623,46 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
 
   Widget _buildControlRow() {
     final canConfirm = _selectedWords.isNotEmpty && !_isRoundCompleted;
-    return Row(
-      children: [
-        Expanded(
-          flex: 1,
-          child: GestureDetector(
-            onTap: _clearSelection,
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 14.h),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20.r),
-                border: Border.all(color: const Color(0xFFCFD8DC), width: 3.w),
-                boxShadow: [
-                  const BoxShadow(
-                    color: Color(0xFFB0BEC5),
-                    offset: Offset(0, 3),
-                    blurRadius: 0,
-                  ),
-                ],
+    return GestureDetector(
+      onTap: canConfirm ? _checkAnswer : null,
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 14.h),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter, end: Alignment.bottomCenter,
+            colors: canConfirm
+                ? [const Color(0xFF00E676), const Color(0xFF00C853)]
+                : [const Color(0xFFECEFF1), const Color(0xFFCFD8DC)]),
+          borderRadius: BorderRadius.circular(20.r),
+          border: Border.all(
+            color: canConfirm ? const Color(0xFF00A343) : const Color(0xFFB0BEC5),
+            width: 3.w,
+          ),
+          boxShadow: [
+            if (canConfirm) ...[
+              const BoxShadow(
+                color: Color(0xFF007E33),
+                offset: Offset(0, 4),
+                blurRadius: 0,
               ),
-              child: Center(
-                child: Text(
-                  'Làm lại 🔄',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF546E7A),
-                  ),
-                ),
+            ] else ...[
+              const BoxShadow(
+                color: Color(0xFFB0BEC5),
+                offset: Offset(0, 2),
+                blurRadius: 0,
               ),
+            ]
+          ]),
+        child: Center(
+          child: Text(
+            'Giải mã mật thư',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w900,
+              color: canConfirm ? Colors.white : const Color(0xFF90A4AE),
             ),
           ),
         ),
-        SizedBox(width: 16.w),
-        Expanded(
-          flex: 2,
-          child: GestureDetector(
-            onTap: canConfirm ? _checkAnswer : null,
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 14.h),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                  colors: canConfirm
-                      ? [const Color(0xFF00E676), const Color(0xFF00C853)]
-                      : [const Color(0xFFECEFF1), const Color(0xFFCFD8DC)]),
-                borderRadius: BorderRadius.circular(20.r),
-                border: Border.all(
-                  color: canConfirm ? const Color(0xFF00A343) : const Color(0xFFB0BEC5),
-                  width: 3.w,
-                ),
-                boxShadow: [
-                  if (canConfirm) ...[
-                    const BoxShadow(
-                      color: Color(0xFF007E33),
-                      offset: Offset(0, 4),
-                      blurRadius: 0,
-                    ),
-                  ] else ...[
-                    const BoxShadow(
-                      color: Color(0xFFB0BEC5),
-                      offset: Offset(0, 2),
-                      blurRadius: 0,
-                    ),
-                  ]
-                ]),
-              child: Center(
-                child: Text(
-                  'Giải mã mật thư 🗿',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w900,
-                    color: canConfirm ? Colors.white : const Color(0xFF90A4AE),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSentenceFrameBar(_SentenceLevel level) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 14.w),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: const Color(0xFFE0F2F1), width: 1.5.w),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF00796B).withValues(alpha: 0.04),
-            blurRadius: 8.r,
-            offset: Offset(0, 3.h),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.auto_awesome_rounded, color: const Color(0xFF00796B), size: 16.sp),
-              SizedBox(width: 6.w),
-              Text(
-                'CẤU TRÚC NGỮ PHÁP KHMER:',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFF00796B),
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 10.h),
-          Wrap(
-            alignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 6.w,
-            runSpacing: 6.h,
-            children: List.generate(level.wordTypes.length, (i) {
-              final type = level.wordTypes[i];
-              final lightColor = _getWordTypeLightColor(type);
-              final darkColor = _getWordTypeDarkColor(type);
-              final border = _getWordTypeColor(type);
-              
-              String khmerLabel = '';
-              String vnLabel = '';
-              switch (type) {
-                case WordType.subject:
-                  khmerLabel = 'ប្រធានបទ';
-                  vnLabel = 'Chủ ngữ';
-                  break;
-                case WordType.verb:
-                  khmerLabel = 'កិរិយាសព្ទ';
-                  vnLabel = 'Động từ';
-                  break;
-                case WordType.object:
-                  khmerLabel = 'កម្មបទ';
-                  vnLabel = 'Tân ngữ';
-                  break;
-                case WordType.modifier:
-                  khmerLabel = 'គុណនាម';
-                  vnLabel = 'Bổ ngữ';
-                  break;
-              }
-              
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                    decoration: BoxDecoration(
-                      color: lightColor,
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: border, width: 1.5.w),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          khmerLabel,
-                          style: GoogleFonts.battambang(
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.bold,
-                            color: darkColor,
-                          ),
-                        ),
-                        Text(
-                          vnLabel,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 9.sp,
-                            fontWeight: FontWeight.w700,
-                            color: darkColor.withValues(alpha: 0.8),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (i < level.wordTypes.length - 1)
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4.w),
-                      child: Icon(
-                        Icons.arrow_forward_rounded,
-                        color: const Color(0xFF00796B).withValues(alpha: 0.5),
-                        size: 16.sp,
-                      ),
-                    ),
-                ],
-              );
-            }),
-          ),
-        ],
       ),
     );
   }
@@ -1775,6 +1718,7 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
         return 'Bổ ngữ';
     }
   }
+
 }
 
 enum WordType { subject, verb, object, modifier }
@@ -1795,4 +1739,64 @@ class _SentenceLevel {
     required this.islandName,
     required this.emoji,
   });
+}
+
+class DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double gap;
+  final double dashLength;
+  final double borderRadius;
+
+  DashedBorderPainter({
+    required this.color,
+    this.strokeWidth = 2.0,
+    this.gap = 4.0,
+    this.dashLength = 6.0,
+    this.borderRadius = 16.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          strokeWidth / 2,
+          strokeWidth / 2,
+          size.width - strokeWidth,
+          size.height - strokeWidth,
+        ),
+        Radius.circular(borderRadius),
+      ));
+
+    final dashPath = Path();
+    double distance = 0.0;
+    
+    for (final pathMetric in path.computeMetrics()) {
+      while (distance < pathMetric.length) {
+        dashPath.addPath(
+          pathMetric.extractPath(distance, distance + dashLength),
+          Offset.zero,
+        );
+        distance += dashLength + gap;
+      }
+      distance = 0.0;
+    }
+    
+    canvas.drawPath(dashPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant DashedBorderPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.strokeWidth != strokeWidth ||
+        oldDelegate.gap != gap ||
+        oldDelegate.dashLength != dashLength ||
+        oldDelegate.borderRadius != borderRadius;
+  }
 }

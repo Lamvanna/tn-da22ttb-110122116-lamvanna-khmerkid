@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -32,6 +31,13 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
   Timer? _timer;
   bool _gameStarted = false;
   bool _gameOver = false;
+
+  // Power-ups
+  int _hintsLeft = 2;
+  int _timePowerupsLeft = 2;
+  int _livesPowerupsLeft = 1;
+  int _doubleScorePowerupsLeft = 1;
+  bool _isDoubleScoreActive = false;
 
   late AnimationController _gardenController;
   late Animation<double> _gardenAnimation;
@@ -126,6 +132,115 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
     super.dispose();
   }
 
+  // ── Powerups Logic ──
+  void _useHint() {
+    if (_hintsLeft <= 0 || _isRoundCompleted || _gameOver) return;
+    HapticFeedback.mediumImpact();
+    final currentLevel = _levels[_currentLevelIdx];
+    setState(() {
+      _hintsLeft--;
+    });
+    _onChoiceSelected(currentLevel.correctAnswer);
+  }
+
+  void _useTimePowerup() {
+    if (_timePowerupsLeft <= 0 || _isRoundCompleted || _gameOver) return;
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _timePowerupsLeft--;
+      _timeLeft += 10;
+    });
+  }
+
+  void _useLivesPowerup() {
+    if (_livesPowerupsLeft <= 0 || _isRoundCompleted || _gameOver) return;
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _livesPowerupsLeft--;
+      if (_lives < 3) _lives++;
+    });
+  }
+
+  void _useDoubleScorePowerup() {
+    if (_doubleScorePowerupsLeft <= 0 || _isRoundCompleted || _gameOver || _isDoubleScoreActive) return;
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _doubleScorePowerupsLeft--;
+      _isDoubleScoreActive = true;
+    });
+  }
+
+  Widget _buildSmallVerticalPowerUpBtn({
+    required String emoji,
+    required int count,
+    required VoidCallback onTap,
+    required List<Color> activeColors,
+    required Color shadowColor,
+    bool isActiveGlow = false,
+  }) {
+    final hasItem = count > 0;
+    return GestureDetector(
+      onTap: hasItem && !_isRoundCompleted && !_gameOver ? onTap : null,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 64.w,
+            height: 64.w,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20.r),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                colors: isActiveGlow
+                    ? [const Color(0xFFFFD600), const Color(0xFFFF8F00)]
+                    : hasItem
+                        ? activeColors
+                        : [const Color(0xFFECEFF1), const Color(0xFFCFD8DC)]),
+              border: Border.all(
+                color: isActiveGlow ? Colors.white : Colors.white.withValues(alpha: 0.6),
+                width: isActiveGlow ? 2.8 : 1.8),
+              boxShadow: [
+                BoxShadow(
+                  color: isActiveGlow
+                      ? const Color(0xFFFF8F00)
+                      : hasItem ? shadowColor : const Color(0xFFB0BEC5),
+                  offset: const Offset(0, 5), blurRadius: 0),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.1), offset: const Offset(0, 5), blurRadius: 5),
+              ]),
+            child: Center(
+              child: Text(emoji, style: TextStyle(fontSize: 30.sp)),
+            ),
+          ),
+          if (count > 0)
+            Positioned(
+              top: -5.h,
+              right: -5.w,
+              child: Container(
+                width: 26.w, height: 26.w,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEF4444), 
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 1.5.w),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 2, offset: const Offset(0, 1))
+                  ]),
+                child: Center(
+                  child: Text('$count',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.0.sp, 
+                      fontWeight: FontWeight.w900, 
+                      color: Colors.white,
+                      height: 1.0,
+                    )),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   void _startGame() {
     setState(() {
       _gameStarted = true;
@@ -136,13 +251,20 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
       _isRoundCompleted = false;
       _isCorrectAnswer = null;
       _gameOver = false;
+      _hintsLeft = 2;
+      _timePowerupsLeft = 2;
+      _livesPowerupsLeft = 1;
+      _doubleScorePowerupsLeft = 1;
+      _isDoubleScoreActive = false;
     });
     _startTimer();
   }
 
   void _startTimer() {
     _timer?.cancel();
-    _timeLeft = 20;
+    setState(() {
+      _timeLeft = 40;
+    });
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
@@ -165,6 +287,7 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
       _lives = 0;
       _gameOver = true;
     });
+    _scoreService?.completeGame('math_garden', _score, syncToBackend: true);
   }
 
   void _onChoiceSelected(String choice) {
@@ -194,7 +317,9 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
         }
       });
 
-      if (!_gameOver) {
+      if (_gameOver) {
+        _scoreService?.completeGame('math_garden', _score, syncToBackend: true);
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -229,9 +354,15 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
   void _onRoundSuccess() {
     HapticFeedback.heavyImpact();
     _timer?.cancel();
+    int addedScore = 15;
+    if (_isDoubleScoreActive) {
+      addedScore = 30;
+      _isDoubleScoreActive = false;
+    }
     setState(() {
-      _score += 15;
+      _score += addedScore;
     });
+    _scoreService?.completeGame('math_garden', addedScore, syncToBackend: false);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -297,8 +428,7 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
 
   void _showGameFinishedDialog() {
     _timer?.cancel();
-    _score = 12;
-    _scoreService?.completeGame('math_garden', 12);
+    _scoreService?.completeGame('math_garden', _score, syncToBackend: true);
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -379,62 +509,115 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
     final currentLevel = _levels[_currentLevelIdx];
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFFFF8E1), Color(0xFFFFF3E0), Color(0xFFFFE0B2)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+      body: Stack(
+        children: [
+          // ── Background Gradient (Soft Pastel Gold) ──
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFFFF8E1), Color(0xFFFFF3E0), Color(0xFFFFE0B2)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: !_gameStarted
-              ? _buildStartScreen()
-              : _gameOver
-                  ? _buildGameOverScreen()
-                  : Column(
-                      children: [
-                        _buildHeader(currentLevel),
-                        Expanded(
-                          child: SingleChildScrollView(
-                            physics: const BouncingScrollPhysics(),
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16.w),
-                              child: Column(
-                                children: [
-                                  SizedBox(height: 16.h),
+          // ── Beautiful Rural Scenery Overlay Layer ──
+          Opacity(
+            opacity: 0.35,
+            child: Image.network(
+              'https://lh3.googleusercontent.com/aida-public/AB6AXuBoJptYW0FURDJyaNotaS25b4rd3BMGg54qWp9sofqqLryGPpHttzs3n7fWq_6hwuZxJbZWw9x27OLzQ0TcxJowDDF6psN04fEqfXpnKk-ciWw-Cwoe43jFvmY4md5yJxBlBws14RTo3W4ySrM_xsXMFWHWFze0YckgGbo39IyIZzHP1_VYzsMQ9pnnj7yNYMAlh84lig__sTm7yDHG2feGTJ-PkLHZu88Q6S4roim5toebUO4Yi_IuB3zhK39Ol-7QaiTaHvdFow',
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+          ),
+          SafeArea(
+            child: !_gameStarted
+                ? _buildStartScreen()
+                : _gameOver
+                    ? _buildGameOverScreen()
+                    : Column(
+                        children: [
+                          _buildHeader(currentLevel),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              physics: const BouncingScrollPhysics(),
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                                child: Column(
+                                  children: [
+                                    SizedBox(height: 16.h),
 
-                                  // 🌳 KHU VỰC KHU VƯỜN ĐẦY MÀU SẮC (Floating Animation)
-                                  AnimatedBuilder(
-                                    animation: _gardenAnimation,
-                                    builder: (context, child) {
-                                      return Transform.translate(
-                                        offset: Offset(0, _gardenAnimation.value),
-                                        child: child,
-                                      );
-                                    },
-                                    child: _buildGardenCard(currentLevel),
-                                  ),
+                                    // 🌳 KHU VỰC KHU VƯỜN ĐẦY MÀU SẮC (Floating Animation)
+                                    AnimatedBuilder(
+                                      animation: _gardenAnimation,
+                                      builder: (context, child) {
+                                        return Transform.translate(
+                                          offset: Offset(0, _gardenAnimation.value),
+                                          child: child,
+                                        );
+                                      },
+                                      child: _buildUnifiedQuestionCard(currentLevel),
+                                    ),
 
-                                  SizedBox(height: 24.h),
+                                    SizedBox(height: 24.h),
 
-                                  // 📝 CÂU HỎI TRỰC QUAN
-                                  _buildVisualMathProblem(currentLevel),
+                                    // 🪧 BẢNG HIỆU LỰA CHỌN PHONG CÁCH BẢNG GỖ (Choices)
+                                    _buildChoicesGrid(currentLevel),
 
-                                  SizedBox(height: 28.h),
-
-                                  // 🪧 NÚT LỰA CHỌN PHONG CÁCH BẢNG GỖ (Choices)
-                                  _buildChoicesGrid(currentLevel),
-
-                                  SizedBox(height: 40.h),
-                                ],
+                                    SizedBox(height: 24.h),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-        ),
+
+                          // ⚡ THANH PHẦN BỔ TRỢ (Pinned Power-ups Horizontal Row at bottom)
+                          Padding(
+                            padding: EdgeInsets.only(bottom: 16.h, left: 16.w, right: 16.w),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildSmallVerticalPowerUpBtn(
+                                  emoji: '🔍',
+                                  count: _hintsLeft,
+                                  onTap: _useHint,
+                                  activeColors: [const Color(0xFFFFD54F), const Color(0xFFFFA000)],
+                                  shadowColor: const Color(0xFFE65100),
+                                ),
+                                SizedBox(width: 16.w),
+                                _buildSmallVerticalPowerUpBtn(
+                                  emoji: '⏰',
+                                  count: _timePowerupsLeft,
+                                  onTap: _useTimePowerup,
+                                  activeColors: [const Color(0xFF4FC3F7), const Color(0xFF0288D1)],
+                                  shadowColor: const Color(0xFF01579B),
+                                ),
+                                SizedBox(width: 16.w),
+                                _buildSmallVerticalPowerUpBtn(
+                                  emoji: '❤️',
+                                  count: _livesPowerupsLeft,
+                                  onTap: _useLivesPowerup,
+                                  activeColors: [const Color(0xFFFF8A80), const Color(0xFFE53935)],
+                                  shadowColor: const Color(0xFFB71C1C),
+                                ),
+                                SizedBox(width: 16.w),
+                                _buildSmallVerticalPowerUpBtn(
+                                  emoji: '⭐',
+                                  count: _doubleScorePowerupsLeft,
+                                  onTap: _useDoubleScorePowerup,
+                                  activeColors: [const Color(0xFFB388FF), const Color(0xFF6200EA)],
+                                  shadowColor: const Color(0xFF4527A0),
+                                  isActiveGlow: _isDoubleScoreActive,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+          ),
+        ],
       ),
     );
   }
@@ -454,11 +637,13 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
                 gradient: const LinearGradient(
                   colors: [Color(0xFFE65100), Color(0xFFFFB74D)],
                 ),
+                border: Border.all(color: Colors.white, width: 4.w),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFE65100).withOpacity(0.4),
-                    blurRadius: 30,
-                    spreadRadius: 5,
+                    color: const Color(0xFFE65100).withValues(alpha: 0.4),
+                    blurRadius: 24,
+                    spreadRadius: 4,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
@@ -468,9 +653,16 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
             Text(
               '🍎 Khu vườn Toán học',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 26.sp,
+                fontSize: 28.sp,
                 fontWeight: FontWeight.w900,
-                color: const Color(0xFF5D4037),
+                color: Colors.white,
+                shadows: [
+                  Shadow(
+                    color: const Color(0xFF5D4037),
+                    offset: Offset(2.w, 2.h),
+                    blurRadius: 4,
+                  ),
+                ],
               ),
             ),
             SizedBox(height: 12.h),
@@ -479,8 +671,8 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 15.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade800,
+                fontWeight: FontWeight.w700,
+                color: Colors.white.withValues(alpha: 0.95),
                 height: 1.5,
               ),
             ),
@@ -489,13 +681,13 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
               width: double.infinity,
               padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.25),
                 borderRadius: BorderRadius.circular(24.r),
-                border: Border.all(color: const Color(0xFFFFB74D), width: 2.w),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5.w),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFE65100).withOpacity(0.08),
-                    blurRadius: 10,
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 16,
                     offset: const Offset(0, 4),
                   ),
                 ],
@@ -505,7 +697,7 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
                 children: [
                   _ruleRow('🍏', 'Đếm số quả chín hoặc giải phép toán đố'),
                   SizedBox(height: 10.h),
-                  _ruleRow('⏱️', '20 giây cho mỗi lượt tính đố vui'),
+                  _ruleRow('⏱️', '40 giây cho mỗi lượt tính đố vui'),
                   SizedBox(height: 10.h),
                   _ruleRow('💖', '3 mạng tim - Chọn sai đáp án sẽ bị trừ mạng'),
                   SizedBox(height: 10.h),
@@ -517,27 +709,40 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
             GestureDetector(
               onTap: _startGame,
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 48.w, vertical: 16.h),
+                padding: EdgeInsets.symmetric(horizontal: 52.w, vertical: 16.h),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFFE65100), Color(0xFFFF9800)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFFFFB74D), Color(0xFFE65100)],
                   ),
                   borderRadius: BorderRadius.circular(30.r),
-                  border: Border.all(color: const Color(0xFF5D4037), width: 2.w),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 2),
                   boxShadow: [
+                    const BoxShadow(
+                      color: Color(0xFFBF360C),
+                      offset: Offset(0, 6),
+                      blurRadius: 0,
+                    ),
                     BoxShadow(
-                      color: const Color(0xFFE65100).withOpacity(0.4),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
+                      color: Colors.black.withValues(alpha: 0.3),
+                      offset: const Offset(0, 8),
+                      blurRadius: 10,
                     ),
                   ],
                 ),
                 child: Text(
                   'BẮT ĐẦU CHƠI',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w900,
                     color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        offset: const Offset(0, 1.5),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -557,8 +762,8 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
           child: Text(
             text,
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w700,
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w800,
               color: const Color(0xFF5D4037),
             ),
           ),
@@ -581,7 +786,14 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 28.sp,
                 fontWeight: FontWeight.w900,
-                color: const Color(0xFFC62828),
+                color: Colors.white,
+                shadows: [
+                  Shadow(
+                    color: const Color(0xFFB71C1C),
+                    offset: Offset(2.w, 2.h),
+                    blurRadius: 4,
+                  ),
+                ],
               ),
             ),
             SizedBox(height: 12.h),
@@ -590,8 +802,8 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 15.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade800,
+                fontWeight: FontWeight.w700,
+                color: Colors.white.withValues(alpha: 0.95),
                 height: 1.5,
               ),
             ),
@@ -600,13 +812,13 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
               width: double.infinity,
               padding: EdgeInsets.all(24.w),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.25),
                 borderRadius: BorderRadius.circular(24.r),
-                border: Border.all(color: const Color(0xFFFFCDD2), width: 2.w),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5.w),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.red.withOpacity(0.05),
-                    blurRadius: 10.r,
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 16.r,
                   ),
                 ],
               ),
@@ -632,7 +844,19 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16.r),
-                        border: Border.all(color: const Color(0xFFC62828), width: 2.w),
+                        border: Border.all(color: const Color(0xFFB0BEC5), width: 1.5.w),
+                        boxShadow: [
+                          const BoxShadow(
+                            color: Color(0xFFB0BEC5),
+                            offset: Offset(0, 4),
+                            blurRadius: 0,
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            offset: const Offset(0, 4),
+                            blurRadius: 4,
+                          ),
+                        ],
                       ),
                       child: Center(
                         child: Text(
@@ -640,7 +864,7 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFFC62828),
+                            color: const Color(0xFF374151),
                           ),
                         ),
                       ),
@@ -655,15 +879,22 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
                       padding: EdgeInsets.symmetric(vertical: 14.h),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFFE65100), Color(0xFFFFB74D)],
+                          colors: [Color(0xFFFFB74D), Color(0xFFE65100)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
                         ),
                         borderRadius: BorderRadius.circular(16.r),
-                        border: Border.all(color: const Color(0xFF5D4037), width: 2.w),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5.w),
                         boxShadow: [
+                          const BoxShadow(
+                            color: Color(0xFFBF360C),
+                            offset: Offset(0, 4),
+                            blurRadius: 0,
+                          ),
                           BoxShadow(
-                            color: const Color(0xFFE65100).withOpacity(0.3),
-                            blurRadius: 10.r,
-                            offset: Offset(0, 4.h),
+                            color: Colors.black.withValues(alpha: 0.2),
+                            offset: const Offset(0, 4),
+                            blurRadius: 4,
                           ),
                         ],
                       ),
@@ -672,8 +903,14 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
                           'Chơi lại',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 16.sp,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w900,
                             color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.3),
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -696,8 +933,8 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
           label,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 15.sp,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF37474F),
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
           ),
         ),
         Text(
@@ -705,7 +942,7 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
           style: GoogleFonts.plusJakartaSans(
             fontSize: 18.sp,
             fontWeight: FontWeight.w900,
-            color: const Color(0xFFE65100),
+            color: const Color(0xFFFFF176),
           ),
         ),
       ],
@@ -713,320 +950,403 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
   }
 
   Widget _buildHeader(_MathLevel level) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: level.bgGradient,
-        ),
-        borderRadius: BorderRadius.circular(20.r),
-        boxShadow: [
-          BoxShadow(
-            color: level.bgGradient.first.withOpacity(0.3),
-            blurRadius: 8.r,
-            offset: Offset(0, 4.h),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            onPressed: () {
-              _timer?.cancel();
-              Navigator.pop(context);
-            },
-            icon: const Icon(Icons.close_rounded, color: Colors.white),
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.2),
-            ),
-          ),
-          SizedBox(width: 8.w),
           Row(
-            children: List.generate(3, (i) => Padding(
-              padding: EdgeInsets.only(right: 4.w),
-              child: Icon(
-                i < _lives ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                color: i < _lives ? const Color(0xFFFF1744) : Colors.white.withOpacity(0.4),
-                size: 22.w,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Exit back (Tactile 3D White Glassmorphic Button)
+              GestureDetector(
+                onTap: () {
+                  _timer?.cancel();
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  width: 36.w, height: 36.w,
+                  margin: EdgeInsets.only(right: 8.w),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.9),
+                    border: Border.all(color: Colors.white, width: 1.5.w),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.06), offset: const Offset(0, 3), blurRadius: 6),
+                    ]),
+                  child: const Icon(Icons.arrow_back_rounded, color: Color(0xFF374151), size: 20)),
               ),
-            )),
-          ),
-          const Spacer(),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: _timeLeft <= 8
-                  ? const Color(0xFFFF1744).withOpacity(0.3)
-                  : Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.timer_rounded,
-                  color: _timeLeft <= 8 ? const Color(0xFFFF8A80) : Colors.white,
-                  size: 16.w,
-                ),
-                SizedBox(width: 4.w),
-                Text(
-                  '$_timeLeft',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w900,
-                    color: _timeLeft <= 8 ? const Color(0xFFFF8A80) : Colors.white,
+              // Star score badge (yellow 3D)
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                    colors: [Color(0xFFFFF176), Color(0xFFFBC02D)]),
+                  borderRadius: BorderRadius.circular(20.r),
+                  border: Border.all(color: Colors.white, width: 1.5.w),
+                  boxShadow: [
+                    const BoxShadow(color: Color(0xFFF57F17), offset: Offset(0, 2), blurRadius: 0),
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.1), offset: const Offset(0, 3), blurRadius: 3),
+                  ]),
+                child: Row(children: [
+                  Icon(Icons.star_rounded, color: Colors.white, size: 18.w),
+                  SizedBox(width: 4.w),
+                  Text('$_score',
+                    style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w900, color: Colors.white)),
+                ]),
+              ),
+              SizedBox(width: 8.w),
+              // Hearts badge (Premium 3D Glassmorphic Capsule)
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.white, Color(0xFFFFEBEE)],
                   ),
+                  borderRadius: BorderRadius.circular(20.r),
+                  border: Border.all(color: const Color(0xFFFFCDD2), width: 1.5.w),
+                  boxShadow: [
+                    const BoxShadow(
+                      color: Color(0xFFEF9A9A),
+                      offset: Offset(0, 2),
+                      blurRadius: 0,
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      offset: const Offset(0, 3),
+                      blurRadius: 3,
+                    ),
+                  ],
                 ),
-              ],
-            ),
+                child: Row(
+                  children: List.generate(3, (i) => Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 1.5.w),
+                    child: Icon(
+                      i < _lives ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                      color: i < _lives ? const Color(0xFFEF5350) : const Color(0xFFB0BEC5),
+                      size: 16.w,
+                    ),
+                  )),
+                ),
+              ),
+            ],
           ),
-          SizedBox(width: 8.w),
+          // Timer (blue 3D or red 3D if time is low)
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16.r),
-              border: Border.all(color: const Color(0xFFFFD54F), width: 2.w),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 4.r,
-                  offset: Offset(0, 2.h),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset('image/sao.png', width: 18.w, height: 18.h),
-                SizedBox(width: 5.w),
-                Text(
-                  '$_score',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFFF57C00),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGardenCard(_MathLevel level) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(color: const Color(0xFFFFD54F), width: 3.w),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFF57C00).withOpacity(0.12),
-            blurRadius: 12.r,
-            offset: Offset(0, 6.h),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(10.w),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFFFFE082),
-              border: Border.all(color: const Color(0xFFFFB300), width: 2.w),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFFFB300).withOpacity(0.2),
-                  blurRadius: 6.r,
-                  offset: Offset(0, 2.h),
-                ),
-              ],
-            ),
-            child: Icon(
-              Icons.spa_rounded,
-              color: level.bgGradient.first,
-              size: 24.sp,
-            ),
-          ),
-          SizedBox(width: 14.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'THỬ THÁCH ĐỐ VUI:',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFFE65100),
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  level.question,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF5D4037),
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVisualMathProblem(_MathLevel level) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28.r),
-        border: Border.all(color: const Color(0xFFFFCC80), width: 2.w),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 16.r,
-            offset: Offset(0, 6.h),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Graphic illustrations inside a cute wicker picnic basket
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 10.w),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF3E0), // Picnic blanket color
+              gradient: LinearGradient(
+                begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                colors: _timeLeft <= 5
+                    ? [const Color(0xFFF87171), const Color(0xFFEF4444)]
+                    : [const Color(0xFF4DD0E1), const Color(0xFF00ACC1)]),
               borderRadius: BorderRadius.circular(20.r),
-              border: Border.all(color: const Color(0xFFFFB74D), width: 2.w),
-            ),
-            child: Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 8.w,
-              runSpacing: 8.h,
-              children: level.visualEmojis.map((emoji) {
-                return Text(
-                  emoji,
-                  style: TextStyle(fontSize: 34.sp),
-                );
-              }).toList(),
-            ),
-          ),
-          SizedBox(height: 16.h),
-          // Math problem blackboard style
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 14.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1B5E20), // Dark green blackboard
-              borderRadius: BorderRadius.circular(18.r),
-              border: Border.all(color: const Color(0xFF8D6E63), width: 4.w), // Wooden frame
+              border: Border.all(color: Colors.white, width: 1.5.w),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  offset: Offset(0, 4.h),
-                  blurRadius: 6.r,
+                  color: _timeLeft <= 5
+                      ? const Color(0xFFB91C1C)
+                      : const Color(0xFF00838F),
+                  offset: const Offset(0, 2), blurRadius: 0),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.1), offset: const Offset(0, 3), blurRadius: 3),
+              ]),
+            child: Row(children: [
+              Icon(Icons.access_time_filled_rounded, color: Colors.white, size: 16.w),
+              SizedBox(width: 6.w),
+              Text('${_timeLeft}s',
+                style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w900, color: Colors.white)),
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUnifiedQuestionCard(_MathLevel level) {
+    final isCounting = !level.khmerProblem.contains('+') && !level.khmerProblem.contains('-');
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // Main parchment container
+        Container(
+          width: double.infinity,
+          margin: EdgeInsets.only(top: 14.h),
+          padding: EdgeInsets.fromLTRB(16.w, 24.h, 16.w, 16.h),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFDF0), // Parchment cream background
+            borderRadius: BorderRadius.circular(24.r),
+            border: Border.all(color: const Color(0xFF8D6E63), width: 3.5.w), // Wooden frame border
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF5D4037).withValues(alpha: 0.15),
+                blurRadius: 12.r,
+                offset: Offset(0, 6.h),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Question text
+              Text(
+                level.question,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF5D4037),
+                  height: 1.4,
+                ),
+              ),
+              SizedBox(height: 16.h),
+
+              // Visual emojis display inside warm basket box
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 12.w),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF3E0), // Picnic basket blanket
+                  borderRadius: BorderRadius.circular(16.r),
+                  border: Border.all(color: const Color(0xFFFFB74D), width: 1.5.w),
+                ),
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 14.w,
+                  runSpacing: 14.h,
+                  children: level.visualEmojis.map((emoji) {
+                    return Text(
+                      emoji,
+                      style: TextStyle(fontSize: 52.sp),
+                    );
+                  }).toList(),
+                ),
+              ),
+
+              // Equation blackboard (only shown for math equation rounds)
+              if (!isCounting) ...[
+                SizedBox(height: 16.h),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B5E20), // Chalkboard green
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(color: const Color(0xFF8D6E63), width: 3.w), // Wooden frame
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        offset: Offset(0, 4.h),
+                        blurRadius: 6.r,
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      level.khmerProblem,
+                      style: GoogleFonts.battambang(
+                        fontSize: 28.sp,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFFFFF59D), // Pastel yellow chalk
+                      ),
+                    ),
+                  ),
                 ),
               ],
-            ),
-            child: Center(
+            ],
+          ),
+        ),
+
+        // Overlapping Purple Level Banner at the top center
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFAB47BC), Color(0xFF7B1FA2)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                borderRadius: BorderRadius.circular(14.r),
+                border: Border.all(color: Colors.white, width: 1.5.w),
+                boxShadow: [
+                  const BoxShadow(
+                    color: Color(0xFF4A148C),
+                    offset: Offset(0, 3),
+                    blurRadius: 0,
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    offset: const Offset(0, 3),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
               child: Text(
-                level.khmerProblem,
-                style: GoogleFonts.battambang(
-                  fontSize: 32.sp,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFFFFF59D), // Pastel chalk yellow
+                'Câu ${_currentLevelIdx + 1} / ${_levels.length}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
                 ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildChoicesGrid(_MathLevel level) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Padding(
-          padding: EdgeInsets.only(left: 8.w, bottom: 12.h),
+        // Green banner
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.2.w),
+            boxShadow: [
+              const BoxShadow(
+                color: Color(0xFF1B5E20),
+                offset: Offset(0, 3),
+                blurRadius: 0,
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                offset: const Offset(0, 3),
+                blurRadius: 3,
+              ),
+            ],
+          ),
           child: Text(
-            'Chọn kết quả bé tính được nhé:',
+            'Chọn chữ số Khmer tương ứng',
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFFE65100),
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
             ),
           ),
         ),
+        SizedBox(height: 16.h),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: level.choices.map((choice) {
             final isSelected = (_selectedChoice == choice);
             final isCorrect = (choice == level.correctAnswer);
 
-            Color btnColor = const Color(0xFFFFE082); // Golden wood yellow
-            Color borderColor = const Color(0xFFFFB300);
-            Color textColor = const Color(0xFF5D4037);
+            // Default wood gradient styling
+            Gradient btnGradient = const LinearGradient(
+              colors: [Color(0xFFE2C29D), Color(0xFFC49A6C)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            );
+            Color borderColor = const Color(0xFF8D6E63);
+            Color shadowColor = const Color(0xFF5D4037);
+            Color textColor = const Color(0xFF4E342E);
 
             if (_isRoundCompleted && isSelected) {
               if (isCorrect) {
-                btnColor = const Color(0xFFC8E6C9);
-                borderColor = const Color(0xFF4CAF50);
+                btnGradient = const LinearGradient(
+                  colors: [Color(0xFFA5D6A7), Color(0xFF66BB6A)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                );
+                borderColor = const Color(0xFF1B5E20);
+                shadowColor = const Color(0xFF1B5E20);
                 textColor = const Color(0xFF1B5E20);
               } else {
-                btnColor = const Color(0xFFFFCDD2);
-                borderColor = const Color(0xFFEF5350);
+                btnGradient = const LinearGradient(
+                  colors: [Color(0xFFEF9A9A), Color(0xFFEF5350)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                );
+                borderColor = const Color(0xFFB71C1C);
+                shadowColor = const Color(0xFFB71C1C);
                 textColor = const Color(0xFFB71C1C);
               }
             }
 
             return Expanded(
-              child: GestureDetector(
-                onTap: () => _onChoiceSelected(choice),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  margin: EdgeInsets.symmetric(horizontal: 6.w),
-                  padding: EdgeInsets.symmetric(vertical: 16.h),
-                  decoration: BoxDecoration(
-                    color: btnColor,
-                    borderRadius: BorderRadius.circular(20.r),
-                    border: Border.all(
-                      color: borderColor,
-                      width: isSelected ? 3.w : 2.5.w,
-                    ),
-                    boxShadow: isSelected && _isRoundCompleted
-                        ? []
-                        : [
-                            BoxShadow(
-                              color: const Color(0xFFF57C00).withOpacity(0.3),
-                              offset: Offset(0, 5.h),
-                            ),
-                          ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      choice,
-                      style: GoogleFonts.battambang(
-                        fontSize: 32.sp,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
+              child: AspectRatio(
+                aspectRatio: 1.0, // Square choice cards
+                child: GestureDetector(
+                  onTap: () => _onChoiceSelected(choice),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    margin: EdgeInsets.symmetric(horizontal: 6.w),
+                    decoration: BoxDecoration(
+                      gradient: btnGradient,
+                      borderRadius: BorderRadius.circular(20.r),
+                      border: Border.all(
+                        color: borderColor,
+                        width: isSelected ? 3.5.w : 2.5.w,
                       ),
+                      boxShadow: isSelected && _isRoundCompleted
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                offset: const Offset(0, 2),
+                                blurRadius: 2,
+                              ),
+                            ]
+                          : [
+                              BoxShadow(
+                                color: shadowColor,
+                                offset: Offset(0, 6.h),
+                                blurRadius: 0,
+                              ),
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.15),
+                                offset: Offset(0, 6.h),
+                                blurRadius: 4,
+                              ),
+                            ],
+                    ),
+                    child: Stack(
+                      children: [
+                        // Screws at 4 corners
+                        Positioned(
+                          left: 6.w, top: 6.h,
+                          child: _buildScrew(),
+                        ),
+                        Positioned(
+                          right: 6.w, top: 6.h,
+                          child: _buildScrew(),
+                        ),
+                        Positioned(
+                          left: 6.w, bottom: 6.h,
+                          child: _buildScrew(),
+                        ),
+                        Positioned(
+                          right: 6.w, bottom: 6.h,
+                          child: _buildScrew(),
+                        ),
+
+                        // The choice number text
+                        Center(
+                          child: Text(
+                            choice,
+                            style: GoogleFonts.battambang(
+                              fontSize: 34.sp,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -1035,6 +1355,18 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
           }).toList(),
         ),
       ],
+    );
+  }
+
+  Widget _buildScrew() {
+    return Container(
+      width: 4.w,
+      height: 4.w,
+      decoration: BoxDecoration(
+        color: const Color(0xFFB0BEC5),
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0xFF78909C), width: 0.5.w),
+      ),
     );
   }
 }

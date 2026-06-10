@@ -22,7 +22,11 @@ class AppHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = gradientColors ?? const [Color(0xFF4580C4), Color(0xFF6A9DD6)];
+    final colors = gradientColors ?? const [
+      Color(0xFF1565C0),
+      Color(0xFF42A5F5),
+      Color(0xFF29B6F6),
+    ];
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -31,40 +35,40 @@ class AppHeader extends StatelessWidget {
           end: const Alignment(0.5, 1),
           colors: colors),
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(16.r),
-          bottomRight: Radius.circular(16.r)),
+          bottomLeft: Radius.circular(24.r),
+          bottomRight: Radius.circular(24.r)),
         boxShadow: [BoxShadow(
-          color: colors.first.withValues(alpha: 0.18),
-          blurRadius: 12.r, offset: Offset(0, 4.h))],
+          color: colors.first.withValues(alpha: 0.35),
+          blurRadius: 24.r, offset: Offset(0, 8.h))],
       ),
       child: Stack(children: [
         // Decorative circles
-        Positioned(right: -30.w, top: -25.h,
-          child: Container(width: 100.w, height: 100.w,
+        Positioned(right: -40.w, top: -30.h,
+          child: Container(width: 120.w, height: 120.w,
             decoration: BoxDecoration(shape: BoxShape.circle,
               color: Colors.white.withValues(alpha: 0.06)))),
-        Positioned(left: -20.w, bottom: -15.h,
-          child: Container(width: 60.w, height: 60.w,
+        Positioned(left: -25.w, bottom: -20.h,
+          child: Container(width: 80.w, height: 80.w,
             decoration: BoxDecoration(shape: BoxShape.circle,
               color: Colors.white.withValues(alpha: 0.04)))),
         // Content
         SafeArea(
           bottom: false,
           child: Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 14.h),
+            padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 40.h),
             child: Row(children: [
-              // Back button — min 44x44 touch target
+              // Back button
               GestureDetector(
                 onTap: onBack,
                 child: Container(
-                  width: 44.w, height: 44.w,
+                  width: 36.w, height: 36.w,
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(14.r),
+                    shape: BoxShape.circle,
                     border: Border.all(
                       color: Colors.white.withValues(alpha: 0.10))),
                   child: Icon(Icons.arrow_back_rounded,
-                    color: Colors.white, size: 20.sp)),
+                    color: Colors.white, size: 18.sp)),
               ),
               SizedBox(width: 14.w),
               // Title + subtitle
@@ -75,9 +79,9 @@ class AppHeader extends StatelessWidget {
                     children: [
                       Text(title,
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 19.sp, fontWeight: FontWeight.w800,
+                          fontSize: 22.sp, fontWeight: FontWeight.w800,
                           color: Colors.white)),
-                      SizedBox(height: 1.h),
+                      SizedBox(height: 2.h),
                       Text(subtitle!,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.sp, fontWeight: FontWeight.w500,
@@ -85,13 +89,20 @@ class AppHeader extends StatelessWidget {
                     ])
                 : Text(title,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 19.sp, fontWeight: FontWeight.w800,
+                      fontSize: 22.sp, fontWeight: FontWeight.w800,
                       color: Colors.white))),
-              // Trailing widget
-              if (trailing != null) trailing!,
+              // Reserve space for trailing stats
+              if (trailing != null) SizedBox(width: 65.w),
             ]),
           ),
         ),
+        // Stats positioned at top right of the header, exactly like LearnScreen
+        if (trailing != null)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 2.h,
+            right: 16.w,
+            child: trailing!,
+          ),
       ]),
     );
   }

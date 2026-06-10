@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
 import '../constants/app_text_styles.dart';
@@ -176,15 +175,6 @@ class _FeedbackOverlayState extends State<_FeedbackOverlay>
                               AppStrings.normalScore,
                               style: AppTextStyles.bodySmall.copyWith(
                                 color: AppColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'កករ',
-                              style: GoogleFonts.battambang(
-                                fontSize: 16,
-                                color: AppColors.primaryPurple,
-                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             const SizedBox(width: 8),

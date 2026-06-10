@@ -41,6 +41,8 @@ class KhmerWriteWidget extends StatefulWidget {
   final double? outsideThreshold;
   final double? toleranceRadius;
   final bool isCompound;
+  final int? writingIndex;
+  final String? lessonId;
 
   const KhmerWriteWidget({
     super.key,
@@ -58,6 +60,8 @@ class KhmerWriteWidget extends StatefulWidget {
     this.outsideThreshold,
     this.toleranceRadius,
     this.isCompound = false,
+    this.writingIndex,
+    this.lessonId,
   });
 
   @override
@@ -85,6 +89,15 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
   final GlobalKey _canvasKey = GlobalKey();
 
   late AnimationController _bounceCtrl;
+
+  @override
+  void didUpdateWidget(covariant KhmerWriteWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.character != widget.character) {
+      _clear();
+      _fetchCharacterInfo();
+    }
+  }
 
   @override
   void initState() {
@@ -248,9 +261,9 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
       try {
         final scoreService = await ScoreService.getInstance();
         await scoreService.completeWritingLesson(
-          0, // dummy index
+          widget.writingIndex ?? 0,
           finalStars,
-          lessonId: null,
+          lessonId: widget.lessonId,
           strokes: _strokes,
           targetCharacter: targetChar,
           passed: finalPassed,

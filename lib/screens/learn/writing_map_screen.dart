@@ -1,13 +1,14 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_writing.dart';
 import 'writing_detail_screen.dart';
 import '../../services/storage_service.dart';
 import '../../repositories/progress_repository.dart';
 
-/// Bản đồ tập viết Khmer — Premium learning path (zigzag)
+/// Bản đồ tập viết Khmer — Premium learning path (zigzag) với các thẻ bài học chi tiết
 class WritingMapScreen extends StatefulWidget {
   const WritingMapScreen({super.key});
   @override
@@ -22,9 +23,9 @@ class _WritingMapScreenState extends State<WritingMapScreen>
 
   final List<KhmerWriting> _lessons = KhmerWritingData.lessons;
 
-  static const double _nodeSpacingY = 100.0;
-  static const double _topPadding = 28.0;
-  static const double _nodeSize = 62.0;
+  double get _nodeSpacingY => 140.h;
+  double get _topPadding => 80.h;
+  double get _nodeSize => 78.w;
 
   int get _currentIdx {
     final idx = _lessons.indexWhere((l) => !l.isLearned);
@@ -69,7 +70,7 @@ class _WritingMapScreenState extends State<WritingMapScreen>
   }
 
   void _scrollToCurrent() {
-    final target = _currentIdx * _nodeSpacingY - 200;
+    final target = _currentIdx * _nodeSpacingY - 200.h;
     if (_scrollCtrl.hasClients) {
       _scrollCtrl.animateTo(
         target.clamp(0.0, _scrollCtrl.position.maxScrollExtent),
@@ -104,10 +105,10 @@ class _WritingMapScreenState extends State<WritingMapScreen>
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
-    final mapH = _lessons.length * _nodeSpacingY + 120;
+    final mapH = _lessons.length * _nodeSpacingY + 200.h;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFF1F8F3),
       body: Column(children: [
         _buildHeader(),
         Expanded(
@@ -125,7 +126,12 @@ class _WritingMapScreenState extends State<WritingMapScreen>
                     width: w,
                     getX: _nodeX,
                     getY: _nodeY,
-                    doneCount: _doneCount),
+                    doneCount: _doneCount,
+                    undoneStroke: 10.w,
+                    shadowStroke: 12.w,
+                    mainStroke: 8.w,
+                    highlightStroke: 3.w,
+                  ),
                   child: Stack(children: _buildAllNodes(w)),
                 ),
               ),
@@ -138,100 +144,181 @@ class _WritingMapScreenState extends State<WritingMapScreen>
 
   // ─── HEADER ───
   Widget _buildHeader() {
-    final progress = _doneCount / _lessons.length;
+    final progress = _lessons.isEmpty ? 0.0 : _doneCount / _lessons.length;
     final pct = (progress * 100).toInt();
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          begin: Alignment(-0.5, -1), end: Alignment(0.5, 1),
-          colors: [Color(0xFF2E7D32), Color(0xFF66BB6A)]),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(16),
-          bottomRight: Radius.circular(16)),
-        boxShadow: [BoxShadow(
-          color: const Color(0xFF2E7D32).withValues(alpha: 0.25),
-          blurRadius: 20, offset: const Offset(0, 6))]),
-      child: Stack(children: [
-        Positioned(right: -40, top: -30,
-          child: Container(width: 120, height: 120,
-            decoration: BoxDecoration(shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.06)))),
-        Positioned(left: -25, bottom: -20,
-          child: Container(width: 80, height: 80,
-            decoration: BoxDecoration(shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.04)))),
-        SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
-            child: Column(children: [
-              Row(children: [
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    width: 36, height: 36,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.12))),
-                    child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 18)),
-                ),
-                const SizedBox(width: 12),
-                Expanded(child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Tập viết Khmer',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
-                    const SizedBox(height: 1),
-                    Text('$_doneCount/${_lessons.length} đã hoàn thành',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11, fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.8))),
-                  ],
-                )),
-                Container(
-                  width: 38, height: 38,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(12)),
-                  child: const Center(child: Text('✍️', style: TextStyle(fontSize: 20)))),
-              ]),
-              const SizedBox(height: 8),
-              Row(children: [
-                Expanded(child: Container(
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(4)),
-                  child: Stack(children: [
-                    FractionallySizedBox(
-                      alignment: Alignment.centerLeft,
-                      widthFactor: progress.clamp(0.0, 1.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Colors.white, Color(0xFFE0F0E0)]),
-                          borderRadius: BorderRadius.circular(4),
-                          boxShadow: [BoxShadow(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            blurRadius: 6)])))]),
-                )),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(6)),
-                  child: Text('$pct%',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white))),
-              ]),
-            ]),
-          ),
+          begin: Alignment(-0.5, -1),
+          end: Alignment(0.5, 1),
+          colors: [Color(0xFF2E7D32), Color(0xFF43A047), Color(0xFF66BB6A)],
         ),
-      ]),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2E7D32).withValues(alpha: 0.35),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Decorative circles
+          Positioned(
+            right: -40.w,
+            top: -30.h,
+            child: Container(
+              width: 120.w,
+              height: 120.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.06),
+              ),
+            ),
+          ),
+          Positioned(
+            left: -25.w,
+            bottom: -20.h,
+            child: Container(
+              width: 80.w,
+              height: 80.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.04),
+              ),
+            ),
+          ),
+          // Mascot elephant
+          Positioned(
+            right: 0,
+            bottom: -2.h,
+            child: Image.asset(
+              'image/Voi nguyên âm.png',
+              width: 100.w,
+              height: 100.w,
+              fit: BoxFit.contain,
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16.w, 4.h, 105.w, 5.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Row: Back + Title
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 36.w,
+                          height: 36.w,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.15),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.12),
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.arrow_back_rounded,
+                            color: Colors.white,
+                            size: 20.w,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Flexible(
+                        child: Text(
+                          'Tập viết Khmer',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 20.sp,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 0.h),
+                  Padding(
+                    padding: EdgeInsets.only(left: 48.w),
+                    child: Text(
+                      '$_doneCount/${_lessons.length} đã hoàn thành',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  // Progress bar
+                  Padding(
+                    padding: EdgeInsets.only(left: 48.w),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            height: 6.h,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(4.r),
+                            ),
+                            child: Stack(
+                              children: [
+                                FractionallySizedBox(
+                                  alignment: Alignment.centerLeft,
+                                  widthFactor: progress.clamp(0.0, 1.0),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          Color(0xFF81C784),
+                                          Color(0xFF4CAF50),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(4.r),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFF4CAF50).withValues(alpha: 0.5),
+                                          blurRadius: 6,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Text(
+                          '$pct%',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -248,7 +335,141 @@ class _WritingMapScreenState extends State<WritingMapScreen>
       final curr = ri == _currentIdx;
       final locked = !done && !curr;
       final color = _nodeColor(ri);
+      final baiNum = ri + 1;
 
+      // Determine label position: alternate left/right based on node position
+      final isNodeOnRight = x > w / 2;
+      final labelOnLeft = isNodeOnRight;
+
+      // ── Label card ──
+      final labelW = 95.w;
+      final labelX = labelOnLeft
+          ? x - _nodeSize / 2 - labelW - 10.w
+          : x + _nodeSize / 2 + 10.w;
+      final labelY = y - 45.h;
+
+      widgets.add(
+        Positioned(
+          left: labelX,
+          top: labelY,
+          child: Container(
+            width: labelW,
+            padding: EdgeInsets.fromLTRB(12.w, 10.h, 12.w, 10.h),
+            decoration: BoxDecoration(
+              color: locked
+                  ? Colors.white.withValues(alpha: 0.45)
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(18.r),
+              border: locked ? null : Border.all(
+                color: color.withValues(alpha: 0.15),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: locked
+                      ? Colors.black.withValues(alpha: 0.03)
+                      : color.withValues(alpha: 0.10),
+                  blurRadius: 14,
+                  offset: const Offset(0, 5),
+                ),
+                if (!locked)
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.06),
+                    blurRadius: 4,
+                    spreadRadius: 1,
+                  ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                  decoration: BoxDecoration(
+                    color: locked
+                        ? const Color(0xFFE8EEF5)
+                        : color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6.r),
+                  ),
+                  child: Text(
+                    'Bài $baiNum',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w800,
+                      color: locked
+                          ? const Color(0xFFB0BEC5)
+                          : color,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  lesson.character,
+                  style: GoogleFonts.battambang(
+                    fontSize: 26.sp,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
+                    color: locked
+                        ? const Color(0xFFB0BEC5)
+                        : const Color(0xFF1A202C),
+                  ),
+                ),
+                Text(
+                  lesson.romanized.isNotEmpty
+                      ? lesson.romanized[0].toUpperCase() + lesson.romanized.substring(1)
+                      : '',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w500,
+                    color: locked
+                        ? const Color(0xFFCFD8DC)
+                        : const Color(0xFF718096),
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(
+                    3,
+                    (si) => Icon(
+                      Icons.star_rounded,
+                      size: 16.w,
+                      color: (done && si < lesson.starRating)
+                          ? const Color(0xFFFFB300)
+                          : locked
+                              ? const Color(0xFFE0E0E0).withValues(alpha: 0.4)
+                              : const Color(0xFFE0E0E0),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // ── Arrow pointer ──
+      final arrowX = labelOnLeft
+          ? labelX + labelW - 2.w
+          : labelX - 8.w;
+      widgets.add(
+        Positioned(
+          left: arrowX,
+          top: y - 6.h,
+          child: CustomPaint(
+            size: Size(14.w, 16.h),
+            painter: _ArrowPainter(
+              pointsRight: labelOnLeft,
+              color: locked
+                  ? Colors.white.withValues(alpha: 0.45)
+                  : Colors.white,
+            ),
+          ),
+        ),
+      );
+
+      // ── Node circle ──
       widgets.add(
         Positioned(
           left: x - _nodeSize / 2,
@@ -257,71 +478,154 @@ class _WritingMapScreenState extends State<WritingMapScreen>
             onTap: locked ? null : () => _openLesson(ri),
             child: SizedBox(
               width: _nodeSize,
-              height: _nodeSize + (done ? 20 : 0),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                curr
+              height: _nodeSize,
+              child: curr
                   ? AnimatedBuilder(
                       animation: _pulseCtrl,
                       builder: (_, child) => Transform.scale(
-                        scale: _pulseAnim.value, child: child),
-                      child: _circle(lesson, color, done, curr, locked))
+                        scale: _pulseAnim.value,
+                        child: child,
+                      ),
+                      child: _circle(lesson, color, done, curr, locked),
+                    )
                   : _circle(lesson, color, done, curr, locked),
-                if (done && lesson.starRating > 0)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 3),
-                    child: Row(mainAxisSize: MainAxisSize.min,
-                      children: List.generate(
-                        min(lesson.starRating, 3),
-                        (_) => Icon(Icons.star_rounded, color: AppColors.secondary, size: 13)))),
-              ]),
             ),
           ),
         ),
       );
+
+      // ── Lesson number badge ──
+      if (!locked) {
+        widgets.add(
+          Positioned(
+            left: x + _nodeSize / 2 - 16.w,
+            top: y - _nodeSize / 2 - 4.h,
+            child: Container(
+              width: 22.w,
+              height: 22.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color,
+                border: Border.all(color: Colors.white, width: 2.w),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.4),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  '$baiNum',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }
     }
 
     return widgets;
   }
 
-  Widget _circle(KhmerWriting lesson, Color color, bool done, bool curr, bool locked) {
+  Widget _circle(
+    KhmerWriting lesson,
+    Color color,
+    bool done,
+    bool curr,
+    bool locked,
+  ) {
     if (locked) {
       return Container(
-        width: _nodeSize, height: _nodeSize,
+        width: _nodeSize,
+        height: _nodeSize,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: AppColors.surfaceContainerLow,
-          border: Border.all(color: AppColors.surfaceContainerHighest, width: 3)),
-        child: Icon(Icons.lock_rounded, color: AppColors.textHint, size: 22));
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFE8EEF5),
+              Color(0xFFD0DAE8),
+            ],
+          ),
+          border: Border.all(
+            color: const Color(0xFFBCC8D9),
+            width: 3.w,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF8E9DB3).withValues(alpha: 0.3),
+              blurRadius: 0,
+              offset: Offset(0, 3.h),
+            ),
+          ],
+        ),
+        child: Icon(Icons.lock_rounded, color: const Color(0xFF8E9DB3), size: 28.w),
+      );
     }
 
     return Container(
-      width: _nodeSize, height: _nodeSize,
+      width: _nodeSize,
+      height: _nodeSize,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topCenter, end: Alignment.bottomCenter,
+        gradient: RadialGradient(
+          center: const Alignment(0, -0.4),
+          radius: 0.85,
           colors: [
-            Color.lerp(color, Colors.white, 0.20)!,
+            Color.lerp(color, Colors.white, 0.45)!,
             color,
-            Color.lerp(color, Colors.black, 0.12)!],
-          stops: const [0.0, 0.45, 1.0]),
-        border: Border.all(color: Color.lerp(color, Colors.white, 0.4)!, width: 3),
+            Color.lerp(color, Colors.black, 0.08)!,
+          ],
+          stops: const [0.0, 0.6, 1.0],
+        ),
+        border: Border.all(
+          color: Color.lerp(color, Colors.white, 0.5)!,
+          width: 4.w,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Color.lerp(color, Colors.black, 0.4)!.withValues(alpha: 0.5),
-            blurRadius: 0, offset: const Offset(0, 4)),
-          if (curr) BoxShadow(
-            color: color.withValues(alpha: 0.4),
-            blurRadius: 18, spreadRadius: 2),
-        ]),
+            color: Color.lerp(color, Colors.black, 0.4)!.withValues(alpha: 0.45),
+            blurRadius: 1,
+            offset: Offset(0, 5.h),
+          ),
+          BoxShadow(
+            color: color.withValues(alpha: 0.25),
+            blurRadius: 12,
+            spreadRadius: 2,
+          ),
+          if (curr)
+            BoxShadow(
+              color: color.withValues(alpha: 0.55),
+              blurRadius: 24,
+              spreadRadius: 6,
+            ),
+        ],
+      ),
       child: Center(
-        child: Text(lesson.character,
+        child: Text(
+          lesson.character,
           style: GoogleFonts.battambang(
-            fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white,
+            fontSize: 32.sp,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
             height: 1.2,
-            shadows: [Shadow(
-              color: Colors.black.withValues(alpha: 0.20),
-              blurRadius: 2, offset: const Offset(0, 1))]))),
+            shadows: [
+              Shadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 4,
+                offset: Offset(0, 2.h),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -346,11 +650,20 @@ class _WritingMapPainter extends CustomPainter {
   final double Function(int, double) getX;
   final double Function(int) getY;
   final int doneCount;
+  final double undoneStroke;
+  final double shadowStroke;
+  final double mainStroke;
+  final double highlightStroke;
 
   _WritingMapPainter({
     required this.count, required this.width,
     required this.getX, required this.getY,
-    required this.doneCount});
+    required this.doneCount,
+    required this.undoneStroke,
+    required this.shadowStroke,
+    required this.mainStroke,
+    required this.highlightStroke,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -368,11 +681,13 @@ class _WritingMapPainter extends CustomPainter {
       }
     }
 
+    // Undone road path
     canvas.drawPath(path, Paint()
-      ..color = AppColors.surfaceContainerHighest
-      ..strokeWidth = 10 ..style = PaintingStyle.stroke
+      ..color = const Color(0xFFC8E6C9)
+      ..strokeWidth = undoneStroke ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round ..strokeJoin = StrokeJoin.round);
 
+    // Done road path (green gradient road)
     if (doneCount > 1) {
       final dp = Path();
       final si = count - 1;
@@ -388,21 +703,59 @@ class _WritingMapPainter extends CustomPainter {
         }
       }
 
+      // Shadow
       canvas.drawPath(dp, Paint()
-        ..color = AppColors.tertiary.withValues(alpha: 0.3)
-        ..strokeWidth = 12 ..style = PaintingStyle.stroke
+        ..color = const Color(0xFF2E7D32).withValues(alpha: 0.4)
+        ..strokeWidth = shadowStroke ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round ..strokeJoin = StrokeJoin.round);
+
+      // Main Road
       canvas.drawPath(dp, Paint()
-        ..color = AppColors.tertiary
-        ..strokeWidth = 8 ..style = PaintingStyle.stroke
+        ..color = const Color(0xFF4CAF50)
+        ..strokeWidth = mainStroke ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round ..strokeJoin = StrokeJoin.round);
+
+      // Highlight line
       canvas.drawPath(dp, Paint()
-        ..color = AppColors.tertiaryLight.withValues(alpha: 0.5)
-        ..strokeWidth = 3 ..style = PaintingStyle.stroke
+        ..color = const Color(0xFF81C784).withValues(alpha: 0.6)
+        ..strokeWidth = highlightStroke ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round ..strokeJoin = StrokeJoin.round);
     }
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// ═══════════════════════════════════════════════
+// ARROW PAINTER — speech bubble pointer
+// ═══════════════════════════════════════════════
+
+class _ArrowPainter extends CustomPainter {
+  final bool pointsRight;
+  final Color color;
+
+  _ArrowPainter({required this.pointsRight, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final path = Path();
+    if (pointsRight) {
+      path.moveTo(0, 0);
+      path.lineTo(size.width, size.height / 2);
+      path.lineTo(0, size.height);
+    } else {
+      path.moveTo(size.width, 0);
+      path.lineTo(0, size.height / 2);
+      path.lineTo(size.width, size.height);
+    }
+    path.close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

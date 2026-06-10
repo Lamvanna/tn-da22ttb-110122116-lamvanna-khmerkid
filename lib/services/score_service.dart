@@ -55,6 +55,22 @@ class ScoreService {
   
   Set<String> get purchasedItems => _storage.getPurchasedItems();
 
+  // --- POWER-UPS & COOLDOWNS ---
+  int get hintsLeft => _storage.getHintsCount();
+  int get timePowerupsLeft => _storage.getTimePowerupsCount();
+  int get livesPowerupsLeft => _storage.getLivesPowerupsCount();
+  int get doubleScorePowerupsLeft => _storage.getDoubleScorePowerupsCount();
+
+  Future<void> useHint() async => await _storage.useHint();
+  Future<void> useTimePowerup() async => await _storage.useTimePowerup();
+  Future<void> useLivesPowerup() async => await _storage.useLivesPowerup();
+  Future<void> useDoubleScorePowerup() async => await _storage.useDoubleScorePowerup();
+
+  int get hintsCooldownRemaining => _storage.getHintsCooldownRemaining();
+  int get timeCooldownRemaining => _storage.getTimePowerupsCooldownRemaining();
+  int get livesCooldownRemaining => _storage.getLivesPowerupsCooldownRemaining();
+  int get doubleScoreCooldownRemaining => _storage.getDoubleScoreCooldownRemaining();
+
   // ─── EARN & SPEND REWARDS ────────────────────────────────────
   
   Future<bool> spendStars(int amount) async {

@@ -386,4 +386,120 @@ class StorageService {
       await _prefs?.remove(_uKey(k));
     }
   }
+
+  // ─── POWER-UPS REGENERATION SYSTEM ───────────────────────────
+  static const _keyHintsCount = 'pu_hints_count';
+  static const _keyHintsLastReg = 'pu_hints_last_reg';
+  static const _keyTimeCount = 'pu_time_count';
+  static const _keyTimeLastReg = 'pu_time_last_reg';
+  static const _keyLivesCount = 'pu_lives_count';
+  static const _keyLivesLastReg = 'pu_lives_last_reg';
+  static const _keyDoubleCount = 'pu_double_count';
+  static const _keyDoubleLastReg = 'pu_double_last_reg';
+
+  static const int _maxHints = 2;
+  static const int _maxTime = 2;
+  static const int _maxLives = 1;
+  static const int _maxDouble = 1;
+
+  static const int _cooldownHintsSec = 7200;  // 2 hours
+  static const int _cooldownTimeSec = 7200;   // 2 hours
+  static const int _cooldownLivesSec = 10800;  // 3 hours
+  static const int _cooldownDoubleSec = 10800; // 3 hours
+
+  int _getRegeneratedCount(String countKey, String timeKey, int maxVal, int cooldownSec) {
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    
+    if (_prefs?.get(countKey) == null) {
+      _prefs?.setInt(countKey, maxVal);
+      _prefs?.setInt(timeKey, nowMs);
+      return maxVal;
+    }
+
+    int currentCount = _prefs?.getInt(countKey) ?? maxVal;
+    int lastRegMs = _prefs?.getInt(timeKey) ?? nowMs;
+
+    if (currentCount >= maxVal) {
+      _prefs?.setInt(timeKey, nowMs);
+      return maxVal;
+    }
+
+    final elapsedSec = (nowMs - lastRegMs) ~/ 1000;
+    if (elapsedSec >= cooldownSec) {
+      final itemsToRegen = elapsedSec ~/ cooldownSec;
+      final extraTimeMs = (elapsedSec % cooldownSec) * 1000;
+
+      currentCount = (currentCount + itemsToRegen).clamp(0, maxVal);
+      lastRegMs = nowMs - extraTimeMs;
+
+      _prefs?.setInt(countKey, currentCount);
+      _prefs?.setInt(timeKey, lastRegMs);
+    }
+
+    return currentCount;
+  }
+
+  int getHintsCount() => _getRegeneratedCount(_uKey(_keyHintsCount), _uKey(_keyHintsLastReg), _maxHints, _cooldownHintsSec);
+  int getTimePowerupsCount() => _getRegeneratedCount(_uKey(_keyTimeCount), _uKey(_keyTimeLastReg), _maxTime, _cooldownTimeSec);
+  int getLivesPowerupsCount() => _getRegeneratedCount(_uKey(_keyLivesCount), _uKey(_keyLivesLastReg), _maxLives, _cooldownLivesSec);
+  int getDoubleScorePowerupsCount() => _getRegeneratedCount(_uKey(_keyDoubleCount), _uKey(_keyDoubleLastReg), _maxDouble, _cooldownDoubleSec);
+
+  Future<void> useHint() async {
+    final current = getHintsCount();
+    if (current > 0) {
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      if (current == _maxHints) {
+        await _prefs?.setInt(_uKey(_keyHintsLastReg), nowMs);
+      }
+      await _prefs?.setInt(_uKey(_keyHintsCount), current - 1);
+    }
+  }
+
+  Future<void> useTimePowerup() async {
+    final current = getTimePowerupsCount();
+    if (current > 0) {
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      if (current == _maxTime) {
+        await _prefs?.setInt(_uKey(_keyTimeLastReg), nowMs);
+      }
+      await _prefs?.setInt(_uKey(_keyTimeCount), current - 1);
+    }
+  }
+
+  Future<void> useLivesPowerup() async {
+    final current = getLivesPowerupsCount();
+    if (current > 0) {
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      if (current == _maxLives) {
+        await _prefs?.setInt(_uKey(_keyLivesLastReg), nowMs);
+      }
+      await _prefs?.setInt(_uKey(_keyLivesCount), current - 1);
+    }
+  }
+
+  Future<void> useDoubleScorePowerup() async {
+    final current = getDoubleScorePowerupsCount();
+    if (current > 0) {
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      if (current == _maxDouble) {
+        await _prefs?.setInt(_uKey(_keyDoubleLastReg), nowMs);
+      }
+      await _prefs?.setInt(_uKey(_keyDoubleCount), current - 1);
+    }
+  }
+
+  int getHintsCooldownRemaining() => _getCooldownRemaining(_uKey(_keyHintsCount), _uKey(_keyHintsLastReg), _maxHints, _cooldownHintsSec);
+  int getTimePowerupsCooldownRemaining() => _getCooldownRemaining(_uKey(_keyTimeCount), _uKey(_keyTimeLastReg), _maxTime, _cooldownTimeSec);
+  int getLivesPowerupsCooldownRemaining() => _getCooldownRemaining(_uKey(_keyLivesCount), _uKey(_keyLivesLastReg), _maxLives, _cooldownLivesSec);
+  int getDoubleScoreCooldownRemaining() => _getCooldownRemaining(_uKey(_keyDoubleCount), _uKey(_keyDoubleLastReg), _maxDouble, _cooldownDoubleSec);
+
+  int _getCooldownRemaining(String countKey, String timeKey, int maxVal, int cooldownSec) {
+    final current = _prefs?.getInt(countKey) ?? maxVal;
+    if (current >= maxVal) return 0;
+    
+    final lastRegMs = _prefs?.getInt(timeKey) ?? DateTime.now().millisecondsSinceEpoch;
+    final elapsedSec = (DateTime.now().millisecondsSinceEpoch - lastRegMs) ~/ 1000;
+    final remaining = cooldownSec - elapsedSec;
+    return remaining.clamp(0, cooldownSec);
+  }
 }

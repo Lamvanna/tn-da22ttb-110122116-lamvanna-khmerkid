@@ -1,66 +1,82 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_writing.dart';
 import '../../widgets/app_header.dart';
+import '../../widgets/feedback_dialog.dart';
 import '../../services/score_service.dart';
-import '../../services/khmer_handwriting_service.dart';
-import '../../services/handwriting_websocket_client.dart';
-import 'dart:async';
 
-/// Trang chi tiết tập viết — Canvas lớn với chữ mẫu mờ
+/// Trang chi tiết tập viết — Chuyển đổi thành Dictation: Chính tả - Nghe và gõ lại
 class WritingDetailScreen extends StatefulWidget {
   final int initialIndex;
   const WritingDetailScreen({super.key, this.initialIndex = 0});
+
   @override
   State<WritingDetailScreen> createState() => _WritingDetailScreenState();
 }
 
 class _WritingDetailScreenState extends State<WritingDetailScreen> {
-  final GlobalKey _canvasKey = GlobalKey();
   final List<KhmerWriting> _lessons = KhmerWritingData.lessons;
   final FlutterTts _tts = FlutterTts();
   late int _current;
-  final List<List<Offset>> _strokes = [];
-  List<Offset> _currentStroke = [];
-  final List<List<StrokePoint>> _strokeTimestamps = [];
-  List<StrokePoint> _currentStrokeTimestamped = [];
-  int? _expectedStrokeCount;
-  bool _showGuide = true;
-  bool _showFeedback = false;
-  List<StrokeSegment> _feedbackSegments = []; // Danh sách nét vẽ phản hồi cục bộ
-  bool _isLoading = false;
+  int _doneCount = 0;
+  int _totalStars = 0;
+  int _streak = 0;
+
+  final TextEditingController _inputCtrl = TextEditingController();
+  bool _isConsonantTab = true;
+  bool _isKeyboardVisible = true;
+
+  // 33 Phụ âm Khmer
+  final List<String> _consonants = const [
+    'ក', 'ខ', 'គ', 'ឃ', 'ង',
+    'ច', 'ឆ', 'ជ', 'ឈ', 'ញ',
+    'ដ', 'ឋ', 'ឌ', 'ឍ', 'ណ',
+    'ត', 'ថ', 'ទ', 'ធ', 'ន',
+    'ប', 'ផ', 'ព', 'ភ', 'ម',
+    'យ', 'រ', 'ល', 'វ',
+    'ស', 'ហ', 'ឡ', 'អ'
+  ];
+
+  // 35 Nguyên âm và dấu Khmer
+  final List<String> _vowels = const [
+    'ា', 'ិ', 'ី', 'ឹ', 'ឺ', 'ុ', 'ូ', 'ួ',
+    'ើ', 'ឿ', 'ៀ', 'េ', 'ែ', 'ៃ', 'ោ', 'ៅ',
+    'ុំ', 'ំ', 'ះ', 'ុះ', 'េះ', 'ោះ',
+    '់', '៉', '៊', '៌', '៍', '៏', '័', 'ៈ',
+    'ៗ', '។', '្', '៎', '៕'
+  ];
 
   KhmerWriting get _lesson => _lessons[_current];
-  int get _doneCount => _lessons.where((l) => l.isLearned).length;
 
   @override
   void initState() {
     super.initState();
     _current = widget.initialIndex;
     _initTts();
-
-    // Initialize Tier 1 (ML Kit)
-    KhmerHandwritingService.instance.initialize().catchError((e) {
-      debugPrint('[WritingDetailScreen] ML Kit init error: $e');
-    });
-
-    // Initialize Tier 2 (WebSocket)
-    HandwritingWebSocketClient.instance.connect();
-
-    _fetchCharacterInfo();
+    _loadDoneCount();
   }
 
-  Future<void> _fetchCharacterInfo() async {
+  Future<void> _loadDoneCount() async {
     try {
-      final info = await HandwritingWebSocketClient.instance
-          .getCharacterInfo(_lesson.character);
-      if (info != null && mounted) {
-        setState(() => _expectedStrokeCount = info.totalStrokes);
+      final scoreService = await ScoreService.getInstance();
+      int count = 0;
+      for (final lesson in _lessons) {
+        if (lesson.isLearned) {
+          count++;
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _doneCount = count;
+          _totalStars = scoreService.totalStars;
+          _streak = scoreService.streak;
+        });
       }
     } catch (e) {
-      debugPrint('[WritingDetailScreen] Character info fetch error: $e');
+      debugPrint('Error loading done count: $e');
     }
   }
 
@@ -73,187 +89,21 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
     await _tts.setVolume(1.0);
   }
 
-  void _speak(String text) => _tts.speak(text);
-
-  void _clearCanvas() => setState(() {
-    _strokes.clear();
-    _currentStroke.clear();
-    _strokeTimestamps.clear();
-    _currentStrokeTimestamped.clear();
-    _showFeedback = false;
-    _feedbackSegments.clear();
-  });
-
-  double get _guideShiftY {
-    final height = 320.0; // Fixed canvas height in WritingDetailScreen is 320
-    
-    final isBelow = _lesson.character.contains('ុ') ||
-        _lesson.character.contains('ូ') ||
-        _lesson.character.contains('ួ') ||
-        _lesson.character.contains('្');
-    if (isBelow) return -height * 0.08;
-    
-    final isAbove = _lesson.character.contains('ិ') ||
-        _lesson.character.contains('ី') ||
-        _lesson.character.contains('ឹ') ||
-        _lesson.character.contains('ឺ') ||
-        _lesson.character.contains('ំ') ||
-        _lesson.character.contains('៏');
-    if (isAbove) return height * 0.06;
-    
-    return 0.0;
-  }
-
-  Future<void> _markDone() async {
-    if (_strokes.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Row(children: [
-          const Icon(Icons.warning_amber_rounded, color: Colors.white),
-          const SizedBox(width: 8),
-          Text('Hãy viết chữ trước nhé! ✍️',
-            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-        ]),
-        backgroundColor: AppColors.coral,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 2),
-      ));
-      return;
+  Future<void> _speak(String text, {bool isSlow = false}) async {
+    if (isSlow) {
+      await _tts.setSpeechRate(0.15);
+    } else {
+      await _tts.setSpeechRate(0.35);
     }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final targetChar = _lesson.character;
-
-      // ── Tier 1: ML Kit on-device recognition ──────────────────
-      bool mlPassed = false;
-      String mlFeedback = 'Hãy thử viết lại nhé! 💪';
-
-      try {
-        final mlResult = await KhmerHandwritingService.instance.recognizeAndValidate(
-          strokes: _strokeTimestamps,
-          targetCharacter: targetChar,
-          expectedStrokeCount: _expectedStrokeCount,
-        );
-
-        mlPassed = mlResult.isCorrect;
-        mlFeedback = mlResult.message;
-      } catch (e) {
-        debugPrint('[WritingDetail] Tier 1 error: $e');
-        mlPassed = true; // fallback
-        mlFeedback = 'Viết tốt lắm! 👍';
-      }
-
-      bool finalPassed = false;
-      double finalScore = 30.0;
-      int stars = 0;
-      String feedback = mlFeedback;
-
-      // ── Tier 2: WebSocket backend geometric analysis ──────────
-      StrokeAnalysisResult? backendResult;
-      try {
-        backendResult = await HandwritingWebSocketClient.instance.analyzeStrokes(
-          strokes: _strokeTimestamps,
-          targetCharacter: targetChar,
-        );
-
-        if (backendResult.success) {
-          finalPassed = mlPassed && backendResult.passed;
-          finalScore = finalPassed ? backendResult.similarityScore.toDouble() : 30.0;
-          stars = finalPassed ? backendResult.stars : 0;
-          feedback = finalPassed ? backendResult.feedback : (mlPassed ? backendResult.feedback : mlFeedback);
-        } else {
-          // Fallback if backend returned success=false
-          finalPassed = mlPassed;
-          finalScore = mlPassed ? 75.0 : 30.0;
-          stars = mlPassed ? 2 : 0;
-        }
-      } catch (e) {
-        debugPrint('[WritingDetail] Tier 2 error: $e');
-        // Fallback on exception
-        finalPassed = mlPassed;
-        finalScore = mlPassed ? 75.0 : 30.0;
-        stars = mlPassed ? 2 : 0;
-      }
-
-      // ── Build feedback segments ──────────────────────────────
-      final errorIndex = (backendResult != null && backendResult.success)
-          ? backendResult.errorStrokeIndex
-          : -1;
-      final feedbackSegments = <StrokeSegment>[];
-      for (int i = 0; i < _strokes.length; i++) {
-        final isError = (i == errorIndex);
-        feedbackSegments.add(StrokeSegment(
-          points: _strokes[i],
-          color: isError ? Colors.red : Colors.green,
-        ));
-      }
-
-      // ── Save progress via ScoreService ─────────────────────────
-      try {
-        final scoreService = await ScoreService.getInstance();
-        await scoreService.completeWritingLesson(
-          _current,
-          stars,
-          lessonId: null,
-          strokes: _strokes,
-          targetCharacter: targetChar,
-          passed: finalPassed,
-        );
-      } catch (e) {
-        debugPrint('[WritingDetail] Save score error: $e');
-      }
-
-      setState(() {
-        _isLoading = false;
-        _showFeedback = true;
-        _feedbackSegments = feedbackSegments;
-        if (finalPassed) {
-          _lesson.isLearned = true;
-          _lesson.starRating = stars;
-        }
-      });
-
-      if (finalPassed) {
-        _speak(targetChar);
-      }
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Row(children: [
-          Icon(finalPassed ? Icons.check_circle_rounded : Icons.info_rounded, color: Colors.white, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              finalPassed
-                  ? 'Hoàn thành "$targetChar" (${finalScore.round()}%) - $stars ⭐!\n$feedback'
-                  : 'Chưa đạt! (${finalScore.round()}%) - Hãy sửa nét vẽ màu đỏ nhé.\n$feedback',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-            ),
-          ),
-        ]),
-        backgroundColor: finalPassed ? AppColors.tertiary : AppColors.coral,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 4)));
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      debugPrint('Error saving writing progress: $e');
-    }
+    await _tts.speak(text);
   }
 
   void _next() {
     if (_current < _lessons.length - 1) {
       setState(() {
         _current++;
-        _clearCanvas();
+        _inputCtrl.clear();
       });
-      _fetchCharacterInfo();
     } else {
       _showCompletionDialog();
     }
@@ -263,325 +113,1016 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
     if (_current > 0) {
       setState(() {
         _current--;
-        _clearCanvas();
+        _inputCtrl.clear();
       });
-      _fetchCharacterInfo();
     }
   }
+
+  void _onKeyTapped(String char) {
+    if (_inputCtrl.text.length >= 200) return;
+    final text = _inputCtrl.text;
+    final selection = _inputCtrl.selection;
+    setState(() {
+      if (selection.isValid) {
+        final start = selection.start;
+        final end = selection.end;
+        final newText = text.replaceRange(start, end, char);
+        _inputCtrl.text = newText;
+        _inputCtrl.selection = TextSelection.collapsed(offset: start + char.length);
+      } else {
+        _inputCtrl.text = text + char;
+      }
+    });
+  }
+
+  void _onBackspaceTapped() {
+    final text = _inputCtrl.text;
+    if (text.isEmpty) return;
+    final selection = _inputCtrl.selection;
+    setState(() {
+      if (selection.isValid) {
+        final start = selection.start;
+        final end = selection.end;
+        if (start != end) {
+          _inputCtrl.text = text.replaceRange(start, end, '');
+          _inputCtrl.selection = TextSelection.collapsed(offset: start);
+        } else if (start > 0) {
+          _inputCtrl.text = text.replaceRange(start - 1, start, '');
+          _inputCtrl.selection = TextSelection.collapsed(offset: start - 1);
+        }
+      } else {
+        _inputCtrl.text = text.substring(0, text.length - 1);
+      }
+    });
+  }
+
+  Future<void> _check() async {
+    final targetChar = _lesson.character;
+    final entered = _inputCtrl.text.trim();
+    
+    if (entered.isEmpty) return;
+    
+    // Chuẩn hóa ký tự trước khi đối chiếu
+    final normTarget = targetChar.replaceAll(' ', '').replaceAll('◌', '').replaceAll('\u25cc', '').toLowerCase();
+    final normEntered = entered.replaceAll(' ', '').replaceAll('◌', '').replaceAll('\u25cc', '').toLowerCase();
+    
+    final isPassed = normTarget == normEntered;
+    int stars = isPassed ? 3 : 0;
+    
+    if (isPassed) {
+      _speak(targetChar);
+    }
+    
+    // Lưu kết quả bài viết
+    try {
+      final scoreService = await ScoreService.getInstance();
+      await scoreService.completeWritingLesson(
+        _current,
+        stars,
+        lessonId: null,
+        strokes: const [],
+        targetCharacter: targetChar,
+        passed: isPassed,
+      );
+    } catch (e) {
+      debugPrint('Error saving progress: $e');
+    }
+    
+    if (mounted) {
+      if (isPassed) {
+        FeedbackDialog.showSuccess(
+          context,
+          xpEarned: 15,
+          message: 'Tuyệt vời! Con đã viết chính tả đúng hoàn toàn rồi! 🌟',
+        );
+        setState(() {
+          _lesson.isLearned = true;
+          _lesson.starRating = 3;
+        });
+        _loadDoneCount();
+      } else {
+        FeedbackDialog.showFailure(
+          context,
+          message: 'Chưa đúng rồi con ơi! Hãy nghe kỹ lại phát âm và gõ lại nhé! 💪',
+        );
+      }
+    }
+  }
+
+
 
   @override
   void dispose() {
     _tts.stop();
+    _inputCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final w = MediaQuery.of(context).size.width;
     final progress = _lessons.isEmpty ? 0.0 : (_current + 1) / _lessons.length;
-    final typeLabel = _lesson.type == 'consonant' ? 'Phụ âm'
-      : _lesson.type == 'vowel' ? 'Nguyên âm' : 'Chữ ghép';
-    final typeColor = _lesson.type == 'consonant' ? AppColors.primary
-      : _lesson.type == 'vowel' ? AppColors.coral : AppColors.tertiary;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Column(children: [
-        AppHeader(
-          title: '✍️ Tập viết',
-          subtitle: '$_doneCount/${_lessons.length} bài đã học',
-          gradientColors: const [Color(0xFF2E7D32), Color(0xFF66BB6A)],
-          onBack: () => Navigator.pop(context),
-          trailing: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(10)),
-            child: Text('${_current + 1}/${_lessons.length}',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white))),
-        ),
-        // Progress bar
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
-          child: Column(children: [
-            Row(children: [
-              Text('Bài ${_current + 1}', style: GoogleFonts.plusJakartaSans(
-                fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
-              const Spacer(),
-              Text('${(progress * 100).toInt()}%', style: GoogleFonts.plusJakartaSans(
-                fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.tertiary)),
-            ]),
-            const SizedBox(height: 6),
-            Container(
-              height: 8,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(4)),
-              child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: progress.clamp(0, 1),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [AppColors.tertiary, AppColors.tertiaryLight]),
-                    borderRadius: BorderRadius.circular(4))))),
-          ]),
-        ),
-        // Content
-        Expanded(child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-          child: Column(children: [
-            // Character info card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 16, offset: const Offset(0, 4))]),
-              child: Row(children: [
-                // Character display
-                GestureDetector(
-                  onTap: () => _speak(_lesson.character),
-                  child: Container(
-                    width: 72, height: 72,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft, end: Alignment.bottomRight,
-                        colors: [Color.lerp(typeColor, Colors.white, 0.2)!, typeColor]),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [BoxShadow(
-                        color: typeColor.withValues(alpha: 0.3),
-                        blurRadius: 10, offset: const Offset(0, 4))]),
-                    child: Center(child: Text(_lesson.character,
-                      style: GoogleFonts.battambang(
-                        fontSize: 32, fontWeight: FontWeight.w700, color: Colors.white))),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: typeColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6)),
-                        child: Text(typeLabel, style: GoogleFonts.plusJakartaSans(
-                          fontSize: 10, fontWeight: FontWeight.w700, color: typeColor))),
-                      const SizedBox(width: 8),
-                      Text(_lesson.romanized, style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-                    ]),
-                    const SizedBox(height: 6),
-                    Text('Viết chữ "${_lesson.character}"',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-                    const SizedBox(height: 4),
-                    GestureDetector(
-                      onTap: () => _speak(_lesson.character),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(Icons.volume_up_rounded, color: typeColor, size: 16),
-                        const SizedBox(width: 4),
-                        Text('Nghe phát âm', style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12, fontWeight: FontWeight.w600, color: typeColor)),
-                      ]),
-                    ),
-                  ],
-                )),
-              ]),
-            ),
-            const SizedBox(height: 16),
-            // Hint card
-            if (_lesson.hint.isNotEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.tertiary.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.tertiary.withValues(alpha: 0.15))),
-                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Container(
-                    width: 28, height: 28,
-                    decoration: BoxDecoration(
-                      color: AppColors.tertiary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8)),
-                    child: Icon(Icons.lightbulb_rounded, color: AppColors.tertiary, size: 16)),
-                  const SizedBox(width: 10),
-                  Expanded(child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Hướng dẫn viết', style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.tertiary)),
-                      const SizedBox(height: 2),
-                      Text(_lesson.hint, style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
-                    ],
-                  )),
-                ]),
+      backgroundColor: const Color(0xFFF7F8FC),
+      body: Column(
+        children: [
+          // App Header
+          _buildHeader(),
+          // Progress and Content Area
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: Column(
+                children: [
+
+
+                  // ── Audio player and Mascot Box ──
+                  _buildAudioPlayerCard(),
+
+                  const SizedBox(height: 14),
+
+                  // ── Gõ câu bạn vừa nghe Area ──
+                  _buildInputBox(),
+
+                  const SizedBox(height: 14),
+
+                  // ── Action Buttons (Replay, Check, Next combined in 1 row) ──
+                  _buildActionRow(),
+                ],
               ),
-            const SizedBox(height: 16),
-            // Writing canvas
-            _buildCanvas(typeColor),
-            const SizedBox(height: 16),
-            // Action buttons
-            Row(children: [
-              Expanded(child: OutlinedButton.icon(
-                onPressed: _clearCanvas,
-                icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: Text('Xóa', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.coral,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  side: BorderSide(color: AppColors.coral.withValues(alpha: 0.3))))),
-              const SizedBox(width: 12),
-              Expanded(child: OutlinedButton.icon(
-                onPressed: () => setState(() => _showGuide = !_showGuide),
-                icon: Icon(_showGuide ? Icons.visibility_off_rounded : Icons.visibility_rounded, size: 18),
-                label: Text(_showGuide ? 'Ẩn mẫu' : 'Hiện mẫu',
-                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.textSecondary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  side: BorderSide(color: AppColors.surfaceContainerHighest)))),
-              const SizedBox(width: 12),
-              Expanded(child: ElevatedButton.icon(
-                onPressed: _strokes.isEmpty ? null : _markDone,
-                icon: const Icon(Icons.check_rounded, size: 18),
-                label: Text('Xong', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.tertiary, foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))))),
-            ]),
-            const SizedBox(height: 16),
-            // Nav buttons
-            Row(children: [
-              if (_current > 0) Expanded(child: OutlinedButton.icon(
-                onPressed: _prev,
-                icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                label: Text('Bài trước', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.textSecondary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  side: BorderSide(color: AppColors.surfaceContainerHighest)))),
-              if (_current > 0 && _current < _lessons.length - 1) const SizedBox(width: 12),
-              if (_current < _lessons.length - 1) Expanded(child: ElevatedButton.icon(
-                onPressed: _next,
-                icon: Text('Bài tiếp', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-                label: const Icon(Icons.arrow_forward_rounded, size: 18),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary, foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))))),
-            ]),
-          ]),
-        )),
-      ]),
+            ),
+          ),
+          // Custom Keyboard docked at the bottom
+          if (_isKeyboardVisible) _buildKeyboard(w),
+        ],
+      ),
     );
   }
 
-  // ═══════════ WRITING CANVAS ═══════════
-  Widget _buildCanvas(Color accentColor) {
+  // ═══════════════════ HEADER ĐỒNG BỘ CAO CẤP ═══════════════════
+  Widget _buildHeader() {
     return Container(
-      width: double.infinity,
-      height: 320,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
+        gradient: AppColors.learnHeaderGradient,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24.r),
+          bottomRight: Radius.circular(24.r),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.headerDark.withValues(alpha: 0.35),
+            blurRadius: 24.r,
+            offset: Offset(0, 8.h),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -20.w,
+            top: -20.h,
+            child: Container(
+              width: 100.w,
+              height: 100.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.06),
+              ),
+            ),
+          ),
+          Positioned(
+            left: -30.w,
+            bottom: -10.h,
+            child: Container(
+              width: 70.w,
+              height: 70.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.04),
+              ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(8.w, 6.h, 16.w, 10.h),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Transform.translate(
+                      offset: Offset(0, -12.h),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: Container(
+                              padding: EdgeInsets.all(8.w),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.arrow_back_rounded,
+                                size: 20,
+                              ),
+                            ),
+                            color: Colors.white,
+                            padding: EdgeInsets.zero,
+                            constraints: BoxConstraints(
+                              minWidth: 44.w,
+                              minHeight: 44.w,
+                            ),
+                          ),
+                          SizedBox(width: 6.w),
+                          Expanded(
+                            child: Text(
+                              'Tập viết ${_current + 1}/${_lessons.length}',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 22.sp,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10.w,
+                          vertical: 4.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '⭐',
+                              style: TextStyle(fontSize: 13.sp),
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              '$_totalStars',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 5.h),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10.w,
+                          vertical: 4.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '🔥',
+                              style: TextStyle(fontSize: 13.sp),
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              '$_streak',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Audio Player and Mascot Card
+  Widget _buildAudioPlayerCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: accentColor.withValues(alpha: 0.2), width: 2),
-        boxShadow: [BoxShadow(
-          color: Colors.black.withValues(alpha: 0.06),
-          blurRadius: 16, offset: const Offset(0, 4))]),
-      child: Stack(children: [
-        // Grid lines
-        CustomPaint(
-          size: const Size(double.infinity, 320),
-          painter: _GridPainter()),
-        // Guide character
-        if (_showGuide)
-          Center(
-            child: Transform.translate(
-              offset: Offset(0, _guideShiftY),
-              child: Text(
-                _lesson.character,
-                style: GoogleFonts.battambang(
-                  fontSize: (_lesson.character.contains('◌') ||
-                          _lesson.character.runes.any((r) => r >= 0x17B6 && r <= 0x17D3))
-                      ? 155
-                      : 180,
-                  fontWeight: FontWeight.w700,
-                  color: accentColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Audio elements
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Instruction prompt
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.violet.withValues(alpha: 0.08),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.volume_up_rounded, color: AppColors.violet, size: 20),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Hãy nghe câu sau',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          'và gõ lại vào ô bên dưới nhé!',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Big Circular Play Button and wave lines
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildWaveform(),
+                  const SizedBox(width: 14),
+                  GestureDetector(
+                    onTap: () => _speak(_lesson.character),
+                    child: Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          colors: [AppColors.violet, AppColors.violetLight],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.violet.withValues(alpha: 0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.volume_up_rounded, color: Colors.white, size: 28),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  _buildWaveform(),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Center(
+                child: Text(
+                  'Nhấn để nghe',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.violet,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // Mascot positioned on the right
+          Positioned(
+            right: -10,
+            top: -10,
+            child: SizedBox(
+              width: 90.w,
+              height: 90.w,
+              child: Image.asset(
+                'image/Voi nguyên âm.png',
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+          // Slow audio button on bottom right
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: GestureDetector(
+              onTap: () => _speak(_lesson.character, isSlow: true),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppColors.violet.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.slow_motion_video_rounded, color: AppColors.violet, size: 14),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Nghe chậm',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.violet,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
-        // Drawing area
-        GestureDetector(
-          key: _canvasKey,
-          onPanStart: (d) => setState(() {
-            final now = DateTime.now().millisecondsSinceEpoch;
-            _currentStroke = [d.localPosition];
-            _currentStrokeTimestamped = [
-              StrokePoint(
-                x: d.localPosition.dx,
-                y: d.localPosition.dy,
-                t: now,
-              ),
-            ];
-            _showFeedback = false; // Hide feedback when drawing
-          }),
-          onPanUpdate: (d) => setState(() {
-            _currentStroke.add(d.localPosition);
-            _currentStrokeTimestamped.add(
-              StrokePoint(
-                x: d.localPosition.dx,
-                y: d.localPosition.dy,
-                t: DateTime.now().millisecondsSinceEpoch,
-              ),
-            );
-          }),
-          onPanEnd: (_) => setState(() {
-            if (_currentStroke.isNotEmpty) {
-              _strokes.add(List.from(_currentStroke));
-              _strokeTimestamps.add(List.from(_currentStrokeTimestamped));
-              _currentStroke = [];
-              _currentStrokeTimestamped = [];
-            }
-          }),
-          child: CustomPaint(
-            size: const Size(double.infinity, 320),
-            painter: _StrokePainter(_strokes, _currentStroke, accentColor, _showFeedback, _feedbackSegments))),
-        // Top-left label
-        Positioned(top: 10, left: 12,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(6)),
-            child: Text('Vẽ ở đây',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 10, fontWeight: FontWeight.w600, color: accentColor)))),
-        // Stroke count
-        if (_strokes.isNotEmpty)
-          Positioned(top: 10, right: 12,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWaveform() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildWaveBar(14),
+        _buildWaveBar(26),
+        _buildWaveBar(18),
+        _buildWaveBar(32),
+        _buildWaveBar(12),
+      ],
+    );
+  }
+
+  Widget _buildWaveBar(double height) {
+    return Container(
+      width: 3.w,
+      height: height.h,
+      margin: EdgeInsets.symmetric(horizontal: 2.w),
+      decoration: BoxDecoration(
+        color: AppColors.violet.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+  }
+
+  // Type your Khmer input card
+  Widget _buildInputBox() {
+    return GestureDetector(
+      onTap: () {
+        if (!_isKeyboardVisible) {
+          setState(() => _isKeyboardVisible = true);
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFEEEDF2), width: 1.5),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.edit_rounded, color: AppColors.violet, size: 16),
+                const SizedBox(width: 6),
+                Text(
+                  'Gõ câu bạn vừa nghe',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.violet,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Container(
+              constraints: BoxConstraints(minHeight: 120.h),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(6)),
-              child: Text('${_strokes.length} nét',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.textHint)))),
-      ]),
+                color: const Color(0xFFF7F8FC),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _inputCtrl,
+                    maxLines: null,
+                    readOnly: true,
+                    showCursor: true,
+                    onTap: () {
+                      if (!_isKeyboardVisible) {
+                        setState(() => _isKeyboardVisible = true);
+                      }
+                    },
+                    style: GoogleFonts.battambang(
+                      fontSize: 24.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Nhập câu Khmer tại đây...',
+                      hintStyle: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textHint,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: Text(
+                      '${_inputCtrl.text.length}/200',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textHint,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+  // Action Buttons Row (Combined Replay, Check, Next into 1 premium row)
+  Widget _buildActionRow() {
+    final hasInput = _inputCtrl.text.trim().isNotEmpty;
+    final canPrev = _current > 0;
+    final canNext = _current < _lessons.length - 1;
+
+    return Row(
+      children: [
+        // 1. Back button (Icon only to save space)
+        if (canPrev)
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: const Color(0xFFEEEDF2), width: 1.5),
+            ),
+            child: IconButton(
+              onPressed: _prev,
+              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textSecondary),
+              constraints: BoxConstraints(minWidth: 44.w, minHeight: 44.h),
+              padding: EdgeInsets.zero,
+            ),
+          ),
+        if (canPrev) SizedBox(width: 8.w),
+
+        // 2. Replay button (Icon only to save space)
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: const Color(0xFFEEEDF2), width: 1.5),
+          ),
+          child: IconButton(
+            onPressed: () => _speak(_lesson.character),
+            icon: const Icon(Icons.volume_up_rounded, color: AppColors.violet),
+            constraints: BoxConstraints(minWidth: 44.w, minHeight: 44.h),
+            padding: EdgeInsets.zero,
+          ),
+        ),
+        SizedBox(width: 8.w),
+
+        // 3. Check button (Expanded)
+        Expanded(
+          flex: 2,
+          child: GestureDetector(
+            onTap: hasInput ? _check : null,
+            child: Container(
+              height: 44.h,
+              decoration: BoxDecoration(
+                gradient: hasInput
+                    ? const LinearGradient(colors: [AppColors.violet, AppColors.violetLight])
+                    : null,
+                color: hasInput ? null : AppColors.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12.r),
+                boxShadow: hasInput
+                    ? [
+                        BoxShadow(
+                          color: AppColors.violet.withValues(alpha: 0.2),
+                          blurRadius: 6.r,
+                          offset: Offset(0, 3.h),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline_rounded,
+                      color: hasInput ? Colors.white : AppColors.textHint,
+                      size: 16.sp,
+                    ),
+                    SizedBox(width: 6.w),
+                    Text(
+                      'Kiểm tra',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w800,
+                        color: hasInput ? Colors.white : AppColors.textHint,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // 4. Next button
+        if (canNext) ...[
+          SizedBox(width: 8.w),
+          Expanded(
+            flex: 1,
+            child: GestureDetector(
+              onTap: _next,
+              child: Container(
+                height: 44.h,
+                decoration: BoxDecoration(
+                  color: AppColors.violet,
+                  borderRadius: BorderRadius.circular(12.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.violet.withValues(alpha: 0.2),
+                      blurRadius: 6.r,
+                      offset: Offset(0, 3.h),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Tiếp',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(width: 4.w),
+                      Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 14.sp),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  // Keyboard Dock
+  Widget _buildKeyboard(double screenWidth) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F2F6),
+        border: Border(top: BorderSide(color: const Color(0xFFE0E2E8), width: 1.w)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildKeyboardTabs(),
+          _buildKeyboardKeys(screenWidth),
+          _buildKeyboardBottomRow(screenWidth),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKeyboardTabs() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: const Color(0xFFF1F2F6),
+      child: Row(
+        children: [
+          // Consonants Tab
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _isConsonantTab = true),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: _isConsonantTab ? AppColors.violetSurface : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _isConsonantTab ? AppColors.violet : Colors.transparent,
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.font_download_outlined,
+                        color: _isConsonantTab ? AppColors.violet : AppColors.textSecondary,
+                        size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Phụ âm',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: _isConsonantTab ? AppColors.violet : AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Swap Button
+          GestureDetector(
+            onTap: () => setState(() => _isConsonantTab = !_isConsonantTab),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFE0E2E8)),
+              ),
+              child: const Icon(Icons.swap_horiz_rounded, color: AppColors.violet, size: 18),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Vowels Tab
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _isConsonantTab = false),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: !_isConsonantTab ? AppColors.coralSurface : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: !_isConsonantTab ? AppColors.coral : Colors.transparent,
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.palette_outlined,
+                        color: !_isConsonantTab ? AppColors.coral : AppColors.textSecondary,
+                        size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Nguyên âm',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: !_isConsonantTab ? AppColors.coral : AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Hide Keyboard Button
+          GestureDetector(
+            onTap: () => setState(() => _isKeyboardVisible = false),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFE0E2E8)),
+              ),
+              child: const Icon(Icons.keyboard_hide_rounded, color: AppColors.violet, size: 18),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKeyboardKeys(double screenWidth) {
+    final keys = _isConsonantTab ? _consonants : _vowels;
+    // Spacing: 6px between keys. 10 keys per row => 9 gaps => 54px total spacing.
+    // Left/right padding: 10px each => 20px total padding.
+    // Remaining width for 10 keys: screenWidth - 74px.
+    final keyWidth = (screenWidth - 76) / 10;
+    
+    return Container(
+      color: const Color(0xFFF1F2F6),
+      padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 8,
+        alignment: WrapAlignment.center,
+        children: keys.map((keyChar) {
+          final isCombining = !_isConsonantTab && 
+              keyChar != 'ៗ' && 
+              keyChar != '។' && 
+              keyChar != '៕';
+          final displayLabel = isCombining ? '◌$keyChar' : keyChar;
+
+          return GestureDetector(
+            onTap: () => _onKeyTapped(keyChar),
+            child: Container(
+              width: keyWidth,
+              height: 38.h,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 1,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  displayLabel,
+                  style: GoogleFonts.battambang(
+                    fontSize: 17.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildKeyboardBottomRow(double screenWidth) {
+    final keyWidth = (screenWidth - 76) / 10;
+    final delWidth = keyWidth * 1.8 + 6;
+    final doneWidth = keyWidth * 1.8 + 6;
+    final spaceWidth = screenWidth - delWidth - doneWidth - 32;
+
+    return Container(
+      color: const Color(0xFFF1F2F6),
+      padding: const EdgeInsets.fromLTRB(10, 0, 10, 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Delete Key
+          GestureDetector(
+            onTap: _onBackspaceTapped,
+            child: Container(
+              width: delWidth,
+              height: 40.h,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE0E2E8),
+                borderRadius: BorderRadius.circular(8.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 1,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.backspace_outlined, size: 16.sp, color: AppColors.violet),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Xóa',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.violet,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Space Key
+          GestureDetector(
+            onTap: () => _onKeyTapped(' '),
+            child: Container(
+              width: spaceWidth,
+              height: 40.h,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 1,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  'Khoảng trắng',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Done Key
+          GestureDetector(
+            onTap: _check,
+            child: Container(
+              width: doneWidth,
+              height: 40.h,
+              decoration: BoxDecoration(
+                color: AppColors.violet,
+                borderRadius: BorderRadius.circular(8.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.violet.withValues(alpha: 0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_rounded, size: 16.sp, color: Colors.white),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Xong',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -622,98 +1163,4 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
       ),
     );
   }
-}
-
-// ═══════════ GRID PAINTER ═══════════
-class _GridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.surfaceContainerHighest.withValues(alpha: 0.5)
-      ..strokeWidth = 1;
-
-    // Horizontal center
-    canvas.drawLine(
-      Offset(0, size.height / 2),
-      Offset(size.width, size.height / 2), paint);
-    // Vertical center
-    canvas.drawLine(
-      Offset(size.width / 2, 0),
-      Offset(size.width / 2, size.height), paint);
-
-    // Dashed border guide
-    final dashPaint = Paint()
-      ..color = AppColors.surfaceContainerHighest.withValues(alpha: 0.3)
-      ..strokeWidth = 1;
-    // Quarter lines
-    canvas.drawLine(
-      Offset(0, size.height / 4),
-      Offset(size.width, size.height / 4), dashPaint);
-    canvas.drawLine(
-      Offset(0, size.height * 3 / 4),
-      Offset(size.width, size.height * 3 / 4), dashPaint);
-    canvas.drawLine(
-      Offset(size.width / 4, 0),
-      Offset(size.width / 4, size.height), dashPaint);
-    canvas.drawLine(
-      Offset(size.width * 3 / 4, 0),
-      Offset(size.width * 3 / 4, size.height), dashPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// ═══════════ STROKE PAINTER ═══════════
-class _StrokePainter extends CustomPainter {
-  final List<List<Offset>> strokes;
-  final List<Offset> current;
-  final Color color;
-  final bool showFeedback;
-  final List<dynamic> feedbackSegments;
-
-  _StrokePainter(this.strokes, this.current, this.color, this.showFeedback, this.feedbackSegments);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (showFeedback && feedbackSegments.isNotEmpty) {
-      // Draw feedback with colored segments
-      for (final segment in feedbackSegments) {
-        final points = segment.points as List<Offset>;
-        final segmentColor = segment.color as Color;
-        final paint = Paint()
-          ..color = segmentColor
-          ..strokeWidth = 6
-          ..strokeCap = StrokeCap.round
-          ..style = PaintingStyle.stroke;
-        _draw(canvas, points, paint);
-      }
-    } else {
-      // Draw normal strokes
-      final paint = Paint()
-        ..color = color
-        ..strokeWidth = 4
-        ..strokeCap = StrokeCap.round
-        ..style = PaintingStyle.stroke;
-      for (final s in strokes) { _draw(canvas, s, paint); }
-      _draw(canvas, current, paint);
-    }
-  }
-
-  void _draw(Canvas canvas, List<Offset> pts, Paint p) {
-    if (pts.length < 2) return;
-    final path = Path()..moveTo(pts[0].dx, pts[0].dy);
-    for (int i = 1; i < pts.length; i++) { path.lineTo(pts[i].dx, pts[i].dy); }
-    canvas.drawPath(path, p);
-  }
-
-  @override
-  bool shouldRepaint(covariant _StrokePainter old) => true;
-}
-
-/// Lớp đoạn nét vẽ phản hồi cục bộ thay thế cho Tracing Service đã xóa
-class StrokeSegment {
-  final List<Offset> points;
-  final Color color;
-  const StrokeSegment({required this.points, required this.color});
 }

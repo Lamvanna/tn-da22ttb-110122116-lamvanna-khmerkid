@@ -97,13 +97,13 @@ class VoiceRecognitionService {
       throw SilenceException();
     }
 
-    // 3. Kiểm tra thời lượng ghi âm >= 0.5 giây và <= 30 giây
+    // 3. Kiểm tra thời lượng ghi âm >= 0.5 giây và <= 60 giây
     final durationSeconds = _durationMs / 1000.0;
     if (durationSeconds < 0.5) {
       throw Exception("Con nói ngắn quá — hãy giữ nút và nói rõ hơn nhé!");
     }
-    if (durationSeconds > 30.0) {
-      throw Exception("Con nói dài quá — chỉ nói tối đa 30 giây thôi con nhé!");
+    if (durationSeconds > 60.0) {
+      throw Exception("Con nói dài quá — chỉ nói tối đa 60 giây thôi con nhé!");
     }
 
     // ─── UPLOAD MULTIPART REQUEST ────────────────────────────────

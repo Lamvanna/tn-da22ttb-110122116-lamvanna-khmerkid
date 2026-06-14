@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show File;
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'auth_service.dart';
@@ -376,6 +377,30 @@ class AdminService {
     } catch (e) {
       return {'success': false, 'message': 'Lỗi: $e'};
     }
+  }
+
+  /// Tải ảnh lên máy chủ (Cloudinary)
+  Future<String?> uploadImage(String filePath) async {
+    try {
+      final uploadUri = Uri.parse('$_baseUrl/upload/image');
+      final request = http.MultipartRequest('POST', uploadUri);
+      if (_token != null) {
+        request.headers['Authorization'] = 'Bearer $_token';
+      }
+      final file = File(filePath);
+      if (await file.exists()) {
+        request.files.add(await http.MultipartFile.fromPath('image', file.path));
+        final streamedResponse = await request.send().timeout(_timeout);
+        final response = await http.Response.fromStream(streamedResponse);
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          final responseData = jsonDecode(response.body);
+          return responseData['data']?['imageUrl'] ?? responseData['imageUrl'];
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ [AdminService] uploadImage error: $e');
+    }
+    return null;
   }
 
   // ════════════════════════════════════════════════════════════════════

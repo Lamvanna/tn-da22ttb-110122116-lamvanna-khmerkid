@@ -80,6 +80,14 @@ class AuthService extends ChangeNotifier {
   /// IP/URL server đang hoạt động (để hiển thị trong màn hình Cài đặt)
   static String get currentServerUrl => _activeBaseUrl;
 
+  /// Tối ưu hóa ảnh Cloudinary động (giảm kích thước, nén chất lượng, chuyển định dạng tự động)
+  static String getOptimizedImageUrl(String url, {int width = 200}) {
+    if (url.isEmpty || !url.contains('cloudinary.com') || !url.contains('/upload/')) {
+      return url;
+    }
+    return url.replaceFirst('/upload/', '/upload/w_$width,c_limit,q_auto,f_auto/');
+  }
+
   /// Chuẩn hóa input người dùng thành URL API đầy đủ.
   /// "192.168.1.50" → "http://192.168.1.50:5000/api"
   static String _normalizeUrl(String input) {

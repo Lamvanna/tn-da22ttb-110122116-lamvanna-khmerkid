@@ -26,6 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   StorageService? _storage;
   String _username = 'Bé Na';
   String _avatarUrl = '';
+  List<dynamic> _allBadges = [];
 
   @override
   void initState() {
@@ -54,6 +55,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _storage = storage;
       });
       _updateStats();
+    }
+    try {
+      final badges = await AuthService().fetchBadges();
+      if (mounted) {
+        setState(() {
+          _allBadges = badges;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading badges on profile: $e');
     }
   }
 
@@ -867,7 +878,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: _avatarUrl.isNotEmpty
                     ? (_avatarUrl.startsWith('http')
                         ? Image.network(
-                            _avatarUrl,
+                            AuthService.getOptimizedImageUrl(_avatarUrl, width: 150),
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
                                 Image.asset('image/Đại diện.png', fit: BoxFit.cover),
@@ -1481,60 +1492,178 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ACHIEVEMENTS (Dynamic từ MongoDB)
   // ══════════════════════════════════════════════════════════════
   Widget _buildAchievements() {
-    // Lấy badges từ MongoDB user profile
-    final profile = AuthService().userProfile;
-    final backendBadges = profile?['badges'] as List? ?? [];
-    
-    // Nếu có badges từ MongoDB thì dùng dynamic, nếu không thì dùng fallback
-    final bool useDynamic = backendBadges.isNotEmpty && backendBadges.first is Map;
-    
-    // Fallback static badges (khi chưa có data từ MongoDB)
+    // 1. Lấy danh sách ID các huy hiệu đã mở khóa của bé từ user profile
+    final user = AuthService().userProfile;
+    final userBadges = user?['badges'] as List? ?? [];
+    final Set<String> unlockedIds = {};
+    final Set<String> unlockedNames = {};
+    for (var b in userBadges) {
+      if (b is Map) {
+        unlockedIds.add(b['_id']?.toString() ?? '');
+        unlockedNames.add(b['name']?.toString() ?? '');
+      } else {
+        unlockedIds.add(b.toString());
+      }
+    }
+
+    // 2. Định nghĩa danh sách 20 huy hiệu tĩnh làm fallback (đồng bộ với AchievementsScreen)
     final fallbackBadges = [
       {
-        'icon': Icons.star_rounded,
-        'label': 'Siêu nhân\nchăm chỉ',
-        'color': const Color(0xFFFFB300),
-        'unlocked': _streak >= 5,
+        'id': 'fb_1',
+        'name': 'Bước đầu tiên',
+        'icon': Icons.rocket_launch_rounded,
+        'color': const Color(0xFF4CAF50),
+        'unlocked': _lettersLearned >= 1 || _vowelsLearned >= 1 || _readingLearned >= 1,
       },
       {
-        'icon': Icons.edit_rounded,
-        'label': 'Bút vàng',
-        'color': const Color(0xFFFB8C00),
-        'unlocked': _lettersLearned >= 5,
-      },
-      {
+        'id': 'fb_2',
+        'name': 'Nhà ngôn ngữ nhí',
         'icon': Icons.auto_stories_rounded,
-        'label': 'Siêu nhân\nbài tập',
-        'color': const Color(0xFF1E88E5),
-        'unlocked': _lettersLearned >= 1,
+        'color': const Color(0xFF4CAF50),
+        'unlocked': _xp >= 50,
       },
       {
+        'id': 'fb_3',
+        'name': 'Bậc thầy phụ âm',
+        'icon': Icons.draw_rounded,
+        'color': const Color(0xFF4CAF50),
+        'unlocked': _score != null && _score!.writingLevel >= 1,
+      },
+      {
+        'id': 'fb_4',
+        'name': 'Khám phá nguyên âm',
         'icon': Icons.menu_book_rounded,
-        'label': 'Tập đọc',
-        'color': const Color(0xFF8E24AA),
-        'unlocked': _readingLearned >= 1,
+        'color': const Color(0xFF4CAF50),
+        'unlocked': _score != null && _score!.readingLevel >= 1,
       },
       {
-        'icon': Icons.spellcheck_rounded,
-        'label': 'Đánh vần\nnhanh',
-        'color': const Color(0xFFE53935),
-        'unlocked': _vowelsLearned >= 1,
-      },
-      {
+        'id': 'fb_5',
+        'name': 'Vua nguyên âm',
         'icon': Icons.explore_rounded,
-        'label': 'Nhà thám\nhiểm',
-        'color': const Color(0xFF00897B),
-        'unlocked': _xp >= 100,
+        'color': const Color(0xFFFF9800),
+        'unlocked': _score != null && _score!.readingLevel >= 2,
+      },
+      {
+        'id': 'fb_6',
+        'name': 'Chính tả giỏi',
+        'icon': Icons.draw_rounded,
+        'color': const Color(0xFF4CAF50),
+        'unlocked': _score != null && _score!.writingLevel >= 2,
+      },
+      {
+        'id': 'fb_7',
+        'name': 'Phát âm chuẩn',
+        'icon': Icons.record_voice_over_rounded,
+        'color': const Color(0xFFFF5722),
+        'unlocked': _score != null && _score!.writingLevel >= 1, // speaking level
+      },
+      {
+        'id': 'fb_8',
+        'name': 'Tai thính',
+        'icon': Icons.hearing_rounded,
+        'color': const Color(0xFF4CAF50),
+        'unlocked': _score != null && _score!.readingLevel >= 1, // listening level
+      },
+      {
+        'id': 'fb_9',
+        'name': 'Viết chữ đẹp',
+        'icon': Icons.draw_rounded,
+        'color': const Color(0xFF4CAF50),
+        'unlocked': _score != null && _score!.writingLevel >= 3,
+      },
+      {
+        'id': 'fb_10',
+        'name': 'Ngôi sao đầu tiên',
+        'icon': Icons.star_rounded,
+        'color': const Color(0xFFFFCA28),
+        'unlocked': _stars >= 15,
+      },
+      {
+        'id': 'fb_11',
+        'name': 'Sao sáng',
+        'icon': Icons.wb_twilight_rounded,
+        'color': const Color(0xFFFFCA28),
+        'unlocked': _stars >= 50,
+      },
+      {
+        'id': 'fb_12',
+        'name': 'Siêu sao',
+        'icon': Icons.military_tech_rounded,
+        'color': const Color(0xFFFFCA28),
+        'unlocked': _stars >= 150,
+      },
+      {
+        'id': 'fb_13',
+        'name': 'Chăm chỉ',
+        'icon': Icons.local_fire_department_rounded,
+        'color': const Color(0xFFE91E63),
+        'unlocked': _streak >= 2,
+      },
+      {
+        'id': 'fb_14',
+        'name': 'Kiên trì',
+        'icon': Icons.calendar_month_rounded,
+        'color': const Color(0xFFE91E63),
+        'unlocked': _streak >= 7,
+      },
+      {
+        'id': 'fb_15',
+        'name': 'Game thủ nhí',
+        'icon': Icons.sports_esports_rounded,
+        'color': const Color(0xFF00E5FF),
+        'unlocked': _score != null && _score!.totalXp >= 30, // games played fallback
+      },
+      {
+        'id': 'fb_16',
+        'name': 'Vô địch mini game',
+        'icon': Icons.emoji_events_rounded,
+        'color': const Color(0xFF00E5FF),
+        'unlocked': _score != null && _score!.totalXp >= 100, // games played fallback
+      },
+      {
+        'id': 'fb_17',
+        'name': 'Tốc độ ánh sáng',
+        'icon': Icons.flash_on_rounded,
+        'color': const Color(0xFFE91E63),
+        'unlocked': _streak >= 15,
+      },
+      {
+        'id': 'fb_18',
+        'name': 'Hoàn hảo',
+        'icon': Icons.verified_rounded,
+        'color': const Color(0xFF4CAF50),
+        'unlocked': _lettersLearned + _vowelsLearned + _readingLearned >= 15,
+      },
+      {
+        'id': 'fb_19',
+        'name': 'Nhà vô địch',
+        'icon': Icons.workspace_premium_rounded,
+        'color': const Color(0xFFFF9800),
+        'unlocked': _lettersLearned + _vowelsLearned + _readingLearned >= 30,
+      },
+      {
+        'id': 'fb_20',
+        'name': 'Bậc thầy Khmer',
+        'icon': Icons.school_rounded,
+        'color': const Color(0xFFFF9800),
+        'unlocked': _level >= 20,
       },
     ];
 
-    // Sử dụng badges từ MongoDB nếu có, nếu không dùng fallback
+    // 3. Xây dựng danh sách hiển thị
     final List<Map<String, dynamic>> badges;
-    if (useDynamic) {
-      // Xây dựng badges list từ MongoDB data
-      badges = backendBadges.map<Map<String, dynamic>>((b) {
+    final int doneCount;
+    final int totalCount;
+
+    if (_allBadges.isNotEmpty) {
+      badges = _allBadges.map<Map<String, dynamic>>((b) {
         final badgeMap = b as Map<String, dynamic>;
+        final String id = badgeMap['_id']?.toString() ?? '';
+        final String name = badgeMap['name']?.toString() ?? 'Huy chương';
         final String type = badgeMap['type']?.toString() ?? 'learning';
+        final String iconUrl = badgeMap['iconUrl']?.toString() ?? '';
+        final bool isUnlocked = unlockedIds.contains(id);
+
         Color badgeColor = const Color(0xFF4CAF50);
         IconData badgeIcon = Icons.stars_rounded;
         if (type == 'level') { badgeColor = const Color(0xFFFF9800); badgeIcon = Icons.rocket_launch_rounded; }
@@ -1542,15 +1671,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
         else if (type == 'streak') { badgeColor = const Color(0xFFE91E63); badgeIcon = Icons.local_fire_department_rounded; }
         else if (type == 'learning') { badgeColor = const Color(0xFF4CAF50); badgeIcon = Icons.auto_stories_rounded; }
         else if (type == 'ranking') { badgeColor = const Color(0xFFFFCA28); badgeIcon = Icons.emoji_events_rounded; }
+
         return {
+          'id': id,
+          'name': name,
           'icon': badgeIcon,
-          'label': badgeMap['name']?.toString() ?? 'Huy chương',
           'color': badgeColor,
-          'unlocked': true, // Backend badges đã unlock
+          'iconUrl': iconUrl,
+          'unlocked': isUnlocked,
         };
       }).toList();
+      doneCount = badges.where((b) => b['unlocked'] == true).length;
+      totalCount = badges.length;
     } else {
-      badges = fallbackBadges;
+      badges = fallbackBadges.map<Map<String, dynamic>>((b) {
+        final name = b['name'] as String;
+        final bool isUnlocked = b['unlocked'] as bool || unlockedNames.contains(name);
+        return {
+          ...b,
+          'unlocked': isUnlocked,
+        };
+      }).toList();
+      doneCount = badges.where((b) => b['unlocked'] == true).length;
+      totalCount = badges.length;
     }
 
     return Container(
@@ -1613,7 +1756,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
                 child: Text(
-                  '$_medals/${badges.length}',
+                  '$doneCount/$totalCount',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 10.sp,
                     fontWeight: FontWeight.w900,
@@ -1666,94 +1809,113 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 final b = badges[i];
                 final color = b['color'] as Color;
                 final unlocked = b['unlocked'] as bool;
+                final String iconUrl = b['iconUrl']?.toString() ?? '';
+
                 return SizedBox(
                   width: 64.w,
                   child: Column(
                     children: [
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          // Outer double-border ring
-                          Container(
-                            width: 58.w,
-                            height: 58.w,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: unlocked
-                                    ? color.withValues(alpha: 0.35)
-                                    : const Color(0xFFE2E8F0),
-                                width: 1.5.w,
-                              ),
+                      Container(
+                        width: 58.w,
+                        height: 58.w,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: unlocked
+                                  ? Colors.black.withValues(alpha: 0.08)
+                                  : Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 6.r,
+                              offset: Offset(0, 3.h),
                             ),
-                            padding: EdgeInsets.all(2.w),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: unlocked
-                                    ? LinearGradient(
+                          ],
+                        ),
+                        child: unlocked
+                            ? (iconUrl.isNotEmpty && iconUrl.startsWith('http')
+                                ? ClipOval(
+                                    child: Image.network(
+                                      AuthService.getOptimizedImageUrl(iconUrl, width: 150),
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) =>
+                                          Icon(b['icon'] as IconData, color: Colors.white, size: 26.sp),
+                                    ),
+                                  )
+                                : Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: LinearGradient(
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                         colors: [
                                           color,
                                           color.withValues(alpha: 0.80),
                                         ],
-                                      )
-                                    : null,
-                                color: unlocked ? null : const Color(0xFFF1F5F9),
-                                border: unlocked
-                                    ? Border.all(
+                                      ),
+                                      border: Border.all(
                                         color: Colors.white.withValues(alpha: 0.60),
                                         width: 1.5.w,
-                                      )
-                                    : null,
-                                boxShadow: unlocked
-                                    ? [
-                                        BoxShadow(
-                                          color: color.withValues(alpha: 0.35),
-                                          blurRadius: 8.r,
-                                          offset: Offset(0, 3.h),
+                                      ),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Icon(b['icon'] as IconData, color: Colors.white, size: 26.sp),
+                                  ))
+                            : Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  (iconUrl.isNotEmpty && iconUrl.startsWith('http')
+                                      ? ClipOval(
+                                          child: ColorFiltered(
+                                            colorFilter: const ColorFilter.mode(
+                                              Colors.grey,
+                                              BlendMode.saturation,
+                                            ),
+                                            child: Opacity(
+                                              opacity: 0.5,
+                                              child: Image.network(
+                                                AuthService.getOptimizedImageUrl(iconUrl, width: 150),
+                                                fit: BoxFit.contain,
+                                                errorBuilder: (context, error, stackTrace) =>
+                                                    Icon(b['icon'] as IconData, color: const Color(0xFF94A3B8), size: 26.sp),
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                      : Container(
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Color(0xFFF1F5F9),
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Icon(b['icon'] as IconData, color: const Color(0xFF94A3B8), size: 26.sp),
+                                        )),
+                                  Positioned(
+                                    right: -1.w,
+                                    bottom: -1.w,
+                                    child: Container(
+                                      width: 18.w,
+                                      height: 18.w,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF94A3B8),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 1.5.w,
                                         ),
-                                      ]
-                                    : null,
-                              ),
-                              alignment: Alignment.center,
-                              child: Icon(
-                                b['icon'] as IconData,
-                                color: unlocked ? Colors.white : const Color(0xFF94A3B8),
-                                size: 26.sp,
-                              ),
-                            ),
-                          ),
-                          // Lock indicator
-                          if (!unlocked)
-                            Positioned(
-                              right: -1.w,
-                              bottom: -1.w,
-                              child: Container(
-                                width: 18.w,
-                                height: 18.w,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF94A3B8),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 1.5.w,
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Icon(
+                                        Icons.lock_rounded,
+                                        color: Colors.white,
+                                        size: 10.sp,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                alignment: Alignment.center,
-                                child: Icon(
-                                  Icons.lock_rounded,
-                                  color: Colors.white,
-                                  size: 10.sp,
-                                ),
+                                ],
                               ),
-                            ),
-                        ],
                       ),
                       SizedBox(height: 8.h),
                       Text(
-                        b['label'] as String,
+                        b['name'] as String,
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,

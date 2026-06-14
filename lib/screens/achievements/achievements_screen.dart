@@ -29,158 +29,159 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       description: 'Hoàn thành bài học đầu tiên của bé!',
     ),
     _Achievement(
-      title: 'Đã vẽ đẹp',
-      icon: Icons.draw_rounded,
-      done: false,
-      color: const Color(0xFFE91E63),
-      bgColor: const Color(0xFFFCE4EC),
-      description: 'Hoàn thành 3 bài học tập viết Khmer.',
-    ),
-    _Achievement(
-      title: 'Đọc chăm chỉ',
-      icon: Icons.menu_book_rounded,
-      done: false,
-      color: const Color(0xFF2196F3),
-      bgColor: const Color(0xFFE3F2FD),
-      description: 'Hoàn thành bài học tập đọc đầu tiên.',
-    ),
-    _Achievement(
-      title: 'Ngôi sao sáng',
-      icon: Icons.star_rounded,
-      done: false,
-      color: const Color(0xFFFFCA28),
-      bgColor: const Color(0xFFFFF8E1),
-      description: 'Tích lũy được 15 ngôi sao danh giá.',
-    ),
-    _Achievement(
-      title: 'Khám phá thế giới',
-      icon: Icons.public_rounded,
-      done: false,
-      color: const Color(0xFF00BCD4),
-      bgColor: const Color(0xFFE0F7FA),
-      description: 'Học được 2 từ vựng tiếng Khmer mới.',
-    ),
-    _Achievement(
-      title: 'Vui học Toán',
-      icon: Icons.calculate_rounded,
-      done: false,
-      color: const Color(0xFF9C27B0),
-      bgColor: const Color(0xFFF3E5F5),
-      description: 'Tích lũy được 50 điểm XP học tập.',
-    ),
-    _Achievement(
-      title: 'Ngoan lễ phép',
-      icon: Icons.emoji_people_rounded,
+      title: 'Nhà ngôn ngữ nhí',
+      icon: Icons.auto_stories_rounded,
       done: false,
       color: const Color(0xFF4CAF50),
       bgColor: const Color(0xFFE8F5E9),
-      description: 'Đạt chuỗi học tập liên tục 2 ngày.',
+      description: 'Học tập tích lũy đạt 50 điểm XP!',
     ),
     _Achievement(
-      title: 'Mầm Non Nhỏ',
-      icon: Icons.child_care_rounded,
+      title: 'Bậc thầy phụ âm',
+      icon: Icons.draw_rounded,
+      done: false,
+      color: const Color(0xFF4CAF50),
+      bgColor: const Color(0xFFE8F5E9),
+      description: 'Đạt trình độ viết phụ âm cấp độ 1.',
+    ),
+    _Achievement(
+      title: 'Khám phá nguyên âm',
+      icon: Icons.menu_book_rounded,
+      done: false,
+      color: const Color(0xFF4CAF50),
+      bgColor: const Color(0xFFE8F5E9),
+      description: 'Đạt trình độ đọc nguyên âm cấp độ 1.',
+    ),
+    _Achievement(
+      title: 'Vua nguyên âm',
+      icon: Icons.explore_rounded,
       done: false,
       color: const Color(0xFFFF9800),
       bgColor: const Color(0xFFFFF3E0),
-      description: 'Đạt cấp độ 5 của hành trình!',
+      description: 'Xuất sắc đạt trình độ đọc nguyên âm cấp độ 2.',
     ),
     _Achievement(
-      title: 'Học Sinh Chăm Chỉ',
-      icon: Icons.workspace_premium_rounded,
+      title: 'Chính tả giỏi',
+      icon: Icons.draw_rounded,
       done: false,
-      color: const Color(0xFFFF5722),
-      bgColor: const Color(0xFFFBE9E7),
-      description: 'Đạt cấp độ 10 trong ứng dụng.',
-    ),
-    _Achievement(
-      title: 'Khám Phá Viên Khmer',
-      icon: Icons.explore_rounded,
-      done: false,
-      color: const Color(0xFF00E676),
+      color: const Color(0xFF4CAF50),
       bgColor: const Color(0xFFE8F5E9),
-      description: 'Xuất sắc đạt cấp độ 20.',
+      description: 'Đạt trình độ viết phụ âm cấp độ 2.',
     ),
     _Achievement(
-      title: 'Khởi Đầu Tốt Đẹp',
-      icon: Icons.lightbulb_rounded,
-      done: false,
-      color: const Color(0xFFFFD54F),
-      bgColor: const Color(0xFFFFF8E1),
-      description: 'Duy trì chuỗi học tập 3 ngày liên tiếp.',
-    ),
-    _Achievement(
-      title: 'Một Tuần Bền Bỉ',
-      icon: Icons.date_range_rounded,
-      done: false,
-      color: const Color(0xFFFF5722),
-      bgColor: const Color(0xFFFBE9E7),
-      description: 'Duy trì chuỗi học tập 7 ngày liên tiếp.',
-    ),
-    _Achievement(
-      title: 'Chiến Binh Kỷ Luật',
-      icon: Icons.shield_rounded,
-      done: false,
-      color: const Color(0xFF9C27B0),
-      bgColor: const Color(0xFFF3E5F5),
-      description: 'Duy trì chuỗi học tập 15 ngày liên tiếp.',
-    ),
-    _Achievement(
-      title: 'Người Chăm Chỉ Học',
-      icon: Icons.auto_stories_rounded,
-      done: false,
-      color: const Color(0xFF2196F3),
-      bgColor: const Color(0xFFE3F2FD),
-      description: 'Hoàn thành xuất sắc 15 bài học.',
-    ),
-    _Achievement(
-      title: 'Vượt Qua Thử Thách',
-      icon: Icons.military_tech_rounded,
-      done: false,
-      color: const Color(0xFFFF1744),
-      bgColor: const Color(0xFFFFEBEE),
-      description: 'Hoàn thành xuất sắc 30 bài học.',
-    ),
-    _Achievement(
-      title: 'Người Chơi Tập Sự',
-      icon: Icons.sports_esports_rounded,
-      done: false,
-      color: const Color(0xFF00E5FF),
-      bgColor: const Color(0xFFE0F7FA),
-      description: 'Chơi hoàn thành 5 trò chơi bổ ích.',
-    ),
-    _Achievement(
-      title: 'Kỷ Lục Gia Trò Chơi',
-      icon: Icons.emoji_events_rounded,
-      done: false,
-      color: const Color(0xFFFFCA28),
-      bgColor: const Color(0xFFFFF8E1),
-      description: 'Chơi hoàn thành 20 trò chơi bổ ích.',
-    ),
-    _Achievement(
-      title: 'Bầu Trời Đầy Sao',
-      icon: Icons.wb_twilight_rounded,
-      done: false,
-      color: const Color(0xFFFFCA28),
-      bgColor: const Color(0xFFFFF8E1),
-      description: 'Tích lũy tổng cộng 150 ngôi sao lấp lánh.',
-    ),
-    _Achievement(
-      title: 'Giọng Ca Oanh Vàng',
+      title: 'Phát âm chuẩn',
       icon: Icons.record_voice_over_rounded,
       done: false,
-      color: const Color(0xFFE91E63),
-      bgColor: const Color(0xFFFCE4EC),
-      description: 'Đạt kỹ năng nói tiếng Khmer cấp độ 2.',
+      color: const Color(0xFFFF5722),
+      bgColor: const Color(0xFFFBE9E7),
+      description: 'Đạt trình độ nói phát âm cấp độ 1.',
     ),
     _Achievement(
-      title: 'Đôi Tai Nhạy Bén',
+      title: 'Tai thính',
       icon: Icons.hearing_rounded,
       done: false,
       color: const Color(0xFF4CAF50),
       bgColor: const Color(0xFFE8F5E9),
-      description: 'Đạt kỹ năng nghe tiếng Khmer cấp độ 2.',
+      description: 'Đạt trình độ nghe tiếng Khmer cấp độ 1.',
+    ),
+    _Achievement(
+      title: 'Viết chữ đẹp',
+      icon: Icons.draw_rounded,
+      done: false,
+      color: const Color(0xFF4CAF50),
+      bgColor: const Color(0xFFE8F5E9),
+      description: 'Đạt trình độ viết Khmer cấp độ 3.',
+    ),
+    _Achievement(
+      title: 'Ngôi sao đầu tiên',
+      icon: Icons.star_rounded,
+      done: false,
+      color: const Color(0xFFFFCA28),
+      bgColor: const Color(0xFFFFF8E1),
+      description: 'Tích lũy được 15 ngôi sao danh giá đầu tiên.',
+    ),
+    _Achievement(
+      title: 'Sao sáng',
+      icon: Icons.wb_twilight_rounded,
+      done: false,
+      color: const Color(0xFFFFCA28),
+      bgColor: const Color(0xFFFFF8E1),
+      description: 'Tích lũy được tổng cộng 50 ngôi sao lấp lánh.',
+    ),
+    _Achievement(
+      title: 'Siêu sao',
+      icon: Icons.military_tech_rounded,
+      done: false,
+      color: const Color(0xFFFFCA28),
+      bgColor: const Color(0xFFFFF8E1),
+      description: 'Sở hữu 150 ngôi sao rực rỡ lấp lánh bầu trời.',
+    ),
+    _Achievement(
+      title: 'Chăm chỉ',
+      icon: Icons.local_fire_department_rounded,
+      done: false,
+      color: const Color(0xFFE91E63),
+      bgColor: const Color(0xFFFCE4EC),
+      description: 'Đạt chuỗi học tập liên tục 2 ngày.',
+    ),
+    _Achievement(
+      title: 'Kiên trì',
+      icon: Icons.calendar_month_rounded,
+      done: false,
+      color: const Color(0xFFE91E63),
+      bgColor: const Color(0xFFFCE4EC),
+      description: 'Duy trì chuỗi học tập bền bỉ liên tục 7 ngày.',
+    ),
+    _Achievement(
+      title: 'Game thủ nhí',
+      icon: Icons.sports_esports_rounded,
+      done: false,
+      color: const Color(0xFF00E5FF),
+      bgColor: const Color(0xFFE0F7FA),
+      description: 'Chơi hoàn thành 5 trò chơi học tập bổ ích.',
+    ),
+    _Achievement(
+      title: 'Vô địch mini game',
+      icon: Icons.emoji_events_rounded,
+      done: false,
+      color: const Color(0xFF00E5FF),
+      bgColor: const Color(0xFFE0F7FA),
+      description: 'Xuất sắc hoàn thành 20 trò chơi bổ ích.',
+    ),
+    _Achievement(
+      title: 'Tốc độ ánh sáng',
+      icon: Icons.flash_on_rounded,
+      done: false,
+      color: const Color(0xFFE91E63),
+      bgColor: const Color(0xFFFCE4EC),
+      description: 'Duy trì chuỗi học tập liên tục 15 ngày.',
+    ),
+    _Achievement(
+      title: 'Hoàn hảo',
+      icon: Icons.verified_rounded,
+      done: false,
+      color: const Color(0xFF4CAF50),
+      bgColor: const Color(0xFFE8F5E9),
+      description: 'Hoàn thành xuất sắc 15 bài học.',
+    ),
+    _Achievement(
+      title: 'Nhà vô địch',
+      icon: Icons.workspace_premium_rounded,
+      done: false,
+      color: const Color(0xFFFF9800),
+      bgColor: const Color(0xFFFFF3E0),
+      description: 'Hoàn thành xuất sắc 30 bài học.',
+    ),
+    _Achievement(
+      title: 'Bậc thầy Khmer',
+      icon: Icons.school_rounded,
+      done: false,
+      color: const Color(0xFFFF9800),
+      bgColor: const Color(0xFFFFF3E0),
+      description: 'Đạt cấp độ 20, vươn tới danh hiệu Bậc thầy Khmer!',
     ),
   ];
+
 
   @override
   void initState() {
@@ -340,9 +341,6 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           ),
         ],
       ),
-      // ═══ BOTTOM NAV BAR ═══
-      extendBody: false,
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -564,72 +562,80 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             height: 72.w,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: isUnlocked
-                  ? const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFFFFD54F), Color(0xFFFFA000)],
-                    )
-                  : const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFFCBD5E1), Color(0xFF94A3B8)],
-                    ),
               boxShadow: [
                 BoxShadow(
                   color: isUnlocked
-                      ? const Color(0xFFFFA000).withValues(alpha: 0.35)
-                      : Colors.black.withValues(alpha: 0.08),
+                      ? Colors.black.withValues(alpha: 0.12)
+                      : Colors.black.withValues(alpha: 0.05),
                   blurRadius: 8.r,
-                  offset: Offset(0, 3.h),
+                  offset: Offset(0, 4.h),
                 ),
               ],
             ),
-            padding: EdgeInsets.all(4.w),
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isUnlocked ? bgColor : const Color(0xFFE2E8F0),
-                border: Border.all(
-                  color: isUnlocked
-                      ? Colors.white.withValues(alpha: 0.6)
-                      : Colors.white.withValues(alpha: 0.35),
-                  width: 2.w,
-                ),
-              ),
-              child: isUnlocked
-                  ? ClipOval(
-                      child: iconUrl.isNotEmpty && iconUrl.startsWith('http')
-                          ? Image.network(
-                              iconUrl,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Icon(fallbackIcon, size: 30.sp, color: accentColor),
-                            )
-                          : Icon(fallbackIcon, size: 30.sp, color: accentColor),
-                    )
-                  : ClipOval(
-                      child: iconUrl.isNotEmpty && iconUrl.startsWith('http')
-                          ? ShaderMask(
-                              shaderCallback: (bounds) => const LinearGradient(
-                                colors: [Colors.grey, Colors.blueGrey],
-                              ).createShader(bounds),
-                              child: Image.network(
-                                iconUrl,
-                                fit: BoxFit.contain,
-                                color: Colors.grey.withValues(alpha: 0.6),
-                                colorBlendMode: BlendMode.modulate,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Icon(Icons.lock_rounded, size: 22.sp, color: const Color(0xFF94A3B8)),
+            child: isUnlocked
+                ? (iconUrl.isNotEmpty && iconUrl.startsWith('http')
+                    ? ClipOval(
+                        child: Image.network(
+                          AuthService.getOptimizedImageUrl(iconUrl, width: 150),
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Icon(fallbackIcon, size: 30.sp, color: accentColor),
+                        ),
+                      )
+                    : Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: bgColor,
+                          border: Border.all(color: Colors.white, width: 2.w),
+                        ),
+                        child: Icon(fallbackIcon, size: 30.sp, color: accentColor),
+                      ))
+                : (iconUrl.isNotEmpty && iconUrl.startsWith('http')
+                    ? Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          ClipOval(
+                            child: ColorFiltered(
+                              colorFilter: const ColorFilter.mode(
+                                Colors.grey,
+                                BlendMode.saturation,
                               ),
-                            )
-                          : Icon(
-                              Icons.lock_rounded,
-                              size: 22.sp,
-                              color: const Color(0xFF94A3B8),
+                              child: Opacity(
+                                opacity: 0.5,
+                                child: Image.network(
+                                  AuthService.getOptimizedImageUrl(iconUrl, width: 150),
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Icon(fallbackIcon, size: 30.sp, color: const Color(0xFF94A3B8)),
+                                ),
+                              ),
                             ),
-                    ),
-            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.all(4.w),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.4),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.lock_rounded,
+                              size: 16.sp,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      )
+                    : Container(
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFFE2E8F0),
+                        ),
+                        child: Icon(
+                          Icons.lock_rounded,
+                          size: 22.sp,
+                          color: const Color(0xFF94A3B8),
+                        ),
+                      )),
           ),
         ),
         SizedBox(height: 6.h),
@@ -770,7 +776,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     ? ClipOval(
                         child: iconUrl.isNotEmpty && iconUrl.startsWith('http')
                             ? Image.network(
-                                iconUrl,
+                                AuthService.getOptimizedImageUrl(iconUrl, width: 250),
                                 fit: BoxFit.contain,
                                 errorBuilder: (context, error, stackTrace) =>
                                     Icon(fallbackIcon, size: 48.sp, color: accentColor),
@@ -854,92 +860,6 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     );
   }
 
-  // ══════════════════════════════════════════════════════════════
-  // BOTTOM NAV
-  // ══════════════════════════════════════════════════════════════
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 16.r,
-            offset: Offset(0, -2.h),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: BottomNavigationBar(
-          currentIndex: 0,
-          onTap: (index) {
-            Navigator.pop(context);
-            final mainState = MainScreenState.of(context);
-            if (mainState != null) mainState.switchTab(index);
-          },
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.navInactive,
-          selectedFontSize: 12.sp,
-          unselectedFontSize: 12.sp,
-          selectedLabelStyle: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.w700,
-          ),
-          unselectedLabelStyle: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.w500,
-          ),
-          elevation: 0,
-          items: [
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 4.h),
-                child: Icon(Icons.home_outlined, size: 26.sp),
-              ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 4.h),
-                child: Icon(Icons.home_rounded, size: 26.sp),
-              ),
-              label: 'Trang chủ',
-            ),
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 4.h),
-                child: Icon(Icons.school_outlined, size: 26.sp),
-              ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 4.h),
-                child: Icon(Icons.school_rounded, size: 26.sp),
-              ),
-              label: 'Học',
-            ),
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 4.h),
-                child: Icon(Icons.sports_esports_outlined, size: 26.sp),
-              ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 4.h),
-                child: Icon(Icons.sports_esports_rounded, size: 26.sp),
-              ),
-              label: 'Chơi',
-            ),
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 4.h),
-                child: Icon(Icons.person_outline_rounded, size: 26.sp),
-              ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 4.h),
-                child: Icon(Icons.person_rounded, size: 26.sp),
-              ),
-              label: 'Hồ sơ',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _Achievement {

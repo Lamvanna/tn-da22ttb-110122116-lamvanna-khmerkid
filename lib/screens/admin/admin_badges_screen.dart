@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../constants/app_colors.dart';
 import '../../services/admin_service.dart';
+import '../../services/auth_service.dart';
 
 /// Màn hình Quản lý Huy hiệu — Admin
 class AdminBadgesScreen extends StatefulWidget {
@@ -206,7 +208,7 @@ class _AdminBadgesScreenState extends State<AdminBadgesScreen> {
             child: iconUrl.startsWith('http')
               ? ClipRRect(
                   borderRadius: BorderRadius.circular(18.r),
-                  child: Image.network(iconUrl, fit: BoxFit.cover,
+                  child: Image.network(AuthService.getOptimizedImageUrl(iconUrl, width: 150), fit: BoxFit.cover,
                     errorBuilder: (ctx, err, stack) => Icon(icon, color: Colors.white, size: 28.sp)),
                 )
               : Icon(icon, color: Colors.white, size: 28.sp),
@@ -281,6 +283,8 @@ class _AdminBadgesScreenState extends State<AdminBadgesScreen> {
     final xpCtrl = TextEditingController(text: '${badge?['xpReward'] ?? 0}');
     final starsCtrl = TextEditingController(text: '${badge?['starsReward'] ?? 0}');
     final orderCtrl = TextEditingController(text: '${badge?['order'] ?? 0}');
+    final iconUrlCtrl = TextEditingController(text: badge?['iconUrl'] ?? '');
+    bool uploadingImg = false;
     String selectedType = badge?['type'] ?? 'level';
 
     showModalBottomSheet(
@@ -322,15 +326,110 @@ class _AdminBadgesScreenState extends State<AdminBadgesScreen> {
                     padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 20.h),
                     child: Builder(
                       builder: (context) {
-                        final typeColors = {
-                          'lesson': AppColors.primary,
-                          'stars': AppColors.secondary,
-                          'xp': AppColors.violet,
-                        };
-                        final formColor = typeColors[selectedType] ?? AppColors.primary;
+                        final formColor = _typeColors[selectedType] ?? AppColors.primary;
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // ── Badge Icon/Image Upload ──
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                GestureDetector(
+                                  onTap: () async {
+                                    final picker = ImagePicker();
+                                    final XFile? image = await picker.pickImage(
+                                      source: ImageSource.gallery,
+                                      maxWidth: 512,
+                                      maxHeight: 512,
+                                      imageQuality: 85,
+                                    );
+                                    if (image == null) return;
+
+                                    setSheetState(() => uploadingImg = true);
+                                    try {
+                                      final url = await AdminService().uploadImage(image.path);
+                                      if (url != null) {
+                                        iconUrlCtrl.text = url;
+                                        _showSnack('Tải ảnh huy hiệu thành công!', AppColors.tertiary);
+                                      } else {
+                                        _showSnack('Tải ảnh thất bại', AppColors.errorRed);
+                                      }
+                                    } catch (e) {
+                                      _showSnack('Có lỗi khi tải ảnh: $e', AppColors.errorRed);
+                                    } finally {
+                                      setSheetState(() => uploadingImg = false);
+                                    }
+                                  },
+                                  child: Container(
+                                    width: 68.w,
+                                    height: 68.w,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.surfaceContainerLowest,
+                                      borderRadius: BorderRadius.circular(16.r),
+                                      border: Border.all(color: AppColors.outlineVariant, width: 1.5),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.03),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 2),
+                                        )
+                                      ],
+                                    ),
+                                    child: uploadingImg
+                                        ? Center(
+                                            child: SizedBox(
+                                              width: 20.w,
+                                              height: 20.w,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: formColor,
+                                              ),
+                                            ),
+                                          )
+                                        : iconUrlCtrl.text.isNotEmpty
+                                            ? ClipRRect(
+                                                borderRadius: BorderRadius.circular(14.r),
+                                                child: Image.network(
+                                                  AuthService.getOptimizedImageUrl(iconUrlCtrl.text, width: 200),
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (ctx, err, stack) => Icon(
+                                                    Icons.broken_image_rounded,
+                                                    color: AppColors.textHint,
+                                                    size: 26.sp,
+                                                  ),
+                                                ),
+                                              )
+                                            : Column(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(Icons.add_photo_alternate_rounded, color: formColor, size: 24.sp),
+                                                  SizedBox(height: 2.h),
+                                                  Text(
+                                                    'Chọn ảnh',
+                                                    style: GoogleFonts.plusJakartaSans(
+                                                      fontSize: 9.sp,
+                                                      fontWeight: FontWeight.w700,
+                                                      color: formColor,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                  ),
+                                ),
+                                SizedBox(width: 14.w),
+                                Expanded(
+                                  child: _formField(
+                                    label: 'Đường dẫn ảnh (iconUrl)',
+                                    ctrl: iconUrlCtrl,
+                                    hint: 'Dán link hoặc chọn ảnh để upload',
+                                    icon: Icons.link_rounded,
+                                    color: formColor,
+                                    onChanged: (val) => setSheetState(() {}),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 14.h),
                             _formField(
                               label: 'Tên huy hiệu',
                               ctrl: nameCtrl,
@@ -404,6 +503,7 @@ class _AdminBadgesScreenState extends State<AdminBadgesScreen> {
                                     'xpReward': int.tryParse(xpCtrl.text) ?? 0,
                                     'starsReward': int.tryParse(starsCtrl.text) ?? 0,
                                     'order': int.tryParse(orderCtrl.text) ?? 0,
+                                    'iconUrl': iconUrlCtrl.text.trim(),
                                   };
                                   if (data['name']!.toString().isEmpty || data['description']!.toString().isEmpty) {
                                     ScaffoldMessenger.of(ctx).showSnackBar(
@@ -450,6 +550,7 @@ class _AdminBadgesScreenState extends State<AdminBadgesScreen> {
     required IconData icon,
     required Color color,
     TextInputType? keyboard,
+    ValueChanged<String>? onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -466,6 +567,7 @@ class _AdminBadgesScreenState extends State<AdminBadgesScreen> {
         TextField(
           controller: ctrl,
           keyboardType: keyboard,
+          onChanged: onChanged,
           style: GoogleFonts.plusJakartaSans(fontSize: 15.sp, fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             hintText: hint,

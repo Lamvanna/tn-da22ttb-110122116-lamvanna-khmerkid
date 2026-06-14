@@ -12,6 +12,8 @@ const mongoose = require('mongoose');
 const seedBadges = require('./seedBadges');
 const seedMissions = require('./seedMissions');
 const seedLessons = require('./seedLessons');
+const seedGameQuestions = require('./seedGameQuestions');
+const seedTestQuestions = require('./seedTestQuestions');
 
 const seedAll = async () => {
   try {
@@ -34,6 +36,14 @@ const seedAll = async () => {
 
     // 3. Seed Lessons
     await seedLessons();
+    console.log('----------------------------------------');
+
+    // 4. Seed Game Questions
+    await seedGameQuestions();
+    console.log('----------------------------------------');
+
+    // 5. Seed Test Questions
+    await seedTestQuestions();
     console.log('----------------------------------------');
 
     console.log('🎉 Database seeding completed successfully! All seeders executed.');

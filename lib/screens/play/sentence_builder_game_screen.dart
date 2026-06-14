@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
+import '../../services/admin_service.dart';
 
 /// Trò chơi: 🏝️ Đảo quốc Ngữ pháp (Khmer Sentence Builder Island)
 /// Bé sắp xếp các khối từ vựng thành câu tiếng Khmer hoàn chỉnh có nghĩa.
@@ -53,6 +54,7 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
     _loadScoreService();
     _initLevels();
     _loadLevel(_currentLevelIdx);
+    _loadGameQuestions();
     _initAnimations();
   }
 
@@ -75,6 +77,86 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
         _livesPowerupsLeft = _scoreService?.livesPowerupsLeft ?? 1;
         _doubleScorePowerupsLeft = _scoreService?.doubleScorePowerupsLeft ?? 1;
       });
+    }
+  }
+
+  Future<void> _loadGameQuestions() async {
+    try {
+      final result = await AdminService().fetchGameQuestionsForUser('sentence_builder');
+      if (!mounted) return;
+      if (result['success'] == true && result['data'] != null && (result['data'] as List).isNotEmpty) {
+        final list = result['data'] as List;
+        final parsed = list.map((q) {
+          final additional = q['additionalData'] as Map?;
+          final List<dynamic> rawChoices = q['choices'] ?? [];
+          final correctWords = rawChoices.map((w) => w.toString()).toList();
+          
+          if (correctWords.isEmpty) return null;
+          
+          final vietnameseTranslation = q['prompt'] ?? '';
+          
+          // Parse wordMeanings
+          final Map<String, String> wordMeanings = {};
+          final rawMeanings = additional?['wordMeanings'];
+          if (rawMeanings is Map) {
+            rawMeanings.forEach((key, val) {
+              wordMeanings[key.toString()] = val.toString();
+            });
+          } else {
+            for (var w in correctWords) {
+              wordMeanings[w] = '';
+            }
+          }
+          
+          // Parse wordTypes
+          final List<WordType> wordTypes = [];
+          final rawTypes = additional?['wordTypes'] as List?;
+          if (rawTypes != null) {
+            for (var t in rawTypes) {
+              switch (t.toString()) {
+                case 'subject':
+                  wordTypes.add(WordType.subject);
+                  break;
+                case 'verb':
+                  wordTypes.add(WordType.verb);
+                  break;
+                case 'object':
+                  wordTypes.add(WordType.object);
+                  break;
+                case 'modifier':
+                  wordTypes.add(WordType.modifier);
+                  break;
+                default:
+                  wordTypes.add(WordType.object);
+              }
+            }
+          }
+          while (wordTypes.length < correctWords.length) {
+            wordTypes.add(WordType.object);
+          }
+
+          final islandName = additional?['islandName']?.toString() ?? 'Đảo Hoang';
+          final emoji = additional?['emoji']?.toString() ?? '🏝️';
+
+          return _SentenceLevel(
+            vietnameseTranslation: vietnameseTranslation,
+            correctWords: correctWords,
+            wordMeanings: wordMeanings,
+            wordTypes: wordTypes,
+            islandName: islandName,
+            emoji: emoji,
+          );
+        }).whereType<_SentenceLevel>().toList();
+
+        if (parsed.isNotEmpty) {
+          setState(() {
+            _levels = parsed;
+          });
+          _loadLevel(_currentLevelIdx);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading sentence builder questions: $e');
     }
   }
 

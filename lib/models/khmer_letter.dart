@@ -76,6 +76,15 @@ class KhmerLetterData {
       pronunciation: 'ngo',
       meaning: 'con ngỗng',
     ),
+    // ── Kiểm tra bài 1-5 ──
+    KhmerLetter(
+      character: '📝',
+      romanized: 'Kiểm tra',
+      isTest: true,
+      testRange: '1-5',
+      starRating: 0,
+      isLearned: false,
+    ),
     // ── Bài 6: ច (cho) ──
     KhmerLetter(
       character: 'ច',
@@ -89,12 +98,6 @@ class KhmerLetterData {
       romanized: 'chhor',
       pronunciation: 'chhor',
       meaning: 'con mèo',
-    ),
-    KhmerLetter(
-      character: 'ជ',
-      romanized: 'cho',
-      pronunciation: 'cho',
-      meaning: 'con cá',
     ),
     // ── Bài 8: ជ (cho) ──
     KhmerLetter(

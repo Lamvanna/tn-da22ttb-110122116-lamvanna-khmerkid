@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
+import '../../services/admin_service.dart';
 
 /// Trò chơi: 🍎 Khu vườn Toán học Khmer (Khmer Math & Number Garden)
 /// Bé học đếm và làm phép tính toán đố bằng chữ số cổ Khmer (០-៩).
@@ -47,6 +48,7 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
     super.initState();
     _loadScoreService();
     _initLevels();
+    _loadGameQuestions();
     _initAnimations();
   }
 
@@ -69,6 +71,70 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
         _livesPowerupsLeft = _scoreService?.livesPowerupsLeft ?? 1;
         _doubleScorePowerupsLeft = _scoreService?.doubleScorePowerupsLeft ?? 1;
       });
+    }
+  }
+
+  Future<void> _loadGameQuestions() async {
+    try {
+      final result = await AdminService().fetchGameQuestionsForUser('math_garden');
+      if (!mounted) return;
+      if (result['success'] == true && result['data'] != null && (result['data'] as List).isNotEmpty) {
+        final list = result['data'] as List;
+        final parsed = list.map((q) {
+          final additional = q['additionalData'] as Map?;
+          final List<dynamic> rawChoices = q['choices'] ?? [];
+          final choices = rawChoices.map((c) => c.toString()).toList();
+          final correctAnswer = q['answer'] ?? '';
+          
+          if (choices.isEmpty || correctAnswer.isEmpty) return null;
+
+          final question = q['prompt'] ?? '';
+          final khmerProblem = additional?['khmerProblem']?.toString() ?? '';
+          final romanized = additional?['romanized']?.toString() ?? '';
+          final arabicMeaning = additional?['arabicMeaning']?.toString() ?? '';
+          
+          final List<dynamic> rawVisualEmojis = additional?['visualEmojis'] as List? ?? [];
+          final visualEmojis = rawVisualEmojis.map((e) => e.toString()).toList();
+          
+          final gardenName = additional?['gardenName']?.toString() ?? 'Khu vườn bí ẩn';
+
+          // Parse bgGradient
+          List<Color> bgGradient = [const Color(0xFFF57C00), const Color(0xFFFFB74D)];
+          final List<dynamic>? rawGradient = additional?['bgGradient'] as List?;
+          if (rawGradient != null && rawGradient.length >= 2) {
+            final List<Color> parsedGrad = [];
+            for (var colorStr in rawGradient) {
+              var hex = colorStr.toString().replaceFirst('#', '');
+              if (hex.length == 6) hex = 'FF' + hex;
+              final val = int.tryParse(hex, radix: 16);
+              if (val != null) parsedGrad.add(Color(val));
+            }
+            if (parsedGrad.length >= 2) {
+              bgGradient = parsedGrad;
+            }
+          }
+
+          return _MathLevel(
+            question: question,
+            khmerProblem: khmerProblem,
+            choices: choices,
+            correctAnswer: correctAnswer,
+            romanized: romanized,
+            arabicMeaning: arabicMeaning,
+            visualEmojis: visualEmojis,
+            gardenName: gardenName,
+            bgGradient: bgGradient,
+          );
+        }).whereType<_MathLevel>().toList();
+
+        if (parsed.isNotEmpty) {
+          setState(() {
+            _levels = parsed;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading math garden questions: $e');
     }
   }
 

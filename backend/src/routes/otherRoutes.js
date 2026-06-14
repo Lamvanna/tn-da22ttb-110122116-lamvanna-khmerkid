@@ -11,6 +11,7 @@ const { uploadImage, uploadAudio } = require('../middlewares/upload');
 const { uploadLimiter } = require('../middlewares/rateLimiter');
 const gameController = require('../controllers/gameController');
 const adminController = require('../controllers/adminController');
+const libraryController = require('../controllers/libraryController');
 const {
   missionController,
   badgeController,
@@ -30,6 +31,14 @@ const gameRouter = require('express').Router();
 gameRouter.use(authenticate);
 gameRouter.post('/result', gameResultValidator, validate, gameController.saveResult);
 gameRouter.get('/history', gameController.getHistory);
+gameRouter.get('/questions', gameController.getQuestions);
+
+// ========================================
+// Library Routes - /api/library/*
+// ========================================
+const libraryRouter = require('express').Router();
+libraryRouter.use(authenticate);
+libraryRouter.get('/', libraryController.getLibraryItems);
 
 // ========================================
 // Mission Routes - /api/missions/*
@@ -76,10 +85,51 @@ uploadRouter.delete('/:publicId', authorize('admin'), uploadController.deleteFil
 const adminRouter = require('express').Router();
 adminRouter.use(authenticate);
 adminRouter.use(authorize('admin'));
+
+// Dashboard & Statistics
 adminRouter.get('/dashboard', adminController.getDashboard);
 adminRouter.get('/statistics', adminController.getStatistics);
+
+// User management
 adminRouter.get('/users', adminController.getUsers);
+adminRouter.put('/users/:id/role', idParamValidator, validate, adminController.updateUserRole);
 adminRouter.delete('/users/:id', idParamValidator, validate, adminController.deleteUser);
+
+// Lesson management
+adminRouter.get('/lessons', adminController.getLessons);
+adminRouter.post('/lessons', adminController.createLesson);
+adminRouter.put('/lessons/:id', idParamValidator, validate, adminController.updateLesson);
+adminRouter.delete('/lessons/:id', idParamValidator, validate, adminController.deleteLesson);
+
+// Mission management
+adminRouter.get('/missions', adminController.getMissions);
+adminRouter.post('/missions', adminController.createMission);
+adminRouter.put('/missions/:id', idParamValidator, validate, adminController.updateMission);
+adminRouter.delete('/missions/:id', idParamValidator, validate, adminController.deleteMission);
+
+// Badge management
+adminRouter.get('/badges', adminController.getBadges);
+adminRouter.post('/badges', adminController.createBadge);
+adminRouter.put('/badges/:id', idParamValidator, validate, adminController.updateBadge);
+adminRouter.delete('/badges/:id', idParamValidator, validate, adminController.deleteBadge);
+
+// Library management
+adminRouter.get('/library', adminController.getLibraryItems);
+adminRouter.post('/library', adminController.createLibraryItem);
+adminRouter.put('/library/:id', idParamValidator, validate, adminController.updateLibraryItem);
+adminRouter.delete('/library/:id', idParamValidator, validate, adminController.deleteLibraryItem);
+
+// Game question management
+adminRouter.get('/game-questions', adminController.getGameQuestions);
+adminRouter.post('/game-questions', adminController.createGameQuestion);
+adminRouter.put('/game-questions/:id', idParamValidator, validate, adminController.updateGameQuestion);
+adminRouter.delete('/game-questions/:id', idParamValidator, validate, adminController.deleteGameQuestion);
+
+// Test question management
+adminRouter.get('/test-questions', adminController.getTestQuestions);
+adminRouter.post('/test-questions', adminController.createTestQuestion);
+adminRouter.put('/test-questions/:id', idParamValidator, validate, adminController.updateTestQuestion);
+adminRouter.delete('/test-questions/:id', idParamValidator, validate, adminController.deleteTestQuestion);
 
 module.exports = {
   gameRouter,
@@ -89,4 +139,5 @@ module.exports = {
   rankRouter,
   uploadRouter,
   adminRouter,
+  libraryRouter,
 };

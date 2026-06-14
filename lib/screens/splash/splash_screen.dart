@@ -4,6 +4,10 @@ import 'dart:math' as math;
 import '../auth/login_screen.dart';
 // import '../../data/khmer_stroke_templates.dart';
 
+import '../../services/auth_service.dart';
+import '../main_screen.dart';
+import '../admin/admin_main_screen.dart';
+
 /// Màn hình khởi động - Background image + animated overlays
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -48,11 +52,40 @@ class _SplashScreenState extends State<SplashScreen>
       if (mounted) _fadeCtrl.forward();
     });
 
-    // Navigate after 2.5 seconds
-    Future.delayed(const Duration(milliseconds: 2500), () {
-      if (!mounted) return;
+    // Check auto-login session
+    _initSession();
+  }
+
+  Future<void> _initSession() async {
+    final stopwatch = Stopwatch()..start();
+
+    bool isLoggedIn = false;
+    try {
+      isLoggedIn = await AuthService().tryAutoLogin();
+    } catch (e) {
+      debugPrint('❌ Auto login check error: $e');
+    }
+
+    final elapsed = stopwatch.elapsedMilliseconds;
+    final remainingTime = 2500 - elapsed;
+    if (remainingTime > 0) {
+      await Future.delayed(Duration(milliseconds: remainingTime));
+    }
+
+    if (!mounted) return;
+
+    if (isLoggedIn) {
+      final profile = AuthService().userProfile;
+      final isAdmin = profile?['role'] == 'admin';
+
+      Navigator.pushReplacement(context, PageRouteBuilder(
+        pageBuilder: (_, animation, __) => isAdmin ? const AdminMainScreen() : const MainScreen(),
+        transitionsBuilder: (_, animation, __, child) =>
+          FadeTransition(opacity: animation, child: child),
+        transitionDuration: const Duration(milliseconds: 600)));
+    } else {
       _navigateToLogin();
-    });
+    }
   }
 
   void _navigateToLogin() {
@@ -62,6 +95,7 @@ class _SplashScreenState extends State<SplashScreen>
         FadeTransition(opacity: animation, child: child),
       transitionDuration: const Duration(milliseconds: 600)));
   }
+
 
   @override
   void dispose() {

@@ -8,6 +8,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import '../../models/khmer_letter.dart';
 import '../../models/khmer_vowel.dart';
 import '../../services/score_service.dart';
+import '../../services/admin_service.dart';
 
 /// Trò chơi Bắt chữ Khmer — Premium High-Fidelity 3D UI giống mẫu HTML (Compile-Safe)
 class LetterCatchGameScreen extends StatefulWidget {
@@ -93,10 +94,14 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
 
   final _random = Random();
 
+  List<_SyllableData> _activeSyllables = [];
+
   @override
   void initState() {
     super.initState();
+    _activeSyllables = _allSyllables;
     _loadScoreService();
+    _loadGameQuestions();
     _shakeCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
     _shakeAnim = Tween<double>(begin: 0, end: 10).animate(
       CurvedAnimation(parent: _shakeCtrl, curve: Curves.elasticIn));
@@ -110,6 +115,33 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
       CurvedAnimation(parent: _resultCtrl, curve: Curves.easeOutBack));
 
     _initTts();
+  }
+
+  Future<void> _loadGameQuestions() async {
+    try {
+      final result = await AdminService().fetchGameQuestionsForUser('letter_catch');
+      if (!mounted) return;
+      if (result['success'] == true && result['data'] != null && (result['data'] as List).isNotEmpty) {
+        final list = result['data'] as List;
+        final parsed = list.map((q) {
+          final additional = q['additionalData'] as Map?;
+          final consonant = additional?['consonant']?.toString() ?? '';
+          final vowel = additional?['vowel']?.toString() ?? '';
+          final answer = q['answer'] ?? '';
+          final prompt = q['prompt'] ?? '';
+          return _SyllableData(
+            consonant: consonant.isNotEmpty ? consonant : (answer.isNotEmpty ? answer.substring(0, 1) : ''),
+            vowel: vowel.isNotEmpty ? vowel : (answer.length > 1 ? answer.substring(1) : ''),
+            result: answer,
+            meaning: prompt,
+          );
+        }).toList();
+
+        setState(() {
+          _activeSyllables = parsed;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadScoreService() async {
@@ -136,7 +168,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
   }
 
   void _startGame() {
-    _shuffled = List.of(_allSyllables)..shuffle(_random);
+    _shuffled = List.of(_activeSyllables)..shuffle(_random);
     setState(() {
       _gameStarted = true;
       _lives = 3;

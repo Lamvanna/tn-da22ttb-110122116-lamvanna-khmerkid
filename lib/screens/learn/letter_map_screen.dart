@@ -895,15 +895,13 @@ class _LetterMapViewState extends State<LetterMapView>
       ),
     );
   }
-
   void _openLetter(int idx) {
     final letter = _letters[idx];
     if (letter.isTest) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const TestScreen()),
-      ).then((_) {
-        if (mounted) {
+        MaterialPageRoute(builder: (_) => TestScreen(testRange: letter.testRange)),
+      ).then((_) {        if (mounted) {
           _loadScore();
         }
       });

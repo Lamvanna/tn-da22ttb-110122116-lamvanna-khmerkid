@@ -88,6 +88,50 @@ const vocabularyList = [
   { khmer: 'ប៊ិច', romanized: 'bech', meaning: 'Bút viết', pronunciation: 'bech', category: 'Học tập' },
 ];
 
+const spellingList = [
+  { khmer: 'កា', romanized: 'ka', meaning: 'Chữ Ka ghép vần A', pronunciation: 'ka', category: 'Ghép vần phụ âm - nguyên âm' },
+  { khmer: 'ខិ', romanized: 'khi', meaning: 'Chữ Kha ghép vần I', pronunciation: 'khi', category: 'Ghép vần phụ âm - nguyên âm' },
+  { khmer: 'គី', romanized: 'kii', meaning: 'Chữ Ko ghép vần Ii', pronunciation: 'kii', category: 'Ghép vần phụ âm - nguyên âm' },
+  { khmer: 'ឃុ', romanized: 'khu', meaning: 'Chữ Kho ghép vần U', pronunciation: 'khu', category: 'Ghép vần phụ âm - nguyên âm' },
+  { khmer: 'ងោ', romanized: 'ngao', meaning: 'Chữ Ngo ghép vần Ao', pronunciation: 'ngao', category: 'Ghép vần phụ âm - nguyên âm' },
+];
+
+const closedSyllableList = [
+  { khmer: 'កក', romanized: 'kak', meaning: 'Đá lạnh / Đông đặc', pronunciation: 'kak', category: 'Ghép vần phụ âm - phụ âm (vần đóng)' },
+  { khmer: 'បក', romanized: 'bok', meaning: 'Bóc vỏ', pronunciation: 'bok', category: 'Ghép vần phụ âm - phụ âm (vần đóng)' },
+  { khmer: 'ដេក', romanized: 'dek', meaning: 'Ngủ', pronunciation: 'dek', category: 'Ghép vần phụ âm - phụ âm (vần đóng)' },
+  { khmer: 'ធំ', romanized: 'thom', meaning: 'To lớn', pronunciation: 'thom', category: 'Ghép vần phụ âm - phụ âm (vần đóng)' },
+];
+
+const coengList = [
+  { khmer: 'ខ្លា', romanized: 'khla', meaning: 'Con hổ', pronunciation: 'khla', category: 'Ghép vần phụ âm có chân (coeng)' },
+  { khmer: 'ក្អែក', romanized: 'k-qek', meaning: 'Con quạ', pronunciation: 'k-qek', category: 'Ghép vần phụ âm có chân (coeng)' },
+  { khmer: 'ឆ្កែ', romanized: 'chgai', meaning: 'Con chó', pronunciation: 'chgai', category: 'Ghép vần phụ âm có chân (coeng)' },
+  { khmer: 'ថ្ម', romanized: 'th-mor', meaning: 'Đá (hòn đá)', pronunciation: 'th-mor', category: 'Ghép vần phụ âm có chân (coeng)' },
+];
+
+const diacriticalSpellingList = [
+  { khmer: 'ម៉ា', romanized: 'ma', meaning: 'Mẹ (cách gọi thân mật)', pronunciation: 'ma', category: 'Ghép vần có dấu' },
+  { khmer: 'ប៉ា', romanized: 'pa', meaning: 'Ba / Bố', pronunciation: 'pa', category: 'Ghép vần có dấu' },
+  { khmer: 'ស៊ី', romanized: 'see', meaning: 'Ăn (dùng cho động vật hoặc thân mật)', pronunciation: 'see', category: 'Ghép vần có dấu' },
+  { khmer: 'ហ៊ី', romanized: 'hee', meaning: 'Hát kịch / Tuồng', pronunciation: 'hee', category: 'Ghép vần có dấu' },
+  { khmer: 'កក់', romanized: 'kok', meaning: 'Gội đầu / Đặt chỗ', pronunciation: 'kok', category: 'Ghép vần có dấu' },
+];
+
+const sentenceList = [
+  { khmer: 'ខ្ញុំរៀនភាសាខ្មែរ', romanized: 'khnhom rien pheasa khmer', meaning: 'Tôi học tiếng Khmer', pronunciation: 'khnhom rien pheasa khmer', category: 'Giao tiếp cơ bản' },
+  { khmer: 'សួស្តីឆ្នាំថ្មី', romanized: 'soustey chnam tmey', meaning: 'Chúc mừng năm mới', pronunciation: 'soustey chnam tmey', category: 'Giao tiếp cơ bản' },
+  { khmer: 'ខ្ញុំស្រឡាញ់អ្នក', romanized: 'khnhom srolanh anak', meaning: 'Tôi yêu bạn', pronunciation: 'khnhom srolanh anak', category: 'Giao tiếp cơ bản' },
+];
+
+const numberList = [
+  { khmer: '១', romanized: 'moi', meaning: 'Số 1', pronunciation: 'moi', category: 'Chữ số' },
+  { khmer: '២', romanized: 'pi', meaning: 'Số 2', pronunciation: 'pi', category: 'Chữ số' },
+  { khmer: '៣', romanized: 'bei', meaning: 'Số 3', pronunciation: 'bei', category: 'Chữ số' },
+  { khmer: '៤', romanized: 'buon', meaning: 'Số 4', pronunciation: 'buon', category: 'Chữ số' },
+  { khmer: '៥', romanized: 'pram', meaning: 'Số 5', pronunciation: 'pram', category: 'Chữ số' },
+];
+
 const seedLessons = async () => {
   try {
     console.log('⏳ Seeding Lessons into Database...');
@@ -201,11 +245,167 @@ const seedLessons = async () => {
       });
     }
 
+    // 4. Seed Spelling (Ghép vần)
+    for (const item of spellingList) {
+      lessonsToInsert.push({
+        title: `Ghép vần: ${item.khmer}`,
+        description: `Học cách ghép vần từ ${item.khmer} (${item.romanized})`,
+        type: LESSON_TYPES.SPELLING,
+        khmerText: item.khmer,
+        romanized: item.romanized,
+        meaning: item.meaning,
+        pronunciation: item.pronunciation,
+        difficulty: DIFFICULTY.BEGINNER,
+        order: orderCounter++,
+        category: item.category,
+        isActive: true,
+        questions: [
+          {
+            question: `Từ ghép vần "${item.khmer}" phát âm là gì?`,
+            options: [item.pronunciation, 'ko', 'khe', 'nhu'],
+            correctAnswer: 0,
+            explanation: `Từ ghép vần "${item.khmer}" phát âm chính xác là "${item.pronunciation}".`
+          }
+        ]
+      });
+    }
+
+    // 5. Seed Closed Syllable (Vần đóng)
+    for (const item of closedSyllableList) {
+      lessonsToInsert.push({
+        title: `Vần đóng: ${item.khmer}`,
+        description: `Học ghép vần đóng có phụ âm cuối: ${item.khmer}`,
+        type: LESSON_TYPES.CLOSED_SYLLABLE,
+        khmerText: item.khmer,
+        romanized: item.romanized,
+        meaning: item.meaning,
+        pronunciation: item.pronunciation,
+        difficulty: DIFFICULTY.INTERMEDIATE,
+        order: orderCounter++,
+        category: item.category,
+        isActive: true,
+        questions: [
+          {
+            question: `Phát âm đúng của từ vần đóng "${item.khmer}" là gì?`,
+            options: [item.pronunciation, 'ka', 'ba', 'tha'],
+            correctAnswer: 0,
+            explanation: `Từ vần đóng "${item.khmer}" được phát âm là "${item.pronunciation}".`
+          }
+        ]
+      });
+    }
+
+    // 5.5. Seed Diacritical Spelling (Ghép vần có dấu)
+    for (const item of diacriticalSpellingList) {
+      lessonsToInsert.push({
+        title: `Ghép vần có dấu: ${item.khmer}`,
+        description: `Học cách ghép vần có dấu từ ${item.khmer} (${item.romanized})`,
+        type: LESSON_TYPES.SPELLING,
+        khmerText: item.khmer,
+        romanized: item.romanized,
+        meaning: item.meaning,
+        pronunciation: item.pronunciation,
+        difficulty: DIFFICULTY.INTERMEDIATE,
+        order: orderCounter++,
+        category: item.category,
+        isActive: true,
+        questions: [
+          {
+            question: `Phát âm đúng của từ ghép vần có dấu "${item.khmer}" là gì?`,
+            options: [item.pronunciation, 'ko', 'me', 'pa'],
+            correctAnswer: 0,
+            explanation: `Từ ghép vần có dấu "${item.khmer}" phát âm chính xác là "${item.pronunciation}".`
+          }
+        ]
+      });
+    }
+
+    // 6. Seed Coeng (Chữ ghép / chân chữ)
+    for (const item of coengList) {
+      lessonsToInsert.push({
+        title: `Chữ ghép: ${item.khmer}`,
+        description: `Học phụ âm chồng có chân chữ (coeng): ${item.khmer}`,
+        type: LESSON_TYPES.COENG,
+        khmerText: item.khmer,
+        romanized: item.romanized,
+        meaning: item.meaning,
+        pronunciation: item.pronunciation,
+        difficulty: DIFFICULTY.INTERMEDIATE,
+        order: orderCounter++,
+        category: item.category,
+        isActive: true,
+        questions: [
+          {
+            question: `Cách phát âm của chữ ghép "${item.khmer}" là gì?`,
+            options: [item.pronunciation, 'ka', 'cho', 'nho'],
+            correctAnswer: 0,
+            explanation: `Chữ ghép "${item.khmer}" được phát âm chính xác là "${item.pronunciation}".`
+          }
+        ]
+      });
+    }
+
+    // 7. Seed Sentence (Câu)
+    for (const item of sentenceList) {
+      lessonsToInsert.push({
+        title: `Câu: ${item.khmer}`,
+        description: `Học mẫu câu giao tiếp: ${item.khmer}`,
+        type: LESSON_TYPES.SENTENCE,
+        khmerText: item.khmer,
+        romanized: item.romanized,
+        meaning: item.meaning,
+        pronunciation: item.pronunciation,
+        difficulty: DIFFICULTY.ADVANCED,
+        order: orderCounter++,
+        category: item.category,
+        isActive: true,
+        questions: [
+          {
+            question: `Nghĩa tiếng Việt của câu "${item.khmer}" là gì?`,
+            options: [item.meaning, 'Hôm nay trời đẹp', 'Tôi muốn ăn cơm', 'Bạn tên là gì'],
+            correctAnswer: 0,
+            explanation: `Câu "${item.khmer}" mang ý nghĩa là "${item.meaning}".`
+          }
+        ]
+      });
+    }
+
+    // 8. Seed Number (Số)
+    for (const item of numberList) {
+      lessonsToInsert.push({
+        title: `Chữ số: ${item.khmer}`,
+        description: `Học đếm số: ${item.khmer} (${item.meaning})`,
+        type: LESSON_TYPES.NUMBER,
+        khmerText: item.khmer,
+        romanized: item.romanized,
+        meaning: item.meaning,
+        pronunciation: item.pronunciation,
+        difficulty: DIFFICULTY.BEGINNER,
+        order: orderCounter++,
+        category: item.category,
+        isActive: true,
+        questions: [
+          {
+            question: `Chữ số "${item.khmer}" biểu diễn cho số mấy?`,
+            options: [item.meaning, 'Số 6', 'Số 8', 'Số 9'],
+            correctAnswer: 0,
+            explanation: `Chữ số "${item.khmer}" biểu diễn cho "${item.meaning}".`
+          }
+        ]
+      });
+    }
+
     const insertedLessons = await Lesson.insertMany(lessonsToInsert);
     console.log(`🎉 Successfully seeded ${insertedLessons.length} new lessons!`);
     console.log(`- Consonants: ${consonantsList.length}`);
     console.log(`- Vowels: ${vowelsList.length}`);
     console.log(`- Vocabulary: ${vocabularyList.length}`);
+    console.log(`- Spelling (Ghép vần): ${spellingList.length}`);
+    console.log(`- Diacritical Spelling (Ghép vần có dấu): ${diacriticalSpellingList.length}`);
+    console.log(`- Closed Syllables (Vần đóng): ${closedSyllableList.length}`);
+    console.log(`- Coeng (Chữ ghép): ${coengList.length}`);
+    console.log(`- Sentences: ${sentenceList.length}`);
+    console.log(`- Numbers: ${numberList.length}`);
 
     return insertedLessons;
   } catch (error) {

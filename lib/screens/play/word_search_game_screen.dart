@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
+import '../../services/admin_service.dart';
 
 /// Trò chơi: 🌲 Giải cứu thú rừng (Khmer Word Search & Rescue)
 /// Bé tìm các chữ cái tạo nên tên con vật để giải cứu chúng.
@@ -47,6 +48,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
     super.initState();
     _loadScoreService();
     _initLevels();
+    _loadGameQuestions();
     _initAnimations();
   }
 
@@ -69,6 +71,68 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
         _livesPowerupsLeft = _scoreService?.livesPowerupsLeft ?? 1;
         _doubleScorePowerupsLeft = _scoreService?.doubleScorePowerupsLeft ?? 1;
       });
+    }
+  }
+
+  Future<void> _loadGameQuestions() async {
+    try {
+      final result = await AdminService().fetchGameQuestionsForUser('word_search');
+      if (!mounted) return;
+      if (result['success'] == true && result['data'] != null && (result['data'] as List).isNotEmpty) {
+        final list = result['data'] as List;
+        final parsed = list.map((q) {
+          final additional = q['additionalData'] as Map?;
+          
+          // Parse grid
+          final rawGrid = additional?['grid'] as List?;
+          final List<List<String>> parsedGrid = [];
+          if (rawGrid != null) {
+            for (var r in rawGrid) {
+              if (r is List) {
+                parsedGrid.add(r.map((c) => c.toString()).toList());
+              }
+            }
+          }
+          
+          // Parse path
+          final rawPath = additional?['path'] as List?;
+          final List<Point<int>> parsedPath = [];
+          if (rawPath != null) {
+            for (var p in rawPath) {
+              if (p is List && p.length >= 2) {
+                parsedPath.add(Point((p[0] as num).toInt(), (p[1] as num).toInt()));
+              }
+            }
+          }
+          
+          final khmerWord = q['answer'] ?? '';
+          final animalViet = q['prompt'] ?? '';
+          final romanized = additional?['romanized']?.toString() ?? '';
+          final emoji = additional?['emoji']?.toString() ?? '🐾';
+          final objective = additional?['objective']?.toString() ?? 'Tìm các chữ cái';
+
+          if (parsedGrid.isNotEmpty && parsedPath.isNotEmpty) {
+            return _Level(
+              animalVietnamese: animalViet,
+              khmerWord: khmerWord,
+              romanized: romanized,
+              emoji: emoji,
+              objective: objective,
+              grid: parsedGrid,
+              path: parsedPath,
+            );
+          }
+          return null;
+        }).whereType<_Level>().toList();
+
+        if (parsed.isNotEmpty) {
+          setState(() {
+            _levels = parsed;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading word search questions: $e');
     }
   }
 
@@ -726,9 +790,6 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
           child: CircularProgressIndicator(),
         ),
       );
-    }
-    if (_levels[0].grid.length != 6) {
-      _initLevels();
     }
     final currentLevel = _levels[_currentLevelIdx];
 
@@ -1489,6 +1550,9 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
   }
 
   Widget _buildWordGrid(_Level level) {
+    final rowCount = level.grid.length;
+    final colCount = level.grid.isNotEmpty ? level.grid[0].length : 0;
+
     return Container(
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
@@ -1509,16 +1573,16 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: 30, // 6 rows x 5 columns
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 5,
+            itemCount: rowCount * colCount,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: colCount > 0 ? colCount : 1,
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
               childAspectRatio: 1.0,
             ),
             itemBuilder: (context, index) {
-              final r = index ~/ 5;
-              final c = index % 5;
+              final r = index ~/ colCount;
+              final c = index % colCount;
               final point = Point(r, c);
               final isSelected = _selectedPoints.contains(point);
 
@@ -1572,6 +1636,8 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
                 painter: _GridConnectionPainter(
                   selectedPoints: _selectedPoints,
                   spacing: 10,
+                  rowCount: rowCount,
+                  columnCount: colCount,
                 ),
               ),
             ),
@@ -1582,16 +1648,16 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
             child: GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: 30, // 6 rows x 5 columns
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 5,
+              itemCount: rowCount * colCount,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: colCount > 0 ? colCount : 1,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
                 childAspectRatio: 1.0,
               ),
               itemBuilder: (context, index) {
-                final r = index ~/ 5;
-                final c = index % 5;
+                final r = index ~/ colCount;
+                final c = index % colCount;
                 final letter = level.grid[r][c];
 
                 final point = Point(r, c);
@@ -1693,18 +1759,22 @@ class _Level {
 class _GridConnectionPainter extends CustomPainter {
   final List<Point<int>> selectedPoints;
   final double spacing;
+  final int rowCount;
+  final int columnCount;
 
   _GridConnectionPainter({
     required this.selectedPoints,
     required this.spacing,
+    required this.rowCount,
+    required this.columnCount,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     if (selectedPoints.length < 2) return;
 
-    final cellWidth = (size.width - 4 * spacing) / 5;
-    final cellHeight = (size.height - 5 * spacing) / 6;
+    final cellWidth = (size.width - (columnCount - 1) * spacing) / (columnCount > 0 ? columnCount : 1);
+    final cellHeight = (size.height - (rowCount - 1) * spacing) / (rowCount > 0 ? rowCount : 1);
 
     Offset getCenter(Point<int> p) {
       final x = p.y * (cellWidth + spacing) + cellWidth / 2;

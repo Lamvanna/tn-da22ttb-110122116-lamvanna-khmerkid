@@ -7,6 +7,7 @@
 const gameService = require('../services/gameService');
 const { sendSuccess } = require('../utils/response');
 const { MESSAGES } = require('../constants');
+const GameQuestion = require('../models/GameQuestion');
 
 class GameController {
   /** POST /api/games/result */
@@ -25,6 +26,19 @@ class GameController {
     try {
       const history = await gameService.getHistory(req.user._id, req.query);
       sendSuccess(res, MESSAGES.FETCH_SUCCESS, history);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /** GET /api/games/questions */
+  async getQuestions(req, res, next) {
+    try {
+      const filter = { isActive: true };
+      if (req.query.gameKey) filter.gameKey = req.query.gameKey;
+      
+      const questions = await GameQuestion.find(filter).sort({ createdAt: -1 });
+      sendSuccess(res, MESSAGES.FETCH_SUCCESS, questions);
     } catch (error) {
       next(error);
     }

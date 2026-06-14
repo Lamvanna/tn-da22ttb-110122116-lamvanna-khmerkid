@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
+import '../../services/admin_service.dart';
 import '../main_screen.dart';
 import 'book_detail_screen.dart';
 import 'audio_detail_screen.dart';
@@ -47,7 +48,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       gradient: const [Color(0xFFFBD075), Color(0xFFF79E2E)]),
   ];
 
-  static final _latestDocs = [
+  static final _fallbackDocs = [
     _DocItem(
       title: 'Khám phá Angkor Wat', type: 'Sách', typeIcon: Icons.menu_book_rounded,
       typeColor: const Color(0xFF5B8FD4),
@@ -97,6 +98,71 @@ class _LibraryScreenState extends State<LibraryScreen> {
       btnColor: const Color(0xFFF2994A),
       image: 'image/Tập đọc.png'),
   ];
+
+  List<_DocItem> _latestDocs = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLatestDocs();
+  }
+
+  Future<void> _loadLatestDocs() async {
+    setState(() => _loading = true);
+    final result = await AdminService().fetchLibraryItemsForUser();
+    if (!mounted) return;
+    if (result['success'] == true && result['data'] != null && (result['data'] as List).isNotEmpty) {
+      final list = result['data'] as List;
+      setState(() {
+        _latestDocs = list.map((item) {
+          final type = item['type'] ?? 'Sách';
+          final title = item['title'] ?? '';
+          final desc = item['description'] ?? '';
+          final rating = (item['rating'] as num?)?.toDouble() ?? 5.0;
+          final viewsCount = item['views'] ?? 0;
+          final views = "$viewsCount lượt xem";
+          final image = (item['image'] != null && item['image'].toString().isNotEmpty)
+              ? item['image'].toString()
+              : 'image/Sách.png';
+
+          IconData typeIcon = Icons.menu_book_rounded;
+          Color typeColor = const Color(0xFF27AE60);
+          String btnLabel = 'Đọc ngay';
+
+          if (type == 'Audio') {
+            typeIcon = Icons.headphones_rounded;
+            typeColor = const Color(0xFF733AEB);
+            btnLabel = 'Nghe ngay';
+          } else if (type == 'Video') {
+            typeIcon = Icons.play_circle_rounded;
+            typeColor = const Color(0xFFF2994A);
+            btnLabel = 'Xem ngay';
+          }
+
+          return _DocItem(
+            title: title,
+            type: type,
+            typeIcon: typeIcon,
+            typeColor: typeColor,
+            desc: desc,
+            rating: rating,
+            views: views,
+            btnLabel: btnLabel,
+            btnIcon: typeIcon,
+            btnColor: typeColor,
+            image: image,
+          );
+        }).toList();
+        _loading = false;
+      });
+    } else {
+      setState(() {
+        _latestDocs = _fallbackDocs;
+        _loading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -579,7 +645,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
           ]),
         ),
-        if (filteredDocs.isEmpty)
+        if (_loading)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 30.h),
+            child: const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+          )
+        else if (filteredDocs.isEmpty)
           Padding(
             padding: EdgeInsets.symmetric(vertical: 30.h),
             child: Text(

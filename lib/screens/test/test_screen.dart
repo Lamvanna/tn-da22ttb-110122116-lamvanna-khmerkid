@@ -2,99 +2,201 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/khmer_letter.dart';
-import '../../models/khmer_number.dart';
 import '../../services/score_service.dart';
+import '../../services/admin_service.dart';
+import '../../services/tts_service.dart';
+import '../../widgets/khmer_speak_widget.dart';
+import '../../widgets/khmer_write_widget.dart';
 
 /// Màn hình Kiểm tra — Bài kiểm tra tổng hợp
-/// 3 lựa chọn: Nhanh (5 câu), Standard (10 câu), Thử thách (20 câu)
+/// Cố định 20 câu hỏi bao gồm trắc nghiệm, luyện nói phát âm và tập viết nét chữ
 class TestScreen extends StatefulWidget {
-  const TestScreen({super.key});
+  final String? testRange;
+  const TestScreen({super.key, this.testRange});
 
   @override
   State<TestScreen> createState() => _TestScreenState();
 }
-
 class _TestScreenState extends State<TestScreen> {
   bool _started = false;
-  int _difficulty = 1; // 0=easy, 1=normal, 2=hard
+  bool _loading = false;
+  static const int _difficulty = 2; // Fixed to 2 (Thử thách) to give maximum stars/XP rewards on completion
 
-  int get _totalQ {
-    switch (_difficulty) {
-      case 0: return 5;
-      case 2: return 20;
-      default: return 10;
-    }
-  }
-
-  final _rng = Random();
   List<_TestQ> _questions = [];
   int _qIdx = 0;
   int _correct = 0;
   int? _selected;
   bool _answered = false;
 
-  void _start() {
-    _questions = _genQuestions(_totalQ);
+  List<KhmerLetter> _getRangeLetters(String rangeStr) {
+    final letters = KhmerLetterData.consonants.where((l) => !l.isTest).toList();
+    if (rangeStr == '1-40') {
+      return letters;
+    }
+    
+    try {
+      final parts = rangeStr.split('-');
+      if (parts.length == 2) {
+        final start = int.parse(parts[0]) - 1;
+        final end = int.parse(parts[1]) - 1;
+        final startClamped = start.clamp(0, letters.length - 1);
+        final endClamped = end.clamp(startClamped, letters.length - 1);
+        return letters.sublist(startClamped, endClamped + 1);
+      }
+    } catch (_) {}
+    
+    return letters;
+  }
+
+  void _start() async {
     setState(() {
+      _loading = true;
+    });
+
+    final rangeLetters = _getRangeLetters(widget.testRange ?? '1-40');
+    List<_TestQ> choiceQuestions = [];
+
+    // 1. Tải câu hỏi từ backend
+    if (widget.testRange != null && widget.testRange!.isNotEmpty) {
+      try {
+        final result = await AdminService().fetchTestQuestionsForUser(widget.testRange!);
+        if (result['success'] == true && result['data'] != null && (result['data'] as List).isNotEmpty) {
+          final list = result['data'] as List;
+          choiceQuestions = list.map((item) {
+            final rawAnswer = item['answer']?.toString() ?? '';
+            final rawOptions = List<String>.from(item['options'] ?? []);
+
+            // 1. Tìm Khmer character tương ứng với đáp án
+            String targetChar = '';
+            String targetRomanized = '';
+            if (rawAnswer.length == 1) {
+              targetChar = rawAnswer;
+              final match = KhmerLetterData.consonants.firstWhere(
+                (l) => l.character == rawAnswer,
+                orElse: () => KhmerLetterData.consonants.first,
+              );
+              targetRomanized = match.romanized;
+            } else {
+              // Tìm bằng romanized
+              final match = KhmerLetterData.consonants.firstWhere(
+                (l) => l.romanized.toLowerCase() == rawAnswer.toLowerCase(),
+                orElse: () => KhmerLetterData.consonants.first,
+              );
+              targetChar = match.character;
+              targetRomanized = match.romanized;
+            }
+
+            // 2. Chuyển đổi các lựa chọn sang dạng chữ Khmer
+            final khmerOptions = rawOptions.map((opt) {
+              if (opt.length == 1) return opt;
+              final match = KhmerLetterData.consonants.firstWhere(
+                (l) => l.romanized.toLowerCase() == opt.toLowerCase(),
+                orElse: () => KhmerLetterData.consonants.first,
+              );
+              return match.character;
+            }).toList();
+
+            return _TestQ(
+              q: 'Nghe và chọn chữ cái đúng:',
+              options: khmerOptions,
+              answer: targetChar,
+              type: TestQuestionType.choice,
+              audioChar: targetChar,
+              romanized: targetRomanized,
+            );
+          }).toList();
+        }
+      } catch (e) {
+        debugPrint('⚠️ Error fetching online test questions: $e');
+      }
+    }
+
+    final rng = Random();
+
+    // Cấu hình cố định 20 câu: 8 trắc nghiệm, 6 phát âm, 6 tập viết
+    int speakCount = 6;
+    int writeCount = 6;
+    int choiceCount = 8;
+
+    // 2. Tự sinh thêm câu hỏi trắc nghiệm nếu thiếu từ API
+    if (choiceQuestions.length < choiceCount) {
+      final needed = choiceCount - choiceQuestions.length;
+      final extraChoices = <_TestQ>[];
+      for (int i = 0; i < needed; i++) {
+        final letter = rangeLetters[rng.nextInt(rangeLetters.length)];
+        final wrong = rangeLetters.where((l) => l.character != letter.character).toList();
+        if (wrong.length < 3) {
+          wrong.addAll(KhmerLetterData.consonants.where((l) => !l.isTest && l.character != letter.character));
+        }
+        wrong.shuffle(rng);
+        final opts = [letter.character, ...wrong.take(3).map((l) => l.character)];
+        opts.shuffle(rng);
+
+        extraChoices.add(_TestQ(
+          q: 'Nghe và chọn chữ cái đúng:',
+          options: opts,
+          answer: letter.character,
+          type: TestQuestionType.choice,
+          audioChar: letter.character,
+          romanized: letter.romanized,
+        ));
+      }
+      choiceQuestions.addAll(extraChoices);
+    }
+
+    // Shuffle và lấy đúng số lượng cần thiết
+    choiceQuestions.shuffle();
+    if (choiceQuestions.length > choiceCount) {
+      choiceQuestions = choiceQuestions.sublist(0, choiceCount);
+    }
+
+    // 3. Sinh các câu hỏi luyện nói phát âm
+    final speakQuestions = <_TestQ>[];
+    for (int i = 0; i < speakCount; i++) {
+      final letter = rangeLetters[rng.nextInt(rangeLetters.length)];
+      speakQuestions.add(_TestQ(
+        q: 'Hãy phát âm chữ cái sau:',
+        options: [],
+        answer: letter.character,
+        type: TestQuestionType.speak,
+        romanized: letter.romanized,
+        meaning: letter.meaning,
+      ));
+    }
+
+    // 4. Sinh các câu hỏi tập viết chữ
+    final writeQuestions = <_TestQ>[];
+    for (int i = 0; i < writeCount; i++) {
+      final letter = rangeLetters[rng.nextInt(rangeLetters.length)];
+      writeQuestions.add(_TestQ(
+        q: 'Hãy tập viết chữ cái sau:',
+        options: [],
+        answer: letter.character,
+        type: TestQuestionType.write,
+      ));
+    }
+
+    // 5. Tổng hợp lại và trộn ngẫu nhiên
+    final finalQuestions = <_TestQ>[];
+    finalQuestions.addAll(choiceQuestions);
+    finalQuestions.addAll(speakQuestions);
+    finalQuestions.addAll(writeQuestions);
+    finalQuestions.shuffle();
+
+    setState(() {
+      _questions = finalQuestions;
       _started = true;
+      _loading = false;
       _qIdx = 0;
       _correct = 0;
       _selected = null;
       _answered = false;
     });
+
+    _playCurrentQuestionAudio();
   }
 
-  List<_TestQ> _genQuestions(int count) {
-    final qs = <_TestQ>[];
-    final letters = KhmerLetterData.consonants;
-    final numbers = KhmerNumberData.numbers;
 
-    // 70% chữ cái, 30% số
-    final letterCount = (count * 0.7).ceil();
-    final numberCount = count - letterCount;
-
-    for (int i = 0; i < letterCount; i++) {
-      final type = _rng.nextBool();
-      if (type) {
-        // Chữ Khmer → phiên âm
-        final c = letters[_rng.nextInt(letters.length)];
-        final wrong = letters.where((l) => l.character != c.character).toList()..shuffle(_rng);
-        final opts = [c.romanized, ...wrong.take(3).map((l) => l.romanized)];
-        opts.shuffle(_rng);
-        qs.add(_TestQ(
-          q: 'Chữ "${c.character}" đọc là?',
-          options: opts,
-          answer: c.romanized,
-        ));
-      } else {
-        // Phiên âm → chữ Khmer
-        final c = letters[_rng.nextInt(letters.length)];
-        final wrong = letters.where((l) => l.character != c.character).toList()..shuffle(_rng);
-        final opts = [c.character, ...wrong.take(3).map((l) => l.character)];
-        opts.shuffle(_rng);
-        qs.add(_TestQ(
-          q: '"${c.romanized}" là chữ nào?',
-          options: opts,
-          answer: c.character,
-        ));
-      }
-    }
-
-    for (int i = 0; i < numberCount; i++) {
-      final n = numbers[_rng.nextInt(numbers.length)];
-      final wrong = numbers.where((x) => x.character != n.character).toList()..shuffle(_rng);
-      final opts = [n.value, ...wrong.take(3).map((x) => x.value)];
-      opts.shuffle(_rng);
-      qs.add(_TestQ(
-        q: 'Số "${n.character}" bằng bao nhiêu?',
-        options: opts,
-        answer: n.value,
-      ));
-    }
-
-    qs.shuffle(_rng);
-    return qs;
-  }
 
   void _answer(int idx) {
     if (_answered) return;
@@ -108,16 +210,45 @@ class _TestScreenState extends State<TestScreen> {
 
     Future.delayed(const Duration(milliseconds: 800), () {
       if (!mounted) return;
-      if (_qIdx >= _questions.length - 1) {
-        _showResult();
-      } else {
-        setState(() {
-          _qIdx++;
-          _selected = null;
-          _answered = false;
+      _nextQuestion();
+    });
+  }
+
+  void _answerCorrect() {
+    if (_answered) return;
+    setState(() {
+      _correct++;
+      _answered = true;
+    });
+
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (!mounted) return;
+      _nextQuestion();
+    });
+  }
+
+  void _nextQuestion() {
+    if (_qIdx >= _questions.length - 1) {
+      _showResult();
+    } else {
+      setState(() {
+        _qIdx++;
+        _selected = null;
+        _answered = false;
+      });
+      _playCurrentQuestionAudio();
+    }
+  }
+
+  void _playCurrentQuestionAudio() {
+    if (_qIdx < _questions.length) {
+      final q = _questions[_qIdx];
+      if (q.type == TestQuestionType.choice && q.audioChar != null) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          TtsService.instance.speakKhmerLetter(character: q.audioChar!);
         });
       }
-    });
+    }
   }
 
   void _showResult() async {
@@ -221,7 +352,7 @@ class _TestScreenState extends State<TestScreen> {
     );
   }
 
-  // ═══════ MENU CHỌN ĐỘ KHÓ ═══════
+  // ═══════ GIỚI THIỆU BÀI KIỂM TRA ═══════
   Widget _buildMenu() {
     return Column(
       children: [
@@ -232,54 +363,70 @@ class _TestScreenState extends State<TestScreen> {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                const SizedBox(height: 8),
-                Text('Chọn độ khó',
+                const SizedBox(height: 12),
+                Text('Thông tin bài kiểm tra',
                     style: GoogleFonts.plusJakartaSans(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: const Color(0xFF37474F))),
-                const SizedBox(height: 20),
-
-                _buildDiffCard(
-                  title: 'Dễ',
-                  sub: '5 câu hỏi • Thời gian thoải mái',
-                  emoji: '😊',
-                  color: const Color(0xFF66BB6A),
-                  level: 0,
-                ),
-                const SizedBox(height: 12),
-                _buildDiffCard(
-                  title: 'Trung bình',
-                  sub: '10 câu hỏi • Chữ + Số',
-                  emoji: '💪',
-                  color: const Color(0xFFFFA726),
-                  level: 1,
-                ),
-                const SizedBox(height: 12),
-                _buildDiffCard(
-                  title: 'Thử thách',
-                  sub: '20 câu hỏi • Tổng hợp',
-                  emoji: '🔥',
-                  color: const Color(0xFFEF5350),
-                  level: 2,
+                const SizedBox(height: 6),
+                Text(
+                  'Bài kiểm tra gồm 20 câu hỏi tổng hợp giúp bé củng cố toàn diện các kỹ năng đã học.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF757575)),
                 ),
                 const SizedBox(height: 24),
 
+                _buildInfoCard(
+                  title: 'Nhận diện chữ cái (Trắc nghiệm)',
+                  sub: '8 câu hỏi • Chọn đáp án đúng cho âm đọc và mặt chữ.',
+                  emoji: '📝',
+                  color: const Color(0xFF2979FF),
+                ),
+                const SizedBox(height: 14),
+                _buildInfoCard(
+                  title: 'Luyện nói phát âm',
+                  sub: '6 câu hỏi • Phát âm to rõ chữ cái xuất hiện trên màn hình.',
+                  emoji: '🗣️',
+                  color: const Color(0xFF00E676),
+                ),
+                const SizedBox(height: 14),
+                _buildInfoCard(
+                  title: 'Tập viết nét chữ',
+                  sub: '6 câu hỏi • Vẽ lại chính xác các chữ cái Khmer theo hướng dẫn.',
+                  emoji: '✍️',
+                  color: const Color(0xFFAA00FF),
+                ),
+                const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _start,
+                    onPressed: _loading ? null : _start,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF5B9CF5),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(18)),
+                      elevation: 3,
+                      shadowColor: const Color(0xFF5B9CF5).withValues(alpha: 0.3),
                     ),
-                    child: Text('Bắt đầu kiểm tra',
-                        style: GoogleFonts.plusJakartaSans(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white)),
+                    child: _loading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : Text('Bắt đầu kiểm tra',
+                            style: GoogleFonts.plusJakartaSans(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white)),
                   ),
                 ),
               ],
@@ -290,58 +437,58 @@ class _TestScreenState extends State<TestScreen> {
     );
   }
 
-  Widget _buildDiffCard({
+  Widget _buildInfoCard({
     required String title,
     required String sub,
     required String emoji,
     required Color color,
-    required int level,
   }) {
-    final selected = _difficulty == level;
-    return GestureDetector(
-      onTap: () => setState(() => _difficulty = level),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.1) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? color : const Color(0xFFE0E0E0),
-            width: selected ? 2.5 : 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2)),
-          ],
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: const Color(0xFFE3E9F9),
+          width: 1.5,
         ),
-        child: Row(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 32)),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: GoogleFonts.plusJakartaSans(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: color)),
-                  Text(sub,
-                      style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF757575))),
-                ],
-              ),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
             ),
-            if (selected)
-              Icon(Icons.check_circle_rounded, color: color, size: 24),
-          ],
-        ),
+            child: Text(emoji, style: const TextStyle(fontSize: 26)),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF37474F))),
+                const SizedBox(height: 4),
+                Text(sub,
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF757575))),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -385,138 +532,237 @@ class _TestScreenState extends State<TestScreen> {
   // ═══════ BÀI KIỂM TRA ═══════
   Widget _buildTest() {
     final q = _questions[_qIdx];
+    final isChoice = q.type == TestQuestionType.choice;
+
     return Column(
       children: [
         _buildTestHeader(),
+        // Thanh tiến trình và thông tin điểm số
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Câu ${_qIdx + 1}/${_questions.length}',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF757575))),
+                  Text('Đúng: $_correct',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF4CAF50))),
+                ],
+              ),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: (_qIdx + 1) / _questions.length,
+                  minHeight: 8,
+                  backgroundColor: const Color(0xFFE0E0E0),
+                  valueColor: const AlwaysStoppedAnimation(Color(0xFF5B9CF5)),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Phần hiển thị câu hỏi tùy loại
         Expanded(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                // Progress
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Câu ${_qIdx + 1}/${_questions.length}',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF757575))),
-                    Text('Đúng: $_correct',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF4CAF50))),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    value: (_qIdx + 1) / _questions.length,
-                    minHeight: 8,
-                    backgroundColor: const Color(0xFFE0E0E0),
-                    valueColor: const AlwaysStoppedAnimation(Color(0xFF5B9CF5)),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Câu hỏi
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
-                          blurRadius: 12, offset: const Offset(0, 4)),
-                    ],
-                  ),
-                  child: Text(q.q,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.plusJakartaSans(
-                          fontSize: 20, fontWeight: FontWeight.w700,
-                          color: const Color(0xFF37474F))),
-                ),
-                const SizedBox(height: 20),
-
-                // 4 đáp án
-                ...List.generate(q.options.length, (i) {
-                  final isCorrect = q.options[i] == q.answer;
-                  final isSelected = _selected == i;
-                  final ok = _answered && isCorrect;
-                  final wrong = _answered && isSelected && !isCorrect;
-
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: GestureDetector(
-                      onTap: _answered ? null : () => _answer(i),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
+          child: isChoice
+              ? SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  child: Column(
+                    children: [
+                      // Câu hỏi có Loa phát âm
+                      Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
                         decoration: BoxDecoration(
-                          color: ok
-                              ? const Color(0xFFE8F5E9)
-                              : wrong
-                                  ? const Color(0xFFFFEBEE)
-                                  : Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: ok
-                                ? const Color(0xFF4CAF50)
-                                : wrong
-                                    ? const Color(0xFFEF5350)
-                                    : const Color(0xFFE0E0E0),
-                            width: ok || wrong ? 2.5 : 1,
-                          ),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.06),
+                                blurRadius: 12, offset: const Offset(0, 4)),
+                          ],
                         ),
-                        child: Row(
+                        child: Column(
                           children: [
-                            Container(
-                              width: 30, height: 30,
-                              decoration: BoxDecoration(
-                                color: ok
-                                    ? const Color(0xFF4CAF50)
-                                    : wrong
-                                        ? const Color(0xFFEF5350)
-                                        : const Color(0xFF5B9CF5).withValues(alpha: 0.15),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: ok || wrong
-                                    ? Icon(ok ? Icons.check_rounded : Icons.close_rounded,
-                                        color: Colors.white, size: 16)
-                                    : Text(String.fromCharCode(65 + i),
-                                        style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w800,
-                                            color: const Color(0xFF5B9CF5))),
+                            Text(q.q,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 18, fontWeight: FontWeight.w800,
+                                    color: const Color(0xFF37474F))),
+                            const SizedBox(height: 18),
+                            GestureDetector(
+                              onTap: () {
+                                if (q.audioChar != null) {
+                                  TtsService.instance.speakKhmerLetter(character: q.audioChar!);
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(22),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF5B9CF5).withValues(alpha: 0.12),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.volume_up_rounded,
+                                  size: 58,
+                                  color: Color(0xFF5B9CF5),
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Text(q.options[i],
-                                  style: q.options[i].length <= 2
-                                      ? GoogleFonts.battambang(
-                                          fontSize: 24,
-                                          color: const Color(0xFF3E2C6E))
-                                      : GoogleFonts.plusJakartaSans(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w600,
-                                          color: const Color(0xFF37474F))),
-                            ),
+                            const SizedBox(height: 10),
+                            Text('Bấm loa để nghe lại 🔊',
+                                style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13, fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF757575))),
                           ],
                         ),
                       ),
+                      const SizedBox(height: 20),
+                      // 4 Đáp án trắc nghiệm
+                      ...List.generate(q.options.length, (i) {
+                        final isCorrect = q.options[i] == q.answer;
+                        final isSelected = _selected == i;
+                        final ok = _answered && isCorrect;
+                        final wrong = _answered && isSelected && !isCorrect;
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: GestureDetector(
+                            onTap: _answered ? null : () => _answer(i),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 16),
+                              decoration: BoxDecoration(
+                                color: ok
+                                    ? const Color(0xFFE8F5E9)
+                                    : wrong
+                                        ? const Color(0xFFFFEBEE)
+                                        : Colors.white,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: ok
+                                      ? const Color(0xFF4CAF50)
+                                      : wrong
+                                          ? const Color(0xFFEF5350)
+                                          : const Color(0xFFE0E0E0),
+                                  width: ok || wrong ? 2.5 : 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 30, height: 30,
+                                    decoration: BoxDecoration(
+                                      color: ok
+                                          ? const Color(0xFF4CAF50)
+                                          : wrong
+                                              ? const Color(0xFFEF5350)
+                                              : const Color(0xFF5B9CF5).withValues(alpha: 0.15),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: ok || wrong
+                                          ? Icon(ok ? Icons.check_rounded : Icons.close_rounded,
+                                              color: Colors.white, size: 16)
+                                          : Text(String.fromCharCode(65 + i),
+                                              style: GoogleFonts.plusJakartaSans(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: const Color(0xFF5B9CF5))),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Text(q.options[i],
+                                        style: q.options[i].length <= 2
+                                            ? GoogleFonts.battambang(
+                                                fontSize: 32,
+                                                fontWeight: FontWeight.w700,
+                                                color: const Color(0xFF3E2C6E))
+                                            : GoogleFonts.plusJakartaSans(
+                                                fontSize: 17,
+                                                fontWeight: FontWeight.w600,
+                                                color: const Color(0xFF37474F))),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                )
+              : Column(
+                  children: [
+                    // Tiêu đề/Yêu cầu luyện nói hoặc viết
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      child: Text(
+                        q.q,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.plusJakartaSans(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF37474F)),
+                      ),
                     ),
-                  );
-                }),
-              ],
-            ),
-          ),
+                    
+                    // Widget tương tác
+                    Expanded(
+                      child: q.type == TestQuestionType.speak
+                          ? KhmerSpeakWidget(
+                              key: ValueKey('speak_${_qIdx}_${q.answer}'),
+                              targetWord: q.answer,
+                              romanized: q.romanized ?? '',
+                              meaning: q.meaning ?? '',
+                              onComplete: _answerCorrect,
+                              accentColor: const Color(0xFF5B9CF5),
+                              accentColorDark: const Color(0xFF3F7FE0),
+                            )
+                          : KhmerWriteWidget(
+                              key: ValueKey('write_${_qIdx}_${q.answer}'),
+                              character: q.answer,
+                              label: 'chữ cái',
+                              onComplete: _answerCorrect,
+                              accentColor: const Color(0xFF5B9CF5),
+                              accentColorDark: const Color(0xFF3F7FE0),
+                            ),
+                    ),
+
+                    // Nút Bỏ qua câu này đề phòng trường hợp các bé bị kẹt
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                      child: TextButton(
+                        onPressed: _nextQuestion,
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14)),
+                          backgroundColor: Colors.white,
+                          side: const BorderSide(color: Color(0xFFE0E0E0)),
+                        ),
+                        child: Text(
+                          'Bỏ qua câu này ➡️',
+                          style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF757575)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
         ),
       ],
     );
@@ -559,9 +805,24 @@ class _TestScreenState extends State<TestScreen> {
   }
 }
 
+enum TestQuestionType { choice, speak, write }
+
 class _TestQ {
   final String q;
   final List<String> options;
   final String answer;
-  _TestQ({required this.q, required this.options, required this.answer});
+  final TestQuestionType type;
+  final String? romanized;
+  final String? meaning;
+  final String? audioChar;
+
+  _TestQ({
+    required this.q,
+    required this.options,
+    required this.answer,
+    this.type = TestQuestionType.choice,
+    this.romanized,
+    this.meaning,
+    this.audioChar,
+  });
 }

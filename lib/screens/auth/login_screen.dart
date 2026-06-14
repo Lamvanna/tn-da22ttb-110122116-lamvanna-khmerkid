@@ -5,6 +5,7 @@ import 'dart:ui';
 import '../../constants/app_colors.dart';
 import '../../services/auth_service.dart';
 import '../main_screen.dart';
+import '../admin/admin_main_screen.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 
@@ -405,10 +406,12 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
 
       if (result['success'] == true) {
-        // Chuyển hướng sang MainScreen
+        // Phân biệt role: admin → AdminMainScreen, user → MainScreen
+        final profile = AuthService().userProfile;
+        final isAdmin = profile?['role'] == 'admin';
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const MainScreen()),
+          MaterialPageRoute(builder: (_) => isAdmin ? const AdminMainScreen() : const MainScreen()),
         );
       } else {
         // Show error dialog
@@ -429,9 +432,11 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
 
       if (result['success'] == true) {
+        final profile = AuthService().userProfile;
+        final isAdmin = profile?['role'] == 'admin';
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const MainScreen()),
+          MaterialPageRoute(builder: (_) => isAdmin ? const AdminMainScreen() : const MainScreen()),
         );
       } else if (result['isDeveloperError'] == true) {
         // Gợi ý đăng nhập giả lập khi gặp lỗi cấu hình SHA-1 của Google
@@ -512,9 +517,11 @@ class _LoginScreenState extends State<LoginScreen> {
               setState(() => _isLoading = false);
               
               if (result['success'] == true) {
+                final profile = AuthService().userProfile;
+                final isAdmin = profile?['role'] == 'admin';
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (_) => const MainScreen()),
+                  MaterialPageRoute(builder: (_) => isAdmin ? const AdminMainScreen() : const MainScreen()),
                 );
               } else {
                 _showErrorDialog(result['message']);

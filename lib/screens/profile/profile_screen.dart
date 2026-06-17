@@ -14,6 +14,8 @@ import '../achievements/achievements_screen.dart';
 import '../../widgets/app_page_route.dart';
 import '../../widgets/game_xp_progress_bar.dart';
 import '../notification/notification_screen.dart';
+import '../../services/notification_service.dart';
+import '../../models/app_notification.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -27,6 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _username = 'Bé Na';
   String _avatarUrl = '';
   List<dynamic> _allBadges = [];
+  int _unreadNotificationsCount = 0;
 
   @override
   void initState() {
@@ -56,6 +59,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
       _updateStats();
     }
+    _loadNotificationCount();
     try {
       final badges = await AuthService().fetchBadges();
       if (mounted) {
@@ -65,6 +69,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       debugPrint('Error loading badges on profile: $e');
+    }
+  }
+
+  Future<void> _loadNotificationCount() async {
+    try {
+      final res = await NotificationService().fetchNotifications();
+      if (res['success'] == true) {
+        final list = res['data'] as List<AppNotification>;
+        final unread = list.where((n) => !n.isRead).length;
+        if (mounted) {
+          setState(() {
+            _unreadNotificationsCount = unread;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading notification count: $e');
     }
   }
 
@@ -594,45 +615,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
 
-                  // ─── Cloud decoration (bottom) ────────────────
-                  Positioned(
-                    left: -20.w,
-                    bottom: 8.h,
-                    child: _cloud(width: 110.w, alpha: 0.22),
-                  ),
-                  Positioned(
-                    right: 30.w,
-                    bottom: 24.h,
-                    child: _cloud(width: 80.w, alpha: 0.18),
-                  ),
-                  Positioned(
-                    left: 140.w,
-                    bottom: 50.h,
-                    child: _cloud(width: 60.w, alpha: 0.14),
-                  ),
 
-                  // ─── Star sparkles ────────────────────────────
-                  Positioned(
-                    left: 30.w,
-                    top: 16.h,
-                    child: _spark(14.sp, 0.45, color: const Color(0xFFFFF176)),
-                  ),
-                  Positioned(left: 90.w, top: 8.h, child: _spark(8.sp, 0.35)),
-                  Positioned(
-                    right: 120.w,
-                    top: 12.h,
-                    child: _spark(12.sp, 0.40, color: const Color(0xFFFFF176)),
-                  ),
-                  Positioned(
-                    right: 180.w,
-                    top: 48.h,
-                    child: _spark(9.sp, 0.30),
-                  ),
-                  Positioned(
-                    left: 170.w,
-                    top: 62.h,
-                    child: _spark(10.sp, 0.35, color: const Color(0xFFFFF176)),
-                  ),
+
+
 
                   // ─── Notification Bell ───
                   Positioned(
@@ -643,7 +628,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Navigator.push(
                           context,
                           AppPageRoute(page: const NotificationScreen()),
-                        );
+                        ).then((_) {
+                          _loadNotificationCount();
+                        });
                       },
                       child: Stack(
                         clipBehavior: Clip.none,
@@ -653,42 +640,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             height: 46.w,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.white,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 8.r,
-                                  offset: Offset(0, 4.h),
-                                ),
-                              ],
+                              color: Colors.white.withOpacity(0.20),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.35),
+                                width: 1.5.w,
+                              ),
                             ),
                             child: Icon(
                               Icons.notifications_none_rounded,
-                              color: const Color(0xFF3B82F6),
-                              size: 26.sp,
+                              color: Colors.white,
+                              size: 24.sp,
                             ),
                           ),
-                        Positioned(
-                          right: -4.w,
-                          top: -4.h,
-                          child: Container(
-                            padding: EdgeInsets.all(5.w),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFF4D4F),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2.w),
-                            ),
-                            child: Text(
-                              '3',
-                              style: GoogleFonts.plusJakartaSans(
-                                color: Colors.white,
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.bold,
-                                height: 1.0,
+                        if (_unreadNotificationsCount > 0)
+                          Positioned(
+                            right: -4.w,
+                            top: -4.h,
+                            child: Container(
+                              padding: EdgeInsets.all(5.w),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFF4D4F),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2.w),
+                              ),
+                              child: Text(
+                                '$_unreadNotificationsCount',
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: Colors.white,
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.0,
+                                ),
                               ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -798,54 +783,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ],
     );
   }
-
-  // ─── Helper: cloud shape (3 overlapping circles) ──────────────
-  Widget _cloud({required double width, required double alpha}) {
-    final color = Colors.white.withValues(alpha: alpha);
-    return SizedBox(
-      width: width,
-      height: width * 0.55,
-      child: Stack(
-        children: [
-          Positioned(
-            left: 0,
-            bottom: 0,
-            child: Container(
-              width: width * 0.55,
-              height: width * 0.55,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-            ),
-          ),
-          Positioned(
-            left: width * 0.30,
-            bottom: width * 0.10,
-            child: Container(
-              width: width * 0.50,
-              height: width * 0.50,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-            ),
-          ),
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: Container(
-              width: width * 0.45,
-              height: width * 0.45,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─── Helper: small star sparkle ───────────────────────────────
-  Widget _spark(double size, double alpha, {Color color = Colors.white}) =>
-      Icon(
-        Icons.star_rounded,
-        color: color.withValues(alpha: alpha),
-        size: size,
-      );
 
   // ─── Avatar with star badge (top-right) + edit button (bottom-right)
   Widget _buildAvatarWithBadges() {
@@ -1001,17 +938,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(28.r),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1E293B).withOpacity(0.08),
-            blurRadius: 24.r,
-            offset: Offset(0, 10.h),
-          ),
-          BoxShadow(
-            color: const Color(0xFF1E293B).withOpacity(0.03),
+            color: const Color(0xFF1E293B).withValues(alpha: 0.02),
             blurRadius: 8.r,
             offset: Offset(0, 2.h),
           ),
         ],
-        border: Border.all(color: const Color(0xFFF1F5F9), width: 2.w),
+        border: Border.all(color: const Color(0xFFEEF2F6), width: 1.w),
       ),
       child: IntrinsicHeight(
         child: Row(
@@ -1146,16 +1078,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(color: const Color(0xFFEEF2F6), width: 1.5.w),
+        border: Border.all(color: const Color(0xFFEEF2F6), width: 1.w),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1A237E).withValues(alpha: 0.06),
-            blurRadius: 20.r,
-            offset: Offset(0, 6.h),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6.r,
+            color: const Color(0xFF1A237E).withValues(alpha: 0.02),
+            blurRadius: 8.r,
             offset: Offset(0, 2.h),
           ),
         ],
@@ -1701,16 +1628,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(color: const Color(0xFFEEF2F6), width: 1.5.w),
+        border: Border.all(color: const Color(0xFFEEF2F6), width: 1.w),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1A237E).withValues(alpha: 0.06),
-            blurRadius: 20.r,
-            offset: Offset(0, 6.h),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6.r,
+            color: const Color(0xFF1A237E).withValues(alpha: 0.02),
+            blurRadius: 8.r,
             offset: Offset(0, 2.h),
           ),
         ],
@@ -1958,12 +1880,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(24.r),
-            border: Border.all(color: const Color(0xFFEEF2F6), width: 1.5.w),
+            border: Border.all(color: const Color(0xFFEEF2F6), width: 1.w),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF1A237E).withValues(alpha: 0.05),
-                blurRadius: 16.r,
-                offset: Offset(0, 4.h),
+                color: const Color(0xFF1A237E).withValues(alpha: 0.02),
+                blurRadius: 8.r,
+                offset: Offset(0, 2.h),
               ),
             ],
           ),

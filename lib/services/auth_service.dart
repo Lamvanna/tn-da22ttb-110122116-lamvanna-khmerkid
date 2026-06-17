@@ -9,6 +9,9 @@ import 'storage_service.dart';
 import 'sync_manager.dart';
 import '../repositories/progress_repository.dart';
 import '../data/local/local_database.dart';
+import '../models/khmer_letter.dart';
+import '../models/khmer_vowel.dart';
+import '../models/khmer_number.dart';
 
 
 /// Dịch vụ Xác thực người dùng (AuthService) kết nối tới Backend Node.js
@@ -258,6 +261,10 @@ class AuthService extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
+
+      // Trigger full sync in background after successful auto login
+      SyncManager.instance.fullSync();
+
       return true;
     } catch (e) {
       debugPrint('❌ Auto login error: $e');
@@ -809,6 +816,8 @@ class AuthService extends ChangeNotifier {
       await storage.setStreak(profile['streak'] ?? 0);
       await storage.setAvatarUrl(profile['avatar'] ?? '');
 
+      final List<Map<String, dynamic>> progressListForIsar = [];
+
       // Đồng bộ các tiến độ bài học từ profile completedLessons sang SharedPreferences
       final dynamic lp = profile['learningProgress'];
       if (lp != null && lp['completedLessons'] != null) {
@@ -816,8 +825,30 @@ class AuthService extends ChangeNotifier {
         for (final item in completed) {
           if (item is Map<String, dynamic>) {
             final type = item['type']?.toString();
-            final order = (item['order'] as num?)?.toInt() ?? 0;
+            final khmerText = item['khmerText']?.toString();
+            final lessonId = item['_id']?.toString() ?? item['id']?.toString() ?? '';
+            int order = (item['order'] as num?)?.toInt() ?? 0;
             final stars = 3; // Mặc định 3 sao nếu đã hoàn thành bài học
+
+            // Ánh xạ khmerText về chỉ số index 0-based của client
+            if (khmerText != null && khmerText.isNotEmpty) {
+              if (type == 'consonant') {
+                final idx = KhmerLetterData.consonants.indexWhere((l) => !l.isTest && l.character == khmerText);
+                if (idx != -1) {
+                  order = idx;
+                }
+              } else if (type == 'vowel') {
+                final idx = KhmerVowelData.vowels.indexWhere((v) => v.character == khmerText);
+                if (idx != -1) {
+                  order = idx;
+                }
+              } else if (type == 'number') {
+                final idx = KhmerNumberData.numbers.indexWhere((n) => n.character == khmerText);
+                if (idx != -1) {
+                  order = idx;
+                }
+              }
+            }
             
             if (type == 'consonant') {
               await storage.saveLetterProgress(order, stars);
@@ -834,6 +865,17 @@ class AuthService extends ChangeNotifier {
             } else if (type == 'writing') {
               await storage.saveWritingProgress(order, stars);
             }
+
+            if (lessonId.isNotEmpty && type != null) {
+              progressListForIsar.add({
+                'lessonId': lessonId,
+                'lessonType': type,
+                'lessonOrder': order,
+                'stars': stars,
+                'isCompleted': true,
+                'isUnlocked': true,
+              });
+            }
           }
         }
       }
@@ -842,6 +884,23 @@ class AuthService extends ChangeNotifier {
       try {
         await ProgressRepository.instance.saveProfileCache(profile);
       } catch (_) {}
+
+      // Lưu trực tiếp tiến độ bài học vào Isar
+      if (progressListForIsar.isNotEmpty) {
+        final userId = profile['_id']?.toString() ?? profile['id']?.toString() ?? 'local';
+        if (userId != 'local') {
+          try {
+            await ProgressRepository.instance.bulkSaveProgress(userId, progressListForIsar);
+            if (kDebugMode) {
+              print('[AuthService] Synced ${progressListForIsar.length} completed lessons directly from profile to Isar.');
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              print('[AuthService] ⚠️ Error saving profile progress directly to Isar: $e');
+            }
+          }
+        }
+      }
 
       // Đồng bộ thêm tiến độ từ local Isar (nếu có sẵn) sang SharedPreferences
       try {

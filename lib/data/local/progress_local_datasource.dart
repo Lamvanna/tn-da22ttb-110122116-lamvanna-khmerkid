@@ -33,6 +33,8 @@ class ProgressLocalDataSource {
         existing.stars = existing.stars > stars ? existing.stars : stars;
         existing.isCompleted = existing.isCompleted || isCompleted;
         existing.isUnlocked = existing.isUnlocked || isUnlocked;
+        existing.lessonOrder = lessonOrder;
+        existing.lessonType = lessonType;
         if (isCompleted && existing.completedAt == null) {
           existing.completedAt = DateTime.now();
         }
@@ -62,6 +64,21 @@ class ProgressLocalDataSource {
     await _isar.writeTxn(() async {
       for (final p in progressList) {
         final lessonId = p['lessonId'] as String;
+
+        // Nếu lessonId là ObjectId, tìm và xóa bản ghi custom ID tương ứng (nếu có) để tránh nhân đôi dữ liệu
+        if (lessonId.length == 24 && RegExp(r'^[0-9a-fA-F]{24}$').hasMatch(lessonId)) {
+          final type = p['lessonType'] as String? ?? '';
+          final order = (p['lessonOrder'] as num?)?.toInt() ?? 0;
+          if (type.isNotEmpty) {
+            final legacyId = '${type}_$order';
+            await _isar.userProgress
+                .filter()
+                .userIdEqualTo(userId)
+                .lessonIdEqualTo(legacyId)
+                .deleteAll();
+          }
+        }
+
         final existing = await _isar.userProgress
             .filter()
             .userIdEqualTo(userId)
@@ -77,6 +94,10 @@ class ProgressLocalDataSource {
           existing.stars = existing.stars > stars ? existing.stars : stars;
           existing.isCompleted = existing.isCompleted || isCompleted;
           existing.isUnlocked = existing.isUnlocked || isUnlocked;
+          existing.lessonOrder = (p['lessonOrder'] as num?)?.toInt() ?? existing.lessonOrder;
+          if (p['lessonType'] != null && (p['lessonType'] as String).isNotEmpty) {
+            existing.lessonType = p['lessonType'] as String;
+          }
           existing.isSynced = true;
           existing.updatedAt = DateTime.now();
           await _isar.userProgress.put(existing);
@@ -161,12 +182,13 @@ class ProgressLocalDataSource {
 
   /// Đếm số bài đã hoàn thành theo loại
   Future<int> getCompletedCountByType(String userId, String lessonType) async {
-    return await _isar.userProgress
+    final items = await _isar.userProgress
         .filter()
         .userIdEqualTo(userId)
         .lessonTypeEqualTo(lessonType)
         .isCompletedEqualTo(true)
-        .count();
+        .findAll();
+    return items.map((e) => e.lessonOrder).toSet().length;
   }
 
   Future<Map<int, int>> getProgressMap(String userId, String lessonType) async {

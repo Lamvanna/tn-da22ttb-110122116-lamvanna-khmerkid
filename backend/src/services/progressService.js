@@ -121,10 +121,15 @@ class ProgressService {
     progress.lastSyncAt = new Date();
     await progress.save();
 
-    // Update User model completedLessons count
+    // Update User model completedLessons count and list of completed lesson IDs
     const completedCount = mergedLessons.filter(l => l.isCompleted).length;
+    const completedLessonIds = mergedLessons
+      .filter(l => l.isCompleted && l.lessonId && l.lessonId.match(/^[0-9a-fA-F]{24}$/))
+      .map(l => l.lessonId);
+
     await User.findByIdAndUpdate(userId, {
       'learningProgress.totalLessonsCompleted': completedCount,
+      'learningProgress.completedLessons': completedLessonIds,
     });
 
     // Return merged data cho client update local
@@ -152,8 +157,36 @@ class ProgressService {
   /**
    * POST /api/progress/complete — Hoàn thành 1 bài học
    */
-  async completeLesson(userId, lessonId, stars, lessonType) {
+  async completeLesson(userId, lessonId, stars, lessonType, lessonOrder = null) {
     const progress = await this.getOrCreateProgress(userId);
+
+    // Tự động phân giải lessonOrder và lessonType nếu thiếu
+    let resolvedOrder = lessonOrder;
+    let resolvedType = lessonType;
+
+    if (resolvedOrder === null || resolvedOrder === undefined) {
+      if (lessonId && lessonId.match(/^[0-9a-fA-F]{24}$/)) {
+        const Lesson = require('../models/Lesson');
+        const dbLesson = await Lesson.findById(lessonId);
+        if (dbLesson) {
+          resolvedOrder = dbLesson.order;
+          if (!resolvedType) resolvedType = dbLesson.type;
+        }
+      } else if (lessonId && lessonId.includes('_')) {
+        const parts = lessonId.split('_');
+        const numPart = parseInt(parts[parts.length - 1], 10);
+        if (!isNaN(numPart)) {
+          resolvedOrder = numPart;
+        }
+        if (!resolvedType) {
+          resolvedType = parts.slice(0, -1).join('_');
+        }
+      }
+    }
+
+    if (resolvedOrder === null || resolvedOrder === undefined) {
+      resolvedOrder = 0;
+    }
 
     // Tìm lesson trong progress
     const existingIdx = progress.completedLessons.findIndex(
@@ -165,6 +198,10 @@ class ProgressService {
       const existing = progress.completedLessons[existingIdx];
       existing.stars = Math.max(existing.stars || 0, stars);
       existing.isCompleted = true;
+      existing.lessonOrder = resolvedOrder;
+      if (resolvedType) {
+        existing.lessonType = resolvedType;
+      }
       if (!existing.completedAt) {
         existing.completedAt = new Date();
       }
@@ -172,7 +209,8 @@ class ProgressService {
       // Add new
       progress.completedLessons.push({
         lessonId,
-        lessonType: lessonType || '',
+        lessonType: resolvedType || '',
+        lessonOrder: resolvedOrder,
         stars,
         isCompleted: true,
         completedAt: new Date(),

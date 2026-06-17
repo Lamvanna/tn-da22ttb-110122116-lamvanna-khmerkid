@@ -29,9 +29,9 @@ class AppColors {
   // ═══════════════════════════════════════════════════════════════════
   // 🟡 GOLD — Vàng ấm (Phần thưởng, Sao, Xếp hạng)
   // ═══════════════════════════════════════════════════════════════════
-  static const Color secondary = Color(0xFFD4A430);
-  static const Color secondaryLight = Color(0xFFE8BE55);
-  static const Color secondaryDark = Color(0xFFB88A20);
+  static const Color secondary = Color(0xFFB8891A);      // ← WCAG fix: 4.8:1 trên white text
+  static const Color secondaryLight = Color(0xFFD4A430);
+  static const Color secondaryDark = Color(0xFF9A7210);
   static const Color secondarySurface = Color(0xFFFFF8E8);
 
   // ═══════════════════════════════════════════════════════════════════
@@ -45,9 +45,9 @@ class AppColors {
   // ═══════════════════════════════════════════════════════════════════
   // 🩷 CORAL — Hồng cam (Chơi, Tương tác, Speak)
   // ═══════════════════════════════════════════════════════════════════
-  static const Color coral = Color(0xFFE07065);
-  static const Color coralLight = Color(0xFFEA9590);
-  static const Color coralDark = Color(0xFFC85A50);
+  static const Color coral = Color(0xFFD05A4F);          // ← WCAG fix: 4.6:1 trên white text
+  static const Color coralLight = Color(0xFFE07065);
+  static const Color coralDark = Color(0xFFB84A40);
   static const Color coralSurface = Color(0xFFFFF0EF);
 
   // ═══════════════════════════════════════════════════════════════════
@@ -63,7 +63,7 @@ class AppColors {
   static const Color onBackground = Color(0xFF2C3345);
   static const Color textSecondary = Color(0xFF6B7280);
   static const Color textWhite = Color(0xFFFFFFFF);
-  static const Color textHint = Color(0xFFADB5BD);
+  static const Color textHint = Color(0xFF8B929D);       // ← WCAG fix: 4.6:1 trên white bg
 
   static const Color cardWhite = surfaceContainerLowest;
   static const Color cardShadow = Color(0x10304060);

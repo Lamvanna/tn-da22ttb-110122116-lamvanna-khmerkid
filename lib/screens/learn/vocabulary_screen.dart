@@ -5,6 +5,8 @@ import 'package:flutter_tts/flutter_tts.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_vocabulary.dart';
 import '../../widgets/app_header.dart';
+import '../../services/score_service.dart';
+import '../../services/storage_service.dart';
 
 /// Màn hình học từ vựng Khmer theo chủ đề — RESPONSIVE
 class VocabularyScreen extends StatefulWidget {
@@ -18,11 +20,25 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
   final FlutterTts _tts = FlutterTts();
   bool _ttsReady = false;
   String? _playingWord;
+  Set<String> _learnedWords = {};
+  StorageService? _storage;
+  ScoreService? _scoreService;
 
   @override
   void initState() {
     super.initState();
     _initTts();
+    _initProgress();
+  }
+
+  Future<void> _initProgress() async {
+    _storage = await StorageService.getInstance();
+    _scoreService = await ScoreService.getInstance();
+    if (mounted) {
+      setState(() {
+        _learnedWords = _storage!.getLearnedVocab();
+      });
+    }
   }
 
   Future<void> _initTts() async {
@@ -56,6 +72,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
     setState(() => _playingWord = text);
     await _tts.speak(text);
   }
+
 
   @override
   void dispose() {
@@ -147,7 +164,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
   }
 
   Widget _buildCategoryInfo(VocabCategory cat) {
-    final learned = cat.words.where((w) => w.isLearned).length;
+    final learned = cat.words.where((w) => _learnedWords.contains(w.khmer)).length;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Container(
@@ -211,6 +228,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
 
   Widget _buildWordCard(KhmerWord word, Color color, int index) {
     final isPlaying = _playingWord == word.khmer;
+    final isLearned = _learnedWords.contains(word.khmer);
     return GestureDetector(
       onTap: () => _speak(word.khmer),
       child: AnimatedContainer(
@@ -286,22 +304,80 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                 ],
               ),
             ),
-            // Number
-            Container(
-              width: 28.w,
-              height: 28.w,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  '${index + 1}',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w800,
-                    color: color,
-                  ),
+            // Checkmark or Add checklist button
+            GestureDetector(
+              onTap: () async {
+                if (_storage == null || _scoreService == null) return;
+                if (isLearned) return;
+
+                // Mark as learned
+                await _scoreService!.learnVocab(word.khmer);
+
+                // Update local set from Storage
+                final updated = _storage!.getLearnedVocab();
+                if (mounted) {
+                  setState(() {
+                    _learnedWords = updated;
+                  });
+                }
+
+                // Show dynamic snackbar with XP and Stars earned
+                if (mounted) {
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          Text('🎉', style: TextStyle(fontSize: 20.sp)),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Text(
+                              'Đã thuộc từ "${word.khmer}"! (+5 XP, +1 ⭐)',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      backgroundColor: const Color(0xFF2D8054),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 32.w,
+                height: 32.w,
+                decoration: BoxDecoration(
+                  color: isLearned
+                      ? const Color(0xFFE8F5E9)
+                      : color.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                  border: isLearned
+                      ? Border.all(color: const Color(0xFF4CAF50), width: 1.5.w)
+                      : Border.all(color: color.withValues(alpha: 0.3), width: 1.w),
+                ),
+                child: Center(
+                  child: isLearned
+                      ? Icon(
+                          Icons.check_rounded,
+                          color: const Color(0xFF4CAF50),
+                          size: 18.sp,
+                        )
+                      : Icon(
+                          Icons.add_rounded,
+                          color: color,
+                          size: 18.sp,
+                        ),
                 ),
               ),
             ),

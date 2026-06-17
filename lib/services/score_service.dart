@@ -411,11 +411,14 @@ class ScoreService {
 
   /// Học từ vựng
   Future<void> learnVocab(String wordKhmer) async {
+    final learned = _storage.getLearnedVocab();
+    if (learned.contains(wordKhmer)) return;
     await _storage.markVocabLearned(wordKhmer);
     await _storage.addXp(5);
     await _storage.addStars(1);
     await _storage.updateStreak();
   }
+
 
   // ─── STATISTICS (Dynamic from MongoDB) ────────────────────────
 
@@ -455,33 +458,40 @@ class ScoreService {
     return (lp?['writingLevel'] as num?)?.toInt() ?? 0;
   }
 
-  /// Tổng số chữ đã học (MongoDB completedLessons count, fallback to local)
-  int get lettersLearned {
+  int _countLearned(String type, int Function() storageCountGetter) {
     final lp = AuthService().userProfile?['learningProgress'];
     final completed = lp?['completedLessons'] as List?;
     if (completed != null && completed.isNotEmpty) {
-      return completed.length;
+      return completed.where((item) {
+        if (item is Map) {
+          return item['type'] == type;
+        }
+        return false;
+      }).length;
     }
-    return _storage.getLetterProgress().length;
+    return storageCountGetter();
   }
 
+  /// Tổng số chữ đã học (MongoDB completedLessons count, fallback to local)
+  int get lettersLearned => _countLearned('consonant', () => _storage.getLetterProgress().length);
+
   /// Tổng số nguyên âm đã học
-  int get vowelsLearned => _storage.getVowelProgress().length;
+  int get vowelsLearned => _countLearned('vowel', () => _storage.getVowelProgress().length);
 
   /// Tổng số bài tập đọc đã học
-  int get readingLearned => _storage.getReadingProgress().length;
+  int get readingLearned => _countLearned('reading', () => _storage.getReadingProgress().length);
 
   /// Tổng số số đã học
-  int get numbersLearned => _storage.getNumberProgress().length;
+  int get numbersLearned => _countLearned('number', () => _storage.getNumberProgress().length);
 
   /// Tổng số dấu đã học
-  int get diacriticalsLearned => _storage.getDiacriticalProgress().length;
+  int get diacriticalsLearned => _countLearned('diacritical', () => _storage.getDiacriticalProgress().length);
 
   /// Tổng số bài ghép vần đã học
-  int get spellingLearned => _storage.getSpellingProgress().length;
+  int get spellingLearned => _countLearned('spelling', () => _storage.getSpellingProgress().length);
 
   /// Tổng số bài luyện viết đã học
-  int get writingLearned => _storage.getWritingProgress().length;
+  int get writingLearned => _countLearned('writing', () => _storage.getWritingProgress().length);
 
   /// Tổng số từ vựng đã học
   int get vocabLearned => _storage.getLearnedVocab().length;

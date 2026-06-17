@@ -58,9 +58,23 @@ class _LetterMapViewState extends State<LetterMapView>
   }
 
   Future<void> _loadScore() async {
+    // ─── CHẨN ĐOÁN TIẾN ĐỘ ĐỒNG BỘ ───
+    final auth = AuthService();
+    debugPrint('🔍 [LetterMap Diagnostic] isAuthenticated: ${auth.isAuthenticated}');
+    debugPrint('🔍 [LetterMap Diagnostic] userProfile name: ${auth.userProfile?['name']}');
+    debugPrint('🔍 [LetterMap Diagnostic] userProfile email: ${auth.userProfile?['email']}');
+    final completed = auth.userProfile?['learningProgress']?['completedLessons'];
+    debugPrint('🔍 [LetterMap Diagnostic] completedLessons type: ${completed?.runtimeType}, length: ${completed is List ? completed.length : 0}');
+    if (completed is List && completed.isNotEmpty) {
+      debugPrint('🔍 [LetterMap Diagnostic] First 5 completed lessons: ${completed.take(5).toList()}');
+    }
+
     // 1. Tải nhanh từ bộ nhớ tạm local (Isar ProgressRepository) trước để giao diện hiện lên NGAY LẬP TỨC
     try {
+      final allLocalProgress = await ProgressRepository.instance.getProgressByType('consonant');
+      debugPrint('🔍 [LetterMap Diagnostic] allLocalProgress consonant items: ${allLocalProgress.map((e) => "${e['lessonId']}: order=${e['lessonOrder']}, stars=${e['stars']}, isCompleted=${e['isCompleted']}").toList()}');
       final localLetterProgress = await ProgressRepository.instance.getProgressMap('consonant');
+      debugPrint('🔍 [LetterMap Diagnostic] localLetterProgress map: $localLetterProgress');
       
       // Khôi phục các bài học bình thường
       for (int i = 0; i < _letters.length; i++) {
@@ -137,6 +151,10 @@ class _LetterMapViewState extends State<LetterMapView>
           })
           .where((id) => id.isNotEmpty)
           .toSet();
+
+      debugPrint('🔍 [LetterMap Diagnostic] completedLetters: $completedLetters');
+      debugPrint('🔍 [LetterMap Diagnostic] completedLessonIds: $completedLessonIds');
+      debugPrint('🔍 [LetterMap Diagnostic] _letters mapped IDs: ${_letters.where((l) => !l.isTest).map((l) => "${l.character}: ${l.id}").toList()}');
 
       final storage = await StorageService.getInstance();
 

@@ -155,6 +155,7 @@ class SyncManager {
           lessonId: payload['lessonId'] ?? '',
           stars: payload['stars'] ?? 0,
           lessonType: payload['lessonType'] ?? '',
+          lessonOrder: payload['lessonOrder'] ?? 0,
         );
         return result != null;
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../main_screen.dart';
 import '../../constants/app_colors.dart';
+import '../../theme/design_tokens.dart';
 import '../library/library_screen.dart';
 import '../leaderboard/leaderboard_screen.dart';
 import '../achievements/achievements_screen.dart';
@@ -24,13 +25,13 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           children: [
             const HomeHeader(),
-            SizedBox(height: 12.h),
+            SizedBox(height: Spacing.v3),
             const GreetingCard(),
-            SizedBox(height: 8.h),
+            SizedBox(height: Spacing.v2),
             _buildCategoryRow1(context),
-            SizedBox(height: 10.h),
+            SizedBox(height: Spacing.v3 - 2.h), // 10.h
             _buildCategoryRow2(context),
-            SizedBox(height: 12.h),
+            SizedBox(height: Spacing.v3),
             const CongratsBanner(),
             SizedBox(height: 90.h),
           ],
@@ -41,24 +42,24 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildCategoryRow1(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      padding: EdgeInsets.symmetric(horizontal: Spacing.s4),
       child: Row(
         children: [
           Expanded(
             child: CategoryCard(
               imagePath: 'image/Học.png',
               label: 'Học',
-              color: const Color(0xFF5B8FD4), // Xanh dương mềm
+              color: AppColors.primaryLight, // Xanh dương mềm
               height: 150.h,
               onTap: () => MainScreenState.of(context)?.switchTab(1),
             ),
           ),
-          SizedBox(width: 14.w),
+          SizedBox(width: Spacing.s4 - 2.w), // 14.w
           Expanded(
             child: CategoryCard(
               imagePath: 'image/Trò chơi.png',
               label: 'Chơi',
-              color: const Color(0xFFE88070), // Coral ấm
+              color: AppColors.coralLight, // Coral ấm
               height: 150.h,
               onTap: () => MainScreenState.of(context)?.switchTab(2),
             ),
@@ -70,36 +71,36 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildCategoryRow2(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      padding: EdgeInsets.symmetric(horizontal: Spacing.s4),
       child: Row(
         children: [
           Expanded(
             child: CategoryCard(
               imagePath: 'image/Thư viện.png',
               label: 'Thư viện',
-              color: const Color(0xFF3AA09A), // Teal
+              color: AppColors.tertiaryLight, // Teal / Green
               height: 120.h,
               onTap: () => Navigator.push(context,
                 AppPageRoute(page: const LibraryScreen())),
             ),
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: Spacing.s3),
           Expanded(
             child: CategoryCard(
               imagePath: 'image/Xếp hạng.png',
               label: 'Xếp hạng',
-              color: const Color(0xFFF0A030), // Vàng cam ấm
+              color: AppColors.secondaryLight, // Vàng cam ấm
               height: 120.h,
               onTap: () => Navigator.push(context,
                 AppPageRoute(page: const LeaderboardScreen())),
             ),
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: Spacing.s3),
           Expanded(
             child: CategoryCard(
               imagePath: 'image/Thành tích.png',
               label: 'Thành tích',
-              color: const Color(0xFF9070CF), // Tím mềm
+              color: AppColors.violetLight, // Tím mềm
               height: 120.h,
               onTap: () => Navigator.push(context,
                 AppPageRoute(page: const AchievementsScreen())),

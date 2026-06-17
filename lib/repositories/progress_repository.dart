@@ -6,6 +6,10 @@ import '../data/local/sync_queue_datasource.dart';
 import '../data/remote/progress_remote_datasource.dart';
 import '../services/auth_service.dart';
 import '../services/storage_service.dart';
+import '../models/khmer_letter.dart';
+import '../models/khmer_vowel.dart';
+import '../models/khmer_number.dart';
+import 'lesson_repository.dart';
 
 /// Repository cho Tiến Độ Học — Offline-First, Database-Driven
 /// MongoDB = source of truth, Isar = local cache + offline support
@@ -81,7 +85,7 @@ class ProgressRepository {
     );
 
     // Step 5: Try immediate sync if online
-    _tryImmediateSync(lessonId, stars, lessonType);
+    _tryImmediateSync(lessonId, stars, lessonType, lessonOrder);
   }
 
   /// Auto-unlock bài tiếp theo
@@ -101,12 +105,13 @@ class ProgressRepository {
   }
 
   /// Try sync ngay nếu có mạng
-  Future<void> _tryImmediateSync(String lessonId, int stars, String lessonType) async {
+  Future<void> _tryImmediateSync(String lessonId, int stars, String lessonType, int lessonOrder) async {
     try {
       final result = await _remoteDS.completeLesson(
         lessonId: lessonId,
         stars: stars,
         lessonType: lessonType,
+        lessonOrder: lessonOrder,
       );
 
       if (result != null) {
@@ -202,6 +207,39 @@ class ProgressRepository {
         // 3. Update local với merged data từ server
         final serverLessons = serverResult['completedLessons'] as List<dynamic>? ?? [];
         final progressList = serverLessons.map((l) => Map<String, dynamic>.from(l as Map)).toList();
+
+        // ─── ĐỒNG BỘ/GIẢI QUYẾT SAI LỆCH CHỈ SỐ (LESSON ORDER HEALING) ───
+        for (final p in progressList) {
+          final lessonId = p['lessonId']?.toString();
+          // Chỉ cần sửa đổi các bài học có lessonOrder bị sai hoặc mặc định là 0
+          if (lessonId != null && (p['lessonOrder'] == 0 || p['lessonOrder'] == null)) {
+            // Lấy thông tin bài học từ local cache/server
+            final lesson = await LessonRepository.instance.getLessonById(lessonId);
+            if (lesson != null) {
+              final type = lesson['type']?.toString();
+              final khmerText = lesson['khmerText']?.toString();
+              
+              if (khmerText != null && khmerText.isNotEmpty) {
+                int resolvedOrder = -1;
+                if (type == 'consonant') {
+                  resolvedOrder = KhmerLetterData.consonants.indexWhere((l) => !l.isTest && l.character == khmerText);
+                } else if (type == 'vowel') {
+                  resolvedOrder = KhmerVowelData.vowels.indexWhere((v) => v.character == khmerText);
+                } else if (type == 'number') {
+                  resolvedOrder = KhmerNumberData.numbers.indexWhere((n) => n.character == khmerText);
+                }
+
+                if (resolvedOrder != -1) {
+                  p['lessonOrder'] = resolvedOrder;
+                  if (kDebugMode) {
+                    print('[ProgressRepo] Healed lesson $lessonId ($khmerText) order to $resolvedOrder');
+                  }
+                }
+              }
+            }
+          }
+        }
+
         await _localDS.bulkSaveProgress(userId, progressList);
 
         // 4. Đánh dấu đã sync
@@ -226,6 +264,11 @@ class ProgressRepository {
   /// Save profile cache vào Isar
   Future<void> saveProfileCache(Map<String, dynamic> profile) async {
     await _localDS.saveProfileCache(_userId, profile);
+  }
+
+  /// Bulk save/update progress directly to Isar
+  Future<void> bulkSaveProgress(String userId, List<Map<String, dynamic>> progressList) async {
+    await _localDS.bulkSaveProgress(userId, progressList);
   }
 
   /// Đồng bộ tiến độ từ local Isar sang SharedPreferences

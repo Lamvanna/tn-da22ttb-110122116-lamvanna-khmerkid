@@ -202,7 +202,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                   color: AppColors.textHint)),
               ])),
               // Divider
-              Container(width: 1.w, height: 40.h, color: const Color(0xFFEEF1F8)),
+              Container(width: 1.w, height: 40.h, color: AppColors.surfaceContainerLow),
               // Stars
               Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -218,7 +218,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                   color: AppColors.textHint)),
               ])),
               // Divider
-              Container(width: 1.w, height: 40.h, color: const Color(0xFFEEF1F8)),
+              Container(width: 1.w, height: 40.h, color: AppColors.surfaceContainerLow),
               // Level
               Expanded(child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -235,7 +235,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                         child: LinearProgressIndicator(
                           value: _score?.levelProgress ?? 0,
                           minHeight: 6.h,
-                          backgroundColor: const Color(0xFFEEF1F8),
+                          backgroundColor: AppColors.surfaceContainerLow,
                           valueColor: const AlwaysStoppedAnimation(AppColors.headerMid)))),
                   ]),
                   SizedBox(height: 3.h),
@@ -249,26 +249,5 @@ class _HomeHeaderState extends State<HomeHeader> {
         ),
       ],
     );
-  }
-
-  Widget _buildStatItem({
-    required IconData icon,
-    required Color iconColor,
-    required String value,
-    required String label,
-  }) {
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(icon, color: iconColor, size: 18.sp),
-        SizedBox(width: 5.w),
-        Text(value, style: GoogleFonts.plusJakartaSans(
-          fontSize: 16.sp, fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary)),
-      ]),
-      SizedBox(height: 3.h),
-      Text(label, style: GoogleFonts.plusJakartaSans(
-        fontSize: 11.sp, fontWeight: FontWeight.w500,
-        color: AppColors.textHint)),
-    ]);
   }
 }

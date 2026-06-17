@@ -25,6 +25,12 @@ async function run() {
       spelling.forEach(l => {
         console.log(`    * ${l.lessonId} (order: ${l.lessonOrder}, stars: ${l.stars}) completed at ${l.completedAt}`);
       });
+
+      const consonant = prog.completedLessons.filter(l => l.lessonType === 'consonant');
+      console.log(`  Consonant lessons: ${consonant.length}`);
+      consonant.forEach(l => {
+        console.log(`    * ${l.lessonId} (order: ${l.lessonOrder}, stars: ${l.stars}) completed at ${l.completedAt}`);
+      });
     }
 
     await mongoose.connection.close();

@@ -259,8 +259,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Widget _buildNotificationItem(AppNotification note) {
     bool isRead = note.isRead;
+
     return GestureDetector(
-      onTap: () => _markAsRead(note),
+      onTap: () {
+        _markAsRead(note);
+        _showNotificationDetails(note);
+      },
       child: Container(
         margin: EdgeInsets.only(bottom: 14.h, left: 16.w, right: 16.w),
         padding: EdgeInsets.all(16.w),
@@ -326,6 +330,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   SizedBox(height: 6.h),
                   Text(
                     note.message,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13.5.sp,
                       color: isRead ? const Color(0xFF64748B) : const Color(0xFF475569),
@@ -355,6 +361,189 @@ class _NotificationScreenState extends State<NotificationScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showNotificationDetails(AppNotification note) {
+    List<Color> gradientColors = [const Color(0xFF0084FF), const Color(0xFF00C3FF)];
+    IconData iconData = Icons.notifications_rounded;
+
+    switch (note.type) {
+      case 'level_up':
+        gradientColors = [const Color(0xFF10B981), const Color(0xFF34D399)];
+        iconData = Icons.rocket_launch_rounded;
+        break;
+      case 'daily_reminder':
+      case 'reminder':
+        gradientColors = [const Color(0xFFF59E0B), const Color(0xFFFBBF24)];
+        iconData = Icons.access_alarm_rounded;
+        break;
+      case 'reward':
+      case 'quest':
+        gradientColors = [const Color(0xFF3B82F6), const Color(0xFF60A5FA)];
+        iconData = Icons.check_circle_rounded;
+        break;
+      case 'badge_unlocked':
+      case 'badge':
+        gradientColors = [const Color(0xFF8B5CF6), const Color(0xFFA78BFA)];
+        iconData = Icons.military_tech_rounded;
+        break;
+      case 'unlock':
+        gradientColors = [const Color(0xFFEC4899), const Color(0xFFF472B6)];
+        iconData = Icons.lock_open_rounded;
+        break;
+      default:
+        break;
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.symmetric(horizontal: 24.w),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28.r),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.12),
+                blurRadius: 30.r,
+                offset: Offset(0, 10.h),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // --- Gradient Header ---
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 24.h),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: gradientColors,
+                  ),
+                ),
+                child: Center(
+                  child: Container(
+                    width: 64.w,
+                    height: 64.w,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white.withOpacity(0.4), width: 2.w),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      iconData,
+                      color: Colors.white,
+                      size: 30.sp,
+                    ),
+                  ),
+                ),
+              ),
+              // --- Content body ---
+              Padding(
+                padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 24.h),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Title
+                    Text(
+                      note.title,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 17.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF0F172A),
+                        height: 1.25,
+                      ),
+                    ),
+                    SizedBox(height: 14.h),
+                    // Message
+                    Flexible(
+                      child: Container(
+                        constraints: BoxConstraints(maxHeight: 200.h),
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: Text(
+                            note.message,
+                            textAlign: TextAlign.left,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13.5.sp,
+                              color: const Color(0xFF475569),
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    // Time
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: 12.sp,
+                          color: const Color(0xFF94A3B8),
+                        ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          _formatTime(note.createdAt),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF94A3B8),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20.h),
+                    // Beautiful custom Close Button with bounce effect
+                    GestureDetector(
+                      onTap: () => Navigator.pop(ctx),
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: gradientColors,
+                          ),
+                          borderRadius: BorderRadius.circular(16.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: gradientColors[0].withOpacity(0.3),
+                              blurRadius: 10.r,
+                              offset: Offset(0, 4.h),
+                            ),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Tuyệt vời',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

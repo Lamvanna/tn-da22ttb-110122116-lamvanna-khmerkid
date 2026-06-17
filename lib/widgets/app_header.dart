@@ -10,6 +10,7 @@ class AppHeader extends StatelessWidget {
   final VoidCallback onBack;
   final Widget? trailing;
   final List<Color>? gradientColors;
+  final double? bottomPadding;
 
   const AppHeader({
     super.key,
@@ -18,6 +19,7 @@ class AppHeader extends StatelessWidget {
     required this.onBack,
     this.trailing,
     this.gradientColors,
+    this.bottomPadding,
   });
 
   @override
@@ -55,7 +57,7 @@ class AppHeader extends StatelessWidget {
         SafeArea(
           bottom: false,
           child: Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 40.h),
+            padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, bottomPadding ?? 40.h),
             child: Row(children: [
               // Back button
               GestureDetector(

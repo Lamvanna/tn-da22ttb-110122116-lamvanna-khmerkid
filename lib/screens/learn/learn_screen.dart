@@ -10,6 +10,7 @@ import 'vowel_screen.dart';
 import 'consonant_series_screen.dart';
 import 'number_map_screen.dart';
 import 'diacritical_map_screen.dart';
+import 'vocabulary_screen.dart';
 import '../../services/score_service.dart';
 import '../../widgets/app_page_route.dart';
 import '../../models/khmer_number.dart';
@@ -79,6 +80,10 @@ class _LearnScreenState extends State<LearnScreen> {
     final doneO_O = (_score?.lettersLearned ?? 0) + (_score?.vowelsLearned ?? 0);
     final o_oProg = totalO_O > 0 ? doneO_O / totalO_O : 0.0;
 
+    final totalVocab = 38;
+    final doneVocab = _score?.vocabLearned ?? 0;
+    final vocabProg = totalVocab > 0 ? doneVocab / totalVocab : 0.0;
+
     return [
       _Zone(n: 1, title: 'Học phụ âm', sub: 'Nhận biết 33 phụ âm Khmer',
         icon: Icons.abc_rounded, img: 'image/Phụ âm.png', prog: lp, total: 33, done: _score?.lettersLearned ?? 0,
@@ -113,11 +118,15 @@ class _LearnScreenState extends State<LearnScreen> {
         icon: Icons.draw_rounded, img: 'image/Tập viết.png', prog: writeProg, total: totalWriting, done: doneWriting,
         color: const Color(0xFFFF9100), stars: 15, btn: 'Bắt đầu học',
         onTap: () => _navigateTo(const WritingMapScreen())),
-      _Zone(n: 9, title: 'Đọc hiểu', sub: 'Hiểu nội dung và trả lời câu hỏi',
+      _Zone(n: 9, title: 'Học từ vựng', sub: 'Học từ vựng theo các chủ đề',
+        icon: Icons.book_rounded, img: 'image/Sách.png', prog: vocabProg, total: totalVocab, done: doneVocab,
+        color: const Color(0xFF7E57C2), stars: 10, btn: 'Bắt đầu học',
+        onTap: () => _navigateTo(const VocabularyScreen())),
+      _Zone(n: 10, title: 'Đọc hiểu', sub: 'Hiểu nội dung và trả lời câu hỏi',
         icon: Icons.menu_book_rounded, img: 'image/Đọc hiểu.png', prog: 0, total: 25, done: 0,
         color: const Color(0xFFFF4081), stars: 20, btn: 'Sắp ra mắt', isComingSoon: true,
         onTap: () => _showComingSoon(context)),
-      _Zone(n: 10, title: 'Khám phá văn hóa', sub: 'Tìm hiểu văn hóa Khmer',
+      _Zone(n: 11, title: 'Khám phá văn hóa', sub: 'Tìm hiểu văn hóa Khmer',
         icon: Icons.temple_buddhist_rounded, img: 'image/Khám phá văn hóa.png', prog: 0, total: 20, done: 0,
         color: const Color(0xFF536DFE), stars: 20, btn: 'Sắp ra mắt', isComingSoon: true,
         onTap: () => _showComingSoon(context)),
@@ -500,51 +509,62 @@ class _LearnScreenState extends State<LearnScreen> {
                     fontSize: 11.sp, 
                     fontWeight: FontWeight.w500, 
                     color: AppColors.textSecondary)),
-                  SizedBox(height: 8.h),
-                  // Row 3: Progress + Button
-                  Row(children: [
-                    Text('${(zone.prog * 100).toInt()}%', 
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.sp, 
-                        fontWeight: FontWeight.w700, 
-                        color: zone.color)),
-                    SizedBox(width: 6.w),
-                    Expanded(child: ClipRRect(
-                      borderRadius: BorderRadius.circular(5.r),
-                      child: LinearProgressIndicator(
-                        value: zone.prog.clamp(0, 1), 
-                        minHeight: 5.h,
-                        backgroundColor: zone.color.withValues(alpha: 0.12), 
-                        color: zone.color),
-                    )),
-                    SizedBox(width: 6.w),
-                    Text('${zone.done}/${zone.total} bài', 
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10.sp, 
-                        fontWeight: FontWeight.w600, 
-                        color: AppColors.textSecondary)),
-                    SizedBox(width: 8.w),
-                    GestureDetector(
-                      onTap: zone.onTap,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                        decoration: BoxDecoration(
-                          color: zone.isComingSoon ? zone.color.withValues(alpha: 0.4) : zone.color,
-                          borderRadius: BorderRadius.circular(10.r)),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          if (zone.isComingSoon)
-                            Padding(
-                              padding: EdgeInsets.only(right: 4.w),
-                              child: Icon(Icons.lock_rounded, size: 12.sp, color: Colors.white)),
-                          Text(zone.btn, 
+                  SizedBox(height: 6.h),
+                  // Row 3: Progress % & Button on the same row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Left: Progress % and count
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('${(zone.prog * 100).toInt()}%', 
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11.sp, 
-                              fontWeight: FontWeight.w700, 
-                              color: Colors.white)),
-                        ]),
+                              fontSize: 12.sp, 
+                              fontWeight: FontWeight.w800, 
+                              color: zone.color)),
+                          SizedBox(width: 10.w),
+                          Text('${zone.done}/${zone.total} bài', 
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.sp, 
+                              fontWeight: FontWeight.w600, 
+                              color: AppColors.textSecondary)),
+                        ],
                       ),
-                    ),
-                  ]),
+                      // Right: Button
+                      GestureDetector(
+                        onTap: zone.onTap,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                          decoration: BoxDecoration(
+                            color: zone.isComingSoon ? zone.color.withValues(alpha: 0.4) : zone.color,
+                            borderRadius: BorderRadius.circular(10.r),
+                            boxShadow: [
+                              BoxShadow(
+                                color: zone.color.withValues(alpha: 0.15),
+                                blurRadius: 6.r,
+                                offset: Offset(0, 2.h),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (zone.isComingSoon)
+                                Padding(
+                                  padding: EdgeInsets.only(right: 4.w),
+                                  child: Icon(Icons.lock_rounded, size: 12.sp, color: Colors.white)),
+                              Text(zone.btn, 
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11.sp, 
+                                  fontWeight: FontWeight.w700, 
+                                  color: Colors.white)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               )),
             ]),

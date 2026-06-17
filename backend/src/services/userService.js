@@ -17,6 +17,26 @@ class UserService {
    * Get user profile by ID
    */
   async getProfile(userId) {
+    // Sync completed lessons from Progress collection to User collection to ensure consistency
+    try {
+      const Progress = require('../models/Progress');
+      const progress = await Progress.findOne({ userId });
+      if (progress && progress.completedLessons && progress.completedLessons.length > 0) {
+        const validObjectIds = progress.completedLessons
+          .map(l => l.lessonId)
+          .filter(id => id && id.match(/^[0-9a-fA-F]{24}$/));
+        
+        if (validObjectIds.length > 0) {
+          await User.findByIdAndUpdate(userId, {
+            $addToSet: { 'learningProgress.completedLessons': { $each: validObjectIds } },
+            'learningProgress.totalLessonsCompleted': progress.completedLessons.filter(l => l.isCompleted).length
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error syncing progress to user profile:', err);
+    }
+
     const user = await User.findById(userId)
       .populate('badges')
       .populate('achievements')

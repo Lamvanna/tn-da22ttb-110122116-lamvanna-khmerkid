@@ -16,7 +16,6 @@ class _AdminGamesScreenState extends State<AdminGamesScreen> {
   List<dynamic> _questions = [];
   bool _loading = true;
   String _selectedGameKey = 'letter_catch';
-  String _searchQuery = '';
   final _searchCtrl = TextEditingController();
 
   static const _gameLabels = {
@@ -34,10 +33,10 @@ class _AdminGamesScreenState extends State<AdminGamesScreen> {
   };
 
   static const _gameColors = {
-    'letter_catch': Color(0xFF1A237E),
-    'word_search': Color(0xFF2E7D32),
-    'sentence_builder': Color(0xFF0288D1),
-    'math_garden': Color(0xFFF57C00),
+    'letter_catch': Color(0xFF6366F1), // Chàm sáng (Indigo)
+    'word_search': Color(0xFF10B981), // Xanh Emerald sáng
+    'sentence_builder': Color(0xFF3B82F6), // Xanh dương sáng
+    'math_garden': Color(0xFFF97316), // Cam tươi sáng
   };
 
   static const _gameIcons = {
@@ -53,13 +52,19 @@ class _AdminGamesScreenState extends State<AdminGamesScreen> {
     _loadQuestions();
   }
 
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadQuestions() async {
     setState(() => _loading = true);
     final result = await AdminService().fetchGameQuestions(
       page: 1,
       limit: 150,
       gameKey: _selectedGameKey,
-      search: _searchQuery.isNotEmpty ? _searchQuery : null,
+      search: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
     );
     if (!mounted) return;
     setState(() {
@@ -70,119 +75,16 @@ class _AdminGamesScreenState extends State<AdminGamesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = _gameColors[_selectedGameKey] ?? AppColors.primary;
+    final activeColor = const Color(0xFF0084FF);
     return Column(
       children: [
-        // ── Game Selector Tabs ──
-        SizedBox(
-          height: 58.h,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-            children: _gameLabels.entries.map((e) {
-              final selected = _selectedGameKey == e.key;
-              final color = _gameColors[e.key] ?? AppColors.primary;
-              return Padding(
-                padding: EdgeInsets.only(right: 10.w),
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() => _selectedGameKey = e.key);
-                    _loadQuestions();
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                    decoration: BoxDecoration(
-                      color: selected ? color : AppColors.cardWhite,
-                      borderRadius: BorderRadius.circular(16.r),
-                      border: Border.all(
-                        color: selected ? color : AppColors.outlineVariant,
-                        width: 1.5,
-                      ),
-                      boxShadow: selected
-                          ? [
-                              BoxShadow(
-                                color: color.withValues(alpha: 0.25),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              )
-                            ]
-                          : null,
-                    ),
-                    child: Center(
-                      child: Row(
-                        children: [
-                          Text('${_gameEmojis[e.key] ?? ''} ', style: TextStyle(fontSize: 14.sp)),
-                          Text(
-                            e.value,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13.sp,
-                              fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                              color: selected ? Colors.white : AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-
-        // ── Search Input ──
-        Padding(
-          padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 8.h),
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 14.w),
-            decoration: BoxDecoration(
-              color: AppColors.cardWhite,
-              borderRadius: BorderRadius.circular(16.r),
-              border: Border.all(
-                color: _searchQuery.isNotEmpty ? activeColor : AppColors.outlineVariant,
-                width: 1.5,
-              ),
-              boxShadow: AppColors.cardShadowList,
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.search_rounded, color: _searchQuery.isNotEmpty ? activeColor : AppColors.textHint, size: 22.sp),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: TextField(
-                    controller: _searchCtrl,
-                    style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-                      hintText: 'Tìm theo tiêu đề, prompt hoặc đáp án...',
-                      hintStyle: GoogleFonts.plusJakartaSans(color: AppColors.textHint, fontSize: 13.sp),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 12.h),
-                    ),
-                    onSubmitted: (val) {
-                      setState(() => _searchQuery = val.trim());
-                      _loadQuestions();
-                    },
-                  ),
-                ),
-                if (_searchQuery.isNotEmpty)
-                  IconButton(
-                    icon: Icon(Icons.clear_rounded, size: 20.sp, color: AppColors.textSecondary),
-                    onPressed: () {
-                      _searchCtrl.clear();
-                      setState(() => _searchQuery = '');
-                      _loadQuestions();
-                    },
-                  ),
-              ],
-            ),
-          ),
-        ),
+        // ── Search & Filter Row ──
+        _buildSearchAndFilterRow(),
 
         // ── Questions List ──
         Expanded(
           child: _loading
-              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+              ? const Center(child: CircularProgressIndicator(color: Color(0xFF0084FF)))
               : _questions.isEmpty
                   ? Center(
                       child: Column(
@@ -214,30 +116,178 @@ class _AdminGamesScreenState extends State<AdminGamesScreen> {
         ),
 
         // ── Add Button ──
-        SafeArea(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 8.h),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: () => _showQuestionForm(null),
-                icon: Icon(Icons.add_rounded, size: 22.sp),
-                label: Text(
-                  'Thêm câu hỏi mới',
-                  style: GoogleFonts.plusJakartaSans(fontSize: 15.sp, fontWeight: FontWeight.w700),
+        _buildAddButton(),
+      ],
+    );
+  }
+
+  Widget _buildSearchAndFilterRow() {
+    final activeColor = const Color(0xFF0084FF);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
+      child: Row(
+        children: [
+          // Search Field
+          Expanded(
+            child: Container(
+              height: 46.h,
+              decoration: BoxDecoration(
+                color: AppColors.cardWhite,
+                borderRadius: BorderRadius.circular(16.r),
+                boxShadow: AppColors.cardShadowList,
+              ),
+              child: TextField(
+                controller: _searchCtrl,
+                onSubmitted: (_) => _loadQuestions(),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13.5.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
                 ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: activeColor,
-                  padding: EdgeInsets.symmetric(vertical: 14.h),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-                  elevation: 3,
-                  shadowColor: activeColor.withValues(alpha: 0.3),
+                decoration: InputDecoration(
+                  hintText: 'Tìm câu hỏi...',
+                  hintStyle: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.sp,
+                    color: AppColors.textHint,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  prefixIcon: Icon(Icons.search_rounded, color: activeColor, size: 20.sp),
+                  suffixIcon: _searchCtrl.text.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(Icons.clear_rounded, size: 16.sp, color: AppColors.textHint),
+                          onPressed: () {
+                            _searchCtrl.clear();
+                            _loadQuestions();
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: Colors.transparent,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                    borderSide: const BorderSide(color: AppColors.outlineVariant, width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                    borderSide: const BorderSide(color: AppColors.outlineVariant, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                    borderSide: BorderSide(color: activeColor, width: 1.8),
+                  ),
                 ),
+                onChanged: (val) => setState(() {}),
               ),
             ),
           ),
+          SizedBox(width: 8.w),
+
+          // Dropdown Combobox Filter
+          _buildFilterSelector(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterSelector() {
+    return Container(
+      width: 175.w,
+      height: 46.h,
+      decoration: BoxDecoration(
+        color: AppColors.cardWhite,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: AppColors.cardShadowList,
+        border: Border.all(
+          color: AppColors.outlineVariant.withValues(alpha: 0.5),
+          width: 1.2,
         ),
-      ],
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedGameKey,
+          isExpanded: true,
+          icon: Padding(
+            padding: EdgeInsets.only(right: 8.w),
+            child: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: AppColors.textSecondary,
+              size: 20.sp,
+            ),
+          ),
+          selectedItemBuilder: (context) {
+            return _gameLabels.entries.map((entry) {
+              final key = entry.key;
+              final label = entry.value;
+              final color = _gameColors[key] ?? const Color(0xFF0084FF);
+              final icon = _gameIcons[key] ?? Icons.sports_esports_rounded;
+
+              return Row(
+                children: [
+                  SizedBox(width: 10.w),
+                  Icon(
+                    icon,
+                    color: color,
+                    size: 16.sp,
+                  ),
+                  SizedBox(width: 6.w),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              );
+            }).toList();
+          },
+          items: _gameLabels.entries.map((entry) {
+            final key = entry.key;
+            final label = entry.value;
+            final color = _gameColors[key] ?? const Color(0xFF0084FF);
+            final icon = _gameIcons[key] ?? Icons.sports_esports_rounded;
+            final emoji = _gameEmojis[key] ?? '';
+
+            return DropdownMenuItem<String>(
+              value: key,
+              child: Row(
+                children: [
+                  Icon(
+                    icon,
+                    color: color,
+                    size: 16.sp,
+                  ),
+                  SizedBox(width: 8.w),
+                  Text(
+                    '$emoji $label',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: (v) {
+            if (v != null) {
+              setState(() {
+                _selectedGameKey = v;
+              });
+              _loadQuestions();
+            }
+          },
+          borderRadius: BorderRadius.circular(16.r),
+          dropdownColor: AppColors.cardWhite,
+        ),
+      ),
     );
   }
 
@@ -248,101 +298,157 @@ class _AdminGamesScreenState extends State<AdminGamesScreen> {
     final List<dynamic> choices = q['choices'] ?? [];
     final isActive = q['isActive'] ?? true;
     final id = q['_id']?.toString() ?? q['id']?.toString() ?? '';
-    final color = _gameColors[_selectedGameKey] ?? AppColors.primary;
+    final color = const Color(0xFF0084FF);
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
         color: AppColors.cardWhite,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(22.r),
         boxShadow: AppColors.cardShadowList,
         border: Border.all(
-          color: !isActive
-              ? AppColors.errorRed.withValues(alpha: 0.3)
-              : color.withValues(alpha: 0.08),
-          width: 1.5,
+          color: isActive
+              ? AppColors.outlineVariant.withValues(alpha: 0.4)
+              : AppColors.errorRed.withValues(alpha: 0.25),
+          width: isActive ? 1.0 : 1.5,
         ),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 48.w, height: 48.w,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                answer.isNotEmpty ? (answer.length > 2 ? answer.substring(0, 2) : answer) : '?',
-                style: GoogleFonts.battambang(
-                  fontSize: 16.sp, fontWeight: FontWeight.w800, color: color),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22.r),
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              // Side colored accent bar
+              Container(
+                width: 6.w,
+                color: isActive ? color : AppColors.errorRed,
               ),
-            ),
-          ),
-          SizedBox(width: 14.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        title,
-                        style: GoogleFonts.plusJakartaSans(fontSize: 12.sp, fontWeight: FontWeight.w600, color: AppColors.textHint),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(14.w),
+                  child: Row(
+                    children: [
+                      // Answer Icon Circle
+                      Container(
+                        width: 52.w,
+                        height: 52.w,
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            answer.isNotEmpty ? (answer.length > 2 ? answer.substring(0, 2) : answer) : '?',
+                            style: GoogleFonts.battambang(
+                                fontSize: 16.sp, fontWeight: FontWeight.w800, color: color),
+                          ),
+                        ),
                       ),
-                    ),
-                    if (!isActive) ...[
-                      SizedBox(width: 6.w),
-                      _miniTag('Ẩn', AppColors.errorRed),
+                      SizedBox(width: 14.w),
+
+                      // Core Info
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    title,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textHint,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              '$prompt ➔ $answer',
+                              style: GoogleFonts.battambang(
+                                fontSize: 14.5.sp,
+                                fontWeight: FontWeight.w700,
+                                color: isActive ? AppColors.textPrimary : AppColors.textHint,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (choices.isNotEmpty) ...[
+                              SizedBox(height: 8.h),
+                              Wrap(
+                                spacing: 6.w,
+                                runSpacing: 4.h,
+                                children: choices.map((c) => _miniTag(c.toString(), color)).toList(),
+                              ),
+                            ],
+                            if (!isActive) ...[
+                              SizedBox(height: 6.h),
+                              _miniTag('Ẩn', AppColors.errorRed),
+                            ],
+                          ],
+                        ),
+                      ),
+
+                      // Actions
+                      PopupMenuButton<String>(
+                        icon: Icon(Icons.more_vert_rounded, color: AppColors.textSecondary, size: 22.sp),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+                        elevation: 4,
+                        color: AppColors.cardWhite,
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit_rounded, size: 18.sp, color: color),
+                                SizedBox(width: 10.w),
+                                Text(
+                                  'Sửa câu hỏi',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete_outline_rounded, size: 18.sp, color: AppColors.errorRed),
+                                SizedBox(width: 10.w),
+                                Text(
+                                  'Xóa câu hỏi',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.errorRed,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        onSelected: (v) {
+                          if (v == 'edit') _showQuestionForm(q);
+                          if (v == 'delete') _confirmDelete(id, title);
+                        },
+                      ),
                     ],
-                  ],
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  '$prompt ➔ $answer',
-                  style: GoogleFonts.battambang(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w700,
-                    color: isActive ? AppColors.textPrimary : AppColors.textHint,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                if (choices.isNotEmpty) ...[
-                  SizedBox(height: 8.h),
-                  Wrap(
-                    spacing: 6.w,
-                    runSpacing: 4.h,
-                    children: choices.map((c) => _miniTag(c.toString(), color)).toList(),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert_rounded, color: AppColors.textSecondary, size: 22.sp),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
-            itemBuilder: (_) => [
-              PopupMenuItem(value: 'edit', child: Row(children: [
-                Icon(Icons.edit_rounded, size: 18.sp, color: color),
-                SizedBox(width: 8.w), const Text('Sửa'),
-              ])),
-              PopupMenuItem(value: 'delete', child: Row(children: [
-                Icon(Icons.delete_outline_rounded, size: 18.sp, color: AppColors.errorRed),
-                SizedBox(width: 8.w), Text('Xóa', style: TextStyle(color: AppColors.errorRed)),
-              ])),
+              ),
             ],
-            onSelected: (v) {
-              if (v == 'edit') _showQuestionForm(q);
-              if (v == 'delete') _confirmDelete(id, title);
-            },
           ),
-        ],
+        ),
       ),
     );
   }
@@ -357,14 +463,75 @@ class _AdminGamesScreenState extends State<AdminGamesScreen> {
       ),
       child: Text(
         text,
-        style: GoogleFonts.battambang(fontSize: 10.sp, fontWeight: FontWeight.w700, color: color),
+        style: GoogleFonts.battambang(
+          fontSize: 10.sp,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
       ),
     );
   }
 
-  // ════════════════════════════════════════════════════════════════
-  //  FORM — Navigate to a full-screen page for create/edit
-  // ════════════════════════════════════════════════════════════════
+  Widget _buildAddButton() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10.r,
+            offset: Offset(0, -4.h),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: SizedBox(
+          width: double.infinity,
+          height: 48.h,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0084FF), Color(0xFF00C6FF)],
+              ),
+              borderRadius: BorderRadius.circular(16.r),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0084FF).withValues(alpha: 0.35),
+                  blurRadius: 12.r,
+                  offset: Offset(0, 4.h),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _showQuestionForm(null),
+                borderRadius: BorderRadius.circular(16.r),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add_circle_outline_rounded, size: 20.sp, color: Colors.white),
+                      SizedBox(width: 8.w),
+                      Text(
+                        'Thêm câu hỏi mới',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   void _showQuestionForm(Map<String, dynamic>? q) {
     Navigator.of(context).push(
@@ -372,7 +539,7 @@ class _AdminGamesScreenState extends State<AdminGamesScreen> {
         builder: (_) => _GameQuestionFormPage(
           gameKey: _selectedGameKey,
           question: q,
-          gameColor: _gameColors[_selectedGameKey] ?? AppColors.primary,
+          gameColor: const Color(0xFF0084FF),
           gameLabel: _gameLabels[_selectedGameKey] ?? '',
           gameEmoji: _gameEmojis[_selectedGameKey] ?? '',
           gameIcon: _gameIcons[_selectedGameKey] ?? Icons.gamepad_rounded,
@@ -467,7 +634,7 @@ class _GameQuestionFormPageState extends State<_GameQuestionFormPage> {
   late final TextEditingController _emojiCtrl;
   late final TextEditingController _objectiveCtrl;
   List<List<TextEditingController>> _gridCtrls = [];
-  Set<String> _pathCells = {};  // "row,col" format
+  final Set<String> _pathCells = {};  // "row,col" format
   int _gridRows = 6;
   int _gridCols = 5;
 
@@ -653,7 +820,7 @@ class _GameQuestionFormPageState extends State<_GameQuestionFormPage> {
                 color: color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10.r),
               ),
-              child: Icon(widget.gameIcon, color: color, size: 18.sp),
+              child: Icon(Icons.sports_esports_rounded, color: color, size: 18.sp),
             ),
             SizedBox(width: 10.w),
             Flexible(
@@ -666,313 +833,278 @@ class _GameQuestionFormPageState extends State<_GameQuestionFormPage> {
           ],
         ),
         centerTitle: false,
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(right: 8.w),
+            child: _saving
+                ? Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      child: SizedBox(
+                        width: 20.w,
+                        height: 20.w,
+                        child: CircularProgressIndicator(
+                          color: color,
+                          strokeWidth: 2.w,
+                        ),
+                      ),
+                    ),
+                  )
+                : TextButton(
+                    onPressed: _onSave,
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                    ),
+                    child: Text(
+                      'Lưu',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w700,
+                        color: color,
+                      ),
+                    ),
+                  ),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(1.h),
           child: Container(height: 1.h, color: AppColors.outlineVariant),
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h + MediaQuery.of(context).viewInsets.bottom),
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h + MediaQuery.of(context).viewInsets.bottom),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Game badge ──
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(color: color.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(widget.gameEmoji, style: TextStyle(fontSize: 16.sp)),
+                  SizedBox(width: 6.w),
+                  Text(widget.gameLabel,
+                    style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700, color: color)),
+                ],
+              ),
+            ),
+            SizedBox(height: 16.h),
+
+            // ── LIVE PREVIEW CARD ──
+            Container(
+              margin: EdgeInsets.only(bottom: 20.h),
+              padding: EdgeInsets.all(14.w),
+              decoration: BoxDecoration(
+                color: AppColors.cardWhite,
+                borderRadius: BorderRadius.circular(20.r),
+                boxShadow: AppColors.cardShadowList,
+                border: Border.all(
+                  color: color.withValues(alpha: 0.25),
+                  width: 1.5,
+                ),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Game badge ──
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(color: color.withValues(alpha: 0.2)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(widget.gameEmoji, style: TextStyle(fontSize: 16.sp)),
-                        SizedBox(width: 6.w),
-                        Text(widget.gameLabel,
-                          style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700, color: color)),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-
-                  // ── LIVE PREVIEW CARD ──
-                  Container(
-                    margin: EdgeInsets.only(bottom: 20.h),
-                    padding: EdgeInsets.all(14.w),
-                    decoration: BoxDecoration(
-                      color: AppColors.cardWhite,
-                      borderRadius: BorderRadius.circular(20.r),
-                      boxShadow: AppColors.cardShadowList,
-                      border: Border.all(
-                        color: color.withValues(alpha: 0.25),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.visibility_outlined, size: 14.sp, color: color),
-                            SizedBox(width: 4.w),
-                            Text(
-                              'XEM TRƯỚC TRỰC TIẾP CÂU HỎI',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w800,
-                                color: color,
-                                letterSpacing: 1.0,
-                              ),
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                              decoration: BoxDecoration(
-                                color: _isActive ? AppColors.tertiary.withValues(alpha: 0.1) : AppColors.errorRed.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6.r),
-                              ),
-                              child: Text(
-                                _isActive ? 'Kích hoạt' : 'Ẩn',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 9.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: _isActive ? AppColors.tertiary : AppColors.errorRed,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 10.h),
-                        const Divider(height: 1, color: AppColors.outlineVariant),
-                        SizedBox(height: 12.h),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 48.w,
-                              height: 48.w,
-                              decoration: BoxDecoration(
-                                color: color.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  _answerCtrl.text.isNotEmpty
-                                      ? (_answerCtrl.text.length > 2 ? _answerCtrl.text.substring(0, 2) : _answerCtrl.text)
-                                      : '?',
-                                  style: GoogleFonts.battambang(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.w800,
-                                    color: color,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 14.w),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _titleCtrl.text.isNotEmpty ? _titleCtrl.text : 'Chưa có tiêu đề',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textHint,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  SizedBox(height: 2.h),
-                                  Text(
-                                    '${_promptCtrl.text.isNotEmpty ? _promptCtrl.text : "Chưa nhập gợi ý"} ➔ ${_answerCtrl.text.isNotEmpty ? _answerCtrl.text : "?"}',
-                                    style: GoogleFonts.battambang(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  if (_choices.isNotEmpty) ...[
-                                    SizedBox(height: 6.h),
-                                    Wrap(
-                                      spacing: 4.w,
-                                      runSpacing: 4.h,
-                                      children: _choices.map<Widget>((c) => _miniTag(c, color)).toList(),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // ════════════════════════════
-                  // SECTION 1: Thông tin cơ bản
-                  // ════════════════════════════
-                  _sectionCard(
-                    icon: Icons.info_outline_rounded,
-                    title: 'Thông tin cơ bản',
-                    color: color,
+                  Row(
                     children: [
-                      _prettyField(
-                        label: 'Tiêu đề',
-                        ctrl: _titleCtrl,
-                        hint: 'Ví dụ: Bắt chữ - mẹ',
-                        icon: Icons.title_rounded,
-                        color: color,
+                      Icon(Icons.visibility_outlined, size: 14.sp, color: color),
+                      SizedBox(width: 4.w),
+                      Text(
+                        'XEM TRƯỚC TRỰC TIẾP CÂU HỎI',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w800,
+                          color: color,
+                          letterSpacing: 1.0,
+                        ),
                       ),
-                      SizedBox(height: 14.h),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _prettyField(
-                              label: 'Câu hỏi / Gợi ý (prompt)',
-                              ctrl: _promptCtrl,
-                              hint: 'Ví dụ: mẹ',
-                              icon: Icons.help_outline_rounded,
+                      const Spacer(),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                        decoration: BoxDecoration(
+                          color: _isActive ? AppColors.tertiary.withValues(alpha: 0.1) : AppColors.errorRed.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6.r),
+                        ),
+                        child: Text(
+                          _isActive ? 'Kích hoạt' : 'Ẩn',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 9.sp,
+                            fontWeight: FontWeight.w700,
+                            color: _isActive ? AppColors.tertiary : AppColors.errorRed,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10.h),
+                  const Divider(height: 1, color: AppColors.outlineVariant),
+                  SizedBox(height: 12.h),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 48.w,
+                        height: 48.w,
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            _answerCtrl.text.isNotEmpty
+                                ? (_answerCtrl.text.length > 2 ? _answerCtrl.text.substring(0, 2) : _answerCtrl.text)
+                                : '?',
+                            style: GoogleFonts.battambang(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w800,
                               color: color,
                             ),
                           ),
-                          SizedBox(width: 12.w),
-                          Expanded(
-                            child: _prettyField(
-                              label: 'Đáp án đúng',
-                              ctrl: _answerCtrl,
-                              hint: 'Ví dụ: មា',
-                              icon: Icons.check_circle_outline_rounded,
-                              color: color,
-                              textStyle: GoogleFonts.battambang(
-                                fontSize: 16.sp,
+                        ),
+                      ),
+                      SizedBox(width: 14.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _titleCtrl.text.isNotEmpty ? _titleCtrl.text : 'Chưa có tiêu đề',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textHint,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              '${_promptCtrl.text.isNotEmpty ? _promptCtrl.text : "Chưa nhập gợi ý"} ➔ ${_answerCtrl.text.isNotEmpty ? _answerCtrl.text : "?"}',
+                              style: GoogleFonts.battambang(
+                                fontSize: 14.sp,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textPrimary,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 14.h),
-                      _choicesChipInput(color),
-                    ],
-                  ),
-                  SizedBox(height: 16.h),
-
-                  // ════════════════════════════
-                  // SECTION 2: Cấu hình riêng game
-                  // ════════════════════════════
-                  if (widget.gameKey == 'letter_catch') _letterCatchSection(color),
-                  if (widget.gameKey == 'word_search') _wordSearchSection(color),
-                  if (widget.gameKey == 'sentence_builder') _sentenceBuilderSection(color),
-                  if (widget.gameKey == 'math_garden') _mathGardenSection(color),
-                  SizedBox(height: 16.h),
-
-                  // ════════════════════════════
-                  // SECTION 3: Trạng thái
-                  // ════════════════════════════
-                  _sectionCard(
-                    icon: Icons.toggle_on_rounded,
-                    title: 'Trạng thái hiển thị',
-                    color: color,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(_isActive ? 'Đang kích hoạt' : 'Đã tắt',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 15.sp, fontWeight: FontWeight.w700,
-                                    color: _isActive ? AppColors.tertiary : AppColors.errorRed)),
-                                SizedBox(height: 2.h),
-                                Text('Câu hỏi ${_isActive ? "sẽ xuất hiện" : "sẽ không xuất hiện"} trong trò chơi',
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 12.sp, color: AppColors.textSecondary)),
-                              ],
-                            ),
-                          ),
-                          Switch(
-                            value: _isActive,
-                            activeColor: color,
-                            onChanged: (val) => setState(() => _isActive = val),
-                          ),
-                        ],
+                            if (_choices.isNotEmpty) ...[
+                              SizedBox(height: 6.h),
+                              Wrap(
+                                spacing: 4.w,
+                                runSpacing: 4.h,
+                                children: _choices.map<Widget>((c) => _miniTag(c, color)).toList(),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-          ),
 
-          // ── Actions Row Bottom ──
-          Container(
-            padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: AppColors.outlineVariant, width: 1)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -4),
+            // ── SECTION 1: Thông tin cơ bản ──
+            _sectionCard(
+              icon: Icons.info_outline_rounded,
+              title: 'Thông tin cơ bản',
+              color: color,
+              children: [
+                _prettyField(
+                  label: 'Tiêu đề',
+                  ctrl: _titleCtrl,
+                  hint: 'Ví dụ: Bắt chữ - mẹ',
+                  icon: Icons.title_rounded,
+                  color: color,
                 ),
-              ],
-            ),
-            child: SafeArea(
-              top: false,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 14.h),
-                        side: const BorderSide(color: AppColors.outlineVariant),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+                SizedBox(height: 14.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _prettyField(
+                        label: 'Câu hỏi / Gợi ý (prompt)',
+                        ctrl: _promptCtrl,
+                        hint: 'Ví dụ: mẹ',
+                        icon: Icons.help_outline_rounded,
+                        color: color,
                       ),
-                      child: Text(
-                        'Hủy',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 15.sp,
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: _prettyField(
+                        label: 'Đáp án đúng',
+                        ctrl: _answerCtrl,
+                        hint: 'Ví dụ: មា',
+                        icon: Icons.check_circle_outline_rounded,
+                        color: color,
+                        textStyle: GoogleFonts.battambang(
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textSecondary,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: _saving ? null : _onSave,
-                      icon: _saving
-                        ? SizedBox(width: 20.w, height: 20.w, child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Icon(_isEdit ? Icons.check_circle_outline_rounded : Icons.add_circle_outline_rounded, size: 20.sp),
-                      label: Text(_isEdit ? 'Lưu thay đổi' : 'Tạo câu hỏi',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 15.sp, fontWeight: FontWeight.w700)),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: color,
-                        disabledBackgroundColor: color.withValues(alpha: 0.5),
-                        padding: EdgeInsets.symmetric(vertical: 14.h),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-                        elevation: 2,
-                        shadowColor: color.withValues(alpha: 0.3),
+                  ],
+                ),
+                SizedBox(height: 14.h),
+                _choicesChipInput(color),
+              ],
+            ),
+            SizedBox(height: 16.h),
+
+            // ── SECTION 2: Cấu hình riêng game ──
+            if (widget.gameKey == 'letter_catch') _letterCatchSection(color),
+            if (widget.gameKey == 'word_search') _wordSearchSection(color),
+            if (widget.gameKey == 'sentence_builder') _sentenceBuilderSection(color),
+            if (widget.gameKey == 'math_garden') _mathGardenSection(color),
+            SizedBox(height: 16.h),
+
+            // ── SECTION 3: Trạng thái ──
+            _sectionCard(
+              icon: Icons.toggle_on_rounded,
+              title: 'Trạng thái hiển thị',
+              color: color,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(_isActive ? 'Đang kích hoạt' : 'Đã tắt',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 15.sp, fontWeight: FontWeight.w700,
+                              color: _isActive ? AppColors.tertiary : AppColors.errorRed)),
+                          SizedBox(height: 2.h),
+                          Text('Câu hỏi ${_isActive ? "sẽ xuất hiện" : "sẽ không xuất hiện"} trong trò chơi',
+                            style: GoogleFonts.plusJakartaSans(fontSize: 12.sp, color: AppColors.textSecondary)),
+                        ],
                       ),
                     ),
-                  ),
-                ],
-              ),
+                    Switch(
+                      value: _isActive,
+                      activeTrackColor: color.withValues(alpha: 0.5),
+                      activeThumbColor: color,
+                      onChanged: (val) => setState(() => _isActive = val),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1070,7 +1202,7 @@ class _GameQuestionFormPageState extends State<_GameQuestionFormPage> {
         Row(
           children: [
             _gridSizeBtn('Hàng', _gridRows, 
-              onMinus: () { if (_gridRows > 2) setState(() { _gridRows--; _gridCtrls.removeLast(); _pathCells.removeWhere((k) => k.startsWith('${_gridRows},')); }); },
+              onMinus: () { if (_gridRows > 2) setState(() { _gridRows--; _gridCtrls.removeLast(); _pathCells.removeWhere((k) => k.startsWith('$_gridRows,')); }); },
               onPlus: () => setState(() { _gridRows++; _gridCtrls.add(List.generate(_gridCols, (_) {
                 final ctrl = TextEditingController();
                 ctrl.addListener(() => setState(() {}));
@@ -1194,18 +1326,18 @@ class _GameQuestionFormPageState extends State<_GameQuestionFormPage> {
         // Path indicator
         Container(
           padding: EdgeInsets.all(10.w),
-          decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(10.r)),
+          decoration: BoxDecoration(color: widget.gameColor.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10.r)),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.lightbulb_outline_rounded, size: 16.sp, color: const Color(0xFF2E7D32)),
+              Icon(Icons.lightbulb_outline_rounded, size: 16.sp, color: widget.gameColor),
               SizedBox(width: 8.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Nhập chữ Khmer vào ô → Bấm vào ô để đánh dấu đáp án (viền xanh)',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 11.sp, fontWeight: FontWeight.w600, color: const Color(0xFF2E7D32))),
+                    Text('Nhập chữ Khmer vào ô → Bấm vào ô để đánh dấu đáp án (viền màu)',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 11.sp, fontWeight: FontWeight.w600, color: widget.gameColor)),
                     if (_pathCells.isNotEmpty) ...[
                       SizedBox(height: 4.h),
                       Wrap(
@@ -1377,38 +1509,60 @@ class _GameQuestionFormPageState extends State<_GameQuestionFormPage> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20.r),
-        boxShadow: AppColors.cardShadowList,
+        borderRadius: BorderRadius.circular(22.r),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+          ...AppColors.cardShadowList,
+        ],
+        border: Border.all(color: color.withValues(alpha: 0.08), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
           Container(
-            padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 10.h),
+            padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 12.h),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+              gradient: LinearGradient(
+                colors: [
+                  color.withValues(alpha: 0.07),
+                  color.withValues(alpha: 0.01),
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20.5.r)),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 30.w, height: 30.w,
+                  width: 32.w, height: 32.w,
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(9.r),
+                    borderRadius: BorderRadius.circular(10.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.1),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Icon(icon, color: color, size: 16.sp),
                 ),
                 SizedBox(width: 10.w),
                 Text(title,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: color)),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w800, color: color)),
               ],
             ),
           ),
           // Body
           Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 16.h),
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 18.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: children,
@@ -1570,8 +1724,14 @@ class _GameQuestionFormPageState extends State<_GameQuestionFormPage> {
           children: [
             Icon(icon, size: 14.sp, color: color.withValues(alpha: 0.7)),
             SizedBox(width: 5.w),
-            Text(label, style: GoogleFonts.plusJakartaSans(
-              fontSize: 12.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.plusJakartaSans(fontSize: 12.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
         SizedBox(height: 6.h),

@@ -131,6 +131,11 @@ adminRouter.post('/test-questions', adminController.createTestQuestion);
 adminRouter.put('/test-questions/:id', idParamValidator, validate, adminController.updateTestQuestion);
 adminRouter.delete('/test-questions/:id', idParamValidator, validate, adminController.deleteTestQuestion);
 
+// Notification management
+adminRouter.get('/notifications', adminController.getNotifications);
+adminRouter.post('/notifications', adminController.createNotification);
+adminRouter.delete('/notifications/:id', idParamValidator, validate, adminController.deleteNotification);
+
 module.exports = {
   gameRouter,
   missionRouter,

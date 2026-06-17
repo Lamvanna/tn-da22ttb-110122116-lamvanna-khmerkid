@@ -29,11 +29,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _selectedLanguage = 'vietnam';
   TtsSpeed _speed = TtsSpeed.normal;
 
-  // Kết nối máy chủ
-  final _serverCtrl = TextEditingController();
-  String _currentServer = '';
-  bool _detecting = false;
-
   static const _langKeys = {'km': 'khmer', 'vi': 'vietnam', 'en': 'english'};
   static const _langStore = {'khmer': 'km', 'vietnam': 'vi', 'english': 'en'};
 
@@ -43,15 +38,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _load();
   }
 
-  @override
-  void dispose() {
-    _serverCtrl.dispose();
-    super.dispose();
-  }
-
   Future<void> _load() async {
     final s = await StorageService.getInstance();
-    final manual = await AuthService.getManualServerUrl();
     setState(() {
       _storage = s;
       _soundEnabled = s.getSoundEnabled();
@@ -59,19 +47,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _offlineEnabled = s.getOfflineEnabled();
       _selectedLanguage = _langKeys[s.getLanguage()] ?? 'vietnam';
       _speed = TtsSpeed.values[s.getTtsSpeed().clamp(0, 2)];
-      _currentServer = AuthService.currentServerUrl;
-      if (manual != null) _serverCtrl.text = _displayHost(manual);
       _loading = false;
     });
-  }
-
-  /// Rút gọn URL "http://192.168.1.50:5000/api" → "192.168.1.50" để hiển thị.
-  String _displayHost(String url) {
-    try {
-      return Uri.parse(url).host;
-    } catch (_) {
-      return url;
-    }
   }
 
   void _tap() {
@@ -85,9 +62,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: Column(
         children: [
           AppHeader(
-            title: '⚙️ ${AppStrings.settingsTitle}',
+            title: AppStrings.settingsTitle,
             subtitle: AppStrings.settingsSubtitle,
             onBack: () => Navigator.pop(context),
+            gradientColors: const [AppColors.primary, AppColors.violet],
           ),
           Expanded(
             child: _loading
@@ -118,19 +96,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _card([
                           _buildOfflineToggle(),
                           _divider(),
-                          _buildResetTile(),
-                          _divider(),
                           _buildLogoutTile(),
                         ]),
-                        const SizedBox(height: 22),
-                        _sectionHeader(AppStrings.sectionServer,
-                            Icons.dns_rounded, AppColors.secondary),
-                        _card([_buildServerSection()]),
                         const SizedBox(height: 22),
                         _sectionHeader(AppStrings.sectionAbout,
                             Icons.info_outline_rounded, AppColors.violet),
                         _card([_buildAboutTile()]),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 16),
                         _buildVersionFooter(),
                       ],
                     ),
@@ -144,17 +116,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ─── Reusable building blocks ─────────────────────────────────────
   Widget _sectionHeader(String title, IconData icon, Color color) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 10),
+      padding: const EdgeInsets.only(left: 6, bottom: 12, top: 8),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 14, color: color),
+          ),
+          const SizedBox(width: 10),
           Text(
             title.toUpperCase(),
             style: AppTextStyles.bodySmall.copyWith(
               fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
-              color: color,
+              letterSpacing: 1.2,
+              color: color.withValues(alpha: 0.85),
             ),
           ),
         ],
@@ -166,16 +145,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.cardWhite,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: AppColors.cardShadowList,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF304060).withValues(alpha: 0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: Column(children: children),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Column(children: children),
+      ),
     );
   }
 
   Widget _divider() => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 18),
-        child: Divider(height: 1, color: AppColors.outlineVariant),
+        child: Divider(height: 1, color: AppColors.outlineVariant.withValues(alpha: 0.4)),
       );
 
   /// Hàng cài đặt chuẩn: icon + tiêu đề + mô tả + widget bên phải.
@@ -191,19 +180,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           child: Row(
             children: [
               Container(
-                width: 46,
-                height: 46,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon, color: color, size: 24),
+                child: Icon(icon, color: color, size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -224,8 +213,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // === sections appended below ===
-
   // ─── Âm thanh ─────────────────────────────────────────────────────
   Widget _buildSoundToggle() {
     return _tile(
@@ -235,9 +222,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       color: AppColors.coral,
       title: AppStrings.sound,
       desc: AppStrings.soundDesc,
-      trailing: Switch(
+      trailing: Switch.adaptive(
         value: _soundEnabled,
-        activeThumbColor: AppColors.tertiary,
+        activeThumbColor: Colors.white,
+        activeTrackColor: AppColors.tertiary,
         onChanged: (v) async {
           _tap();
           setState(() => _soundEnabled = v);
@@ -263,14 +251,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Row(
                 children: [
                   Container(
-                    width: 46,
-                    height: 46,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
                       color: AppColors.coral.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(Icons.speed_rounded,
-                        color: AppColors.coral, size: 24),
+                        color: AppColors.coral, size: 22),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -288,17 +276,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
               const SizedBox(height: 14),
-              Row(
-                children: [
-                  _speedChip(TtsSpeed.slow, AppStrings.speedSlow,
-                      Icons.directions_walk_rounded),
-                  const SizedBox(width: 8),
-                  _speedChip(TtsSpeed.normal, AppStrings.speedNormal,
-                      Icons.directions_run_rounded),
-                  const SizedBox(width: 8),
-                  _speedChip(TtsSpeed.fast, AppStrings.speedFast,
-                      Icons.bolt_rounded),
-                ],
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    _speedChip(TtsSpeed.slow, AppStrings.speedSlow,
+                        Icons.directions_walk_rounded),
+                    _speedChip(TtsSpeed.normal, AppStrings.speedNormal,
+                        Icons.directions_run_rounded),
+                    _speedChip(TtsSpeed.fast, AppStrings.speedFast,
+                        Icons.bolt_rounded),
+                  ],
+                ),
               ),
             ],
           ),
@@ -319,27 +316,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
           TtsService.instance.speak('ក', fallbackText: 'co');
         },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: selected ? AppColors.coral : AppColors.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: selected ? AppColors.coral : AppColors.outlineVariant,
-              width: 1.5,
-            ),
+            color: selected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : [],
           ),
-          child: Column(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon,
-                  size: 20,
-                  color: selected ? Colors.white : AppColors.textSecondary),
-              const SizedBox(height: 4),
+              Icon(
+                icon,
+                size: 16,
+                color: selected ? AppColors.coral : AppColors.textSecondary,
+              ),
+              const SizedBox(width: 6),
               Text(
                 label,
-                style: AppTextStyles.bodySmall.copyWith(
+                style: AppTextStyles.bodyMedium.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: selected ? Colors.white : AppColors.textSecondary,
+                  fontSize: 13,
+                  color: selected ? AppColors.coral : AppColors.textSecondary,
                 ),
               ),
             ],
@@ -356,9 +362,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       color: AppColors.secondary,
       title: AppStrings.haptics,
       desc: AppStrings.hapticsDesc,
-      trailing: Switch(
+      trailing: Switch.adaptive(
         value: _hapticsEnabled,
-        activeThumbColor: AppColors.tertiary,
+        activeThumbColor: Colors.white,
+        activeTrackColor: AppColors.tertiary,
         onChanged: (v) async {
           if (v) HapticFeedback.lightImpact();
           setState(() => _hapticsEnabled = v);
@@ -378,14 +385,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Row(
             children: [
               Container(
-                width: 46,
-                height: 46,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(Icons.translate_rounded,
-                    color: AppColors.primary, size: 24),
+                    color: AppColors.primary, size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -425,18 +432,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.surfaceContainerLow,
+          color: selected
+              ? AppColors.primary.withValues(alpha: 0.06)
+              : AppColors.background,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.outlineVariant,
-            width: 1.5,
+            color: selected ? AppColors.primary : AppColors.outlineVariant.withValues(alpha: 0.4),
+            width: selected ? 1.8 : 1.2,
           ),
         ),
         child: Row(
           children: [
-            Text(flag, style: const TextStyle(fontSize: 26)),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: Text(flag, style: const TextStyle(fontSize: 22)),
+            ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -445,18 +467,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Text(
                     title,
                     style: AppTextStyles.bodyLarge.copyWith(
-                      color: selected
-                          ? AppColors.textWhite
-                          : AppColors.textPrimary,
+                      color: selected ? AppColors.primary : AppColors.textPrimary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     subtitle,
                     style: AppTextStyles.bodySmall.copyWith(
-                      color: selected
-                          ? Colors.white.withValues(alpha: 0.85)
-                          : AppColors.textSecondary,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -464,7 +483,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             if (selected)
               const Icon(Icons.check_circle_rounded,
-                  color: Colors.white, size: 22),
+                  color: AppColors.primary, size: 22)
+            else
+              Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.textHint.withValues(alpha: 0.6),
+                    width: 1.5,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -478,9 +509,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       color: AppColors.tertiary,
       title: AppStrings.offlineMode,
       desc: AppStrings.offlineModeDesc,
-      trailing: Switch(
+      trailing: Switch.adaptive(
         value: _offlineEnabled,
-        activeThumbColor: AppColors.tertiary,
+        activeThumbColor: Colors.white,
+        activeTrackColor: AppColors.tertiary,
         onChanged: (v) async {
           _tap();
           setState(() => _offlineEnabled = v);
@@ -488,64 +520,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         },
       ),
     );
-  }
-
-  // ─── Đặt lại tiến độ ──────────────────────────────────────────────
-  Widget _buildResetTile() {
-    return _tile(
-      icon: Icons.restart_alt_rounded,
-      color: AppColors.errorRed,
-      title: AppStrings.resetProgress,
-      desc: AppStrings.resetProgressDesc,
-      trailing: const Icon(Icons.chevron_right_rounded,
-          color: AppColors.textHint),
-      onTap: _confirmReset,
-    );
-  }
-
-  Future<void> _confirmReset() async {
-    _tap();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        icon: const Icon(Icons.warning_amber_rounded,
-            color: AppColors.errorRed, size: 40),
-        title: Text(AppStrings.resetConfirmTitle,
-            style: AppTextStyles.cardTitle, textAlign: TextAlign.center),
-        content: Text(AppStrings.resetConfirmMsg,
-            style: AppTextStyles.bodySmall, textAlign: TextAlign.center),
-        actionsAlignment: MainAxisAlignment.spaceEvenly,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(AppStrings.cancel,
-                style: AppTextStyles.bodyMedium
-                    .copyWith(color: AppColors.textSecondary)),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-                backgroundColor: AppColors.errorRed),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(AppStrings.confirmReset,
-                style: AppTextStyles.buttonTextSmall),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      await _storage?.clearProgress();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppStrings.resetDone),
-          backgroundColor: AppColors.tertiary,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
   }
 
   // ─── Đăng xuất ────────────────────────────────────────────────────
@@ -556,7 +530,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       title: 'Đăng xuất',
       desc: 'Đăng xuất tài khoản hiện tại khỏi thiết bị',
       trailing: const Icon(Icons.chevron_right_rounded,
-          color: AppColors.textHint),
+          color: AppColors.errorRed),
       onTap: _confirmLogout,
     );
   }
@@ -567,7 +541,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         icon: const Icon(Icons.logout_rounded,
             color: AppColors.errorRed, size: 40),
         title: const Text('Đăng xuất?',
@@ -584,7 +558,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-                backgroundColor: AppColors.errorRed),
+                backgroundColor: AppColors.errorRed,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10)),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Đăng xuất',
                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -616,175 +592,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         (route) => false,
       );
     }
-  }
-
-  // ─── Kết nối máy chủ ──────────────────────────────────────────────
-  Widget _buildServerSection() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: AppColors.secondary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(Icons.dns_rounded,
-                    color: AppColors.secondary, size: 24),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(AppStrings.serverAddress,
-                        style: AppTextStyles.bodyLarge),
-                    const SizedBox(height: 2),
-                    Text(
-                      _detecting
-                          ? AppStrings.serverDetecting
-                          : _displayHost(_currentServer),
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: _detecting
-                            ? AppColors.secondary
-                            : AppColors.tertiary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (_detecting)
-                const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2.5),
-                ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          TextField(
-            controller: _serverCtrl,
-            keyboardType: TextInputType.url,
-            style: AppTextStyles.bodyMedium,
-            decoration: InputDecoration(
-              hintText: AppStrings.serverManualHint,
-              hintStyle: AppTextStyles.bodySmall
-                  .copyWith(color: AppColors.textHint),
-              prefixIcon:
-                  const Icon(Icons.lan_rounded, color: AppColors.secondary),
-              filled: true,
-              fillColor: AppColors.surfaceContainerLow,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: AppColors.outlineVariant),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: AppColors.outlineVariant),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide:
-                    const BorderSide(color: AppColors.secondary, width: 1.8),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _detecting ? null : _redetectServer,
-                  icon: const Icon(Icons.radar_rounded, size: 18),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.secondary,
-                    side: const BorderSide(color: AppColors.secondary),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                  ),
-                  label: Text(AppStrings.serverRedetect,
-                      style: AppTextStyles.buttonTextSmall
-                          .copyWith(color: AppColors.secondary)),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: _detecting ? null : _saveManualServer,
-                  icon: const Icon(Icons.save_rounded, size: 18),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.secondary,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                  ),
-                  label: Text(AppStrings.serverSaveManual,
-                      style: AppTextStyles.buttonTextSmall),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(AppStrings.serverHelp,
-              style: AppTextStyles.bodySmall
-                  .copyWith(color: AppColors.textHint, height: 1.4)),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _redetectServer() async {
-    _tap();
-    setState(() => _detecting = true);
-    // Xóa IP thủ công để buộc dò tự động (nếu ô trống)
-    if (_serverCtrl.text.trim().isEmpty) {
-      await AuthService.setManualServerUrl(null);
-    }
-    await AuthService.detectActiveServer();
-    if (!mounted) return;
-    setState(() {
-      _currentServer = AuthService.currentServerUrl;
-      _detecting = false;
-    });
-    _snack(AppStrings.serverFound, AppColors.tertiary);
-  }
-
-  Future<void> _saveManualServer() async {
-    _tap();
-    final input = _serverCtrl.text.trim();
-    if (input.isEmpty) {
-      await AuthService.setManualServerUrl(null);
-      await _redetectServer();
-      return;
-    }
-    setState(() => _detecting = true);
-    await AuthService.setManualServerUrl(input);
-    await AuthService.detectActiveServer();
-    if (!mounted) return;
-    setState(() {
-      _currentServer = AuthService.currentServerUrl;
-      _detecting = false;
-    });
-    _snack(AppStrings.serverManualSaved, AppColors.tertiary);
-  }
-
-  void _snack(String msg, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: color,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   // ─── Giới thiệu ───────────────────────────────────────────────────

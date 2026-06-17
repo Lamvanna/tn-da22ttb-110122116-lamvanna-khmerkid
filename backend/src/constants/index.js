@@ -100,6 +100,7 @@ const NOTIFICATION_TYPES = {
   STREAK_UPDATE: 'streak_update',
   LEVEL_UP: 'level_up',
   RANK_UPDATE: 'rank_update',
+  SYSTEM: 'system',
 };
 
 // ========================================

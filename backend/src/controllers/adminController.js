@@ -16,6 +16,7 @@ const ListeningResult = require('../models/ListeningResult');
 const LibraryItem = require('../models/LibraryItem');
 const GameQuestion = require('../models/GameQuestion');
 const TestQuestion = require('../models/TestQuestion');
+const Notification = require('../models/Notification');
 const { sendSuccess, sendError } = require('../utils/response');
 const { MESSAGES } = require('../constants');
 const { paginateQuery } = require('../utils/pagination');
@@ -123,7 +124,12 @@ class AdminController {
         page: req.query.page,
         limit: req.query.limit,
         sort: { createdAt: -1 },
-        select: 'name email role level xp stars streak avatar createdAt lastLoginDate lastActiveDate',
+        select: 'name email role level xp stars streak avatar createdAt lastLoginDate lastActiveDate learningProgress badges achievements',
+        populate: [
+          { path: 'learningProgress.completedLessons', select: 'title type category order' },
+          { path: 'badges', select: 'name icon type' },
+          { path: 'achievements', select: 'title description icon' }
+        ]
       });
       res.status(200).json({ success: true, message: MESSAGES.FETCH_SUCCESS, data, pagination });
     } catch (error) {
@@ -529,6 +535,163 @@ class AdminController {
     try {
       const testQuestion = await TestQuestion.findByIdAndDelete(req.params.id);
       if (!testQuestion) return sendError(res, MESSAGES.NOT_FOUND, 404);
+      sendSuccess(res, MESSAGES.DELETE_SUCCESS);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // ========================================
+  // Notification Management
+  // ========================================
+
+  /** GET /api/admin/notifications */
+  async getNotifications(req, res, next) {
+    try {
+      const { parsePagination, createPaginationResult } = require('../utils/pagination');
+      const { page, limit, skip } = parsePagination(req.query);
+
+      const matchStage = {};
+      if (req.query.search) {
+        const searchRegex = new RegExp(req.query.search, 'i');
+        matchStage.$or = [
+          { title: searchRegex },
+          { message: searchRegex },
+        ];
+      }
+      if (req.query.type) {
+        matchStage.type = req.query.type;
+      }
+
+      // Group by title, message, type to avoid duplicates when sent to 'all'
+      const pipeline = [
+        { $match: matchStage },
+        {
+          $group: {
+            _id: { title: "$title", message: "$message", type: "$type" },
+            count: { $sum: 1 },
+            createdAt: { $max: "$createdAt" },
+            userIds: { $push: "$userId" },
+            ids: { $push: "$_id" }
+          }
+        },
+        { $sort: { createdAt: -1 } },
+        {
+          $facet: {
+            metadata: [{ $count: "total" }],
+            data: [{ $skip: skip }, { $limit: limit }]
+          }
+        }
+      ];
+
+      const results = await Notification.aggregate(pipeline);
+      const totalDocs = results[0].metadata.length > 0 ? results[0].metadata[0].total : 0;
+      const rawData = results[0].data;
+
+      const mappedData = await Promise.all(rawData.map(async (item) => {
+        let user = null;
+        if (item.count === 1 && item.userIds[0]) {
+           user = await User.findById(item.userIds[0]).select('name email').lean();
+        }
+        
+        return {
+          _id: item.ids[0], // Use the first ID for deletion reference
+          title: item._id.title,
+          message: item._id.message,
+          type: item._id.type,
+          createdAt: item.createdAt,
+          target: item.count > 1 ? 'all' : 'specific',
+          userId: user, 
+          recipientCount: item.count
+        };
+      }));
+
+      const pagination = createPaginationResult(totalDocs, page, limit);
+      res.status(200).json({ success: true, message: MESSAGES.FETCH_SUCCESS, data: mappedData, pagination });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /** POST /api/admin/notifications */
+  async createNotification(req, res, next) {
+    try {
+      const { title, message, type, target, userId } = req.body;
+
+      if (!title || !message || !type || !target) {
+        return sendError(res, 'Thiếu thông tin bắt buộc (title, message, type, target)', 400);
+      }
+
+      const { emitToUser, broadcast } = require('../sockets');
+      const { SOCKET_EVENTS } = require('../constants');
+
+      if (target === 'all') {
+        // Find all student users
+        const students = await User.find({ role: 'user' }).select('_id');
+        if (students.length === 0) {
+          return sendError(res, 'Không tìm thấy người dùng nào trong hệ thống', 404);
+        }
+
+        const notifications = students.map(student => ({
+          userId: student._id,
+          title,
+          message,
+          type,
+          isRead: false,
+        }));
+
+        await Notification.insertMany(notifications);
+
+        // Emit real-time notification to all users
+        broadcast(SOCKET_EVENTS.NOTIFICATION, {
+          title,
+          message,
+          type,
+          createdAt: new Date(),
+        });
+
+        sendSuccess(res, MESSAGES.CREATE_SUCCESS, { count: students.length }, 201);
+      } else {
+        if (!userId) {
+          return sendError(res, 'Yêu cầu userId khi gửi cho người dùng cụ thể', 400);
+        }
+
+        const student = await User.findById(userId);
+        if (!student) {
+          return sendError(res, 'Không tìm thấy người dùng đích', 404);
+        }
+
+        const notification = await Notification.create({
+          userId,
+          title,
+          message,
+          type,
+          isRead: false,
+        });
+
+        // Emit real-time notification to target user
+        emitToUser(userId, SOCKET_EVENTS.NOTIFICATION, notification);
+
+        sendSuccess(res, MESSAGES.CREATE_SUCCESS, { notification }, 201);
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /** DELETE /api/admin/notifications/:id */
+  async deleteNotification(req, res, next) {
+    try {
+      const notification = await Notification.findById(req.params.id);
+      if (!notification) return sendError(res, MESSAGES.NOT_FOUND, 404);
+
+      // Xóa tất cả các thông báo có cùng title, message, type (để xử lý cả trường hợp gửi cho all)
+      await Notification.deleteMany({
+        title: notification.title,
+        message: notification.message,
+        type: notification.type
+      });
+
       sendSuccess(res, MESSAGES.DELETE_SUCCESS);
     } catch (error) {
       next(error);

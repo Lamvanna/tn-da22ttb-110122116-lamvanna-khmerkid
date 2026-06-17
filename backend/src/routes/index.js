@@ -20,6 +20,7 @@ const writingRoutes = require('./writingRoutes');
 const pronunciationRoute = require('./pronunciation.route');
 const gamePlaySessionRoutes = require('./gamePlaySessionRoutes');
 const testRoutes = require('./testRoutes');
+const notificationRoutes = require('./notificationRoutes');
 
 // ========================================
 // Mount Routes
@@ -43,5 +44,6 @@ router.use('/admin', adminRouter);
 router.use('/library', libraryRouter);
 router.use('/tests', testRoutes);
 router.use('/game-play-sessions', gamePlaySessionRoutes);
+router.use('/notifications', notificationRoutes);
 
 module.exports = router;

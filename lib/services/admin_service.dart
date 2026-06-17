@@ -646,6 +646,72 @@ class AdminService {
     }
   }
 
+  // ════════════════════════════════════════════════════════════════════
+  // Notification Management
+  // ════════════════════════════════════════════════════════════════════
+
+  /// Lấy danh sách thông báo quản trị (Admin)
+  Future<Map<String, dynamic>> fetchAdminNotifications({int page = 1, int limit = 10, String? search}) async {
+    try {
+      final query = <String, String>{
+        'page': '$page',
+        'limit': '$limit',
+      };
+      if (search != null && search.isNotEmpty) query['search'] = search;
+
+      final uri = Uri.parse('$_baseUrl/admin/notifications').replace(queryParameters: query);
+      final res = await _authGet(uri);
+
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        return {
+          'success': true,
+          'data': body['data'] ?? [],
+          'pagination': body['pagination'],
+        };
+      }
+      return {'success': false, 'message': 'Lỗi ${res.statusCode}'};
+    } catch (e) {
+      debugPrint('❌ [AdminService] fetchAdminNotifications error: $e');
+      return {'success': false, 'message': 'Không thể kết nối máy chủ: $e'};
+    }
+  }
+
+  /// Gửi thông báo hệ thống mới (Admin)
+  Future<Map<String, dynamic>> sendNotification(Map<String, dynamic> data) async {
+    try {
+      final res = await _authPost(
+        Uri.parse('$_baseUrl/admin/notifications'),
+        body: jsonEncode(data),
+      );
+
+      final body = jsonDecode(res.body);
+      if (res.statusCode == 201 || res.statusCode == 200) {
+        return {'success': true, 'data': body['data']};
+      }
+      return {'success': false, 'message': body['message'] ?? 'Lỗi'};
+    } catch (e) {
+      debugPrint('❌ [AdminService] sendNotification error: $e');
+      return {'success': false, 'message': 'Không thể kết nối máy chủ: $e'};
+    }
+  }
+
+  /// Xóa thông báo (Admin)
+  Future<Map<String, dynamic>> deleteNotification(String id) async {
+    try {
+      final res = await _authDelete(Uri.parse('$_baseUrl/admin/notifications/$id'));
+
+      final body = jsonDecode(res.body);
+      if (res.statusCode == 200) {
+        return {'success': true};
+      }
+      return {'success': false, 'message': body['message'] ?? 'Lỗi'};
+    } catch (e) {
+      debugPrint('❌ [AdminService] deleteNotification error: $e');
+      return {'success': false, 'message': 'Không thể kết nối máy chủ: $e'};
+    }
+  }
+
   /// Lấy danh sách câu hỏi kiểm tra cho học sinh (User - Public)
   Future<Map<String, dynamic>> fetchTestQuestionsForUser(String testRange) async {
     try {

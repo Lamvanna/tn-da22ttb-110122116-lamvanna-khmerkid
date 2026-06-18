@@ -705,13 +705,13 @@ class _PreviewItem {
 
   String get exampleImage {
     if (khmerWord == 'ក') {
-      return 'image/Hình phần thư viện/Sách.png';
+      return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781810872/khmerkid/library/l1lba7h2swazdzwlnp4m.png';
     } else if (khmerWord == 'ដំរី') {
-      return 'image/Hình phần thư viện/Kiến thức.png';
+      return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781810870/khmerkid/library/fitdcgqfto7135no5aat.png';
     } else if (khmerWord == 'ស្វា') {
-      return 'image/Hình phần thư viện/video.png';
+      return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781810867/khmerkid/library/video.png';
     }
-    return 'image/Hình phần thư viện/Truyện.png';
+    return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781810866/khmerkid/library/ea7hwynods7uehxiwjyk.png';
   }
 
   _PreviewItem({

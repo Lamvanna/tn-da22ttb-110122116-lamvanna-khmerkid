@@ -35,27 +35,27 @@ class _LibraryScreenState extends State<LibraryScreen> {
   static final _featuredCategories = [
     _FeaturedCat(
       title: 'Sách',
-      image: 'image/Hình phần thư viện/Sách.png',
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781810872/khmerkid/library/l1lba7h2swazdzwlnp4m.png',
       gradient: const [Color(0xFF7EB1FF), Color(0xFF568FFF)]),
     _FeaturedCat(
       title: 'Truyện',
-      image: 'image/Hình phần thư viện/Truyện.png',
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781810866/khmerkid/library/ea7hwynods7uehxiwjyk.png',
       gradient: const [Color(0xFF7EE79D), Color(0xFF52BF76)]),
     _FeaturedCat(
       title: 'Bài hát',
-      image: 'image/Hình phần thư viện/Bài hát.png',
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781810869/khmerkid/library/k2ddww6pnnw93cj5mcjo.png',
       gradient: const [Color(0xFFD39BFF), Color(0xFFAD6BFF)]),
     _FeaturedCat(
       title: 'Video',
-      image: 'image/Hình phần thư viện/video.png',
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781810867/khmerkid/library/video.png',
       gradient: const [Color(0xFFFFB37E), Color(0xFFF88F48)]),
     _FeaturedCat(
       title: 'Kiến thức',
-      image: 'image/Hình phần thư viện/Kiến thức.png',
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781810870/khmerkid/library/fitdcgqfto7135no5aat.png',
       gradient: const [Color(0xFFFFE07D), Color(0xFFF2BC3F)]),
     _FeaturedCat(
       title: 'Yêu thích',
-      image: 'image/Hình phần thư viện/Yêu thích.png',
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781810868/khmerkid/library/lqlngfhcifbpvqcdygmm.png',
       gradient: const [Color(0xFFFF9EC3), Color(0xFFE86F9C)]),
   ];
 
@@ -86,7 +86,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           final views = "$viewsCount lượt xem";
           final image = (item['image'] != null && item['image'].toString().isNotEmpty)
               ? item['image'].toString()
-              : 'image/Sách.png';
+              : 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781810872/khmerkid/library/l1lba7h2swazdzwlnp4m.png';
 
           IconData typeIcon = Icons.menu_book_rounded;
           Color typeColor = const Color(0xFF27AE60);
@@ -558,8 +558,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                              // Image
                              Expanded(
                                child: Center(
-                                 child: Image.asset(cat.image,
-                                   width: 95.w, height: 95.w, fit: BoxFit.contain)),
+                                 child: Image.network(cat.image,
+                                    width: 95.w, height: 95.w, fit: BoxFit.contain)),
                              ),
                              SizedBox(height: 4.h),
                             // Title

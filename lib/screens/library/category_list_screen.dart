@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../widgets/app_header.dart';
 import 'book_detail_screen.dart';
-import 'audio_detail_screen.dart';
+import 'book_reader_screen.dart';
 import 'video_detail_screen.dart';
 import 'song_player_screen.dart';
 
@@ -21,28 +21,28 @@ class CategoryListScreen extends StatelessWidget {
   List<_FeaturedCat> get _featuredCategories => [
     const _FeaturedCat(
       title: 'Sách',
-      image: 'image/Tập đọc.png',
-      gradient: [Color(0xFF4DA0F0), Color(0xFF1E6DEB)]),
+      image: 'image/Hình phần thư viện/Sách.png',
+      gradient: [Color(0xFF7EB1FF), Color(0xFF568FFF)]),
     const _FeaturedCat(
       title: 'Truyện',
-      image: 'image/Đọc hiểu.png',
-      gradient: [Color(0xFF66BB6A), Color(0xFF2E7D32)]),
+      image: 'image/Hình phần thư viện/Truyện.png',
+      gradient: [Color(0xFF7EE79D), Color(0xFF52BF76)]),
     const _FeaturedCat(
       title: 'Bài hát',
-      image: 'image/Nghe.png',
-      gradient: [Color(0xFFAB47BC), Color(0xFF7B1FA2)]),
+      image: 'image/Hình phần thư viện/Bài hát.png',
+      gradient: [Color(0xFFD39BFF), Color(0xFFAD6BFF)]),
     const _FeaturedCat(
       title: 'Video',
-      image: 'image/Học.png',
-      gradient: [Color(0xFFFBD075), Color(0xFFF79E2E)]),
+      image: 'image/Hình phần thư viện/video.png',
+      gradient: [Color(0xFFFFB37E), Color(0xFFF88F48)]),
     const _FeaturedCat(
       title: 'Kiến thức',
-      image: 'image/Nguyên âm.png',
-      gradient: [Color(0xFFFFB74D), Color(0xFFE65100)]),
+      image: 'image/Hình phần thư viện/Kiến thức.png',
+      gradient: [Color(0xFFFFE07D), Color(0xFFF2BC3F)]),
     const _FeaturedCat(
       title: 'Yêu thích',
-      image: 'image/Huy hiệu.png',
-      gradient: [Color(0xFFFF5F6D), Color(0xFFFFC371)]),
+      image: 'image/Hình phần thư viện/Yêu thích.png',
+      gradient: [Color(0xFFFF9EC3), Color(0xFFE86F9C)]),
   ];
 
   List<DocItem> _getItemsForCategory() {
@@ -71,7 +71,7 @@ class CategoryListScreen extends StatelessWidget {
                   crossAxisCount: 2,
                   mainAxisSpacing: 16.h,
                   crossAxisSpacing: 16.w,
-                  childAspectRatio: 0.85,
+                  childAspectRatio: 0.78,
                 ),
                 itemCount: _featuredCategories.length,
                 itemBuilder: (context, index) {
@@ -101,9 +101,10 @@ class CategoryListScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(22.r),
                         boxShadow: [
                           BoxShadow(
-                            color: cat.gradient.first.withValues(alpha: 0.30),
-                            blurRadius: 14.r, offset: Offset(0, 6.h)
-                          )
+                            color: cat.gradient.first.withValues(alpha: 0.12),
+                            blurRadius: 8.r,
+                            offset: Offset(0, 3.h),
+                          ),
                         ],
                       ),
                       child: Stack(
@@ -119,14 +120,14 @@ class CategoryListScreen extends StatelessWidget {
                             ),
                           ),
                           Padding(
-                            padding: EdgeInsets.all(14.w),
+                            padding: EdgeInsets.fromLTRB(10.w, 10.h, 10.w, 8.h),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
                                   child: Center(
                                     child: Image.asset(cat.image,
-                                      width: 80.w, height: 80.w, fit: BoxFit.contain),
+                                      width: 120.w, height: 120.w, fit: BoxFit.contain),
                                   ),
                                 ),
                                 SizedBox(height: 8.h),
@@ -204,10 +205,15 @@ class CategoryListScreen extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => BookDetailScreen(
-                title: doc.title,
-                imagePath: doc.image,
-              ),
+              builder: (context) => doc.isStory
+                  ? BookReaderScreen(
+                      title: doc.title,
+                      imagePath: doc.image,
+                    )
+                  : BookDetailScreen(
+                      title: doc.title,
+                      imagePath: doc.image,
+                    ),
             ),
           );
         } else if (doc.type == 'Audio') {
@@ -297,20 +303,20 @@ class CategoryListScreen extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                 decoration: BoxDecoration(
-                  color: doc.typeColor.withValues(alpha: 0.1),
+                  color: doc.displayColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20.r),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(doc.typeIcon, size: 11.sp, color: doc.typeColor),
+                    Icon(doc.displayIcon, size: 11.sp, color: doc.displayColor),
                     SizedBox(width: 4.w),
                     Text(
-                      doc.type == 'Audio' ? 'Bài hát' : doc.type,
+                      doc.displayType,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 9.5.sp,
                         fontWeight: FontWeight.w700,
-                        color: doc.typeColor,
+                        color: doc.displayColor,
                       ),
                     ),
                   ],
@@ -389,6 +395,39 @@ class DocItem {
     required this.image,
   });
 
+  bool get isStory {
+    if (type != 'Sách') return false;
+    final t = title.toLowerCase();
+    return t.contains('truyện') ||
+        t.contains('thỏ') ||
+        t.contains('rùa') ||
+        t.contains('sóc') ||
+        t.contains('cầu vồng') ||
+        t.contains('tích') ||
+        t.contains('ngụ ngôn') ||
+        t.contains('thông minh') ||
+        t.contains('ដំរី') || 
+        t.contains('ស្វា') || 
+        t.contains('ទន្សាយ') || 
+        t.contains('អណ្តើក');
+  }
+
+  String get displayType {
+    if (type == 'Audio') return 'Bài hát';
+    if (isStory) return 'Truyện';
+    return type;
+  }
+
+  Color get displayColor {
+    if (isStory) return const Color(0xFF22C55E);
+    return typeColor;
+  }
+
+  IconData get displayIcon {
+    if (isStory) return Icons.auto_stories_rounded;
+    return typeIcon;
+  }
+
   static String optimizeUrl(String url, {int width = 300}) {
     if (url.startsWith('https://res.cloudinary.com/')) {
       if (url.contains('/image/upload/') && !url.contains('f_auto')) {
@@ -402,20 +441,7 @@ class DocItem {
     if (label == 'Tất cả') return true;
     if (label == 'Yêu thích') return rating >= 4.8;
     if (label == 'Truyện') {
-      if (type != 'Sách') return false;
-      final t = title.toLowerCase();
-      return t.contains('truyện') ||
-          t.contains('thỏ') ||
-          t.contains('rùa') ||
-          t.contains('sóc') ||
-          t.contains('cầu vồng') ||
-          t.contains('tích') ||
-          t.contains('ngụ ngôn') ||
-          t.contains('thông minh') ||
-          t.contains('ដំរី') || // ដំរីតូចក្លាហាន
-          t.contains('ស្វា') || // ស្វាតូចឆ្លាតវៃ
-          t.contains('ទន្សាយ') || // ទន្សាយនិងអណ្តើក
-          t.contains('អណ្តើក');
+      return isStory;
     }
     if (label == 'Bài hát') {
       return type == 'Audio';
@@ -582,11 +608,10 @@ class DocItem {
 }
 
 class _FeaturedCat {
-  final String title, count, image;
+  final String title, image;
   final List<Color> gradient;
   const _FeaturedCat({
     required this.title,
-    this.count = '',
     required this.image,
     required this.gradient,
   });

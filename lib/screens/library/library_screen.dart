@@ -5,7 +5,7 @@ import '../../constants/app_colors.dart';
 import '../../services/admin_service.dart';
 import '../main_screen.dart';
 import 'book_detail_screen.dart';
-import 'audio_detail_screen.dart';
+import 'book_reader_screen.dart';
 import 'video_detail_screen.dart';
 import 'category_list_screen.dart';
 import 'song_player_screen.dart';
@@ -35,28 +35,28 @@ class _LibraryScreenState extends State<LibraryScreen> {
   static final _featuredCategories = [
     _FeaturedCat(
       title: 'Sách',
-      image: 'image/Tập đọc.png',
-      gradient: const [Color(0xFF4DA0F0), Color(0xFF1E6DEB)]),
+      image: 'image/Hình phần thư viện/Sách.png',
+      gradient: const [Color(0xFF7EB1FF), Color(0xFF568FFF)]),
     _FeaturedCat(
       title: 'Truyện',
-      image: 'image/Đọc hiểu.png',
-      gradient: const [Color(0xFF66BB6A), Color(0xFF2E7D32)]),
+      image: 'image/Hình phần thư viện/Truyện.png',
+      gradient: const [Color(0xFF7EE79D), Color(0xFF52BF76)]),
     _FeaturedCat(
       title: 'Bài hát',
-      image: 'image/Nghe.png',
-      gradient: const [Color(0xFFAB47BC), Color(0xFF7B1FA2)]),
+      image: 'image/Hình phần thư viện/Bài hát.png',
+      gradient: const [Color(0xFFD39BFF), Color(0xFFAD6BFF)]),
     _FeaturedCat(
       title: 'Video',
-      image: 'image/Học.png',
-      gradient: const [Color(0xFFFBD075), Color(0xFFF79E2E)]),
+      image: 'image/Hình phần thư viện/video.png',
+      gradient: const [Color(0xFFFFB37E), Color(0xFFF88F48)]),
     _FeaturedCat(
       title: 'Kiến thức',
-      image: 'image/Nguyên âm.png',
-      gradient: const [Color(0xFFFFB74D), Color(0xFFE65100)]),
+      image: 'image/Hình phần thư viện/Kiến thức.png',
+      gradient: const [Color(0xFFFFE07D), Color(0xFFF2BC3F)]),
     _FeaturedCat(
       title: 'Yêu thích',
-      image: 'image/Huy hiệu.png',
-      gradient: const [Color(0xFFFF5F6D), Color(0xFFFFC371)]),
+      image: 'image/Hình phần thư viện/Yêu thích.png',
+      gradient: const [Color(0xFFFF9EC3), Color(0xFFE86F9C)]),
   ];
 
   static final _fallbackDocs = DocItem.fallbackDocs;
@@ -527,9 +527,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         begin: Alignment.topLeft, end: Alignment.bottomRight,
                         colors: cat.gradient),
                       borderRadius: BorderRadius.circular(12.r),
-                      boxShadow: [BoxShadow(
-                        color: cat.gradient.first.withValues(alpha: 0.30),
-                        blurRadius: 14.r, offset: Offset(0, 6.h))],
+                      boxShadow: [
+                        BoxShadow(
+                          color: cat.gradient.first.withValues(alpha: 0.12),
+                          blurRadius: 8.r,
+                          offset: Offset(0, 3.h),
+                        ),
+                      ],
                     ),
                     child: Stack(children: [
                       // Decorative circle
@@ -547,17 +551,17 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             color: Colors.white.withValues(alpha: 0.10), size: 12.sp)),
                       ],
                       Padding(
-                        padding: EdgeInsets.all(12.w),
+                        padding: EdgeInsets.fromLTRB(6.w, 10.h, 6.w, 8.h),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Image
-                            Expanded(
-                              child: Center(
-                                child: Image.asset(cat.image,
-                                  width: 70.w, height: 70.w, fit: BoxFit.contain)),
-                            ),
-                            SizedBox(height: 8.h),
+                             // Image
+                             Expanded(
+                               child: Center(
+                                 child: Image.asset(cat.image,
+                                   width: 95.w, height: 95.w, fit: BoxFit.contain)),
+                             ),
+                             SizedBox(height: 4.h),
                             // Title
                             Text(cat.title,
                               maxLines: 2, overflow: TextOverflow.ellipsis,
@@ -646,10 +650,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => BookDetailScreen(
-                          title: doc.title,
-                          imagePath: doc.image,
-                        ),
+                        builder: (context) => doc.isStory
+                            ? BookReaderScreen(
+                                title: doc.title,
+                                imagePath: doc.image,
+                              )
+                            : BookDetailScreen(
+                                title: doc.title,
+                                imagePath: doc.image,
+                              ),
                       ),
                     );
                   } else if (doc.type == 'Audio') {
@@ -813,10 +822,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => BookDetailScreen(
-                title: doc.title,
-                imagePath: doc.image,
-              ),
+              builder: (context) => doc.isStory
+                  ? BookReaderScreen(
+                      title: doc.title,
+                      imagePath: doc.image,
+                    )
+                  : BookDetailScreen(
+                      title: doc.title,
+                      imagePath: doc.image,
+                    ),
             ),
           );
         } else if (doc.type == 'Audio') {
@@ -906,20 +920,20 @@ class _LibraryScreenState extends State<LibraryScreen> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                 decoration: BoxDecoration(
-                  color: doc.typeColor.withValues(alpha: 0.1),
+                  color: doc.displayColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20.r),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(doc.typeIcon, size: 11.sp, color: doc.typeColor),
+                    Icon(doc.displayIcon, size: 11.sp, color: doc.displayColor),
                     SizedBox(width: 4.w),
                     Text(
-                      doc.type == 'Audio' ? 'Bài hát' : doc.type,
+                      doc.displayType,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 9.5.sp,
                         fontWeight: FontWeight.w700,
-                        color: doc.typeColor,
+                        color: doc.displayColor,
                       ),
                     ),
                   ],
@@ -1057,11 +1071,10 @@ class _TabData {
 }
 
 class _FeaturedCat {
-  final String title, count, image;
+  final String title, image;
   final List<Color> gradient;
   const _FeaturedCat({
     required this.title,
-    this.count = '',
     required this.image,
     required this.gradient,
   });

@@ -6,103 +6,171 @@ import '../../widgets/app_header.dart';
 import 'book_detail_screen.dart';
 import 'audio_detail_screen.dart';
 import 'video_detail_screen.dart';
+import 'song_player_screen.dart';
 
 class CategoryListScreen extends StatelessWidget {
   final String categoryTitle;
+  final List<DocItem>? customItems;
 
-  const CategoryListScreen({super.key, required this.categoryTitle});
+  const CategoryListScreen({
+    super.key,
+    required this.categoryTitle,
+    this.customItems,
+  });
 
-  List<_DocItem> _getItemsForCategory() {
-    if (categoryTitle == 'Sách') {
-      return [
-        _DocItem(
-          title: 'Khám phá Angkor Wat', type: 'Sách', typeIcon: Icons.menu_book_rounded,
-          typeColor: const Color(0xFF5B8FD4),
-          desc: 'Tìm hiểu về kỳ quan thế giới Angkor Wat',
-          rating: 4.8, views: '1.2K lượt xem',
-          btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
-          btnColor: const Color(0xFF5B8FD4),
-          image: 'image/Khám phá văn hóa.png'),
-        _DocItem(
-          title: 'Học phụ âm Khmer', type: 'Sách', typeIcon: Icons.menu_book_rounded,
-          typeColor: const Color(0xFF5B8FD4),
-          desc: 'Bảng 33 phụ âm tiếng Khmer cơ bản',
-          rating: 4.9, views: '950 lượt xem',
-          btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
-          btnColor: const Color(0xFF5B8FD4),
-          image: 'image/Học.png'),
-        _DocItem(
-          title: 'Bé học viết chữ', type: 'Sách', typeIcon: Icons.menu_book_rounded,
-          typeColor: const Color(0xFF5B8FD4),
-          desc: 'Tập tô nét chữ Khmer chuẩn tiểu học',
-          rating: 4.7, views: '640 lượt xem',
-          btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
-          btnColor: const Color(0xFF5B8FD4),
-          image: 'image/Đọc hiểu.png'),
-      ];
-    } else if (categoryTitle == 'Truyện') {
-      return [
-        _DocItem(
-          title: 'Chú thỏ thông minh', type: 'Sách', typeIcon: Icons.menu_book_rounded,
-          typeColor: const Color(0xFF27AE60),
-          desc: 'Câu chuyện kể bằng tiếng Khmer',
-          rating: 4.9, views: '856 lượt nghe',
-          btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
-          btnColor: const Color(0xFF27AE60),
-          image: 'image/Sách.png'),
-        _DocItem(
-          title: 'Rùa và Thỏ', type: 'Sách', typeIcon: Icons.menu_book_rounded,
-          typeColor: const Color(0xFF27AE60),
-          desc: 'Truyện ngụ ngôn ý nghĩa cho bé',
-          rating: 4.8, views: '1.1K lượt xem',
-          btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
-          btnColor: const Color(0xFF27AE60),
-          image: 'image/Khám phá văn hóa.png'),
-      ];
-    } else if (categoryTitle == 'Bài hát') {
-      return [
-        _DocItem(
-          title: 'Bài ca đi học', type: 'Audio', typeIcon: Icons.headphones_rounded,
-          typeColor: const Color(0xFF733AEB),
-          desc: 'Bài hát tiếng Khmer vui nhộn',
-          rating: 4.9, views: '2.4K lượt nghe',
-          btnLabel: 'Nghe ngay', btnIcon: Icons.headphones_rounded,
-          btnColor: const Color(0xFF733AEB),
-          image: 'image/Nghe.png'),
-        _DocItem(
-          title: 'Mặt trời mọc', type: 'Audio', typeIcon: Icons.headphones_rounded,
-          typeColor: const Color(0xFF733AEB),
-          desc: 'Bài hát thiếu nhi nhẹ nhàng buổi sáng',
-          rating: 4.6, views: '780 lượt nghe',
-          btnLabel: 'Nghe ngay', btnIcon: Icons.headphones_rounded,
-          btnColor: const Color(0xFF733AEB),
-          image: 'image/Sách.png'),
-      ];
-    } else {
-      // Kiến thức / Video
-      return [
-        _DocItem(
-          title: 'Học nguyên âm tiếng Khmer', type: 'Video', typeIcon: Icons.play_circle_rounded,
-          typeColor: const Color(0xFFF2994A),
-          desc: 'Học nguyên âm qua video hoạt hình',
-          rating: 4.7, views: '2.1K lượt xem',
-          btnLabel: 'Xem ngay', btnIcon: Icons.play_circle_rounded,
-          btnColor: const Color(0xFFF2994A),
-          image: 'image/Nguyên âm.png'),
-        _DocItem(
-          title: 'Đếm số 1-10', type: 'Video', typeIcon: Icons.play_circle_rounded,
-          typeColor: const Color(0xFFF2994A),
-          desc: 'Nhận diện chữ số Khmer qua bài hát',
-          rating: 4.9, views: '3.2K lượt xem',
-          btnLabel: 'Xem ngay', btnIcon: Icons.play_circle_rounded,
-          btnColor: const Color(0xFFF2994A),
-          image: 'image/Tập đọc.png'),
-      ];
+  List<_FeaturedCat> get _featuredCategories => [
+    const _FeaturedCat(
+      title: 'Sách',
+      image: 'image/Tập đọc.png',
+      gradient: [Color(0xFF4DA0F0), Color(0xFF1E6DEB)]),
+    const _FeaturedCat(
+      title: 'Truyện',
+      image: 'image/Đọc hiểu.png',
+      gradient: [Color(0xFF66BB6A), Color(0xFF2E7D32)]),
+    const _FeaturedCat(
+      title: 'Bài hát',
+      image: 'image/Nghe.png',
+      gradient: [Color(0xFFAB47BC), Color(0xFF7B1FA2)]),
+    const _FeaturedCat(
+      title: 'Video',
+      image: 'image/Học.png',
+      gradient: [Color(0xFFFBD075), Color(0xFFF79E2E)]),
+    const _FeaturedCat(
+      title: 'Kiến thức',
+      image: 'image/Nguyên âm.png',
+      gradient: [Color(0xFFFFB74D), Color(0xFFE65100)]),
+    const _FeaturedCat(
+      title: 'Yêu thích',
+      image: 'image/Huy hiệu.png',
+      gradient: [Color(0xFFFF5F6D), Color(0xFFFFC371)]),
+  ];
+
+  List<DocItem> _getItemsForCategory() {
+    final list = customItems ?? DocItem.fallbackDocs;
+    if (categoryTitle == 'Tất cả danh mục' || categoryTitle == 'Tất cả') {
+      return list;
     }
+    return list.where((doc) => doc.matchesCategory(categoryTitle)).toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (categoryTitle == 'Tất cả danh mục') {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Column(
+          children: [
+            AppHeader(
+              title: 'Tất cả danh mục',
+              onBack: () => Navigator.pop(context),
+            ),
+            Expanded(
+              child: GridView.builder(
+                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 16.h,
+                  crossAxisSpacing: 16.w,
+                  childAspectRatio: 0.85,
+                ),
+                itemCount: _featuredCategories.length,
+                itemBuilder: (context, index) {
+                  final cat = _featuredCategories[index];
+                  final count = (customItems ?? DocItem.fallbackDocs)
+                      .where((doc) => doc.matchesCategory(cat.title))
+                      .length;
+                  final countStr = '$count tài liệu';
+
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CategoryListScreen(
+                            categoryTitle: cat.title,
+                            customItems: customItems,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft, end: Alignment.bottomRight,
+                          colors: cat.gradient),
+                        borderRadius: BorderRadius.circular(22.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: cat.gradient.first.withValues(alpha: 0.30),
+                            blurRadius: 14.r, offset: Offset(0, 6.h)
+                          )
+                        ],
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            right: -15.w, top: -15.h,
+                            child: Container(
+                              width: 60.w, height: 60.w,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withValues(alpha: 0.08),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(14.w),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Center(
+                                    child: Image.asset(cat.image,
+                                      width: 80.w, height: 80.w, fit: BoxFit.contain),
+                                  ),
+                                ),
+                                SizedBox(height: 8.h),
+                                Text(
+                                  cat.title,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14.sp, fontWeight: FontWeight.w800,
+                                    color: Colors.white, height: 1.2),
+                                ),
+                                SizedBox(height: 4.h),
+                                Row(
+                                  children: [
+                                    Text(
+                                      countStr,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 11.sp, fontWeight: FontWeight.w500,
+                                        color: Colors.white.withValues(alpha: 0.80)),
+                                    ),
+                                    const Spacer(),
+                                    Container(
+                                      width: 22.w, height: 22.w,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(alpha: 0.20),
+                                        shape: BoxShape.circle),
+                                      child: Icon(Icons.chevron_right_rounded,
+                                        size: 16.sp, color: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final items = _getItemsForCategory();
 
     return Scaffold(
@@ -129,7 +197,7 @@ class CategoryListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDocCard(BuildContext context, _DocItem doc) {
+  Widget _buildDocCard(BuildContext context, DocItem doc) {
     return GestureDetector(
       onTap: () {
         if (doc.type == 'Sách') {
@@ -146,10 +214,8 @@ class CategoryListScreen extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => AudioDetailScreen(
-                title: doc.title,
-                description: doc.desc,
-                imagePath: doc.image,
+              builder: (context) => SongPlayerScreen(
+                initialSongTitle: doc.title,
               ),
             ),
           );
@@ -171,7 +237,7 @@ class CategoryListScreen extends StatelessWidget {
         padding: EdgeInsets.all(14.w),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(22.r),
+          borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
@@ -181,15 +247,17 @@ class CategoryListScreen extends StatelessWidget {
               blurRadius: 4.r, offset: Offset(0, 1.h)),
           ],
         ),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
           // Thumbnail
           Container(
-            width: 85.w, height: 95.h,
+            width: 80.w, height: 105.h,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16.r)),
+              borderRadius: BorderRadius.circular(8.r)),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(16.r),
-              child: Image.asset(doc.image, fit: BoxFit.cover)),
+              borderRadius: BorderRadius.circular(8.r),
+              child: doc.image.startsWith('http')
+                  ? Image.network(DocItem.optimizeUrl(doc.image, width: 300), fit: BoxFit.cover)
+                  : Image.asset(doc.image, fit: BoxFit.cover)),
           ),
           SizedBox(width: 14.w),
           // Content
@@ -209,7 +277,7 @@ class CategoryListScreen extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFF6B6B).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(6.r)),
+                    borderRadius: BorderRadius.circular(8.r)),
                   child: Text('Mới',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10.sp, fontWeight: FontWeight.w700,
@@ -217,61 +285,82 @@ class CategoryListScreen extends StatelessWidget {
                 ),
               ]),
               SizedBox(height: 4.h),
-              // Type badge
-              Row(children: [
-                Icon(doc.typeIcon, size: 14.sp, color: doc.typeColor),
-                SizedBox(width: 4.w),
-                Text(doc.type,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11.sp, fontWeight: FontWeight.w600,
-                    color: doc.typeColor)),
-              ]),
-              SizedBox(height: 4.h),
               // Description
               Text(doc.desc,
-                maxLines: 1, overflow: TextOverflow.ellipsis,
+                maxLines: 2, overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12.sp, fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary)),
-              SizedBox(height: 8.h),
-              // Rating + Views + Button
-              Row(children: [
-                Icon(Icons.star_rounded, size: 14.sp, color: const Color(0xFFF0A030)),
-                SizedBox(width: 3.w),
-                Text('${doc.rating}',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12.sp, fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary)),
-                SizedBox(width: 6.w),
-                Text('•', style: TextStyle(
-                  fontSize: 10.sp, color: AppColors.textHint)),
-                SizedBox(width: 6.w),
-                Icon(Icons.visibility_rounded, size: 12.sp,
-                  color: AppColors.textHint),
-                SizedBox(width: 3.w),
-                Expanded(child: Text(doc.views,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11.sp, fontWeight: FontWeight.w500,
-                    color: AppColors.textHint))),
-                // Action button
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                  decoration: BoxDecoration(
-                    color: doc.btnColor,
-                    borderRadius: BorderRadius.circular(12.r),
-                    boxShadow: [BoxShadow(
-                      color: doc.btnColor.withValues(alpha: 0.30),
-                      blurRadius: 8.r, offset: Offset(0, 3.h))]),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(doc.btnIcon, size: 14.sp, color: Colors.white),
-                    SizedBox(width: 4.w),
-                    Text(doc.btnLabel,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.sp, fontWeight: FontWeight.w700,
-                        color: Colors.white)),
-                  ]),
+                  fontSize: 11.5.sp, fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                  height: 1.25)),
+              SizedBox(height: 6.h),
+              // Type badge (colored capsule)
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                decoration: BoxDecoration(
+                  color: doc.typeColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20.r),
                 ),
-              ]),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(doc.typeIcon, size: 11.sp, color: doc.typeColor),
+                    SizedBox(width: 4.w),
+                    Text(
+                      doc.type == 'Audio' ? 'Bài hát' : doc.type,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 9.5.sp,
+                        fontWeight: FontWeight.w700,
+                        color: doc.typeColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 6.h),
+              // Bottom Row: Rating/Views on the left, Action button on the right
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Rating & Views
+                  Icon(Icons.star_rounded, size: 13.sp, color: const Color(0xFFF0A030)),
+                  SizedBox(width: 2.w),
+                  Text('${doc.rating}',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10.5.sp, fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary)),
+                  SizedBox(width: 5.w),
+                  Text('•', style: TextStyle(
+                    fontSize: 9.sp, color: AppColors.textHint)),
+                  SizedBox(width: 5.w),
+                  Icon(Icons.visibility_rounded, size: 11.sp,
+                    color: AppColors.textHint),
+                  SizedBox(width: 3.w),
+                  Text(
+                    doc.views.replaceAll(' lượt xem', '').replaceAll(' lượt nghe', ''),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10.5.sp, fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary)),
+                  const Spacer(),
+                  // Action Button
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                    decoration: BoxDecoration(
+                      color: doc.btnColor,
+                      borderRadius: BorderRadius.circular(10.r),
+                      boxShadow: [BoxShadow(
+                        color: doc.btnColor.withValues(alpha: 0.2),
+                        blurRadius: 6.r, offset: Offset(0, 2.h))]),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(doc.btnIcon, size: 12.sp, color: Colors.white),
+                      SizedBox(width: 5.w),
+                      Text(doc.btnLabel,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10.5.sp, fontWeight: FontWeight.w800,
+                          color: Colors.white)),
+                    ]),
+                  ),
+                ],
+              ),
             ],
           )),
         ]),
@@ -280,15 +369,225 @@ class CategoryListScreen extends StatelessWidget {
   }
 }
 
-class _DocItem {
+class DocItem {
   final String title, type, desc, views, btnLabel, image;
   final IconData typeIcon, btnIcon;
   final Color typeColor, btnColor;
   final double rating;
-  const _DocItem({
-    required this.title, required this.type, required this.typeIcon,
-    required this.typeColor, required this.desc,
-    required this.rating, required this.views,
-    required this.btnLabel, required this.btnIcon, required this.btnColor,
-    required this.image});
+
+  const DocItem({
+    required this.title,
+    required this.type,
+    required this.typeIcon,
+    required this.typeColor,
+    required this.desc,
+    required this.rating,
+    required this.views,
+    required this.btnLabel,
+    required this.btnIcon,
+    required this.btnColor,
+    required this.image,
+  });
+
+  static String optimizeUrl(String url, {int width = 300}) {
+    if (url.startsWith('https://res.cloudinary.com/')) {
+      if (url.contains('/image/upload/') && !url.contains('f_auto')) {
+        return url.replaceFirst('/image/upload/', '/image/upload/f_auto,q_auto,w_$width/');
+      }
+    }
+    return url;
+  }
+
+  bool matchesCategory(String label) {
+    if (label == 'Tất cả') return true;
+    if (label == 'Yêu thích') return rating >= 4.8;
+    if (label == 'Truyện') {
+      if (type != 'Sách') return false;
+      final t = title.toLowerCase();
+      return t.contains('truyện') ||
+          t.contains('thỏ') ||
+          t.contains('rùa') ||
+          t.contains('sóc') ||
+          t.contains('cầu vồng') ||
+          t.contains('tích') ||
+          t.contains('ngụ ngôn') ||
+          t.contains('thông minh') ||
+          t.contains('ដំរី') || // ដំរីតូចក្លាហាន
+          t.contains('ស្វា') || // ស្វាតូចឆ្លាតវៃ
+          t.contains('ទន្សាយ') || // ទន្សាយនិងអណ្តើក
+          t.contains('អណ្តើក');
+    }
+    if (label == 'Bài hát') {
+      return type == 'Audio';
+    }
+    if (label == 'Kiến thức') {
+      return type == 'Video' || 
+        title.contains('Học') || 
+        title.contains('Đếm') || 
+        title.contains('Bảng') || 
+        title.contains('chữ') || 
+        title.toLowerCase().contains('học') || 
+        title.toLowerCase().contains('chữ') ||
+        title.toLowerCase().contains('kiến thức');
+    }
+    return type == label;
+  }
+
+  static List<DocItem> get fallbackDocs => [
+    const DocItem(
+      title: 'Học chữ khmer', type: 'Sách', typeIcon: Icons.menu_book_rounded,
+      typeColor: Color(0xFF27AE60),
+      desc: 'Học bảng chữ cái và cách phát âm cơ bản',
+      rating: 4.8, views: '1.2K lượt xem',
+      btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
+      btnColor: Color(0xFF27AE60),
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781781825/khmerkid/library/eddtrctzrddpea2mtfx1.png'),
+    const DocItem(
+      title: 'TRuyện thiếu nhi', type: 'Sách', typeIcon: Icons.menu_book_rounded,
+      typeColor: Color(0xFF27AE60),
+      desc: 'Các câu chuyện ý nghĩa cho bé học tập',
+      rating: 4.9, views: '850 lượt xem',
+      btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
+      btnColor: Color(0xFF27AE60),
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781781829/khmerkid/library/lhn2ivplvojj5mfayoia.png'),
+    const DocItem(
+      title: 'Bé Tập Viết Chữ Khmer', type: 'Sách', typeIcon: Icons.menu_book_rounded,
+      typeColor: Color(0xFF27AE60),
+      desc: 'Tập tô nét chữ Khmer chuẩn tiểu học',
+      rating: 4.7, views: '950 lượt xem',
+      btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
+      btnColor: Color(0xFF27AE60),
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781781835/khmerkid/library/fof6w2jwtpitzj32vqus.png'),
+    const DocItem(
+      title: 'Học Từ Vựng Khmer Qua Hình Ảnh', type: 'Sách', typeIcon: Icons.menu_book_rounded,
+      typeColor: Color(0xFF27AE60),
+      desc: 'Học từ vựng trực quan sinh động qua tranh vẽ',
+      rating: 4.8, views: '1.1K lượt xem',
+      btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
+      btnColor: Color(0xFF27AE60),
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781781824/khmerkid/library/mtcq0mpsgjw65ey8fsbg.png'),
+    const DocItem(
+      title: 'ដំរីតូចក្លាហាន', type: 'Sách', typeIcon: Icons.menu_book_rounded,
+      typeColor: Color(0xFF27AE60),
+      desc: 'Câu chuyện về lòng dũng cảm của chú voi nhỏ',
+      rating: 4.9, views: '720 lượt xem',
+      btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
+      btnColor: Color(0xFF27AE60),
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781781830/khmerkid/library/shzcfks9ptkmthq6wqp5.png'),
+    const DocItem(
+      title: 'Thỏ Trắng Và Ngôi Sao May Mắn', type: 'Sách', typeIcon: Icons.menu_book_rounded,
+      typeColor: Color(0xFF27AE60),
+      desc: 'Câu chuyện thỏ trắng tìm ngôi sao may mắn',
+      rating: 4.8, views: '640 lượt xem',
+      btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
+      btnColor: Color(0xFF27AE60),
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781781828/khmerkid/library/bxax1yqy9fde0pkqtxs5.png'),
+    const DocItem(
+      title: 'Hành Trình Tìm Cầu Vồng Của Bé Sóc', type: 'Sách', typeIcon: Icons.menu_book_rounded,
+      typeColor: Color(0xFF27AE60),
+      desc: 'Cuộc phiêu lưu kỳ thú của chú sóc nhỏ',
+      rating: 4.7, views: '580 lượt xem',
+      btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
+      btnColor: Color(0xFF27AE60),
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781781827/khmerkid/library/fytoyjalak42cfisfg3d.png'),
+    const DocItem(
+      title: 'ស្វាតូចឆ្លាតវៃ', type: 'Sách', typeIcon: Icons.menu_book_rounded,
+      typeColor: Color(0xFF27AE60),
+      desc: 'Câu chuyện thông minh dí dỏm về chú khỉ con',
+      rating: 4.9, views: '890 lượt xem',
+      btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
+      btnColor: Color(0xFF27AE60),
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781781833/khmerkid/library/c42qxbcimdhz4am2ywes.png'),
+    const DocItem(
+      title: 'ទន្សាយនិងអណ្តើក', type: 'Sách', typeIcon: Icons.menu_book_rounded,
+      typeColor: Color(0xFF27AE60),
+      desc: 'Truyện ngụ ngôn Rùa và Thỏ bằng tiếng Khmer',
+      rating: 4.8, views: '1.2K lượt xem',
+      btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
+      btnColor: Color(0xFF27AE60),
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781781831/khmerkid/library/lfbcadvl5h22vh2rc6tv.png'),
+    const DocItem(
+      title: 'Bảng Chữ Cái Khmer Vui Nhộn', type: 'Sách', typeIcon: Icons.menu_book_rounded,
+      typeColor: Color(0xFF27AE60),
+      desc: 'Học chữ cái qua các bài hát vui nhộn',
+      rating: 4.8, views: '910 lượt xem',
+      btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
+      btnColor: Color(0xFF27AE60),
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781781822/khmerkid/library/zx2pibowpd287plq34sn.png'),
+    const DocItem(
+      title: 'Hành Trình 33 Chữ Cái Khmer', type: 'Sách', typeIcon: Icons.menu_book_rounded,
+      typeColor: Color(0xFF27AE60),
+      desc: 'Khám phá thế giới 33 chữ cái phụ âm',
+      rating: 4.9, views: '1.5K lượt xem',
+      btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
+      btnColor: Color(0xFF27AE60),
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781781823/khmerkid/library/sh5oitnbnr3hhregxnor.png'),
+    const DocItem(
+      title: 'Bé Học Từ Vựng', type: 'Sách', typeIcon: Icons.menu_book_rounded,
+      typeColor: Color(0xFF27AE60),
+      desc: 'Phát triển vốn từ vựng Khmer cơ bản hằng ngày',
+      rating: 4.7, views: '830 lượt xem',
+      btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
+      btnColor: Color(0xFF27AE60),
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781781820/khmerkid/library/dnakvq21vgkv0oabe4pw.png'),
+    const DocItem(
+      title: 'ក្មេងៗ ច្រៀងលេង (Trẻ em ca hát vui đùa)', type: 'Audio', typeIcon: Icons.music_note_rounded,
+      typeColor: Color(0xFFFD79A8),
+      desc: 'Bài hát tiếng Khmer vui nhộn dành cho bé',
+      rating: 4.9, views: '2.5K lượt nghe',
+      btnLabel: 'Nghe ngay', btnIcon: Icons.music_note_rounded,
+      btnColor: Color(0xFFFD79A8),
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/f_auto,q_auto,w_300/v1781781829/khmerkid/library/lhn2ivplvojj5mfayoia.png'),
+    const DocItem(
+      title: 'ដំរីតូច (Chú voi con)', type: 'Audio', typeIcon: Icons.music_note_rounded,
+      typeColor: Color(0xFFFD79A8),
+      desc: 'Bài hát tiếng Khmer về chú voi con ngộ nghĩnh',
+      rating: 4.8, views: '1.9K lượt nghe',
+      btnLabel: 'Nghe ngay', btnIcon: Icons.music_note_rounded,
+      btnColor: Color(0xFFFD79A8),
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/f_auto,q_auto,w_300/v1781781830/khmerkid/library/shzcfks9ptkmthq6wqp5.png'),
+    const DocItem(
+      title: 'គេងលក់ យប់index (Đi ngủ nào bé ơi)', type: 'Audio', typeIcon: Icons.music_note_rounded,
+      typeColor: Color(0xFFFD79A8),
+      desc: 'Bài hát tiếng Khmer ru bé giấc ngủ êm đềm',
+      rating: 4.7, views: '2.1K lượt nghe',
+      btnLabel: 'Nghe ngay', btnIcon: Icons.music_note_rounded,
+      btnColor: Color(0xFFFD79A8),
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/f_auto,q_auto,w_300/v1781781828/khmerkid/library/bxax1yqy9fde0pkqtxs5.png'),
+    const DocItem(
+      title: ' ខ្ញុំស្រឡាញ់គ្រួសារ (Em yêu gia đình)', type: 'Audio', typeIcon: Icons.music_note_rounded,
+      typeColor: Color(0xFFFD79A8),
+      desc: 'Bài hát tiếng Khmer ý nghĩa ca ngợi gia đình thân thương',
+      rating: 4.9, views: '2.4K lượt nghe',
+      btnLabel: 'Nghe ngay', btnIcon: Icons.music_note_rounded,
+      btnColor: Color(0xFFFD79A8),
+      image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/f_auto,q_auto,w_300/v1781781820/khmerkid/library/dnakvq21vgkv0oabe4pw.png'),
+    const DocItem(
+      title: 'Học nguyên âm tiếng Khmer', type: 'Video', typeIcon: Icons.play_circle_rounded,
+      typeColor: Color(0xFFF2994A),
+      desc: 'Học nguyên âm qua video hoạt hình',
+      rating: 4.7, views: '2.1K lượt xem',
+      btnLabel: 'Xem ngay', btnIcon: Icons.play_circle_rounded,
+      btnColor: Color(0xFFF2994A),
+      image: 'image/Nguyên âm.png'),
+    const DocItem(
+      title: 'Đếm số 1-10', type: 'Video', typeIcon: Icons.play_circle_rounded,
+      typeColor: Color(0xFFF2994A),
+      desc: 'Nhận diện chữ số Khmer qua bài hát',
+      rating: 4.9, views: '3.2K lượt xem',
+      btnLabel: 'Xem ngay', btnIcon: Icons.play_circle_rounded,
+      btnColor: Color(0xFFF2994A),
+      image: 'image/Tập đọc.png'),
+  ];
+}
+
+class _FeaturedCat {
+  final String title, count, image;
+  final List<Color> gradient;
+  const _FeaturedCat({
+    required this.title,
+    this.count = '',
+    required this.image,
+    required this.gradient,
+  });
 }

@@ -14,6 +14,7 @@ const seedMissions = require('./seedMissions');
 const seedLessons = require('./seedLessons');
 const seedGameQuestions = require('./seedGameQuestions');
 const seedTestQuestions = require('./seedTestQuestions');
+const seedLibrary = require('./seedLibrary');
 
 const seedAll = async () => {
   try {
@@ -44,6 +45,10 @@ const seedAll = async () => {
 
     // 5. Seed Test Questions
     await seedTestQuestions();
+    console.log('----------------------------------------');
+
+    // 6. Seed Library Items
+    await seedLibrary();
     console.log('----------------------------------------');
 
     console.log('🎉 Database seeding completed successfully! All seeders executed.');

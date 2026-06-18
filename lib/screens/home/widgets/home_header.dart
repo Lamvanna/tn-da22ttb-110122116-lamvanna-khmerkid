@@ -97,8 +97,10 @@ class _HomeHeaderState extends State<HomeHeader> {
                 color: Colors.white.withValues(alpha: 0.08), size: 12.sp)),
             // Elephant mascot — bên phải, to rõ
             Positioned(right: -42.w, bottom: -70.h,
-              child: Image.asset('image/Voi header.png',
-                width: 260.w, height: 260.h, fit: BoxFit.contain)),
+              child: IgnorePointer(
+                child: Image.asset('image/Voi header.png',
+                  width: 260.w, height: 260.h, fit: BoxFit.contain),
+              )),
             SafeArea(
               bottom: false,
               child: Padding(

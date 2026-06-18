@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/feedback_dialog.dart';
+import 'category_list_screen.dart';
 
 class AudioDetailScreen extends StatefulWidget {
   final String title;
@@ -131,10 +132,15 @@ class _AudioDetailScreenState extends State<AudioDetailScreen> with SingleTicker
                             child: ClipOval(
                               child: Padding(
                                 padding: EdgeInsets.all(35.w),
-                                child: Image.asset(
-                                  widget.imagePath,
-                                  fit: BoxFit.contain,
-                                ),
+                                child: widget.imagePath.startsWith('http')
+                                    ? Image.network(
+                                        DocItem.optimizeUrl(widget.imagePath, width: 500),
+                                        fit: BoxFit.contain,
+                                      )
+                                    : Image.asset(
+                                        widget.imagePath,
+                                        fit: BoxFit.contain,
+                                      ),
                               ),
                             ),
                           ),

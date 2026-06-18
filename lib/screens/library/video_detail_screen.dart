@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/feedback_dialog.dart';
+import 'category_list_screen.dart';
 
 class VideoDetailScreen extends StatefulWidget {
   final String title;
@@ -73,12 +74,19 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
                           borderRadius: BorderRadius.circular(24.r),
                           child: Opacity(
                             opacity: 0.45,
-                            child: Image.asset(
-                              widget.imagePath,
-                              width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
+                            child: widget.imagePath.startsWith('http')
+                                ? Image.network(
+                                    DocItem.optimizeUrl(widget.imagePath, width: 600),
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Image.asset(
+                                    widget.imagePath,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
                           ),
                         ),
 

@@ -8,6 +8,7 @@ import 'book_detail_screen.dart';
 import 'audio_detail_screen.dart';
 import 'video_detail_screen.dart';
 import 'category_list_screen.dart';
+import 'song_player_screen.dart';
 
 /// Màn hình Thư viện — Redesigned Premium UI
 /// Phong cách Duolingo Kids / Khan Academy Kids
@@ -22,84 +23,45 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   // ── Data ──
   static const _tabs = [
-    _TabData(icon: Icons.auto_stories_rounded, label: 'Tất cả', count: 128, color: Color(0xFF1E6DEB)),
+    _TabData(icon: Icons.grid_view_rounded, label: 'Tất cả', count: 128, color: Color(0xFF1E6DEB)),
     _TabData(icon: Icons.menu_book_rounded, label: 'Sách', count: 45, color: Color(0xFF27AE60)),
-    _TabData(icon: Icons.headphones_rounded, label: 'Audio', count: 32, color: Color(0xFF733AEB)),
-    _TabData(icon: Icons.play_circle_rounded, label: 'Video', count: 28, color: Color(0xFFF2994A)),
-    _TabData(icon: Icons.favorite_rounded, label: 'Yêu thích', count: 12, color: Color(0xFFE25C5C)),
+    _TabData(icon: Icons.auto_stories_rounded, label: 'Truyện', count: 15, color: Color(0xFF00A896)),
+    _TabData(icon: Icons.music_note_rounded, label: 'Bài hát', count: 18, color: Color(0xFFFD79A8)),
+    _TabData(icon: Icons.play_circle_filled_rounded, label: 'Video', count: 28, color: Color(0xFFE67E22)),
+    _TabData(icon: Icons.emoji_objects_rounded, label: 'Kiến thức', count: 25, color: Color(0xFFF1C40F)),
+    _TabData(icon: Icons.favorite_rounded, label: 'Yêu thích', count: 12, color: Color(0xFFE74C3C)),
   ];
 
   static final _featuredCategories = [
     _FeaturedCat(
-      title: 'Sách', count: '20 cuốn',
+      title: 'Sách',
       image: 'image/Tập đọc.png',
       gradient: const [Color(0xFF4DA0F0), Color(0xFF1E6DEB)]),
     _FeaturedCat(
-      title: 'Truyện', count: '15 cuốn',
-      image: 'image/Sách.png',
-      gradient: const [Color(0xFF76D69B), Color(0xFF2FB369)]),
+      title: 'Truyện',
+      image: 'image/Đọc hiểu.png',
+      gradient: const [Color(0xFF66BB6A), Color(0xFF2E7D32)]),
     _FeaturedCat(
-      title: 'Bài hát', count: '18 bài',
+      title: 'Bài hát',
       image: 'image/Nghe.png',
-      gradient: const [Color(0xFFB392F0), Color(0xFF733AEB)]),
+      gradient: const [Color(0xFFAB47BC), Color(0xFF7B1FA2)]),
     _FeaturedCat(
-      title: 'Kiến thức', count: '25 bài',
+      title: 'Video',
       image: 'image/Học.png',
       gradient: const [Color(0xFFFBD075), Color(0xFFF79E2E)]),
+    _FeaturedCat(
+      title: 'Kiến thức',
+      image: 'image/Nguyên âm.png',
+      gradient: const [Color(0xFFFFB74D), Color(0xFFE65100)]),
+    _FeaturedCat(
+      title: 'Yêu thích',
+      image: 'image/Huy hiệu.png',
+      gradient: const [Color(0xFFFF5F6D), Color(0xFFFFC371)]),
   ];
 
-  static final _fallbackDocs = [
-    _DocItem(
-      title: 'Khám phá Angkor Wat', type: 'Sách', typeIcon: Icons.menu_book_rounded,
-      typeColor: const Color(0xFF5B8FD4),
-      desc: 'Tìm hiểu về kỳ quan thế giới Angkor Wat',
-      rating: 4.8, views: '1.2K lượt xem',
-      btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
-      btnColor: const Color(0xFF5B8FD4),
-      image: 'image/Khám phá văn hóa.png'),
-    _DocItem(
-      title: 'Chú thỏ thông minh', type: 'Audio', typeIcon: Icons.headphones_rounded,
-      typeColor: const Color(0xFF733AEB),
-      desc: 'Câu chuyện kể bằng tiếng Khmer',
-      rating: 4.9, views: '856 lượt nghe',
-      btnLabel: 'Nghe ngay', btnIcon: Icons.headphones_rounded,
-      btnColor: const Color(0xFF733AEB),
-      image: 'image/Sách.png'),
-    _DocItem(
-      title: 'Học nguyên âm tiếng Khmer', type: 'Video', typeIcon: Icons.play_circle_rounded,
-      typeColor: const Color(0xFFF2994A),
-      desc: 'Học nguyên âm qua video hoạt hình',
-      rating: 4.7, views: '2.1K lượt xem',
-      btnLabel: 'Xem ngay', btnIcon: Icons.play_circle_rounded,
-      btnColor: const Color(0xFFF2994A),
-      image: 'image/Nguyên âm.png'),
-    _DocItem(
-      title: 'Rùa và Thỏ', type: 'Sách', typeIcon: Icons.menu_book_rounded,
-      typeColor: const Color(0xFF27AE60),
-      desc: 'Truyện ngụ ngôn ý nghĩa cho bé',
-      rating: 4.8, views: '1.1K lượt xem',
-      btnLabel: 'Đọc ngay', btnIcon: Icons.menu_book_rounded,
-      btnColor: const Color(0xFF27AE60),
-      image: 'image/Khám phá văn hóa.png'),
-    _DocItem(
-      title: 'Bài ca đi học', type: 'Audio', typeIcon: Icons.headphones_rounded,
-      typeColor: const Color(0xFF733AEB),
-      desc: 'Bài hát tiếng Khmer vui nhộn',
-      rating: 4.9, views: '2.4K lượt nghe',
-      btnLabel: 'Nghe ngay', btnIcon: Icons.headphones_rounded,
-      btnColor: const Color(0xFF733AEB),
-      image: 'image/Nghe.png'),
-    _DocItem(
-      title: 'Đếm số 1-10', type: 'Video', typeIcon: Icons.play_circle_rounded,
-      typeColor: const Color(0xFFF2994A),
-      desc: 'Nhận diện chữ số Khmer qua bài hát',
-      rating: 4.9, views: '3.2K lượt xem',
-      btnLabel: 'Xem ngay', btnIcon: Icons.play_circle_rounded,
-      btnColor: const Color(0xFFF2994A),
-      image: 'image/Tập đọc.png'),
-  ];
+  static final _fallbackDocs = DocItem.fallbackDocs;
 
-  List<_DocItem> _latestDocs = [];
+  List<DocItem> _latestDocs = [];
   bool _loading = true;
 
   @override
@@ -131,8 +93,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
           String btnLabel = 'Đọc ngay';
 
           if (type == 'Audio') {
-            typeIcon = Icons.headphones_rounded;
-            typeColor = const Color(0xFF733AEB);
+            typeIcon = Icons.music_note_rounded;
+            typeColor = const Color(0xFFFD79A8);
             btnLabel = 'Nghe ngay';
           } else if (type == 'Video') {
             typeIcon = Icons.play_circle_rounded;
@@ -140,7 +102,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             btnLabel = 'Xem ngay';
           }
 
-          return _DocItem(
+          return DocItem(
             title: title,
             type: type,
             typeIcon: typeIcon,
@@ -162,6 +124,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
         _loading = false;
       });
     }
+  }
+
+  int _getDocCountForLabel(String label) {
+    final list = _latestDocs.isNotEmpty ? _latestDocs : _fallbackDocs;
+    return list.where((doc) => doc.matchesCategory(label)).length;
   }
 
   @override
@@ -215,11 +182,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       Positioned(
                         right: -55.w,
                         top: -190.h,
-                        child: Image.asset(
-                          'image/Voi header.png',
-                          width: 275.w,
-                          height: 275.w,
-                          fit: BoxFit.contain,
+                        child: IgnorePointer(
+                          child: Image.asset(
+                            'image/Voi header.png',
+                            width: 275.w,
+                            height: 275.w,
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       ),
                     ],
@@ -265,7 +234,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               fontSize: 14.sp, fontWeight: FontWeight.w500,
               color: const Color(0xFF8896AB)),
             border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(vertical: 11.h)),
+            contentPadding: EdgeInsets.symmetric(vertical: 8.h)),
         )),
       ]),
     );
@@ -413,21 +382,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,
-                width: 72.w,
+                width: 76.w,
                 margin: EdgeInsets.only(right: 8.w),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18.r),
+                  color: selected ? tab.color.withValues(alpha: 0.08) : Colors.white,
+                  borderRadius: BorderRadius.circular(14.r),
                   border: Border.all(
-                    color: selected
-                      ? const Color(0xFF1E6DEB)
-                      : const Color(0xFFE2E8F0),
+                    color: selected ? tab.color : const Color(0xFFE2E8F0),
                     width: selected ? 2.w : 1.5.w,
                   ),
                   boxShadow: selected
                       ? [
                           BoxShadow(
-                            color: const Color(0xFF1E6DEB).withValues(alpha: 0.12),
+                            color: tab.color.withValues(alpha: 0.15),
                             blurRadius: 10.r,
                             offset: Offset(0, 4.h),
                           )
@@ -448,7 +415,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       Icon(
                         tab.icon,
                         size: 26.sp,
-                        color: selected ? const Color(0xFF1E6DEB) : tab.color,
+                        color: tab.color,
                       ),
                       SizedBox(height: 6.h),
                       FittedBox(
@@ -458,7 +425,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 10.sp,
                             fontWeight: FontWeight.w800,
-                            color: selected ? const Color(0xFF1E6DEB) : const Color(0xFF2C3E50),
+                            color: selected ? tab.color : const Color(0xFF2C3E50),
                           ),
                         ),
                       ),
@@ -466,12 +433,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
-                          '${tab.count} tài liệu',
+                          '${_getDocCountForLabel(tab.label)} tài liệu',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 7.5.sp,
                             fontWeight: FontWeight.w600,
                             color: selected
-                              ? const Color(0xFF1E6DEB).withValues(alpha: 0.7)
+                              ? tab.color.withValues(alpha: 0.8)
                               : const Color(0xFF8896AB),
                           ),
                         ),
@@ -491,17 +458,167 @@ class _LibraryScreenState extends State<LibraryScreen> {
   // FEATURED CATEGORIES — Horizontal Scroll Cards
   // ═══════════════════════════════════════════════════
   Widget _buildFeaturedSection() {
+    final selectedLabel = _tabs[_selectedTab].label;
+
+    if (selectedLabel == 'Tất cả') {
+      return Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 14.h),
+            child: Row(children: [
+              Text('Danh mục nổi bật',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 19.sp, fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary)),
+              const Spacer(),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CategoryListScreen(
+                        categoryTitle: 'Tất cả danh mục',
+                        customItems: _latestDocs.isNotEmpty ? _latestDocs : _fallbackDocs,
+                      ),
+                    ),
+                  );
+                },
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Text('Xem tất cả',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13.sp, fontWeight: FontWeight.w600,
+                      color: const Color(0xFF4580C4))),
+                  SizedBox(width: 2.w),
+                  Icon(Icons.chevron_right_rounded,
+                    size: 18.sp, color: const Color(0xFF4580C4)),
+                ]),
+              ),
+            ]),
+          ),
+          SizedBox(
+            height: 155.h,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              itemCount: _featuredCategories.length,
+              itemBuilder: (context, index) {
+                final cat = _featuredCategories[index];
+                final count = _getDocCountForLabel(cat.title);
+                final countStr = '$count tài liệu';
+
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CategoryListScreen(
+                          categoryTitle: cat.title,
+                          customItems: _latestDocs.isNotEmpty ? _latestDocs : _fallbackDocs,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: 110.w,
+                    margin: EdgeInsets.only(right: 12.w),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft, end: Alignment.bottomRight,
+                        colors: cat.gradient),
+                      borderRadius: BorderRadius.circular(12.r),
+                      boxShadow: [BoxShadow(
+                        color: cat.gradient.first.withValues(alpha: 0.30),
+                        blurRadius: 14.r, offset: Offset(0, 6.h))],
+                    ),
+                    child: Stack(children: [
+                      // Decorative circle
+                      Positioned(right: -15.w, top: -15.h,
+                        child: Container(width: 60.w, height: 60.w,
+                          decoration: BoxDecoration(shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.08)))),
+                      // Music notes for songs
+                      if (cat.title == 'Bài hát' || cat.title == 'Audio') ...[
+                        Positioned(left: 10.w, top: 15.h,
+                          child: Icon(Icons.music_note_rounded,
+                            color: Colors.white.withValues(alpha: 0.15), size: 16.sp)),
+                        Positioned(right: 30.w, bottom: 50.h,
+                          child: Icon(Icons.music_note_rounded,
+                            color: Colors.white.withValues(alpha: 0.10), size: 12.sp)),
+                      ],
+                      Padding(
+                        padding: EdgeInsets.all(12.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Image
+                            Expanded(
+                              child: Center(
+                                child: Image.asset(cat.image,
+                                  width: 70.w, height: 70.w, fit: BoxFit.contain)),
+                            ),
+                            SizedBox(height: 8.h),
+                            // Title
+                            Text(cat.title,
+                              maxLines: 2, overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12.5.sp, fontWeight: FontWeight.w800,
+                                color: Colors.white, height: 1.2)),
+                            SizedBox(height: 4.h),
+                            // Count + Arrow
+                            Row(children: [
+                              Text(countStr,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 10.sp, fontWeight: FontWeight.w500,
+                                  color: Colors.white.withValues(alpha: 0.80))),
+                              const Spacer(),
+                              Container(
+                                width: 20.w, height: 20.w,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.20),
+                                  shape: BoxShape.circle),
+                                child: Icon(Icons.chevron_right_rounded,
+                                  size: 14.sp, color: Colors.white),
+                              ),
+                            ]),
+                          ],
+                        ),
+                      ),
+                    ]),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      );
+    }
+
+    final list = _latestDocs.isNotEmpty ? _latestDocs : _fallbackDocs;
+    final selectedDocs = list.where((doc) => doc.matchesCategory(selectedLabel)).toList();
+
     return Column(
       children: [
         Padding(
           padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 14.h),
           child: Row(children: [
-            Text('Danh mục nổi bật',
+            Text('$selectedLabel nổi bật',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 19.sp, fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary)),
             const Spacer(),
             GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CategoryListScreen(
+                      categoryTitle: selectedLabel,
+                      customItems: _latestDocs.isNotEmpty ? _latestDocs : _fallbackDocs,
+                    ),
+                  ),
+                );
+              },
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 Text('Xem tất cả',
                   style: GoogleFonts.plusJakartaSans(
@@ -515,91 +632,106 @@ class _LibraryScreenState extends State<LibraryScreen> {
           ]),
         ),
         SizedBox(
-          height: 155.h,
+          height: 165.h,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             padding: EdgeInsets.symmetric(horizontal: 16.w),
-            itemCount: _featuredCategories.length,
+            itemCount: selectedDocs.length,
             itemBuilder: (context, index) {
-              final cat = _featuredCategories[index];
+              final doc = selectedDocs[index];
               return GestureDetector(
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CategoryListScreen(
-                        categoryTitle: cat.title,
+                  if (doc.type == 'Sách') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => BookDetailScreen(
+                          title: doc.title,
+                          imagePath: doc.image,
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  } else if (doc.type == 'Audio') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SongPlayerScreen(
+                          initialSongTitle: doc.title,
+                        ),
+                      ),
+                    );
+                  } else if (doc.type == 'Video') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VideoDetailScreen(
+                          title: doc.title,
+                          description: doc.desc,
+                          imagePath: doc.image,
+                        ),
+                      ),
+                    );
+                  }
                 },
                 child: Container(
-                  width: 120.w,
+                  width: 115.w,
                   margin: EdgeInsets.only(right: 12.w),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft, end: Alignment.bottomRight,
-                      colors: cat.gradient),
-                    borderRadius: BorderRadius.circular(22.r),
-                    boxShadow: [BoxShadow(
-                      color: cat.gradient.first.withValues(alpha: 0.30),
-                      blurRadius: 14.r, offset: Offset(0, 6.h))],
-                  ),
-                  child: Stack(children: [
-                    // Decorative circle
-                    Positioned(right: -15.w, top: -15.h,
-                      child: Container(width: 60.w, height: 60.w,
-                        decoration: BoxDecoration(shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.08)))),
-                    // Music notes for songs
-                    if (index == 2) ...[
-                      Positioned(left: 10.w, top: 15.h,
-                        child: Icon(Icons.music_note_rounded,
-                          color: Colors.white.withValues(alpha: 0.15), size: 16.sp)),
-                      Positioned(right: 30.w, bottom: 50.h,
-                        child: Icon(Icons.music_note_rounded,
-                          color: Colors.white.withValues(alpha: 0.10), size: 12.sp)),
+                      colors: doc.type == 'Sách'
+                          ? const [Color(0xFFE8F0FE), Color(0xFFC2D7FA)]
+                          : doc.type == 'Audio'
+                              ? const [Color(0xFFF3E8FF), Color(0xFFD8B4FE)]
+                              : const [Color(0xFFFFF3E0), Color(0xFFFFCC80)]),
+                    borderRadius: BorderRadius.circular(12.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 10.r,
+                        offset: Offset(0, 4.h),
+                      )
                     ],
-                    Padding(
-                      padding: EdgeInsets.all(14.w),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Image
-                          Expanded(
-                            child: Center(
-                              child: Image.asset(cat.image,
-                                width: 80.w, height: 80.w, fit: BoxFit.contain)),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(8.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8.r),
+                            child: doc.image.startsWith('http')
+                                ? Image.network(
+                                    DocItem.optimizeUrl(doc.image, width: 300),
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Image.asset(
+                                    doc.image,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
                           ),
-                          SizedBox(height: 8.h),
-                          // Title
-                          Text(cat.title,
-                            maxLines: 2, overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13.sp, fontWeight: FontWeight.w800,
-                              color: Colors.white, height: 1.2)),
-                          SizedBox(height: 4.h),
-                          // Count + Arrow
-                          Row(children: [
-                            Text(cat.count,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11.sp, fontWeight: FontWeight.w500,
-                                color: Colors.white.withValues(alpha: 0.80))),
-                            const Spacer(),
-                            Container(
-                              width: 22.w, height: 22.w,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.20),
-                                shape: BoxShape.circle),
-                              child: Icon(Icons.chevron_right_rounded,
-                                size: 16.sp, color: Colors.white),
-                            ),
-                          ]),
-                        ],
-                      ),
+                        ),
+                        SizedBox(height: 6.h),
+                        Text(
+                          doc.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11.5.sp,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF2C3E50),
+                          ),
+                        ),
+                      ],
                     ),
-                  ]),
+                  ),
                 ),
               );
             },
@@ -614,13 +746,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
   // ═══════════════════════════════════════════════════
   Widget _buildLatestSection() {
     final selectedLabel = _tabs[_selectedTab].label;
-    final filteredDocs = _latestDocs.where((doc) {
-      if (selectedLabel == 'Tất cả') return true;
-      if (selectedLabel == 'Yêu thích') {
-        return doc.rating >= 4.8;
-      }
-      return doc.type == selectedLabel;
-    }).toList();
+    final list = _latestDocs.isNotEmpty ? _latestDocs : _fallbackDocs;
+    final filteredDocs = list.where((doc) => doc.matchesCategory(selectedLabel)).toList();
 
     return Column(
       children: [
@@ -633,6 +760,17 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 color: AppColors.textPrimary)),
             const Spacer(),
             GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CategoryListScreen(
+                      categoryTitle: selectedLabel == 'Tất cả' ? 'Tất cả tài liệu' : selectedLabel,
+                      customItems: _latestDocs.isNotEmpty ? _latestDocs : _fallbackDocs,
+                    ),
+                  ),
+                );
+              },
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 Text('Xem tất cả',
                   style: GoogleFonts.plusJakartaSans(
@@ -668,7 +806,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
-  Widget _buildDocCard(_DocItem doc) {
+  Widget _buildDocCard(DocItem doc) {
     return GestureDetector(
       onTap: () {
         if (doc.type == 'Sách') {
@@ -685,10 +823,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => AudioDetailScreen(
-                title: doc.title,
-                description: doc.desc,
-                imagePath: doc.image,
+              builder: (context) => SongPlayerScreen(
+                initialSongTitle: doc.title,
               ),
             ),
           );
@@ -710,7 +846,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         padding: EdgeInsets.all(14.w),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(22.r),
+          borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
@@ -720,15 +856,17 @@ class _LibraryScreenState extends State<LibraryScreen> {
               blurRadius: 4.r, offset: Offset(0, 1.h)),
           ],
         ),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
           // Thumbnail
           Container(
-            width: 85.w, height: 95.h,
+            width: 80.w, height: 105.h,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16.r)),
+              borderRadius: BorderRadius.circular(8.r)),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(16.r),
-              child: Image.asset(doc.image, fit: BoxFit.cover)),
+              borderRadius: BorderRadius.circular(8.r),
+              child: doc.image.startsWith('http')
+                  ? Image.network(DocItem.optimizeUrl(doc.image, width: 300), fit: BoxFit.cover)
+                  : Image.asset(doc.image, fit: BoxFit.cover)),
           ),
           SizedBox(width: 14.w),
           // Content
@@ -748,7 +886,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFF6B6B).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(6.r)),
+                    borderRadius: BorderRadius.circular(8.r)),
                   child: Text('Mới',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10.sp, fontWeight: FontWeight.w700,
@@ -756,61 +894,82 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ),
               ]),
               SizedBox(height: 4.h),
-              // Type badge
-              Row(children: [
-                Icon(doc.typeIcon, size: 14.sp, color: doc.typeColor),
-                SizedBox(width: 4.w),
-                Text(doc.type,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11.sp, fontWeight: FontWeight.w600,
-                    color: doc.typeColor)),
-              ]),
-              SizedBox(height: 4.h),
               // Description
               Text(doc.desc,
-                maxLines: 1, overflow: TextOverflow.ellipsis,
+                maxLines: 2, overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12.sp, fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary)),
-              SizedBox(height: 8.h),
-              // Rating + Views + Button
-              Row(children: [
-                Icon(Icons.star_rounded, size: 14.sp, color: const Color(0xFFF0A030)),
-                SizedBox(width: 3.w),
-                Text('${doc.rating}',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12.sp, fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary)),
-                SizedBox(width: 6.w),
-                Text('•', style: TextStyle(
-                  fontSize: 10.sp, color: AppColors.textHint)),
-                SizedBox(width: 6.w),
-                Icon(Icons.visibility_rounded, size: 12.sp,
-                  color: AppColors.textHint),
-                SizedBox(width: 3.w),
-                Expanded(child: Text(doc.views,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11.sp, fontWeight: FontWeight.w500,
-                    color: AppColors.textHint))),
-                // Action button
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                  decoration: BoxDecoration(
-                    color: doc.btnColor,
-                    borderRadius: BorderRadius.circular(12.r),
-                    boxShadow: [BoxShadow(
-                      color: doc.btnColor.withValues(alpha: 0.30),
-                      blurRadius: 8.r, offset: Offset(0, 3.h))]),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(doc.btnIcon, size: 14.sp, color: Colors.white),
-                    SizedBox(width: 4.w),
-                    Text(doc.btnLabel,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.sp, fontWeight: FontWeight.w700,
-                        color: Colors.white)),
-                  ]),
+                  fontSize: 11.5.sp, fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                  height: 1.25)),
+              SizedBox(height: 6.h),
+              // Type badge (colored capsule)
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                decoration: BoxDecoration(
+                  color: doc.typeColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20.r),
                 ),
-              ]),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(doc.typeIcon, size: 11.sp, color: doc.typeColor),
+                    SizedBox(width: 4.w),
+                    Text(
+                      doc.type == 'Audio' ? 'Bài hát' : doc.type,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 9.5.sp,
+                        fontWeight: FontWeight.w700,
+                        color: doc.typeColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 6.h),
+              // Bottom Row: Rating/Views on the left, Action button on the right
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Rating & Views
+                  Icon(Icons.star_rounded, size: 13.sp, color: const Color(0xFFF0A030)),
+                  SizedBox(width: 2.w),
+                  Text('${doc.rating}',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10.5.sp, fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary)),
+                  SizedBox(width: 5.w),
+                  Text('•', style: TextStyle(
+                    fontSize: 9.sp, color: AppColors.textHint)),
+                  SizedBox(width: 5.w),
+                  Icon(Icons.visibility_rounded, size: 11.sp,
+                    color: AppColors.textHint),
+                  SizedBox(width: 3.w),
+                  Text(
+                    doc.views.replaceAll(' lượt xem', '').replaceAll(' lượt nghe', ''),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10.5.sp, fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary)),
+                  const Spacer(),
+                  // Action Button
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                    decoration: BoxDecoration(
+                      color: doc.btnColor,
+                      borderRadius: BorderRadius.circular(10.r),
+                      boxShadow: [BoxShadow(
+                        color: doc.btnColor.withValues(alpha: 0.2),
+                        blurRadius: 6.r, offset: Offset(0, 2.h))]),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(doc.btnIcon, size: 12.sp, color: Colors.white),
+                      SizedBox(width: 5.w),
+                      Text(doc.btnLabel,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10.5.sp, fontWeight: FontWeight.w800,
+                          color: Colors.white)),
+                    ]),
+                  ),
+                ],
+              ),
             ],
           )),
         ]),
@@ -901,21 +1060,11 @@ class _FeaturedCat {
   final String title, count, image;
   final List<Color> gradient;
   const _FeaturedCat({
-    required this.title, required this.count,
-    required this.image, required this.gradient});
-}
-
-class _DocItem {
-  final String title, type, desc, views, btnLabel, image;
-  final IconData typeIcon, btnIcon;
-  final Color typeColor, btnColor;
-  final double rating;
-  const _DocItem({
-    required this.title, required this.type, required this.typeIcon,
-    required this.typeColor, required this.desc,
-    required this.rating, required this.views,
-    required this.btnLabel, required this.btnIcon, required this.btnColor,
-    required this.image});
+    required this.title,
+    this.count = '',
+    required this.image,
+    required this.gradient,
+  });
 }
 
 // ═══════════════════════════════════════════════════

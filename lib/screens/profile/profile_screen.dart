@@ -516,6 +516,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return 'Mới bắt đầu';
   }
 
+  int _getCurrentProgress(String reqType) {
+    if (_score == null) return 0;
+    switch (reqType) {
+      case 'lessons_complete':
+        return _score!.totalLessonsCompleted;
+      case 'xp_total':
+        return _score!.totalXp;
+      case 'writing_level':
+        return _score!.writingLevel;
+      case 'reading_level':
+        return _score!.readingLevel;
+      case 'speaking_level':
+        return _score!.speakingLevel;
+      case 'listening_level':
+        return _score!.listeningLevel;
+      case 'stars_total':
+        return _score!.totalStars;
+      case 'streak_days':
+        return _score!.streak;
+      case 'games_played':
+        return _score!.totalGamesPlayed;
+      case 'level_reach':
+        return _score!.level;
+      default:
+        return 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Tải động XP cần thiết từ Backend MongoDB
@@ -1589,7 +1617,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final String name = badgeMap['name']?.toString() ?? 'Huy chương';
         final String type = badgeMap['type']?.toString() ?? 'learning';
         final String iconUrl = badgeMap['iconUrl']?.toString() ?? '';
-        final bool isUnlocked = unlockedIds.contains(id);
+        
+        final reqMap = badgeMap['requirement'] as Map?;
+        final String reqType = reqMap?['type']?.toString() ?? 'unknown';
+        final int target = (reqMap?['value'] as num?)?.toInt() ?? 20;
+        final current = _getCurrentProgress(reqType);
+        final bool isUnlocked = unlockedIds.contains(id) || (current >= target);
 
         Color badgeColor = const Color(0xFF4CAF50);
         IconData badgeIcon = Icons.stars_rounded;
@@ -1753,14 +1786,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ],
                         ),
                         child: unlocked
-                            ? (iconUrl.isNotEmpty && iconUrl.startsWith('http')
+                            ? (iconUrl.isNotEmpty
                                 ? ClipOval(
-                                    child: Image.network(
-                                      AuthService.getOptimizedImageUrl(iconUrl, width: 150),
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (context, error, stackTrace) =>
-                                          Icon(b['icon'] as IconData, color: Colors.white, size: 26.sp),
-                                    ),
+                                    child: iconUrl.startsWith('http')
+                                        ? Image.network(
+                                            AuthService.getOptimizedImageUrl(iconUrl, width: 150),
+                                            fit: BoxFit.contain,
+                                            errorBuilder: (context, error, stackTrace) =>
+                                                Icon(b['icon'] as IconData, color: Colors.white, size: 26.sp),
+                                          )
+                                        : Image.asset(
+                                            iconUrl,
+                                            fit: BoxFit.contain,
+                                            errorBuilder: (context, error, stackTrace) =>
+                                                Icon(b['icon'] as IconData, color: Colors.white, size: 26.sp),
+                                          ),
                                   )
                                 : Container(
                                     decoration: BoxDecoration(
@@ -1784,7 +1824,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             : Stack(
                                 clipBehavior: Clip.none,
                                 children: [
-                                  (iconUrl.isNotEmpty && iconUrl.startsWith('http')
+                                  (iconUrl.isNotEmpty
                                       ? ClipOval(
                                           child: ColorFiltered(
                                             colorFilter: const ColorFilter.mode(
@@ -1793,12 +1833,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             ),
                                             child: Opacity(
                                               opacity: 0.5,
-                                              child: Image.network(
-                                                AuthService.getOptimizedImageUrl(iconUrl, width: 150),
-                                                fit: BoxFit.contain,
-                                                errorBuilder: (context, error, stackTrace) =>
-                                                    Icon(b['icon'] as IconData, color: const Color(0xFF94A3B8), size: 26.sp),
-                                              ),
+                                              child: iconUrl.startsWith('http')
+                                                  ? Image.network(
+                                                      AuthService.getOptimizedImageUrl(iconUrl, width: 150),
+                                                      fit: BoxFit.contain,
+                                                      errorBuilder: (context, error, stackTrace) =>
+                                                          Icon(b['icon'] as IconData, color: const Color(0xFF94A3B8), size: 26.sp),
+                                                    )
+                                                  : Image.asset(
+                                                      iconUrl,
+                                                      fit: BoxFit.contain,
+                                                      errorBuilder: (context, error, stackTrace) =>
+                                                          Icon(b['icon'] as IconData, color: const Color(0xFF94A3B8), size: 26.sp),
+                                                    ),
                                             ),
                                           ),
                                         )

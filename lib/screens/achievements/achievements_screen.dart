@@ -23,6 +23,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Bước đầu tiên',
       icon: Icons.rocket_launch_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Bước đầu tiên.png',
       done: false,
       color: const Color(0xFF4CAF50),
       bgColor: const Color(0xFFE8F5E9),
@@ -31,110 +32,124 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Nhà ngôn ngữ nhí',
       icon: Icons.auto_stories_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Nhà ngôn ngữ nhí.png',
       done: false,
-      color: const Color(0xFF4CAF50),
-      bgColor: const Color(0xFFE8F5E9),
+      color: const Color(0xFF9C27B0),
+      bgColor: const Color(0xFFF3E5F5),
       description: 'Học tập tích lũy đạt 50 điểm XP!',
     ),
     _Achievement(
       title: 'Bậc thầy phụ âm',
       icon: Icons.draw_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Bậc thầy phụ âm.png',
       done: false,
-      color: const Color(0xFF4CAF50),
-      bgColor: const Color(0xFFE8F5E9),
+      color: const Color(0xFFFFB300),
+      bgColor: const Color(0xFFFFF8E1),
       description: 'Đạt trình độ viết phụ âm cấp độ 1.',
     ),
     _Achievement(
       title: 'Khám phá nguyên âm',
       icon: Icons.menu_book_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Khám phá nguyên âm.png',
       done: false,
-      color: const Color(0xFF4CAF50),
-      bgColor: const Color(0xFFE8F5E9),
+      color: const Color(0xFF2196F3),
+      bgColor: const Color(0xFFE3F2FD),
       description: 'Đạt trình độ đọc nguyên âm cấp độ 1.',
     ),
     _Achievement(
       title: 'Vua nguyên âm',
       icon: Icons.explore_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Vua nguyên âm.png',
       done: false,
-      color: const Color(0xFFFF9800),
-      bgColor: const Color(0xFFFFF3E0),
+      color: const Color(0xFF009688),
+      bgColor: const Color(0xFFE0F2F1),
       description: 'Xuất sắc đạt trình độ đọc nguyên âm cấp độ 2.',
     ),
     _Achievement(
       title: 'Chính tả giỏi',
       icon: Icons.draw_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Chính tả giỏi.png',
       done: false,
-      color: const Color(0xFF4CAF50),
-      bgColor: const Color(0xFFE8F5E9),
+      color: const Color(0xFF3F51B5),
+      bgColor: const Color(0xFFE8EAF6),
       description: 'Đạt trình độ viết phụ âm cấp độ 2.',
     ),
     _Achievement(
       title: 'Phát âm chuẩn',
       icon: Icons.record_voice_over_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Phát âm chuẩn.png',
       done: false,
-      color: const Color(0xFFFF5722),
-      bgColor: const Color(0xFFFBE9E7),
+      color: const Color(0xFFE91E63),
+      bgColor: const Color(0xFFFCE4EC),
       description: 'Đạt trình độ nói phát âm cấp độ 1.',
     ),
     _Achievement(
       title: 'Tai thính',
       icon: Icons.hearing_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Tai thính.png',
       done: false,
-      color: const Color(0xFF4CAF50),
-      bgColor: const Color(0xFFE8F5E9),
+      color: const Color(0xFF1E88E5),
+      bgColor: const Color(0xFFEBF4FF),
       description: 'Đạt trình độ nghe tiếng Khmer cấp độ 1.',
     ),
     _Achievement(
       title: 'Viết chữ đẹp',
       icon: Icons.draw_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Viết chữ đẹp.png',
       done: false,
-      color: const Color(0xFF4CAF50),
-      bgColor: const Color(0xFFE8F5E9),
+      color: const Color(0xFF00BCD4),
+      bgColor: const Color(0xFFE0F7FA),
       description: 'Đạt trình độ viết Khmer cấp độ 3.',
     ),
     _Achievement(
       title: 'Ngôi sao đầu tiên',
       icon: Icons.star_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Ngôi sao đầu tiên.png',
       done: false,
-      color: const Color(0xFFFFCA28),
+      color: const Color(0xFFFFC107),
       bgColor: const Color(0xFFFFF8E1),
       description: 'Tích lũy được 15 ngôi sao danh giá đầu tiên.',
     ),
     _Achievement(
       title: 'Sao sáng',
       icon: Icons.wb_twilight_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Sao sáng.png',
       done: false,
-      color: const Color(0xFFFFCA28),
-      bgColor: const Color(0xFFFFF8E1),
+      color: const Color(0xFF03A9F4),
+      bgColor: const Color(0xFFE1F5FE),
       description: 'Tích lũy được tổng cộng 50 ngôi sao lấp lánh.',
     ),
     _Achievement(
       title: 'Siêu sao',
       icon: Icons.military_tech_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Siêu sao.png',
       done: false,
-      color: const Color(0xFFFFCA28),
-      bgColor: const Color(0xFFFFF8E1),
+      color: const Color(0xFF7C4DFF),
+      bgColor: const Color(0xFFEDE7F6),
       description: 'Sở hữu 150 ngôi sao rực rỡ lấp lánh bầu trời.',
     ),
     _Achievement(
       title: 'Chăm chỉ',
       icon: Icons.local_fire_department_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Chăm chỉ.png',
       done: false,
-      color: const Color(0xFFE91E63),
-      bgColor: const Color(0xFFFCE4EC),
+      color: const Color(0xFFFF9800),
+      bgColor: const Color(0xFFFFF3E0),
       description: 'Đạt chuỗi học tập liên tục 2 ngày.',
     ),
     _Achievement(
       title: 'Kiên trì',
       icon: Icons.calendar_month_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Kiên trì.png',
       done: false,
-      color: const Color(0xFFE91E63),
-      bgColor: const Color(0xFFFCE4EC),
+      color: const Color(0xFFFF8F00),
+      bgColor: const Color(0xFFFFF3CD),
       description: 'Duy trì chuỗi học tập bền bỉ liên tục 7 ngày.',
     ),
     _Achievement(
       title: 'Game thủ nhí',
       icon: Icons.sports_esports_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Game thủ nhí.png',
       done: false,
       color: const Color(0xFF00E5FF),
       bgColor: const Color(0xFFE0F7FA),
@@ -143,41 +158,46 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Vô địch mini game',
       icon: Icons.emoji_events_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Vô địch mini game.png',
       done: false,
-      color: const Color(0xFF00E5FF),
-      bgColor: const Color(0xFFE0F7FA),
+      color: const Color(0xFFD32F2F),
+      bgColor: const Color(0xFFFFEBEE),
       description: 'Xuất sắc hoàn thành 20 trò chơi bổ ích.',
     ),
     _Achievement(
       title: 'Tốc độ ánh sáng',
       icon: Icons.flash_on_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Tốc độ ánh sáng.png',
       done: false,
-      color: const Color(0xFFE91E63),
-      bgColor: const Color(0xFFFCE4EC),
+      color: const Color(0xFF7C4DFF),
+      bgColor: const Color(0xFFEDE7F6),
       description: 'Duy trì chuỗi học tập liên tục 15 ngày.',
     ),
     _Achievement(
       title: 'Hoàn hảo',
       icon: Icons.verified_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Hoàn hảo.png',
       done: false,
-      color: const Color(0xFF4CAF50),
+      color: const Color(0xFF2E7D32),
       bgColor: const Color(0xFFE8F5E9),
       description: 'Hoàn thành xuất sắc 15 bài học.',
     ),
     _Achievement(
       title: 'Nhà vô địch',
       icon: Icons.workspace_premium_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Nhà vô địch.png',
       done: false,
-      color: const Color(0xFFFF9800),
-      bgColor: const Color(0xFFFFF3E0),
+      color: const Color(0xFFFF5722),
+      bgColor: const Color(0xFFFBE9E7),
       description: 'Hoàn thành xuất sắc 30 bài học.',
     ),
     _Achievement(
       title: 'Bậc thầy Khmer',
       icon: Icons.school_rounded,
+      imagePath: 'image/Ảnh nhiệm vụ/Bậc thầy Khmer.png',
       done: false,
-      color: const Color(0xFFFF9800),
-      bgColor: const Color(0xFFFFF3E0),
+      color: const Color(0xFF651FFF),
+      bgColor: const Color(0xFFEDE7F6),
       description: 'Đạt cấp độ 20, vươn tới danh hiệu Bậc thầy Khmer!',
     ),
   ];
@@ -228,19 +248,25 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   Widget build(BuildContext context) {
     if (_loading) {
       return Scaffold(
-        backgroundColor: const Color(0xFFD6E9F8),
+        backgroundColor: const Color(0xFFF3F7FA),
         body: const Center(child: CircularProgressIndicator(color: AppColors.primary)),
       );
     }
 
     final bool useFallback = _backendBadges.isEmpty;
     final int done = useFallback
-        ? _fallbackAchievements.where((a) => a.done).length
+        ? _fallbackAchievements.where((a) {
+            final req = _getFallbackReqInfo(a.title);
+            final String reqType = req['type'] ?? 'unknown';
+            final int target = req['value'] ?? 20;
+            final int current = _getCurrentProgress(reqType);
+            return current >= target;
+          }).length
         : _backendBadges.where((b) => _unlockedBadgeIds.contains(b['_id']?.toString())).length;
     final int total = useFallback ? _fallbackAchievements.length : _backendBadges.length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFD6E9F8),
+      backgroundColor: const Color(0xFFF3F7FA),
       body: Column(
         children: [
           // ═══ GRADIENT HEADER ═══
@@ -323,8 +349,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 4,
                 crossAxisSpacing: 10.w,
-                mainAxisSpacing: 14.h,
-                childAspectRatio: 0.7,
+                mainAxisSpacing: 12.h,
+                childAspectRatio: 0.68,
               ),
               itemCount: total,
               itemBuilder: (context, index) {
@@ -341,7 +367,244 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     );
   }
 
+  // Helper to calculate progress dynamically based on badge requirement type
+  int _getCurrentProgress(String reqType) {
+    if (_score == null) return 0;
+    switch (reqType) {
+      case 'lessons_complete':
+        return _score!.totalLessonsCompleted;
+      case 'xp_total':
+        return _score!.totalXp;
+      case 'writing_level':
+        return _score!.writingLevel;
+      case 'reading_level':
+        return _score!.readingLevel;
+      case 'speaking_level':
+        return _score!.speakingLevel;
+      case 'listening_level':
+        return _score!.listeningLevel;
+      case 'stars_total':
+        return _score!.totalStars;
+      case 'streak_days':
+        return _score!.streak;
+      case 'games_played':
+        return _score!.totalGamesPlayed;
+      case 'level_reach':
+        return _score!.level;
+      default:
+        return 0;
+    }
+  }
 
+  // Helper to map fallback badges to their requirements
+  Map<String, dynamic> _getFallbackReqInfo(String title) {
+    switch (title) {
+      case 'Bước đầu tiên':
+        return {'type': 'lessons_complete', 'value': 1};
+      case 'Nhà ngôn ngữ nhí':
+        return {'type': 'xp_total', 'value': 50};
+      case 'Bậc thầy phụ âm':
+        return {'type': 'writing_level', 'value': 1};
+      case 'Khám phá nguyên âm':
+        return {'type': 'reading_level', 'value': 1};
+      case 'Vua nguyên âm':
+        return {'type': 'reading_level', 'value': 2};
+      case 'Chính tả giỏi':
+        return {'type': 'writing_level', 'value': 2};
+      case 'Phát âm chuẩn':
+        return {'type': 'speaking_level', 'value': 1};
+      case 'Tai thính':
+        return {'type': 'listening_level', 'value': 1};
+      case 'Viết chữ đẹp':
+        return {'type': 'writing_level', 'value': 3};
+      case 'Ngôi sao đầu tiên':
+        return {'type': 'stars_total', 'value': 15};
+      case 'Sao sáng':
+        return {'type': 'stars_total', 'value': 50};
+      case 'Siêu sao':
+        return {'type': 'stars_total', 'value': 150};
+      case 'Chăm chỉ':
+        return {'type': 'streak_days', 'value': 2};
+      case 'Kiên trì':
+        return {'type': 'streak_days', 'value': 7};
+      case 'Game thủ nhí':
+        return {'type': 'games_played', 'value': 5};
+      case 'Vô địch mini game':
+        return {'type': 'games_played', 'value': 20};
+      case 'Tốc độ ánh sáng':
+        return {'type': 'streak_days', 'value': 15};
+      case 'Hoàn hảo':
+        return {'type': 'lessons_complete', 'value': 15};
+      case 'Nhà vô địch':
+        return {'type': 'lessons_complete', 'value': 30};
+      case 'Bậc thầy Khmer':
+        return {'type': 'level_reach', 'value': 20};
+      default:
+        return {'type': 'unknown', 'value': 1};
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // TROPHY HEADER
+  // ══════════════════════════════════════════════════════════════
+  Widget _buildTrophyHeader(int done, int total) {
+    final remaining = total - done;
+    final progress = total > 0 ? done / total : 0.0;
+    return Container(
+      margin: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 4.h),
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 16.r,
+            offset: Offset(0, 4.h),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Medal
+          Container(
+            width: 42.w,
+            height: 42.w,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFFFE082), Color(0xFFFFA726)],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFFA726).withValues(alpha: 0.25),
+                  blurRadius: 8.r,
+                  offset: Offset(0, 3.h),
+                ),
+              ],
+            ),
+            padding: EdgeInsets.all(3.w),
+            child: Container(
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+              child: Image.asset(
+                'image/cúp hồ sơ.png',
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+          SizedBox(width: 12.w),
+          // Progress info
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Tiến độ của bạn',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF94A3B8),
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '$done',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 24.sp,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primary,
+                        height: 1,
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 2.h),
+                      child: Text(
+                        '/$total',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFCBD5E1),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 4.h),
+                // Progress bar
+                Stack(
+                  children: [
+                    Container(
+                      height: 6.h,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEDF1F7),
+                        borderRadius: BorderRadius.circular(3.r),
+                      ),
+                    ),
+                    FractionallySizedBox(
+                      widthFactor: progress.clamp(0.0, 1.0),
+                      child: Container(
+                        height: 6.h,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppColors.primary, AppColors.secondary],
+                          ),
+                          borderRadius: BorderRadius.circular(3.r),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 12.w),
+          // Motivation text
+          Expanded(
+            flex: 2,
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 10.w),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0F5FF),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF64748B),
+                    height: 1.3,
+                  ),
+                  children: [
+                    const TextSpan(text: 'Còn '),
+                    TextSpan(
+                      text: '$remaining',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const TextSpan(text: ' thành tích nữa!'),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   // ══════════════════════════════════════════════════════════════
   // DYNAMIC BADGE ITEM (MongoDB Atlas data)
@@ -352,7 +615,12 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     final String description = badge['description']?.toString() ?? '';
     final String iconUrl = badge['iconUrl']?.toString() ?? '';
     final String type = badge['type']?.toString() ?? 'learning';
-    final bool isUnlocked = _unlockedBadgeIds.contains(id);
+
+    final reqMap = badge['requirement'] as Map?;
+    final String reqType = reqMap?['type']?.toString() ?? 'unknown';
+    final int target = (reqMap?['value'] as num?)?.toInt() ?? 20;
+    final current = _getCurrentProgress(reqType);
+    final bool isUnlocked = _unlockedBadgeIds.contains(id) || (current >= target);
 
     // Dynamic colors based on badge type
     Color accentColor = const Color(0xFF7367D6);
@@ -381,110 +649,95 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       fallbackIcon = Icons.emoji_events_rounded;
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Circular badge
-        GestureDetector(
-          onTap: () {
-            _showBadgeDetailDialog(name, description, isUnlocked, accentColor, iconUrl, fallbackIcon);
-          },
-          child: Container(
-            width: 72.w,
-            height: 72.w,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: isUnlocked
-                      ? Colors.black.withValues(alpha: 0.12)
-                      : Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 8.r,
-                  offset: Offset(0, 4.h),
-                ),
-              ],
+    return GestureDetector(
+      onTap: () {
+        _showBadgeDetailDialog(name, description, isUnlocked, accentColor, iconUrl, fallbackIcon);
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8.r,
+              offset: const Offset(0, 4),
             ),
-            child: isUnlocked
-                ? (iconUrl.isNotEmpty && iconUrl.startsWith('http')
-                    ? ClipOval(
-                        child: Image.network(
-                          AuthService.getOptimizedImageUrl(iconUrl, width: 150),
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Icon(fallbackIcon, size: 30.sp, color: accentColor),
-                        ),
-                      )
-                    : Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: bgColor,
-                          border: Border.all(color: Colors.white, width: 2.w),
-                        ),
-                        child: Icon(fallbackIcon, size: 30.sp, color: accentColor),
-                      ))
-                : (iconUrl.isNotEmpty && iconUrl.startsWith('http')
-                    ? Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          ClipOval(
-                            child: ColorFiltered(
-                              colorFilter: const ColorFilter.mode(
-                                Colors.grey,
-                                BlendMode.saturation,
-                              ),
-                              child: Opacity(
-                                opacity: 0.5,
-                                child: Image.network(
-                                  AuthService.getOptimizedImageUrl(iconUrl, width: 150),
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      Icon(fallbackIcon, size: 30.sp, color: const Color(0xFF94A3B8)),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: EdgeInsets.all(4.w),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.4),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.lock_rounded,
-                              size: 16.sp,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      )
-                    : Container(
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color(0xFFE2E8F0),
-                        ),
-                        child: Icon(
-                          Icons.lock_rounded,
-                          size: 22.sp,
-                          color: const Color(0xFF94A3B8),
-                        ),
-                      )),
-          ),
+          ],
         ),
-        SizedBox(height: 6.h),
-        // Label
-        Text(
-          name,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 10.sp,
-            fontWeight: FontWeight.w700,
-            color: isUnlocked ? const Color(0xFF334155) : const Color(0xFF94A3B8),
-            height: 1.2,
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Circular Badge Icon
+            SizedBox(
+              width: 60.w,
+              height: 60.w,
+              child: isUnlocked
+                  ? (iconUrl.isNotEmpty
+                      ? (iconUrl.startsWith('http')
+                          ? Image.network(
+                              AuthService.getOptimizedImageUrl(iconUrl, width: 150),
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  _buildIconCircle(fallbackIcon, accentColor, bgColor),
+                            )
+                          : Image.asset(
+                              iconUrl,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  _buildIconCircle(fallbackIcon, accentColor, bgColor),
+                            ))
+                      : _buildIconCircle(fallbackIcon, accentColor, bgColor))
+                  : _buildIconCircle(Icons.lock_rounded, const Color(0xFF94A3B8), const Color(0xFFF1F5F9), borderColor: const Color(0xFFE2E8F0)),
+            ),
+            SizedBox(height: 6.h),
+            // Title
+            Expanded(
+              child: Center(
+                child: Text(
+                  name,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF1E293B),
+                    height: 1.25,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 4.h),
+            // Status Indicator
+            isUnlocked
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.check_circle_rounded, color: const Color(0xFF4CAF50), size: 11.sp),
+                      SizedBox(width: 2.w),
+                      Text(
+                        'Đã đạt',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 9.sp,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF4CAF50),
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(
+                    '$current/$target',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 9.sp,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF94A3B8),
+                    ),
+                  ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -492,82 +745,118 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   // FALLBACK BADGE ITEM
   // ══════════════════════════════════════════════════════════════
   Widget _buildFallbackBadge(_Achievement a) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GestureDetector(
-          onTap: () {
-            _showBadgeDetailDialog(a.title, a.description, a.done, a.color, '', a.icon);
-          },
-          child: Container(
-            width: 72.w,
-            height: 72.w,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: a.done
-                  ? const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFFFFD54F), Color(0xFFFFA000)],
-                    )
-                  : const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFFCBD5E1), Color(0xFF94A3B8)],
-                    ),
-              boxShadow: [
-                BoxShadow(
-                  color: a.done
-                      ? const Color(0xFFFFA000).withValues(alpha: 0.35)
-                      : Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 8.r,
-                  offset: Offset(0, 3.h),
-                ),
-              ],
+    final req = _getFallbackReqInfo(a.title);
+    final String reqType = req['type'] ?? 'unknown';
+    final int target = req['value'] ?? 20;
+    final int current = _getCurrentProgress(reqType);
+    final bool isUnlocked = current >= target;
+
+    final Color accentColor = a.color;
+    final Color bgColor = a.bgColor;
+
+    return GestureDetector(
+      onTap: () {
+        _showBadgeDetailDialog(a.title, a.description, isUnlocked, accentColor, a.imagePath, a.icon);
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8.r,
+              offset: const Offset(0, 4),
             ),
-            padding: EdgeInsets.all(4.w),
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: a.done ? a.bgColor : const Color(0xFFE2E8F0),
-                border: Border.all(
-                  color: a.done
-                      ? Colors.white.withValues(alpha: 0.6)
-                      : Colors.white.withValues(alpha: 0.35),
-                  width: 2.w,
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Circular Badge Icon
+            SizedBox(
+              width: 60.w,
+              height: 60.w,
+              child: isUnlocked
+                  ? (a.imagePath.isNotEmpty
+                      ? Image.asset(
+                          a.imagePath,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              _buildIconCircle(a.icon, accentColor, bgColor),
+                        )
+                      : _buildIconCircle(a.icon, accentColor, bgColor))
+                  : _buildIconCircle(Icons.lock_rounded, const Color(0xFF94A3B8), const Color(0xFFF1F5F9), borderColor: const Color(0xFFE2E8F0)),
+            ),
+            SizedBox(height: 6.h),
+            // Title
+            Expanded(
+              child: Center(
+                child: Text(
+                  a.title,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF1E293B),
+                    height: 1.25,
+                  ),
                 ),
               ),
-              child: a.done
-                  ? Icon(a.icon, size: 30.sp, color: a.color)
-                  : Icon(
-                      Icons.lock_rounded,
-                      size: 22.sp,
+            ),
+            SizedBox(height: 4.h),
+            // Status Indicator
+            isUnlocked
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.check_circle_rounded, color: const Color(0xFF4CAF50), size: 11.sp),
+                      SizedBox(width: 2.w),
+                      Text(
+                        'Đã đạt',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 9.sp,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF4CAF50),
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(
+                    '$current/$target',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 9.sp,
+                      fontWeight: FontWeight.w800,
                       color: const Color(0xFF94A3B8),
                     ),
-            ),
-          ),
+                  ),
+          ],
         ),
-        SizedBox(height: 6.h),
-        // Label
-        Text(
-          a.title,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 10.sp,
-            fontWeight: FontWeight.w700,
-            color: a.done ? const Color(0xFF334155) : const Color(0xFF94A3B8),
-            height: 1.2,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
   // ══════════════════════════════════════════════════════════════
   // DETAIL DIALOG
   // ══════════════════════════════════════════════════════════════
+  Widget _buildIconCircle(IconData icon, Color iconColor, Color bg, {Color? borderColor, double? iconSize}) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: bg,
+        border: Border.all(
+          color: borderColor ?? iconColor.withValues(alpha: 0.25),
+          width: 1.5.w,
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Icon(icon, size: iconSize ?? (icon == Icons.lock_rounded ? 24.sp : 30.sp), color: iconColor),
+    );
+  }
+
   void _showBadgeDetailDialog(
     String name,
     String description,
@@ -592,34 +881,26 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Badge icon stacked
-              Container(
-                width: 100.w,
-                height: 100.w,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isUnlocked ? accentColor.withValues(alpha: 0.12) : const Color(0xFFF1F5F9),
-                  border: Border.all(
-                    color: isUnlocked ? accentColor.withValues(alpha: 0.3) : const Color(0xFFE2E8F0),
-                    width: 3.w,
-                  ),
-                ),
-                padding: EdgeInsets.all(12.w),
+              SizedBox(
+                width: 130.w,
+                height: 130.w,
                 child: isUnlocked
-                    ? ClipOval(
-                        child: iconUrl.isNotEmpty && iconUrl.startsWith('http')
+                    ? (iconUrl.isNotEmpty
+                        ? (iconUrl.startsWith('http')
                             ? Image.network(
                                 AuthService.getOptimizedImageUrl(iconUrl, width: 250),
                                 fit: BoxFit.contain,
                                 errorBuilder: (context, error, stackTrace) =>
-                                    Icon(fallbackIcon, size: 48.sp, color: accentColor),
+                                    _buildIconCircle(fallbackIcon, accentColor, accentColor.withValues(alpha: 0.12), iconSize: 64.sp),
                               )
-                            : Icon(fallbackIcon, size: 48.sp, color: accentColor),
-                      )
-                    : Icon(
-                        Icons.lock_rounded,
-                        size: 44.sp,
-                        color: const Color(0xFF94A3B8),
-                      ),
+                            : Image.asset(
+                                iconUrl,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    _buildIconCircle(fallbackIcon, accentColor, accentColor.withValues(alpha: 0.12), iconSize: 64.sp),
+                              ))
+                        : _buildIconCircle(fallbackIcon, accentColor, accentColor.withValues(alpha: 0.12), iconSize: 64.sp))
+                    : _buildIconCircle(Icons.lock_rounded, const Color(0xFF94A3B8), const Color(0xFFF1F5F9), borderColor: const Color(0xFFE2E8F0), iconSize: 56.sp),
               ),
               SizedBox(height: 20.h),
               // Badge Name
@@ -697,6 +978,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 class _Achievement {
   final String title;
   final IconData icon;
+  final String imagePath;
   final bool done;
   final Color color;
   final Color bgColor;
@@ -705,6 +987,7 @@ class _Achievement {
   const _Achievement({
     required this.title,
     required this.icon,
+    required this.imagePath,
     required this.done,
     required this.color,
     required this.bgColor,

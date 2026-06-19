@@ -340,7 +340,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Main title
-                        Text('Thư viện 📚',
+                        Text('Thư viện',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 30.sp,
                             fontWeight: FontWeight.w900,

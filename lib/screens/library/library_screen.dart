@@ -195,13 +195,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       ),
                       // Mascot sitting on top of the curved edge
                       Positioned(
-                        right: -55.w,
-                        top: -190.h,
+                        right: -40.w,
+                        top: -145.h,
                         child: IgnorePointer(
                           child: Image.asset(
                             'image/Voi thư viện.png',
-                            width: 275.w,
-                            height: 275.w,
+                            width: 215.w,
+                            height: 215.w,
                             fit: BoxFit.contain,
                           ),
                         ),

@@ -136,7 +136,8 @@ const items = [
     description: 'Học nguyên âm qua video hoạt hình',
     image: 'image/Nguyên âm.png',
     rating: 4.7,
-    views: 2100
+    views: 2100,
+    duration: '08:45'
   },
   {
     title: 'Đếm số 1-10',
@@ -144,7 +145,53 @@ const items = [
     description: 'Nhận diện chữ số Khmer qua bài hát',
     image: 'image/Tập đọc.png',
     rating: 4.9,
-    views: 3200
+    views: 3200,
+    duration: '05:30'
+  },
+  {
+    title: 'Giải cứu thú rừng',
+    type: 'Video',
+    description: 'Học từ vựng Khmer qua cuộc chiến bảo vệ rừng xanh',
+    image: 'image/Giải cứu thú rừng.png',
+    rating: 4.8,
+    views: 1520,
+    duration: '10:15'
+  },
+  {
+    title: 'Đảo quốc Ngữ pháp',
+    type: 'Video',
+    description: 'Khám phá thế giới ngữ pháp Khmer qua chuyến đi phiêu lưu',
+    image: 'image/Đảo quốc Ngữ pháp.png',
+    rating: 4.9,
+    views: 2350,
+    duration: '12:40'
+  },
+  {
+    title: 'Cờ tỷ phú Khmer kỳ thú',
+    type: 'Video',
+    description: 'Vừa chơi cờ vừa học giao tiếp tiếng Khmer thực tế',
+    image: 'image/Cờ tỷ phú Khmer kỳ thú.png',
+    rating: 4.7,
+    views: 980,
+    duration: '15:20'
+  },
+  {
+    title: 'Nhà khảo cổ nhí',
+    type: 'Video',
+    description: 'Khám phá lịch sử cổ xưa qua các chữ cái Khmer',
+    image: 'image/Nhà khảo cổ nhí.png',
+    rating: 4.8,
+    views: 1120,
+    duration: '09:50'
+  },
+  {
+    title: 'Bắt chữ Khmer',
+    type: 'Video',
+    description: 'Đố vui đoán chữ Khmer cực nhanh cho các bé học từ',
+    image: 'image/Bắt chữ Khmer.png',
+    rating: 4.9,
+    views: 3080,
+    duration: '11:05'
   }
 ];
 

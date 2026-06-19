@@ -74,8 +74,8 @@ class MainScreenState extends State<MainScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildNavItem(0, Icons.home_outlined, Icons.home_rounded, 'Trang chủ'),
-                _buildNavItem(1, Icons.school_outlined, Icons.school_rounded, 'Học'),
-                _buildNavItem(2, Icons.sports_esports_outlined, Icons.sports_esports_rounded, 'Chơi'),
+                _buildNavItem(1, Icons.school_outlined, Icons.school_rounded, 'Học tập'),
+                _buildNavItem(2, Icons.sports_esports_outlined, Icons.sports_esports_rounded, 'Trò chơi'),
                 _buildNavItem(3, Icons.person_outline_rounded, Icons.person_rounded, 'Hồ sơ'),
               ],
             ),

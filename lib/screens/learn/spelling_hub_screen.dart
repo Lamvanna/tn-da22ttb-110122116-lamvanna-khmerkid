@@ -671,61 +671,88 @@ class _HubBottomNav extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24.r),
+          topRight: Radius.circular(24.r),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 16.r,
-            offset: Offset(0, -2.h),
+            offset: Offset(0, -4.h),
           ),
         ],
       ),
       child: SafeArea(
-        child: BottomNavigationBar(
-          currentIndex: currentIndex,
-          onTap: (index) => _switchTab(context, index),
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.navInactive,
-          selectedFontSize: 12.sp,
-          unselectedFontSize: 12.sp,
-          selectedLabelStyle:
-              GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-          unselectedLabelStyle:
-              GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w500),
-          elevation: 0,
-          items: [
-            _navItem(Icons.home_outlined, Icons.home_rounded, 'Trang chủ'),
-            _navItem(Icons.school_outlined, Icons.school_rounded, 'Học'),
-            _navItem(Icons.sports_esports_outlined,
-                Icons.sports_esports_rounded, 'Chơi'),
-            _navItem(Icons.person_outline_rounded, Icons.person_rounded,
-                'Hồ sơ'),
-          ],
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 9.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(context, 0, Icons.home_outlined, Icons.home_rounded, 'Trang chủ'),
+              _buildNavItem(context, 1, Icons.school_outlined, Icons.school_rounded, 'Học tập'),
+              _buildNavItem(context, 2, Icons.sports_esports_outlined, Icons.sports_esports_rounded, 'Trò chơi'),
+              _buildNavItem(context, 3, Icons.person_outline_rounded, Icons.person_rounded, 'Hồ sơ'),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  BottomNavigationBarItem _navItem(
-      IconData inactive, IconData active, String label) {
-    return BottomNavigationBarItem(
-      icon: Padding(
-        padding: EdgeInsets.only(bottom: 4.h),
-        child: Icon(inactive, size: 26.sp),
-      ),
-      activeIcon: Padding(
-        padding: EdgeInsets.only(bottom: 4.h),
-        child: Icon(active, size: 26.sp),
-      ),
-      label: label,
-    );
-  }
+  Widget _buildNavItem(BuildContext context, int index, IconData inactiveIcon, IconData activeIcon, String label) {
+    final bool isSelected = currentIndex == index;
+    final Color color = isSelected ? AppColors.primary : AppColors.navInactive;
 
-  /// Pop về MainScreen rồi switch tab tương ứng
-  void _switchTab(BuildContext context, int index) {
-    final mainState = MainScreenState.of(context);
-    Navigator.of(context).popUntil((route) => route.isFirst);
-    mainState?.switchTab(index);
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          final mainState = MainScreenState.of(context);
+          Navigator.of(context).popUntil((route) => route.isFirst);
+          if (mainState != null) {
+            mainState.switchTab(index);
+          }
+          HapticFeedback.lightImpact();
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedScale(
+              scale: isSelected ? 1.12 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutBack,
+              child: Icon(
+                isSelected ? activeIcon : inactiveIcon,
+                color: color,
+                size: 26.sp,
+              ),
+            ),
+            SizedBox(height: 2.h),
+            Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11.sp,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                color: color,
+                height: 1.1,
+              ),
+            ),
+            SizedBox(height: 3.h),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              width: isSelected ? 20.w : 0.w,
+              height: 3.h,
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(1.5.r),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

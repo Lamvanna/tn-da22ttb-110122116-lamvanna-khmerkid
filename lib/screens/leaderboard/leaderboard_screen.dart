@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -307,85 +308,97 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       ),
       // ═══ BOTTOM NAV BAR ═══
       extendBody: false,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 16.r,
-              offset: Offset(0, -2.h),
-            ),
-          ],
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════
+  // BOTTOM NAVIGATION BAR
+  // ═══════════════════════════════════════════════════
+  Widget _buildBottomNav() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24.r),
+          topRight: Radius.circular(24.r),
         ),
-        child: SafeArea(
-          child: BottomNavigationBar(
-            currentIndex: 0,
-            onTap: (index) {
-              Navigator.pop(context);
-              final mainState = MainScreenState.of(context);
-              if (mainState != null) mainState.switchTab(index);
-            },
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.white,
-            selectedItemColor: AppColors.primary,
-            unselectedItemColor: AppColors.navInactive,
-            selectedFontSize: 12.sp,
-            unselectedFontSize: 12.sp,
-            selectedLabelStyle: GoogleFonts.plusJakartaSans(
-              fontWeight: FontWeight.w700,
-            ),
-            unselectedLabelStyle: GoogleFonts.plusJakartaSans(
-              fontWeight: FontWeight.w500,
-            ),
-            elevation: 0,
-            items: [
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4.h),
-                  child: Icon(Icons.home_outlined, size: 26.sp),
-                ),
-                activeIcon: Padding(
-                  padding: EdgeInsets.only(bottom: 4.h),
-                  child: Icon(Icons.home_rounded, size: 26.sp),
-                ),
-                label: 'Trang chủ',
-              ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4.h),
-                  child: Icon(Icons.school_outlined, size: 26.sp),
-                ),
-                activeIcon: Padding(
-                  padding: EdgeInsets.only(bottom: 4.h),
-                  child: Icon(Icons.school_rounded, size: 26.sp),
-                ),
-                label: 'Học',
-              ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4.h),
-                  child: Icon(Icons.sports_esports_outlined, size: 26.sp),
-                ),
-                activeIcon: Padding(
-                  padding: EdgeInsets.only(bottom: 4.h),
-                  child: Icon(Icons.sports_esports_rounded, size: 26.sp),
-                ),
-                label: 'Chơi',
-              ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4.h),
-                  child: Icon(Icons.person_outline_rounded, size: 26.sp),
-                ),
-                activeIcon: Padding(
-                  padding: EdgeInsets.only(bottom: 4.h),
-                  child: Icon(Icons.person_rounded, size: 26.sp),
-                ),
-                label: 'Hồ sơ',
-              ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 16.r,
+            offset: Offset(0, -4.h),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 9.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(0, Icons.home_outlined, Icons.home_rounded, 'Trang chủ'),
+              _buildNavItem(1, Icons.school_outlined, Icons.school_rounded, 'Học tập'),
+              _buildNavItem(2, Icons.sports_esports_outlined, Icons.sports_esports_rounded, 'Trò chơi'),
+              _buildNavItem(3, Icons.person_outline_rounded, Icons.person_rounded, 'Hồ sơ'),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData inactiveIcon, IconData activeIcon, String label) {
+    final bool isSelected = index == 0; // Bảng xếp hạng is opened from the Home screen (Trang chủ)
+    final Color color = isSelected ? AppColors.primary : AppColors.navInactive;
+
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          Navigator.pop(context);
+          final mainState = MainScreenState.of(context);
+          if (mainState != null) {
+            mainState.switchTab(index);
+          }
+          HapticFeedback.lightImpact();
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedScale(
+              scale: isSelected ? 1.12 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutBack,
+              child: Icon(
+                isSelected ? activeIcon : inactiveIcon,
+                color: color,
+                size: 26.sp,
+              ),
+            ),
+            SizedBox(height: 2.h),
+            Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11.sp,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                color: color,
+                height: 1.1,
+              ),
+            ),
+            SizedBox(height: 3.h),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              width: isSelected ? 20.w : 0.w,
+              height: 3.h,
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(1.5.r),
+              ),
+            ),
+          ],
         ),
       ),
     );

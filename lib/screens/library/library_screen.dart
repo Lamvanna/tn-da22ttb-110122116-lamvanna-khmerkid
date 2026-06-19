@@ -102,6 +102,17 @@ class _LibraryScreenState extends State<LibraryScreen> {
             btnLabel = 'Xem ngay';
           }
 
+           var duration = item['duration']?.toString() ?? '';
+          if (type == 'Video' && duration.isEmpty) {
+            if (title.contains('1-10')) duration = '05:30';
+            else if (title.contains('nguyên âm')) duration = '08:45';
+            else if (title.contains('thú rừng')) duration = '10:15';
+            else if (title.contains('Ngữ pháp')) duration = '12:40';
+            else if (title.contains('tỷ phú')) duration = '15:20';
+            else if (title.contains('khảo cổ')) duration = '09:50';
+            else if (title.contains('Bắt chữ')) duration = '11:05';
+            else duration = '08:45';
+          }
           return DocItem(
             title: title,
             type: type,
@@ -114,6 +125,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             btnIcon: typeIcon,
             btnColor: typeColor,
             image: image,
+            duration: duration.isNotEmpty ? duration : null,
           );
         }).toList();
         _loading = false;
@@ -128,6 +140,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   int _getDocCountForLabel(String label) {
     final list = _latestDocs.isNotEmpty ? _latestDocs : _fallbackDocs;
+    if (label == 'Tất cả') {
+      return list.where((doc) => doc.type != 'Video').length;
+    }
     return list.where((doc) => doc.matchesCategory(label)).length;
   }
 
@@ -558,8 +573,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
                              // Image
                              Expanded(
                                child: Center(
-                                 child: Image.network(cat.image,
-                                    width: 95.w, height: 95.w, fit: BoxFit.contain)),
+                                 child: FadeInImage.assetNetwork(
+                                   placeholder: 'assets/images/splash_bg.png',
+                                   image: DocItem.optimizeUrl(cat.image, width: 200),
+                                   width: 95.w, height: 95.w, fit: BoxFit.contain,
+                                   fadeInDuration: const Duration(milliseconds: 200),
+                                   imageErrorBuilder: (_, _, _) => Icon(
+                                     Icons.image_rounded, size: 40.sp,
+                                     color: Colors.white.withValues(alpha: 0.5)),
+                                 )),
                              ),
                              SizedBox(height: 4.h),
                             // Title
@@ -684,7 +706,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   }
                 },
                 child: Container(
-                  width: 115.w,
+                  width: doc.type == 'Video' ? 180.w : 115.w,
                   margin: EdgeInsets.only(right: 12.w),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -711,19 +733,64 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         Expanded(
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8.r),
-                            child: doc.image.startsWith('http')
-                                ? Image.network(
-                                    DocItem.optimizeUrl(doc.image, width: 300),
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    fit: BoxFit.cover,
-                                  )
-                                : Image.asset(
-                                    doc.image,
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    fit: BoxFit.cover,
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                doc.image.startsWith('http')
+                                    ? Image.network(
+                                        DocItem.optimizeUrl(doc.image, width: 300),
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.asset(
+                                        doc.image,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        fit: BoxFit.cover,
+                                      ),
+                                if (doc.type == 'Video') ...[
+                                  Container(
+                                    color: Colors.black.withValues(alpha: 0.15),
+                                    child: Center(
+                                      child: Container(
+                                        width: 28.w,
+                                        height: 28.w,
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withValues(alpha: 0.5),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.play_arrow_rounded,
+                                          color: Colors.white,
+                                          size: 18.sp,
+                                        ),
+                                      ),
+                                    ),
                                   ),
+                                  if (doc.duration != null && doc.duration!.isNotEmpty)
+                                    Positioned(
+                                      bottom: 4.h,
+                                      right: 4.w,
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withValues(alpha: 0.65),
+                                          borderRadius: BorderRadius.circular(3.r),
+                                        ),
+                                        child: Text(
+                                          doc.duration!,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 8.sp,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ],
+                            ),
                           ),
                         ),
                         SizedBox(height: 6.h),
@@ -756,7 +823,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Widget _buildLatestSection() {
     final selectedLabel = _tabs[_selectedTab].label;
     final list = _latestDocs.isNotEmpty ? _latestDocs : _fallbackDocs;
-    final filteredDocs = list.where((doc) => doc.matchesCategory(selectedLabel)).toList();
+    var filteredDocs = list.where((doc) => doc.matchesCategory(selectedLabel)).toList();
+    if (selectedLabel == 'Tất cả') {
+      filteredDocs = filteredDocs.where((doc) => doc.type != 'Video').toList();
+    }
 
     return Column(
       children: [
@@ -873,14 +943,61 @@ class _LibraryScreenState extends State<LibraryScreen> {
         child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
           // Thumbnail
           Container(
-            width: 80.w, height: 105.h,
+            width: doc.type == 'Video' ? 120.w : 80.w,
+            height: doc.type == 'Video' ? 90.h : 105.h,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8.r)),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8.r),
-              child: doc.image.startsWith('http')
-                  ? Image.network(DocItem.optimizeUrl(doc.image, width: 300), fit: BoxFit.cover)
-                  : Image.asset(doc.image, fit: BoxFit.cover)),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  doc.image.startsWith('http')
+                      ? Image.network(DocItem.optimizeUrl(doc.image, width: 300), fit: BoxFit.cover)
+                      : Image.asset(doc.image, fit: BoxFit.cover),
+                  if (doc.type == 'Video') ...[
+                    Container(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      child: Center(
+                        child: Container(
+                          width: 32.w,
+                          height: 32.w,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.play_arrow_rounded,
+                            color: Colors.white,
+                            size: 22.sp,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (doc.duration != null && doc.duration!.isNotEmpty)
+                      Positioned(
+                        bottom: 6.h,
+                        right: 6.w,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.65),
+                            borderRadius: BorderRadius.circular(4.r),
+                          ),
+                          child: Text(
+                            doc.duration!,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 9.sp,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ],
+              ),
+            ),
           ),
           SizedBox(width: 14.w),
           // Content
@@ -998,56 +1115,84 @@ class _LibraryScreenState extends State<LibraryScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(
-          color: Colors.black.withValues(alpha: 0.06),
-          blurRadius: 16.r, offset: Offset(0, -2.h))],
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24.r),
+          topRight: Radius.circular(24.r),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 16.r,
+            offset: Offset(0, -4.h),
+          ),
+        ],
       ),
       child: SafeArea(
-        child: ClipRect(
-          child: BottomNavigationBar(
-            currentIndex: 0,
-            onTap: (index) {
-              Navigator.pop(context);
-              MainScreenState.of(context)?.switchTab(index);
-            },
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.white,
-            selectedItemColor: AppColors.primary,
-            unselectedItemColor: AppColors.navInactive,
-            selectedFontSize: 12.sp,
-            unselectedFontSize: 12.sp,
-            selectedLabelStyle: GoogleFonts.plusJakartaSans(
-              fontWeight: FontWeight.w700),
-            unselectedLabelStyle: GoogleFonts.plusJakartaSans(
-              fontWeight: FontWeight.w500),
-            elevation: 0,
-            items: [
-              BottomNavigationBarItem(
-                icon: Padding(padding: EdgeInsets.only(bottom: 4.h),
-                  child: Icon(Icons.home_outlined, size: 26.sp)),
-                activeIcon: Padding(padding: EdgeInsets.only(bottom: 4.h),
-                  child: Icon(Icons.home_rounded, size: 26.sp)),
-                label: 'Trang chủ'),
-              BottomNavigationBarItem(
-                icon: Padding(padding: EdgeInsets.only(bottom: 4.h),
-                  child: Icon(Icons.school_outlined, size: 26.sp)),
-                activeIcon: Padding(padding: EdgeInsets.only(bottom: 4.h),
-                  child: Icon(Icons.school_rounded, size: 26.sp)),
-                label: 'Học'),
-              BottomNavigationBarItem(
-                icon: Padding(padding: EdgeInsets.only(bottom: 4.h),
-                  child: Icon(Icons.sports_esports_outlined, size: 26.sp)),
-                activeIcon: Padding(padding: EdgeInsets.only(bottom: 4.h),
-                  child: Icon(Icons.sports_esports_rounded, size: 26.sp)),
-                label: 'Chơi'),
-              BottomNavigationBarItem(
-                icon: Padding(padding: EdgeInsets.only(bottom: 4.h),
-                  child: Icon(Icons.person_outline_rounded, size: 26.sp)),
-                activeIcon: Padding(padding: EdgeInsets.only(bottom: 4.h),
-                  child: Icon(Icons.person_rounded, size: 26.sp)),
-                label: 'Hồ sơ'),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 9.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(0, Icons.home_outlined, Icons.home_rounded, 'Trang chủ'),
+              _buildNavItem(1, Icons.school_outlined, Icons.school_rounded, 'Học tập'),
+              _buildNavItem(2, Icons.sports_esports_outlined, Icons.sports_esports_rounded, 'Trò chơi'),
+              _buildNavItem(3, Icons.person_outline_rounded, Icons.person_rounded, 'Hồ sơ'),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData inactiveIcon, IconData activeIcon, String label) {
+    final bool isSelected = index == 0; // Library Screen is opened from the Home screen (Trang chủ)
+    final Color color = isSelected ? AppColors.primary : AppColors.navInactive;
+
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          Navigator.pop(context);
+          if (index != 0) {
+            MainScreenState.of(context)?.switchTab(index);
+          }
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedScale(
+              scale: isSelected ? 1.12 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutBack,
+              child: Icon(
+                isSelected ? activeIcon : inactiveIcon,
+                color: color,
+                size: 26.sp,
+              ),
+            ),
+            SizedBox(height: 2.h),
+            Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11.sp,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                color: color,
+                height: 1.1,
+              ),
+            ),
+            SizedBox(height: 3.h),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              width: isSelected ? 20.w : 0.w,
+              height: 3.h,
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(1.5.r),
+              ),
+            ),
+          ],
         ),
       ),
     );

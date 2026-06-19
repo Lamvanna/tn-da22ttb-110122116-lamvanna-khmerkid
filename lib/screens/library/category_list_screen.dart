@@ -48,7 +48,7 @@ class CategoryListScreen extends StatelessWidget {
   List<DocItem> _getItemsForCategory() {
     final list = customItems ?? DocItem.fallbackDocs;
     if (categoryTitle == 'Tất cả danh mục' || categoryTitle == 'Tất cả') {
-      return list;
+      return list.where((doc) => doc.type != 'Video').toList();
     }
     return list.where((doc) => doc.matchesCategory(categoryTitle)).toList();
   }
@@ -126,8 +126,15 @@ class CategoryListScreen extends StatelessWidget {
                               children: [
                                 Expanded(
                                   child: Center(
-                                    child: Image.network(cat.image,
-                                      width: 120.w, height: 120.w, fit: BoxFit.contain),
+                                    child: FadeInImage.assetNetwork(
+                                      placeholder: 'assets/images/splash_bg.png',
+                                      image: DocItem.optimizeUrl(cat.image, width: 250),
+                                      width: 120.w, height: 120.w, fit: BoxFit.contain,
+                                      fadeInDuration: const Duration(milliseconds: 200),
+                                      imageErrorBuilder: (_, _, _) => Icon(
+                                        Icons.image_rounded, size: 48.sp,
+                                        color: Colors.white.withValues(alpha: 0.5)),
+                                    ),
                                   ),
                                 ),
                                 SizedBox(height: 8.h),
@@ -254,16 +261,63 @@ class CategoryListScreen extends StatelessWidget {
           ],
         ),
         child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-          // Thumbnail
+           // Thumbnail
           Container(
-            width: 80.w, height: 105.h,
+            width: doc.type == 'Video' ? 120.w : 80.w,
+            height: doc.type == 'Video' ? 90.h : 105.h,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8.r)),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8.r),
-              child: doc.image.startsWith('http')
-                  ? Image.network(DocItem.optimizeUrl(doc.image, width: 300), fit: BoxFit.cover)
-                  : Image.asset(doc.image, fit: BoxFit.cover)),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  doc.image.startsWith('http')
+                      ? Image.network(DocItem.optimizeUrl(doc.image, width: 300), fit: BoxFit.cover)
+                      : Image.asset(doc.image, fit: BoxFit.cover),
+                  if (doc.type == 'Video') ...[
+                    Container(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      child: Center(
+                        child: Container(
+                          width: 32.w,
+                          height: 32.w,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.play_arrow_rounded,
+                            color: Colors.white,
+                            size: 22.sp,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (doc.duration != null && doc.duration!.isNotEmpty)
+                      Positioned(
+                        bottom: 6.h,
+                        right: 6.w,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.65),
+                            borderRadius: BorderRadius.circular(4.r),
+                          ),
+                          child: Text(
+                            doc.duration!,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 9.sp,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ],
+              ),
+            ),
           ),
           SizedBox(width: 14.w),
           // Content
@@ -380,6 +434,7 @@ class DocItem {
   final IconData typeIcon, btnIcon;
   final Color typeColor, btnColor;
   final double rating;
+  final String? duration;
 
   const DocItem({
     required this.title,
@@ -393,6 +448,7 @@ class DocItem {
     required this.btnIcon,
     required this.btnColor,
     required this.image,
+    this.duration,
   });
 
   bool get isStory {
@@ -595,7 +651,8 @@ class DocItem {
       rating: 4.7, views: '2.1K lượt xem',
       btnLabel: 'Xem ngay', btnIcon: Icons.play_circle_rounded,
       btnColor: Color(0xFFF2994A),
-      image: 'image/Nguyên âm.png'),
+      image: 'image/Nguyên âm.png',
+      duration: '08:45'),
     const DocItem(
       title: 'Đếm số 1-10', type: 'Video', typeIcon: Icons.play_circle_rounded,
       typeColor: Color(0xFFF2994A),
@@ -603,7 +660,53 @@ class DocItem {
       rating: 4.9, views: '3.2K lượt xem',
       btnLabel: 'Xem ngay', btnIcon: Icons.play_circle_rounded,
       btnColor: Color(0xFFF2994A),
-      image: 'image/Tập đọc.png'),
+      image: 'image/Tập đọc.png',
+      duration: '05:30'),
+    const DocItem(
+      title: 'Giải cứu thú rừng', type: 'Video', typeIcon: Icons.play_circle_rounded,
+      typeColor: Color(0xFFF2994A),
+      desc: 'Học từ vựng Khmer qua cuộc chiến bảo vệ rừng xanh',
+      rating: 4.8, views: '1.5K lượt xem',
+      btnLabel: 'Xem ngay', btnIcon: Icons.play_circle_rounded,
+      btnColor: Color(0xFFF2994A),
+      image: 'image/Giải cứu thú rừng.png',
+      duration: '10:15'),
+    const DocItem(
+      title: 'Đảo quốc Ngữ pháp', type: 'Video', typeIcon: Icons.play_circle_rounded,
+      typeColor: Color(0xFFF2994A),
+      desc: 'Khám phá thế giới ngữ pháp Khmer qua chuyến đi phiêu lưu',
+      rating: 4.9, views: '2.3K lượt xem',
+      btnLabel: 'Xem ngay', btnIcon: Icons.play_circle_rounded,
+      btnColor: Color(0xFFF2994A),
+      image: 'image/Đảo quốc Ngữ pháp.png',
+      duration: '12:40'),
+    const DocItem(
+      title: 'Cờ tỷ phú Khmer kỳ thú', type: 'Video', typeIcon: Icons.play_circle_rounded,
+      typeColor: Color(0xFFF2994A),
+      desc: 'Vừa chơi cờ vừa học giao tiếp tiếng Khmer thực tế',
+      rating: 4.7, views: '980 lượt xem',
+      btnLabel: 'Xem ngay', btnIcon: Icons.play_circle_rounded,
+      btnColor: Color(0xFFF2994A),
+      image: 'image/Cờ tỷ phú Khmer kỳ thú.png',
+      duration: '15:20'),
+    const DocItem(
+      title: 'Nhà khảo cổ nhí', type: 'Video', typeIcon: Icons.play_circle_rounded,
+      typeColor: Color(0xFFF2994A),
+      desc: 'Khám phá lịch sử cổ xưa qua các chữ cái Khmer',
+      rating: 4.8, views: '1.1K lượt xem',
+      btnLabel: 'Xem ngay', btnIcon: Icons.play_circle_rounded,
+      btnColor: Color(0xFFF2994A),
+      image: 'image/Nhà khảo cổ nhí.png',
+      duration: '09:50'),
+    const DocItem(
+      title: 'Bắt chữ Khmer', type: 'Video', typeIcon: Icons.play_circle_rounded,
+      typeColor: Color(0xFFF2994A),
+      desc: 'Đố vui đoán chữ Khmer cực nhanh cho các bé học từ',
+      rating: 4.9, views: '3.0K lượt xem',
+      btnLabel: 'Xem ngay', btnIcon: Icons.play_circle_rounded,
+      btnColor: Color(0xFFF2994A),
+      image: 'image/Bắt chữ Khmer.png',
+      duration: '11:05'),
   ];
 }
 

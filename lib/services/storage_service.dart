@@ -421,7 +421,7 @@ class StorageService {
 
     if (currentCount >= maxVal) {
       _prefs?.setInt(timeKey, nowMs);
-      return maxVal;
+      return currentCount;
     }
 
     final elapsedSec = (nowMs - lastRegMs) ~/ 1000;
@@ -443,6 +443,26 @@ class StorageService {
   int getTimePowerupsCount() => _getRegeneratedCount(_uKey(_keyTimeCount), _uKey(_keyTimeLastReg), _maxTime, _cooldownTimeSec);
   int getLivesPowerupsCount() => _getRegeneratedCount(_uKey(_keyLivesCount), _uKey(_keyLivesLastReg), _maxLives, _cooldownLivesSec);
   int getDoubleScorePowerupsCount() => _getRegeneratedCount(_uKey(_keyDoubleCount), _uKey(_keyDoubleLastReg), _maxDouble, _cooldownDoubleSec);
+
+  Future<void> addHints(int amount) async {
+    final current = getHintsCount();
+    await _prefs?.setInt(_uKey(_keyHintsCount), current + amount);
+  }
+
+  Future<void> addTimePowerups(int amount) async {
+    final current = getTimePowerupsCount();
+    await _prefs?.setInt(_uKey(_keyTimeCount), current + amount);
+  }
+
+  Future<void> addLivesPowerups(int amount) async {
+    final current = getLivesPowerupsCount();
+    await _prefs?.setInt(_uKey(_keyLivesCount), current + amount);
+  }
+
+  Future<void> addDoubleScorePowerups(int amount) async {
+    final current = getDoubleScorePowerupsCount();
+    await _prefs?.setInt(_uKey(_keyDoubleCount), current + amount);
+  }
 
   Future<void> useHint() async {
     final current = getHintsCount();

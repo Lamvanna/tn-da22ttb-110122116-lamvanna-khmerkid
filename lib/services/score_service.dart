@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:ui';
 import 'auth_service.dart';
 import 'storage_service.dart';
 import '../repositories/progress_repository.dart';
@@ -65,6 +64,11 @@ class ScoreService {
   Future<void> useTimePowerup() async => await _storage.useTimePowerup();
   Future<void> useLivesPowerup() async => await _storage.useLivesPowerup();
   Future<void> useDoubleScorePowerup() async => await _storage.useDoubleScorePowerup();
+
+  Future<void> addHints(int amount) async => await _storage.addHints(amount);
+  Future<void> addTimePowerups(int amount) async => await _storage.addTimePowerups(amount);
+  Future<void> addLivesPowerups(int amount) async => await _storage.addLivesPowerups(amount);
+  Future<void> addDoubleScorePowerups(int amount) async => await _storage.addDoubleScorePowerups(amount);
 
   int get hintsCooldownRemaining => _storage.getHintsCooldownRemaining();
   int get timeCooldownRemaining => _storage.getTimePowerupsCooldownRemaining();

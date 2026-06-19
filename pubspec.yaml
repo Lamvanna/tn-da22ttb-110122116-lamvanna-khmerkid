@@ -74,6 +74,7 @@ flutter:
     - assets/images/elephant_mascot.png
     - assets/images/splash_bg.png
     - image/
+    - image/Ảnh nhiệm vụ/
     # Audio assets - Phát âm chuẩn tiếng Khmer
     - assets/audio/khmer/consonants/
     - assets/audio/khmer/vowels/

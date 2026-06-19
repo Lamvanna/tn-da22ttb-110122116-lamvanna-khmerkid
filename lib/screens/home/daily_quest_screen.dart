@@ -24,26 +24,23 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
   final List<_DailyQuest> _dailyQuests = [
     _DailyQuest(
       id: 'mock_d1',
-      icon: '📚', title: 'Học 3 bài học',
-      subtitle: 'Hoàn thành 3 bài học bất kỳ',
-      current: 2, total: 3, reward: 20,
+      icon: 'image/Ảnh nhiệm vụ/Nhà thông thái nhí.png', title: 'Nhà thông thái nhí 📚',
+      subtitle: 'Hoàn thành 2 bài học mới bất kỳ trong ngày.',
+      current: 0, total: 2, reward: 20,
       accentColor: const Color(0xFF1E88E5),
     ),
     _DailyQuest(
       id: 'mock_d2',
-      icon: '✏️', title: 'Luyện tập 2 lần',
-      subtitle: 'Hoàn thành 2 bài luyện tập',
-      current: 2, total: 2, reward: 15,
-      accentColor: const Color(0xFF43A047),
-      done: true,
-      isCompleted: true,
-      isClaimed: true,
+      icon: 'image/Ảnh nhiệm vụ/Luyện viết chữ đẹp.png', title: 'Luyện viết chữ đẹp ✍️',
+      subtitle: 'Luyện vẽ/viết chính xác 5 chữ cái (qua tính năng nhận diện viết tay).',
+      current: 0, total: 5, reward: 30,
+      accentColor: const Color(0xFFE91E63),
     ),
     _DailyQuest(
       id: 'mock_d3',
-      icon: '🎧', title: 'Nghe phát âm 5 lần',
-      subtitle: 'Nghe phát âm của bất kỳ 5 chữ',
-      current: 3, total: 5, reward: 10,
+      icon: 'image/Ảnh nhiệm vụ/Đôi tai nhạy bén.png', title: 'Đôi tai nhạy bén 🎧',
+      subtitle: 'Luyện nghe phát âm và chọn đúng đáp án 5 lần.',
+      current: 0, total: 5, reward: 25,
       accentColor: const Color(0xFF7C4DFF),
     ),
   ];
@@ -51,21 +48,21 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
   final List<_WeeklyQuest> _weeklyQuests = [
     _WeeklyQuest(
       id: 'mock_w1',
-      icon: '🏆', title: 'Hoàn thành 10 bài',
-      current: 0, total: 10, reward: 100,
+      icon: 'image/Ảnh nhiệm vụ/Chuỗi ngày vàng.png', title: 'Chuỗi ngày vàng 🔥',
+      current: 0, total: 5, reward: 100,
       gradient: const [Color(0xFFFFB300), Color(0xFFFF8F00)],
     ),
     _WeeklyQuest(
       id: 'mock_w2',
-      icon: '🎯', title: 'Luyện tập 15 lần',
-      current: 7, total: 15, reward: 80,
-      gradient: const [Color(0xFFE53935), Color(0xFFD32F2F)],
+      icon: 'image/Ảnh nhiệm vụ/Đại sứ vựng.png', title: 'Đại sứ vựng 👑',
+      current: 0, total: 15, reward: 150,
+      gradient: const [Color(0xFF7C4DFF), Color(0xFF651FFF)],
     ),
     _WeeklyQuest(
       id: 'mock_w3',
-      icon: '👑', title: 'Đạt 3 ngày liên tiếp',
-      current: 1, total: 3, reward: 120,
-      gradient: const [Color(0xFF7C4DFF), Color(0xFF651FFF)],
+      icon: 'image/Ảnh nhiệm vụ/Cao thủ trò chơi.png', title: 'Cao thủ trò chơi 🕹️',
+      current: 0, total: 10, reward: 120,
+      gradient: const [Color(0xFFE53935), Color(0xFFD32F2F)],
     ),
   ];
 
@@ -99,6 +96,21 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
   }
 
   String _getEmoji(String title) {
+    if (title.contains('Nhà thông thái nhí')) return 'image/Ảnh nhiệm vụ/Nhà thông thái nhí.png';
+    if (title.contains('Luyện viết chữ đẹp')) return 'image/Ảnh nhiệm vụ/Luyện viết chữ đẹp.png';
+    if (title.contains('Đôi tai nhạy bén')) return 'image/Ảnh nhiệm vụ/Đôi tai nhạy bén.png';
+    if (title.contains('Giọng ca oanh vàng')) return 'image/Ảnh nhiệm vụ/Giọng ca oanh vàng.png';
+    if (title.contains('Vừa học vừa chơi')) return 'image/Ảnh nhiệm vụ/Vừa học vừa chơi.png';
+    if (title.contains('Điểm số hoàn hảo')) return 'image/Ảnh nhiệm vụ/Điểm số hoàn hảo.png';
+    if (title.contains('Khởi đầu ngày mới')) return 'image/Ảnh nhiệm vụ/Khởi đầu ngày mới.png';
+    
+    if (title.contains('Chuỗi ngày vàng')) return 'image/Ảnh nhiệm vụ/Chuỗi ngày vàng.png';
+    if (title.contains('Đại sứ vựng')) return 'image/Ảnh nhiệm vụ/Đại sứ vựng.png';
+    if (title.contains('Cao thủ trò chơi')) return 'image/Ảnh nhiệm vụ/Cao thủ trò chơi.png';
+    if (title.contains('Cơn mưa quà tặng')) return 'image/Ảnh nhiệm vụ/Cơn mưa quà tặng.png';
+    if (title.contains('Bàn tay khéo léo')) return 'image/Ảnh nhiệm vụ/Bàn tay khéo léo.png';
+
+    // Fallbacks
     if (title.contains('☀️')) return '☀️';
     if (title.contains('🎧')) return '🎧';
     if (title.contains('🗣️') || title.contains('🗣')) return '🗣️';
@@ -164,9 +176,14 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
             ));
           } else {
             List<Color> gradient = const [Color(0xFFFFB300), Color(0xFFFF8F00)];
-            if (title.contains('Game') || title.contains('Trò chơi')) gradient = const [Color(0xFFE53935), Color(0xFFD32F2F)];
-            else if (title.contains('Nói') || title.contains('Phát âm')) gradient = const [Color(0xFF7C4DFF), Color(0xFF651FFF)];
-            else if (title.contains('Viết') || title.contains('Chữ')) gradient = const [Color(0xFF00BCD4), Color(0xFF0097A7)];
+            final lowerTitle = title.toLowerCase();
+            if (lowerTitle.contains('game') || lowerTitle.contains('trò chơi')) {
+              gradient = const [Color(0xFFE53935), Color(0xFFD32F2F)];
+            } else if (lowerTitle.contains('nói') || lowerTitle.contains('phát âm') || lowerTitle.contains('vựng')) {
+              gradient = const [Color(0xFF7C4DFF), Color(0xFF651FFF)];
+            } else if (lowerTitle.contains('viết') || lowerTitle.contains('chữ') || lowerTitle.contains('khéo léo')) {
+              gradient = const [Color(0xFF00BCD4), Color(0xFF0097A7)];
+            }
 
             weekly.add(_WeeklyQuest(
               id: id,
@@ -264,7 +281,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4FF),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: Column(
         children: [
           _buildHeader(),
@@ -279,10 +296,13 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                   SizedBox(height: 14.h),
                   _buildSectionHeader('Nhiệm vụ hằng ngày', '⏱ ${_formatDuration(_dailyRemaining)}'),
                   SizedBox(height: 10.h),
-                  ...List.generate(_dailyQuests.length, (i) => Padding(
-                    padding: EdgeInsets.only(bottom: 12.h),
-                    child: _buildDailyCard(_dailyQuests[i]),
-                  )),
+                  ...List.generate(
+                    _dailyQuests.length > 3 ? 3 : _dailyQuests.length,
+                    (i) => Padding(
+                      padding: EdgeInsets.only(bottom: 12.h),
+                      child: _buildDailyCard(_dailyQuests[i]),
+                    ),
+                  ),
                   SizedBox(height: 0),
                   _buildSectionHeader('Nhiệm vụ hằng tuần', '⏱ ${_formatWeekly(_weeklyRemaining)}'),
                   SizedBox(height: 14.h),
@@ -330,11 +350,10 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
             child: Container(width: 60.w, height: 60.w,
               decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.06)))),
           
-          // Content
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
+              padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 28.h),
               child: Row(
                 children: [
                   GestureDetector(
@@ -395,64 +414,89 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
   }
 
   // ═══════════════════ POINTS CARD ═══════════════════
+  // ═══════════════════ POINTS CARD ═══════════════════
   Widget _buildPointsCard() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 22.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft, end: Alignment.bottomRight,
-          colors: [const Color(0xFF1E88E5).withValues(alpha: 0.08), const Color(0xFF42A5F5).withValues(alpha: 0.05)]),
-        borderRadius: BorderRadius.circular(22.r),
-        border: Border.all(color: const Color(0xFF1E88E5).withValues(alpha: 0.12)),
-        boxShadow: [BoxShadow(
-          color: const Color(0xFF1E88E5).withValues(alpha: 0.08),
-          blurRadius: 16.r, offset: Offset(0, 4.h))]),
-      child: Row(
-        children: [
-          // Gift icon
-          Container(
-            width: 60.w, height: 60.w,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft, end: Alignment.bottomRight,
-                colors: [Color(0xFFFFB300), Color(0xFFFF8F00)]),
-              borderRadius: BorderRadius.circular(18.r),
-              boxShadow: [BoxShadow(
-                color: const Color(0xFFFF8F00).withValues(alpha: 0.3),
-                blurRadius: 12.r, offset: Offset(0, 4.h))]),
-            child: Center(child: Text('🎁', style: TextStyle(fontSize: 28.sp))),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFEBF4FF),
+            Color(0xFFD6E9F8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(
+          color: const Color(0xFFB3D7FF).withValues(alpha: 0.5),
+          width: 1.5.w,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E88E5).withValues(alpha: 0.08),
+            blurRadius: 20.r,
+            offset: Offset(0, 8.h),
           ),
-          SizedBox(width: 14.w),
-          // Points
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Điểm của bạn',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-                SizedBox(height: 2.h),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 28.sp),
-                    SizedBox(width: 6.w),
-                    Text('$_totalPoints',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 32.sp, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
-                  ],
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Mascot / Gift image wrapper (Left side)
+          Container(
+            padding: EdgeInsets.all(10.w),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.75),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.5),
+                width: 1.5.w,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF1E88E5).withValues(alpha: 0.06),
+                  blurRadius: 10.r,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
+            child: Image.asset(
+              'image/Hộp quà.png',
+              width: 68.w,
+              height: 68.w,
+              fit: BoxFit.contain,
+            ),
           ),
-          // Reward milestones
-          Column(
-            children: [
-              _buildRewardBtn(),
-              SizedBox(height: 8.h),
-              _buildMilestones(),
-            ],
+          SizedBox(width: 14.w),
+          // Title, claim button, and milestones (Right side)
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Nhiệm vụ & Quà tặng',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF1E6DEB),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    _buildRewardBtn(),
+                  ],
+                ),
+                SizedBox(height: 16.h),
+                _buildMilestones(),
+              ],
+            ),
           ),
         ],
       ),
@@ -467,50 +511,133 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
           builder: (_) => const ShopScreen()));
       },
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E88E5),
-          borderRadius: BorderRadius.circular(12.r),
-          boxShadow: [BoxShadow(
-            color: const Color(0xFF1E88E5).withValues(alpha: 0.3),
-            blurRadius: 8.r, offset: Offset(0, 2.h))]),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 16.sp),
-          SizedBox(width: 4.w),
-          Text('Đổi thưởng',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 11.sp, fontWeight: FontWeight.w700, color: Colors.white)),
-        ]),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFFFB300), Color(0xFFFF8F00)],
+          ),
+          borderRadius: BorderRadius.circular(14.r),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFF8F00).withValues(alpha: 0.3),
+              blurRadius: 10.r,
+              offset: Offset(0, 3.h),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 14.sp),
+            SizedBox(width: 4.w),
+            Text(
+              'Đổi thưởng',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11.sp,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildMilestones() {
-    return Row(children: [
-      _milestone('🎁', '50'),
-      SizedBox(width: 6.w),
-      Container(width: 20.w, height: 3.h, decoration: BoxDecoration(
-        color: _totalPoints >= 50 ? const Color(0xFF43A047) : const Color(0xFFE0E0E0),
-        borderRadius: BorderRadius.circular(2.r))),
-      SizedBox(width: 6.w),
-      _milestone('🎁', '100'),
-      SizedBox(width: 6.w),
-      Container(width: 20.w, height: 3.h, decoration: BoxDecoration(
-        color: _totalPoints >= 100 ? const Color(0xFF43A047) : const Color(0xFFE0E0E0),
-        borderRadius: BorderRadius.circular(2.r))),
-      SizedBox(width: 6.w),
-      _milestone('🎁', '150'),
-    ]);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _milestoneCircle(250),
+            Expanded(child: _milestoneLine(250)),
+            _milestoneCircle(500),
+            Expanded(child: _milestoneLine(500)),
+            _milestoneCircle(1000),
+          ],
+        ),
+        SizedBox(height: 6.h),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _milestoneLabel(250),
+            const Spacer(),
+            _milestoneLabel(500),
+            const Spacer(),
+            _milestoneLabel(1000),
+          ],
+        ),
+      ],
+    );
   }
 
-  Widget _milestone(String emoji, String label) {
-    final reached = _totalPoints >= int.parse(label);
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      Text(emoji, style: TextStyle(fontSize: 14.sp)),
-      Text(label, style: GoogleFonts.plusJakartaSans(
-        fontSize: 9.sp, fontWeight: FontWeight.w700,
-        color: reached ? const Color(0xFF43A047) : AppColors.textHint)),
-    ]);
+  Widget _milestoneCircle(int target) {
+    final reached = _totalPoints >= target;
+    return SizedBox(
+      width: 42.w,
+      height: 42.w,
+      child: Center(
+        child: AnimatedScale(
+          scale: reached ? 1.15 : 1.0,
+          duration: const Duration(milliseconds: 300),
+          child: Container(
+            padding: EdgeInsets.all(8.w),
+            decoration: BoxDecoration(
+              color: reached ? const Color(0xFFEDF8F2) : Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: reached ? const Color(0xFF43A047) : const Color(0xFFE2E2F2),
+                width: 2.w,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: (reached ? const Color(0xFF43A047) : const Color(0xFF94A3B8)).withValues(alpha: 0.15),
+                  blurRadius: 4.r,
+                  offset: Offset(0, 2.h),
+                ),
+              ],
+            ),
+            child: Text(
+              reached ? '🎉' : '🎁',
+              style: TextStyle(fontSize: 18.sp),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _milestoneLabel(int target) {
+    final reached = _totalPoints >= target;
+    return SizedBox(
+      width: 42.w,
+      child: Center(
+        child: Text(
+          '$target',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 11.sp,
+            fontWeight: FontWeight.w800,
+            color: reached ? const Color(0xFF43A047) : const Color(0xFF64748B),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _milestoneLine(int target) {
+    final reached = _totalPoints >= target;
+    return Container(
+      height: 4.h,
+      decoration: BoxDecoration(
+        color: reached ? const Color(0xFF43A047) : const Color(0xFFCBD5E1),
+        borderRadius: BorderRadius.circular(2.r),
+      ),
+    );
   }
 
   // ═══════════════════ SECTION HEADER ═══════════════════
@@ -534,150 +661,247 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
       padding: EdgeInsets.zero,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22.r),
+        borderRadius: BorderRadius.circular(24.r),
         border: Border.all(
-          color: quest.done
-              ? const Color(0xFF43A047).withValues(alpha: 0.20)
-              : Colors.grey.withValues(alpha: 0.10),
-          width: 1.2),
+          color: quest.isClaimed
+              ? const Color(0xFF43A047).withValues(alpha: 0.15)
+              : (quest.isCompleted && !quest.isClaimed)
+                  ? const Color(0xFFFFB300).withValues(alpha: 0.4)
+                  : const Color(0xFFE2E8F0),
+          width: 1.5.w,
+        ),
         boxShadow: [
           BoxShadow(
             color: quest.accentColor.withValues(alpha: 0.06),
-            blurRadius: 18.r, offset: Offset(0, 6.h)),
+            blurRadius: 20.r,
+            offset: Offset(0, 6.h),
+          ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6.r, offset: Offset(0, 2.h)),
-        ]),
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8.r,
+            offset: Offset(0, 2.h),
+          ),
+        ],
+      ),
       child: Padding(
-        padding: EdgeInsets.all(14.w),
+        padding: EdgeInsets.all(16.w),
         child: Row(
           children: [
             // Emoji icon with gradient bg
             Container(
-              width: 54.w, height: 54.w,
+              width: 82.w,
+              height: 82.w,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                   colors: [
                     quest.accentColor.withValues(alpha: 0.12),
-                    quest.accentColor.withValues(alpha: 0.04),
-                  ]),
-                borderRadius: BorderRadius.circular(16.r),
-                border: Border.all(color: quest.accentColor.withValues(alpha: 0.10))),
-              child: Center(child: Text(quest.icon, style: TextStyle(fontSize: 26.sp))),
+                    quest.accentColor.withValues(alpha: 0.03),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20.r),
+                border: Border.all(
+                  color: quest.accentColor.withValues(alpha: 0.10),
+                  width: 1,
+                ),
+              ),
+              child: Center(
+                child: quest.icon.contains('/') || quest.icon.endsWith('.png')
+                    ? Image.asset(
+                        quest.icon,
+                        width: 68.w,
+                        height: 68.w,
+                        fit: BoxFit.contain,
+                      )
+                    : Text(
+                        quest.icon,
+                        style: TextStyle(fontSize: 34.sp),
+                      ),
+              ),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: 14.w),
             // Title + subtitle + progress
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(quest.title,
+                  Text(
+                    quest.title,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 15.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
                   SizedBox(height: 3.h),
-                  Text(quest.subtitle,
+                  Text(
+                    quest.subtitle,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11.sp, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
-                  SizedBox(height: 16.h),
-                  // Custom progress bar
-                  Row(children: [
-                    Expanded(
-                      child: Container(
-                        height: 8.h,
-                        decoration: BoxDecoration(
-                          color: barColor.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(4.r)),
-                        child: FractionallySizedBox(
-                          alignment: Alignment.centerLeft,
-                          widthFactor: progress.clamp(0.0, 1.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: quest.done
-                                    ? [const Color(0xFF66BB6A), const Color(0xFF43A047)]
-                                    : [barColor.withValues(alpha: 0.65), barColor]),
-                              borderRadius: BorderRadius.circular(4.r),
-                              boxShadow: [BoxShadow(
-                                color: barColor.withValues(alpha: 0.30),
-                                blurRadius: 4.r, offset: Offset(0, 1.h))]),
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  SizedBox(height: 14.h),
+                  // Thicker custom progress bar
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 10.h,
+                          decoration: BoxDecoration(
+                            color: barColor.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(6.r),
+                          ),
+                          child: FractionallySizedBox(
+                            alignment: Alignment.centerLeft,
+                            widthFactor: progress.clamp(0.0, 1.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: quest.done
+                                      ? [const Color(0xFF66BB6A), const Color(0xFF43A047)]
+                                      : [barColor.withValues(alpha: 0.65), barColor],
+                                ),
+                                borderRadius: BorderRadius.circular(6.r),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: barColor.withValues(alpha: 0.20),
+                                    blurRadius: 4.r,
+                                    offset: Offset(0, 1.h),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    SizedBox(width: 10.w),
-                    Text('${quest.current} / ${quest.total}',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.sp, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
-                  ]),
+                      SizedBox(width: 10.w),
+                      Text(
+                        '${quest.current}/${quest.total}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
-            SizedBox(width: 10.w),
-            // Reward badge
+            SizedBox(width: 14.w),
+            // Reward / Action badge
             quest.isClaimed
                 ? Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        begin: Alignment.topLeft, end: Alignment.bottomRight,
-                        colors: [const Color(0xFF66BB6A).withValues(alpha: 0.15), const Color(0xFF43A047).withValues(alpha: 0.08)]),
-                      borderRadius: BorderRadius.circular(14.r),
-                      border: Border.all(color: const Color(0xFF43A047).withValues(alpha: 0.18))),
-                    child: Column(children: [
-                      Icon(Icons.check_circle_rounded, color: const Color(0xFF43A047), size: 22.sp),
-                      SizedBox(height: 1.h),
-                      Text('+${quest.reward}',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11.sp, fontWeight: FontWeight.w800, color: const Color(0xFF43A047))),
-                    ]),
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          const Color(0xFF66BB6A).withValues(alpha: 0.15),
+                          const Color(0xFF43A047).withValues(alpha: 0.08),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16.r),
+                      border: Border.all(
+                        color: const Color(0xFF43A047).withValues(alpha: 0.18),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.check_circle_rounded, color: const Color(0xFF43A047), size: 24.sp),
+                        SizedBox(height: 2.h),
+                        Text(
+                          '+${quest.reward}',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF43A047),
+                          ),
+                        ),
+                      ],
+                    ),
                   )
                 : (quest.isCompleted && !quest.isClaimed)
                     ? GestureDetector(
                         onTap: () {
-                          HapticFeedback.lightImpact();
+                          HapticFeedback.mediumImpact();
                           _claimReward(quest.id);
                         },
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              begin: Alignment.topLeft, end: Alignment.bottomRight,
-                              colors: [Color(0xFFFFCA28), Color(0xFFF57C00)]),
-                            borderRadius: BorderRadius.circular(14.r),
-                            boxShadow: [BoxShadow(
-                              color: const Color(0xFFF57C00).withValues(alpha: 0.3),
-                              blurRadius: 8.r, offset: Offset(0, 3.h))]),
-                          child: Column(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Color(0xFFFFD54F), Color(0xFFFF8F00)],
+                            ),
+                            borderRadius: BorderRadius.circular(16.r),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFF8F00).withValues(alpha: 0.35),
+                                blurRadius: 10.r,
+                                offset: Offset(0, 4.h),
+                              ),
+                            ],
+                          ),
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.star_rounded, color: Colors.white, size: 22.sp),
-                              SizedBox(height: 1.h),
-                              Text('NHẬN',
+                              Icon(Icons.star_rounded, color: Colors.white, size: 16.sp),
+                              SizedBox(width: 4.w),
+                              Text(
+                                'NHẬN',
                                 style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11.sp, fontWeight: FontWeight.w900, color: Colors.white)),
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
                             ],
                           ),
                         ),
                       )
                     : Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            begin: Alignment.topLeft, end: Alignment.bottomRight,
-                            colors: [Color(0xFFFFF8E1), Color(0xFFFFF3CD)]),
-                          borderRadius: BorderRadius.circular(14.r),
-                          border: Border.all(color: const Color(0xFFFFB300).withValues(alpha: 0.25)),
-                          boxShadow: [BoxShadow(
-                            color: const Color(0xFFFFB300).withValues(alpha: 0.10),
-                            blurRadius: 6.r, offset: Offset(0, 2.h))]),
-                        child: Column(children: [
-                          Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 22.sp),
-                          SizedBox(height: 1.h),
-                          Text('+${quest.reward}',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11.sp, fontWeight: FontWeight.w800, color: const Color(0xFFFF8F00))),
-                        ]),
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFFFFF8E1), Color(0xFFFFF3CD)],
+                          ),
+                          borderRadius: BorderRadius.circular(16.r),
+                          border: Border.all(
+                            color: const Color(0xFFFFB300).withValues(alpha: 0.25),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFFB300).withValues(alpha: 0.08),
+                              blurRadius: 6.r,
+                              offset: Offset(0, 2.h),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 24.sp),
+                            SizedBox(height: 2.h),
+                            Text(
+                              '+${quest.reward}',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFFFF8F00),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
           ],
         ),
@@ -688,7 +912,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
   // ═══════════════════ WEEKLY QUEST ROW ═══════════════════
   Widget _buildWeeklyRow() {
     return SizedBox(
-      height: 195.h,
+      height: 245.h,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -706,113 +930,218 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
       width: 145.w,
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: quest.gradient[0].withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(24.r),
         border: Border.all(
           color: done
               ? const Color(0xFF43A047).withValues(alpha: 0.3)
-              : quest.gradient[0].withValues(alpha: 0.15)),
+              : quest.gradient[0].withValues(alpha: 0.15),
+          width: 1.5.w,
+        ),
         boxShadow: [
           BoxShadow(
             color: quest.gradient[0].withValues(alpha: 0.06),
-            blurRadius: 16.r, offset: Offset(0, 6.h)),
+            blurRadius: 16.r,
+            offset: Offset(0, 6.h),
+          ),
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6.r, offset: Offset(0, 2.h)),
-        ]),
+            blurRadius: 6.r,
+            offset: Offset(0, 2.h),
+          ),
+        ],
+      ),
       child: Column(
         children: [
           // Icon
-          Container(
-            width: 58.w, height: 58.w,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft, end: Alignment.bottomRight,
-                colors: quest.gradient),
-              borderRadius: BorderRadius.circular(20.r),
-              boxShadow: [BoxShadow(
-                color: quest.gradient[1].withValues(alpha: 0.35),
-                blurRadius: 12.r, offset: Offset(0, 6.h))]),
-            child: Center(child: Text(quest.icon, style: TextStyle(fontSize: 28.sp))),
+          SizedBox(
+            width: 96.w,
+            height: 96.w,
+            child: Center(
+              child: quest.icon.contains('/') || quest.icon.endsWith('.png')
+                  ? Image.asset(
+                      quest.icon,
+                      width: 92.w,
+                      height: 92.w,
+                      fit: BoxFit.contain,
+                    )
+                  : Text(
+                      quest.icon,
+                      style: TextStyle(fontSize: 48.sp),
+                    ),
+            ),
           ),
-          SizedBox(height: 20.h),
+          SizedBox(height: 12.h),
           // Title
-          Text(quest.title,
-            textAlign: TextAlign.center,
-            maxLines: 2, overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 11.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary, height: 1.25)),
-          SizedBox(height: 8.h),
+          SizedBox(
+            height: 34.h,
+            child: Center(
+              child: Text(
+                quest.title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11.5.sp,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                  height: 1.2,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 10.h),
           // Progress text & bar
-          Text('${quest.current} / ${quest.total}',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 11.sp, fontWeight: FontWeight.w700,
-              color: done ? const Color(0xFF43A047) : AppColors.textSecondary)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Tiến độ',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              Text(
+                '${quest.current}/${quest.total}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10.5.sp,
+                  fontWeight: FontWeight.w800,
+                  color: done ? const Color(0xFF43A047) : AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
           SizedBox(height: 4.h),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4.r),
-            child: LinearProgressIndicator(
-              value: progress, minHeight: 4.h,
-              backgroundColor: quest.gradient[0].withValues(alpha: 0.1),
-              valueColor: AlwaysStoppedAnimation(
-                done ? const Color(0xFF43A047) : quest.gradient[0]),
+          Container(
+            height: 8.h,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(4.r),
+            ),
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: progress.clamp(0.0, 1.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: done
+                        ? [const Color(0xFF66BB6A), const Color(0xFF43A047)]
+                        : quest.gradient,
+                  ),
+                  borderRadius: BorderRadius.circular(4.r),
+                ),
+              ),
             ),
           ),
           const Spacer(),
-          // Reward pill
+          // Reward pill / Button
           quest.isClaimed
               ? Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF43A047).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: const Color(0xFF43A047).withValues(alpha: 0.2))),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.check_circle_rounded, color: const Color(0xFF43A047), size: 14.sp),
-                    SizedBox(width: 4.w),
-                    Text('+${quest.reward}',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.sp, fontWeight: FontWeight.w800, color: const Color(0xFF43A047))),
-                  ]),
+                    color: const Color(0xFFEDF8F2),
+                    borderRadius: BorderRadius.circular(14.r),
+                    border: Border.all(
+                      color: const Color(0xFF43A047).withValues(alpha: 0.2),
+                      width: 1.w,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check_circle_rounded, color: const Color(0xFF43A047), size: 12.sp),
+                      SizedBox(width: 4.w),
+                      Text(
+                        'Đã nhận',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF43A047),
+                        ),
+                      ),
+                    ],
+                  ),
                 )
               : (quest.isCompleted && !quest.isClaimed)
                   ? GestureDetector(
                       onTap: () {
-                        HapticFeedback.lightImpact();
+                        HapticFeedback.mediumImpact();
                         _claimReward(quest.id);
                       },
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            begin: Alignment.topLeft, end: Alignment.bottomRight,
-                            colors: [Color(0xFFFFD54F), Color(0xFFFFA000)]),
-                          borderRadius: BorderRadius.circular(12.r),
-                          boxShadow: [BoxShadow(
-                            color: const Color(0xFFFFA000).withValues(alpha: 0.25),
-                            blurRadius: 6.r, offset: Offset(0, 2.h))]),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          Icon(Icons.star_rounded, color: Colors.white, size: 14.sp),
-                          SizedBox(width: 4.w),
-                          Text('NHẬN',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11.sp, fontWeight: FontWeight.w900, color: Colors.white)),
-                        ]),
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFFFFD54F), Color(0xFFFF8F00)],
+                          ),
+                          borderRadius: BorderRadius.circular(14.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFF8F00).withValues(alpha: 0.3),
+                              blurRadius: 6.r,
+                              offset: Offset(0, 2.h),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.star_rounded, color: Colors.white, size: 12.sp),
+                            SizedBox(width: 4.w),
+                            Text(
+                              'NHẬN',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     )
                   : Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFF8E1),
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: const Color(0xFFFFB300).withValues(alpha: 0.3))),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 14.sp),
-                        SizedBox(width: 4.w),
-                        Text('+${quest.reward}',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11.sp, fontWeight: FontWeight.w800, color: const Color(0xFFFF8F00))),
-                      ]),
+                        color: const Color(0xFFFFFDF5),
+                        borderRadius: BorderRadius.circular(14.r),
+                        border: Border.all(
+                          color: const Color(0xFFFFD54F).withValues(alpha: 0.5),
+                          width: 1.2.w,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFFD54F).withValues(alpha: 0.05),
+                            blurRadius: 4.r,
+                            offset: Offset(0, 1.h),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Image.asset(
+                            'image/sao.png',
+                            width: 14.w,
+                            height: 14.w,
+                            fit: BoxFit.contain,
+                          ),
+                          SizedBox(width: 4.w),
+                          Text(
+                            '+${quest.reward}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10.5.sp,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFFFF8F00),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
         ],
       ),

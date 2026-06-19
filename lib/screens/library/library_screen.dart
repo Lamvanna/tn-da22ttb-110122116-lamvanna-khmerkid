@@ -199,7 +199,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         top: -190.h,
                         child: IgnorePointer(
                           child: Image.asset(
-                            'image/Voi header.png',
+                            'image/Voi thư viện.png',
                             width: 275.w,
                             height: 275.w,
                             fit: BoxFit.contain,

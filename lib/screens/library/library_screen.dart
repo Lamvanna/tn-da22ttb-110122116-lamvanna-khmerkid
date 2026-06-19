@@ -196,7 +196,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       // Mascot sitting on top of the curved edge
                       Positioned(
                         right: -42.w,
-                        top: -155.h,
+                        top: -165.h,
                         child: IgnorePointer(
                           child: Image.asset(
                             'image/Voi thư viện.png',

@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:async';
 import '../../constants/app_colors.dart';
 import '../../services/auth_service.dart';
+import '../../services/score_service.dart';
 import '../achievements/achievements_screen.dart';
 import '../shop/shop_screen.dart';
 
@@ -66,12 +67,49 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
     ),
   ];
 
-  final List<_Achievement> _achievements = [
-    _Achievement(icon: '📖', title: 'Học sinh chăm chỉ', subtitle: 'Học 10 bài học', value: 10, color: const Color(0xFF1E88E5)),
-    _Achievement(icon: '💪', title: 'Luyện tập tốt', subtitle: 'Luyện tập 5 lần', value: 5, color: const Color(0xFF43A047)),
-    _Achievement(icon: '🎧', title: 'Người nghe siêu đẳng', subtitle: 'Nghe 10 lần phát âm', value: 10, color: const Color(0xFFFF6D00)),
-    _Achievement(icon: '🔥', title: 'Chuỗi ngày vàng', subtitle: '3 ngày liên tiếp', value: 3, color: const Color(0xFFE53935)),
+  static final List<_Achievement> _fallbackAchievements = [
+    _Achievement(
+      title: 'Bước đầu tiên',
+      icon: Icons.rocket_launch_rounded,
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895771/khmerkid/badges/B%C6%B0%E1%BB%9Bc%20%C4%91%E1%BA%A7u%20ti%C3%AAn.png',
+      done: false,
+      color: const Color(0xFF4CAF50),
+      bgColor: const Color(0xFFE8F5E9),
+      description: 'Hoàn thành bài học đầu tiên của bé!',
+    ),
+    _Achievement(
+      title: 'Nhà ngôn ngữ nhí',
+      icon: Icons.auto_stories_rounded,
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895799/khmerkid/badges/Nh%C3%A0%20ng%C3%B4n%20ng%E1%BB%AF%20nh%C3%AD.png',
+      done: false,
+      color: const Color(0xFF9C27B0),
+      bgColor: const Color(0xFFF3E5F5),
+      description: 'Học tập tích lũy đạt 50 điểm XP!',
+    ),
+    _Achievement(
+      title: 'Bậc thầy phụ âm',
+      icon: Icons.draw_rounded,
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895774/khmerkid/badges/B%E1%BA%ADc%20th%E1%BA%A7y%20ph%E1%BB%A5%20%C3%A2m.png',
+      done: false,
+      color: const Color(0xFFFFB300),
+      bgColor: const Color(0xFFFFF8E1),
+      description: 'Đạt trình độ viết phụ âm cấp độ 1.',
+    ),
+    _Achievement(
+      title: 'Khám phá nguyên âm',
+      icon: Icons.menu_book_rounded,
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895793/khmerkid/badges/Kh%C3%A1m%20ph%C3%A1%20nguy%C3%AAn%20%C3%A2m.png',
+      done: false,
+      color: const Color(0xFF2196F3),
+      bgColor: const Color(0xFFE3F2FD),
+      description: 'Đạt trình độ đọc nguyên âm cấp độ 1.',
+    ),
   ];
+
+  ScoreService? _score;
+  List<dynamic> _backendBadges = [];
+  Set<String> _unlockedBadgeIds = {};
+  bool _loadingBadges = true;
 
   bool _loadingMissions = true;
 
@@ -91,7 +129,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
     });
     _loadMissions();
     AuthService().fetchProfile().then((_) {
-      if (mounted) setState(() {});
+      _loadAchievements();
     });
   }
 
@@ -151,7 +189,8 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
           final rewardMap = item['reward'] as Map?;
           final reward = rewardMap?['stars'] as int? ?? rewardMap?['xp'] as int? ?? 10;
           
-          final icon = _getEmoji(title);
+          final iconUrl = item['iconUrl']?.toString() ?? '';
+          final icon = iconUrl.isNotEmpty ? iconUrl : _getEmoji(title);
 
           if (type == 'daily') {
             Color accentColor = const Color(0xFF1E88E5);
@@ -687,37 +726,37 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
         padding: EdgeInsets.all(16.w),
         child: Row(
           children: [
-            // Emoji icon with gradient bg
-            Container(
-              width: 82.w,
-              height: 82.w,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    quest.accentColor.withValues(alpha: 0.12),
-                    quest.accentColor.withValues(alpha: 0.03),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(20.r),
-                border: Border.all(
-                  color: quest.accentColor.withValues(alpha: 0.10),
-                  width: 1,
-                ),
-              ),
+            // Enlarged Icon without circular border or background container
+            SizedBox(
+              width: 80.w,
+              height: 80.w,
               child: Center(
-                child: quest.icon.contains('/') || quest.icon.endsWith('.png')
-                    ? Image.asset(
-                        quest.icon,
-                        width: 68.w,
-                        height: 68.w,
+                child: quest.icon.startsWith('http')
+                    ? Image.network(
+                        AuthService.getOptimizedImageUrl(quest.icon, width: 150),
+                        width: 76.w,
+                        height: 76.w,
                         fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => Text(
+                          '🎁',
+                          style: TextStyle(fontSize: 34.sp),
+                        ),
                       )
-                    : Text(
-                        quest.icon,
-                        style: TextStyle(fontSize: 34.sp),
-                      ),
+                    : (quest.icon.contains('/') || quest.icon.endsWith('.png')
+                        ? Image.asset(
+                            quest.icon,
+                            width: 76.w,
+                            height: 76.w,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) => Text(
+                              '🎁',
+                              style: TextStyle(fontSize: 34.sp),
+                            ),
+                          )
+                        : Text(
+                            quest.icon,
+                            style: TextStyle(fontSize: 34.sp),
+                          )),
               ),
             ),
             SizedBox(width: 14.w),
@@ -953,22 +992,37 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
       ),
       child: Column(
         children: [
-          // Icon
+          // Icon with support for network images (Cloudinary)
           SizedBox(
             width: 96.w,
             height: 96.w,
             child: Center(
-              child: quest.icon.contains('/') || quest.icon.endsWith('.png')
-                  ? Image.asset(
-                      quest.icon,
+              child: quest.icon.startsWith('http')
+                  ? Image.network(
+                      AuthService.getOptimizedImageUrl(quest.icon, width: 200),
                       width: 92.w,
                       height: 92.w,
                       fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => Text(
+                        '🎁',
+                        style: TextStyle(fontSize: 48.sp),
+                      ),
                     )
-                  : Text(
-                      quest.icon,
-                      style: TextStyle(fontSize: 48.sp),
-                    ),
+                  : (quest.icon.contains('/') || quest.icon.endsWith('.png')
+                      ? Image.asset(
+                          quest.icon,
+                          width: 92.w,
+                          height: 92.w,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) => Text(
+                            '🎁',
+                            style: TextStyle(fontSize: 48.sp),
+                          ),
+                        )
+                      : Text(
+                          quest.icon,
+                          style: TextStyle(fontSize: 48.sp),
+                        )),
             ),
           ),
           SizedBox(height: 12.h),
@@ -1181,15 +1235,17 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
         ]),
         SizedBox(height: 14.h),
         SizedBox(
-          height: 145.h,
+          height: 172.h,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
-            itemCount: _achievements.length,
+            itemCount: _backendBadges.isEmpty ? _fallbackAchievements.length : _backendBadges.length,
             separatorBuilder: (_, __) => SizedBox(width: 12.w),
             itemBuilder: (_, i) => SizedBox(
               width: 110.w,
-              child: _buildAchievementTile(_achievements[i]),
+              child: _backendBadges.isEmpty
+                  ? _buildFallbackAchievementTile(_fallbackAchievements[i])
+                  : _buildDynamicAchievementTile(_backendBadges[i]),
             ),
           ),
         ),
@@ -1197,66 +1253,309 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
     );
   }
 
-  Widget _buildAchievementTile(_Achievement ach) {
+  Future<void> _loadAchievements() async {
+    try {
+      _score = await ScoreService.getInstance();
+      final badges = await AuthService().fetchBadges();
+      final user = AuthService().userProfile;
+      final userBadges = user?['badges'] as List<dynamic>? ?? [];
+      final Set<String> unlockedIds = {};
+      for (var b in userBadges) {
+        if (b is Map) {
+          unlockedIds.add(b['_id']?.toString() ?? '');
+        } else {
+          unlockedIds.add(b.toString());
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _backendBadges = badges;
+          _unlockedBadgeIds = unlockedIds;
+          _loadingBadges = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error loading achievements in DailyQuestScreen: $e');
+      if (mounted) {
+        setState(() => _loadingBadges = false);
+      }
+    }
+  }
+
+  int _getCurrentProgress(String reqType) {
+    if (_score == null) return 0;
+    switch (reqType) {
+      case 'lessons_complete':
+        return _score!.totalLessonsCompleted;
+      case 'xp_total':
+        return _score!.totalXp;
+      case 'writing_level':
+        return _score!.writingLevel;
+      case 'reading_level':
+        return _score!.readingLevel;
+      case 'speaking_level':
+        return _score!.speakingLevel;
+      case 'listening_level':
+        return _score!.listeningLevel;
+      case 'stars_total':
+        return _score!.totalStars;
+      case 'streak_days':
+        return _score!.streak;
+      case 'games_played':
+        return _score!.totalGamesPlayed;
+      case 'level_reach':
+        return _score!.level;
+      default:
+        return 0;
+    }
+  }
+
+  Map<String, dynamic> _getFallbackReqInfo(String title) {
+    switch (title) {
+      case 'Bước đầu tiên':
+        return {'type': 'lessons_complete', 'value': 1};
+      case 'Nhà ngôn ngữ nhí':
+        return {'type': 'xp_total', 'value': 50};
+      case 'Bậc thầy phụ âm':
+        return {'type': 'writing_level', 'value': 1};
+      case 'Khám phá nguyên âm':
+        return {'type': 'reading_level', 'value': 1};
+      case 'Vua nguyên âm':
+        return {'type': 'reading_level', 'value': 2};
+      case 'Chính tả giỏi':
+        return {'type': 'writing_level', 'value': 2};
+      case 'Phát âm chuẩn':
+        return {'type': 'speaking_level', 'value': 1};
+      case 'Tai thính':
+        return {'type': 'listening_level', 'value': 1};
+      case 'Viết chữ đẹp':
+        return {'type': 'writing_level', 'value': 3};
+      case 'Ngôi sao đầu tiên':
+        return {'type': 'stars_total', 'value': 15};
+      case 'Sao sáng':
+        return {'type': 'stars_total', 'value': 50};
+      case 'Siêu sao':
+        return {'type': 'stars_total', 'value': 150};
+      case 'Chăm chỉ':
+        return {'type': 'streak_days', 'value': 2};
+      case 'Kiên trì':
+        return {'type': 'streak_days', 'value': 7};
+      case 'Game thủ nhí':
+        return {'type': 'games_played', 'value': 5};
+      case 'Vô địch mini game':
+        return {'type': 'games_played', 'value': 20};
+      case 'Tốc độ ánh sáng':
+        return {'type': 'streak_days', 'value': 15};
+      case 'Hoàn hảo':
+        return {'type': 'lessons_complete', 'value': 15};
+      case 'Nhà vô địch':
+        return {'type': 'lessons_complete', 'value': 30};
+      case 'Bậc thầy Khmer':
+        return {'type': 'level_reach', 'value': 20};
+      default:
+        return {'type': 'unknown', 'value': 1};
+    }
+  }
+
+  Widget _buildDynamicAchievementTile(Map<String, dynamic> badge) {
+    final String id = badge['_id']?.toString() ?? '';
+    final String name = badge['name']?.toString() ?? 'Huy chương';
+    final String description = badge['description']?.toString() ?? '';
+    final String iconUrl = badge['iconUrl']?.toString() ?? '';
+    final String type = badge['type']?.toString() ?? 'learning';
+
+    final reqMap = badge['requirement'] as Map?;
+    final String reqType = reqMap?['type']?.toString() ?? 'unknown';
+    final int target = (reqMap?['value'] as num?)?.toInt() ?? 20;
+    final current = _getCurrentProgress(reqType);
+    final bool isUnlocked = _unlockedBadgeIds.contains(id) || (current >= target);
+
+    Color accentColor = const Color(0xFF7367D6);
+    Color bgColor = const Color(0xFFF2F0FF);
+    IconData fallbackIcon = Icons.stars_rounded;
+
+    if (type == 'level') {
+      accentColor = const Color(0xFFFF9800);
+      bgColor = const Color(0xFFFFF3E0);
+      fallbackIcon = Icons.rocket_launch_rounded;
+    } else if (type == 'pronunciation') {
+      accentColor = const Color(0xFFFF5722);
+      bgColor = const Color(0xFFFBE9E7);
+      fallbackIcon = Icons.record_voice_over_rounded;
+    } else if (type == 'streak') {
+      accentColor = const Color(0xFFE91E63);
+      bgColor = const Color(0xFFFCE4EC);
+      fallbackIcon = Icons.local_fire_department_rounded;
+    } else if (type == 'learning') {
+      accentColor = const Color(0xFF4CAF50);
+      bgColor = const Color(0xFFE8F5E9);
+      fallbackIcon = Icons.auto_stories_rounded;
+    } else if (type == 'ranking') {
+      accentColor = const Color(0xFFFFCA28);
+      bgColor = const Color(0xFFFFF8E1);
+      fallbackIcon = Icons.emoji_events_rounded;
+    }
+
+    return _buildAchievementTileLayout(
+      title: name,
+      subtitle: description,
+      iconUrl: iconUrl,
+      fallbackIcon: fallbackIcon,
+      accentColor: accentColor,
+      bgColor: bgColor,
+      target: target,
+      current: current,
+      isUnlocked: isUnlocked,
+    );
+  }
+
+  Widget _buildFallbackAchievementTile(_Achievement a) {
+    final req = _getFallbackReqInfo(a.title);
+    final String reqType = req['type'] ?? 'unknown';
+    final int target = req['value'] ?? 20;
+    final int current = _getCurrentProgress(reqType);
+    final bool isUnlocked = current >= target;
+
+    return _buildAchievementTileLayout(
+      title: a.title,
+      subtitle: a.description,
+      iconUrl: a.imagePath,
+      fallbackIcon: a.icon,
+      accentColor: a.color,
+      bgColor: a.bgColor,
+      target: target,
+      current: current,
+      isUnlocked: isUnlocked,
+    );
+  }
+
+  Widget _buildAchievementTileLayout({
+    required String title,
+    required String subtitle,
+    required String iconUrl,
+    required IconData fallbackIcon,
+    required Color accentColor,
+    required Color bgColor,
+    required int target,
+    required int current,
+    required bool isUnlocked,
+  }) {
     return Container(
-      padding: EdgeInsets.fromLTRB(6.w, 16.h, 6.w, 14.h),
+      padding: EdgeInsets.fromLTRB(6.w, 14.h, 6.w, 12.h),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22.r),
-        border: Border.all(color: ach.color.withValues(alpha: 0.15)),
+        border: Border.all(color: accentColor.withValues(alpha: 0.15)),
         boxShadow: [
           BoxShadow(
-            color: ach.color.withValues(alpha: 0.05),
-            blurRadius: 12.r, offset: Offset(0, 4.h)),
+            color: accentColor.withValues(alpha: 0.05),
+            blurRadius: 12.r,
+            offset: Offset(0, 4.h),
+          ),
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 4.r, offset: Offset(0, 2.h)),
-        ]),
-      child: Column(
-        children: [
-          // Icon box with badge
-          Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: 52.w, height: 52.w,
-                decoration: BoxDecoration(
-                  color: ach.color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(color: ach.color.withValues(alpha: 0.15))),
-                child: Center(child: Text(ach.icon, style: TextStyle(fontSize: 24.sp))),
-              ),
-              Positioned(
-                bottom: -4.w, right: -4.w,
-                child: Container(
-                  width: 22.w, height: 22.w,
-                  decoration: BoxDecoration(
-                    color: ach.color,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2.5.w),
-                    boxShadow: [BoxShadow(
-                      color: ach.color.withValues(alpha: 0.3),
-                      blurRadius: 4.r, offset: Offset(0, 2.h))]),
-                  child: Center(child: Text('${ach.value}',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 9.sp, fontWeight: FontWeight.w900, color: Colors.white))),
-                ),
-              ),
-            ],
+            blurRadius: 4.r,
+            offset: Offset(0, 2.h),
           ),
-          SizedBox(height: 14.h),
-          Text(ach.title,
-            textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 10.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary, height: 1.25)),
-          SizedBox(height: 4.h),
-          Text(ach.subtitle,
-            textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 8.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
         ],
       ),
+      child: Column(
+        children: [
+          SizedBox(
+            width: 72.w,
+            height: 72.w,
+            child: Center(
+              child: isUnlocked
+                  ? (iconUrl.isNotEmpty
+                      ? (iconUrl.startsWith('http')
+                          ? Image.network(
+                              AuthService.getOptimizedImageUrl(iconUrl, width: 150),
+                              width: 68.w,
+                              height: 68.w,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  _buildFallbackCircle(fallbackIcon, accentColor, bgColor),
+                            )
+                          : Image.asset(
+                              iconUrl,
+                              width: 68.w,
+                              height: 68.w,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  _buildFallbackCircle(fallbackIcon, accentColor, bgColor),
+                            ))
+                      : _buildFallbackCircle(fallbackIcon, accentColor, bgColor))
+                  : _buildFallbackCircle(Icons.lock_rounded, const Color(0xFF94A3B8), const Color(0xFFF1F5F9), borderColor: const Color(0xFFE2E8F0)),
+            ),
+          ),
+          SizedBox(height: 12.h),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+              height: 1.25,
+            ),
+          ),
+          SizedBox(height: 3.h),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 8.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          SizedBox(height: 6.h),
+          // Status indicator matching achievements page
+          isUnlocked
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle_rounded, color: const Color(0xFF4CAF50), size: 11.sp),
+                    SizedBox(width: 2.w),
+                    Text(
+                      'Đã đạt',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF4CAF50),
+                      ),
+                    ),
+                  ],
+                )
+              : Text(
+                  '$current/$target',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF94A3B8),
+                  ),
+                ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFallbackCircle(IconData icon, Color iconColor, Color bg, {Color? borderColor}) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: bg,
+        border: Border.all(
+          color: borderColor ?? iconColor.withValues(alpha: 0.25),
+          width: 1.5.w,
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Icon(icon, size: 24.sp, color: iconColor),
     );
   }
 }
@@ -1310,9 +1609,21 @@ class _WeeklyQuest {
 }
 
 class _Achievement {
-  final String icon, title, subtitle;
-  final int value;
+  final String title;
+  final IconData icon;
+  final String imagePath;
+  final bool done;
   final Color color;
-  _Achievement({required this.icon, required this.title, required this.subtitle,
-    required this.value, required this.color});
+  final Color bgColor;
+  final String description;
+
+  const _Achievement({
+    required this.title,
+    required this.icon,
+    required this.imagePath,
+    required this.done,
+    required this.color,
+    required this.bgColor,
+    required this.description,
+  });
 }

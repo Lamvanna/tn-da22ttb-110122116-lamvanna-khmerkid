@@ -23,7 +23,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Bước đầu tiên',
       icon: Icons.rocket_launch_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Bước đầu tiên.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895771/khmerkid/badges/B%C6%B0%E1%BB%9Bc%20%C4%91%E1%BA%A7u%20ti%C3%AAn.png',
       done: false,
       color: const Color(0xFF4CAF50),
       bgColor: const Color(0xFFE8F5E9),
@@ -32,7 +32,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Nhà ngôn ngữ nhí',
       icon: Icons.auto_stories_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Nhà ngôn ngữ nhí.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895799/khmerkid/badges/Nh%C3%A0%20ng%C3%B4n%20ng%E1%BB%AF%20nh%C3%AD.png',
       done: false,
       color: const Color(0xFF9C27B0),
       bgColor: const Color(0xFFF3E5F5),
@@ -41,7 +41,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Bậc thầy phụ âm',
       icon: Icons.draw_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Bậc thầy phụ âm.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895774/khmerkid/badges/B%E1%BA%ADc%20th%E1%BA%A7y%20ph%E1%BB%A5%20%C3%A2m.png',
       done: false,
       color: const Color(0xFFFFB300),
       bgColor: const Color(0xFFFFF8E1),
@@ -50,7 +50,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Khám phá nguyên âm',
       icon: Icons.menu_book_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Khám phá nguyên âm.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895793/khmerkid/badges/Kh%C3%A1m%20ph%C3%A1%20nguy%C3%AAn%20%C3%A2m.png',
       done: false,
       color: const Color(0xFF2196F3),
       bgColor: const Color(0xFFE3F2FD),
@@ -59,7 +59,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Vua nguyên âm',
       icon: Icons.explore_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Vua nguyên âm.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895814/khmerkid/badges/Vua%20nguy%C3%AAn%20%C3%A2m.png',
       done: false,
       color: const Color(0xFF009688),
       bgColor: const Color(0xFFE0F2F1),
@@ -68,7 +68,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Chính tả giỏi',
       icon: Icons.draw_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Chính tả giỏi.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895778/khmerkid/badges/Ch%C3%ADnh%20t%E1%BA%A3%20gi%E1%BB%8Fi.png',
       done: false,
       color: const Color(0xFF3F51B5),
       bgColor: const Color(0xFFE8EAF6),
@@ -77,7 +77,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Phát âm chuẩn',
       icon: Icons.record_voice_over_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Phát âm chuẩn.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895802/khmerkid/badges/Ph%C3%A1t%20%C3%A2m%20chu%E1%BA%A9n.png',
       done: false,
       color: const Color(0xFFE91E63),
       bgColor: const Color(0xFFFCE4EC),
@@ -86,7 +86,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Tai thính',
       icon: Icons.hearing_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Tai thính.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895809/khmerkid/badges/Tai%20th%C3%ADnh.png',
       done: false,
       color: const Color(0xFF1E88E5),
       bgColor: const Color(0xFFEBF4FF),
@@ -95,7 +95,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Viết chữ đẹp',
       icon: Icons.draw_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Viết chữ đẹp.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895813/khmerkid/badges/Vi%E1%BA%BFt%20ch%E1%BB%AF%20%C4%91%E1%BA%B9p.png',
       done: false,
       color: const Color(0xFF00BCD4),
       bgColor: const Color(0xFFE0F7FA),
@@ -104,7 +104,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Ngôi sao đầu tiên',
       icon: Icons.star_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Ngôi sao đầu tiên.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895798/khmerkid/badges/Ng%C3%B4i%20sao%20%C4%91%E1%BA%A7u%20ti%C3%AAn.png',
       done: false,
       color: const Color(0xFFFFC107),
       bgColor: const Color(0xFFFFF8E1),
@@ -113,7 +113,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Sao sáng',
       icon: Icons.wb_twilight_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Sao sáng.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895806/khmerkid/badges/Sao%20s%C3%A1ng.png',
       done: false,
       color: const Color(0xFF03A9F4),
       bgColor: const Color(0xFFE1F5FE),
@@ -122,7 +122,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Siêu sao',
       icon: Icons.military_tech_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Siêu sao.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895808/khmerkid/badges/Si%C3%AAu%20sao.png',
       done: false,
       color: const Color(0xFF7C4DFF),
       bgColor: const Color(0xFFEDE7F6),
@@ -131,7 +131,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Chăm chỉ',
       icon: Icons.local_fire_department_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Chăm chỉ.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895781/khmerkid/badges/Ch%C4%83m%20ch%E1%BB%89.png',
       done: false,
       color: const Color(0xFFFF9800),
       bgColor: const Color(0xFFFFF3E0),
@@ -140,7 +140,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Kiên trì',
       icon: Icons.calendar_month_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Kiên trì.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895795/khmerkid/badges/Ki%C3%AAn%20tr%C3%AC.png',
       done: false,
       color: const Color(0xFFFF8F00),
       bgColor: const Color(0xFFFFF3CD),
@@ -149,7 +149,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Game thủ nhí',
       icon: Icons.sports_esports_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Game thủ nhí.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895785/khmerkid/badges/Game%20th%E1%BB%A7%20nh%C3%AD.png',
       done: false,
       color: const Color(0xFF00E5FF),
       bgColor: const Color(0xFFE0F7FA),
@@ -158,7 +158,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Vô địch mini game',
       icon: Icons.emoji_events_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Vô địch mini game.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895816/khmerkid/badges/V%C3%B4%20%C4%91%E1%BB%8Bch%20mini%20game.png',
       done: false,
       color: const Color(0xFFD32F2F),
       bgColor: const Color(0xFFFFEBEE),
@@ -167,7 +167,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Tốc độ ánh sáng',
       icon: Icons.flash_on_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Tốc độ ánh sáng.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895811/khmerkid/badges/T%E1%BB%91c%20%C4%91%E1%BB%99%20%C3%A1nh%20s%C3%A1ng.png',
       done: false,
       color: const Color(0xFF7C4DFF),
       bgColor: const Color(0xFFEDE7F6),
@@ -176,7 +176,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Hoàn hảo',
       icon: Icons.verified_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Hoàn hảo.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895787/khmerkid/badges/Ho%C3%A0n%20h%E1%BA%A3o.png',
       done: false,
       color: const Color(0xFF2E7D32),
       bgColor: const Color(0xFFE8F5E9),
@@ -185,7 +185,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Nhà vô địch',
       icon: Icons.workspace_premium_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Nhà vô địch.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895801/khmerkid/badges/Nh%C3%A0%20v%C3%B4%20%C4%91%E1%BB%8Bch.png',
       done: false,
       color: const Color(0xFFFF5722),
       bgColor: const Color(0xFFFBE9E7),
@@ -194,7 +194,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     _Achievement(
       title: 'Bậc thầy Khmer',
       icon: Icons.school_rounded,
-      imagePath: 'image/Ảnh nhiệm vụ/Bậc thầy Khmer.png',
+      imagePath: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895773/khmerkid/badges/B%E1%BA%ADc%20th%E1%BA%A7y%20Khmer.png',
       done: false,
       color: const Color(0xFF651FFF),
       bgColor: const Color(0xFFEDE7F6),
@@ -780,12 +780,19 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               height: 60.w,
               child: isUnlocked
                   ? (a.imagePath.isNotEmpty
-                      ? Image.asset(
-                          a.imagePath,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              _buildIconCircle(a.icon, accentColor, bgColor),
-                        )
+                      ? (a.imagePath.startsWith('http')
+                          ? Image.network(
+                              a.imagePath,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  _buildIconCircle(a.icon, accentColor, bgColor),
+                            )
+                          : Image.asset(
+                              a.imagePath,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  _buildIconCircle(a.icon, accentColor, bgColor),
+                            ))
                       : _buildIconCircle(a.icon, accentColor, bgColor))
                   : _buildIconCircle(Icons.lock_rounded, const Color(0xFF94A3B8), const Color(0xFFF1F5F9), borderColor: const Color(0xFFE2E8F0)),
             ),

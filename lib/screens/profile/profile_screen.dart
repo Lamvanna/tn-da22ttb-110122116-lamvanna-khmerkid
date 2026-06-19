@@ -1469,6 +1469,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.rocket_launch_rounded,
         'color': const Color(0xFF4CAF50),
         'unlocked': _lettersLearned >= 1 || _vowelsLearned >= 1 || _readingLearned >= 1,
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895771/khmerkid/badges/B%C6%B0%E1%BB%9Bc%20%C4%91%E1%BA%A7u%20ti%C3%AAn.png',
       },
       {
         'id': 'fb_2',
@@ -1476,6 +1477,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.auto_stories_rounded,
         'color': const Color(0xFF4CAF50),
         'unlocked': _xp >= 50,
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895799/khmerkid/badges/Nh%C3%A0%20ng%C3%B4n%20ng%E1%BB%AF%20nh%C3%AD.png',
       },
       {
         'id': 'fb_3',
@@ -1483,6 +1485,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.draw_rounded,
         'color': const Color(0xFF4CAF50),
         'unlocked': _score != null && _score!.writingLevel >= 1,
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895774/khmerkid/badges/B%E1%BA%ADc%20th%E1%BA%A7y%20ph%E1%BB%A5%20%C3%A2m.png',
       },
       {
         'id': 'fb_4',
@@ -1490,6 +1493,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.menu_book_rounded,
         'color': const Color(0xFF4CAF50),
         'unlocked': _score != null && _score!.readingLevel >= 1,
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895793/khmerkid/badges/Kh%C3%A1m%20ph%C3%A1%20nguy%C3%AAn%20%C3%A2m.png',
       },
       {
         'id': 'fb_5',
@@ -1497,6 +1501,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.explore_rounded,
         'color': const Color(0xFFFF9800),
         'unlocked': _score != null && _score!.readingLevel >= 2,
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895814/khmerkid/badges/Vua%20nguy%C3%AAn%20%C3%A2m.png',
       },
       {
         'id': 'fb_6',
@@ -1504,6 +1509,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.draw_rounded,
         'color': const Color(0xFF4CAF50),
         'unlocked': _score != null && _score!.writingLevel >= 2,
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895778/khmerkid/badges/Ch%C3%ADnh%20t%E1%BA%A3%20gi%E1%BB%8Fi.png',
       },
       {
         'id': 'fb_7',
@@ -1511,6 +1517,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.record_voice_over_rounded,
         'color': const Color(0xFFFF5722),
         'unlocked': _score != null && _score!.writingLevel >= 1, // speaking level
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895802/khmerkid/badges/Ph%C3%A1t%20%C3%A2m%20chu%E1%BA%A9n.png',
       },
       {
         'id': 'fb_8',
@@ -1518,6 +1525,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.hearing_rounded,
         'color': const Color(0xFF4CAF50),
         'unlocked': _score != null && _score!.readingLevel >= 1, // listening level
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895809/khmerkid/badges/Tai%20th%C3%ADnh.png',
       },
       {
         'id': 'fb_9',
@@ -1525,6 +1533,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.draw_rounded,
         'color': const Color(0xFF4CAF50),
         'unlocked': _score != null && _score!.writingLevel >= 3,
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895813/khmerkid/badges/Vi%E1%BA%BFt%20ch%E1%BB%AF%20%C4%91%E1%BA%B9p.png',
       },
       {
         'id': 'fb_10',
@@ -1532,6 +1541,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.star_rounded,
         'color': const Color(0xFFFFCA28),
         'unlocked': _stars >= 15,
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895798/khmerkid/badges/Ng%C3%B4i%20sao%20%C4%91%E1%BA%A7u%20ti%C3%AAn.png',
       },
       {
         'id': 'fb_11',
@@ -1539,6 +1549,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.wb_twilight_rounded,
         'color': const Color(0xFFFFCA28),
         'unlocked': _stars >= 50,
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895806/khmerkid/badges/Sao%20s%C3%A1ng.png',
       },
       {
         'id': 'fb_12',
@@ -1546,6 +1557,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.military_tech_rounded,
         'color': const Color(0xFFFFCA28),
         'unlocked': _stars >= 150,
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895808/khmerkid/badges/Si%C3%AAu%20sao.png',
       },
       {
         'id': 'fb_13',
@@ -1553,6 +1565,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.local_fire_department_rounded,
         'color': const Color(0xFFE91E63),
         'unlocked': _streak >= 2,
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895781/khmerkid/badges/Ch%C4%83m%20ch%E1%BB%89.png',
       },
       {
         'id': 'fb_14',
@@ -1560,6 +1573,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.calendar_month_rounded,
         'color': const Color(0xFFE91E63),
         'unlocked': _streak >= 7,
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895795/khmerkid/badges/Ki%C3%AAn%20tr%C3%AC.png',
       },
       {
         'id': 'fb_15',
@@ -1567,6 +1581,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.sports_esports_rounded,
         'color': const Color(0xFF00E5FF),
         'unlocked': _score != null && _score!.totalXp >= 30, // games played fallback
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895785/khmerkid/badges/Game%20th%E1%BB%A7%20nh%C3%AD.png',
       },
       {
         'id': 'fb_16',
@@ -1574,6 +1589,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.emoji_events_rounded,
         'color': const Color(0xFF00E5FF),
         'unlocked': _score != null && _score!.totalXp >= 100, // games played fallback
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895816/khmerkid/badges/V%C3%B4%20%C4%91%E1%BB%8Bch%20mini%20game.png',
       },
       {
         'id': 'fb_17',
@@ -1581,6 +1597,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.flash_on_rounded,
         'color': const Color(0xFFE91E63),
         'unlocked': _streak >= 15,
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895811/khmerkid/badges/T%E1%BB%91c%20%C4%91%E1%BB%99%20%C3%A1nh%20s%C3%A1ng.png',
       },
       {
         'id': 'fb_18',
@@ -1588,6 +1605,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.verified_rounded,
         'color': const Color(0xFF4CAF50),
         'unlocked': _lettersLearned + _vowelsLearned + _readingLearned >= 15,
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895787/khmerkid/badges/Ho%C3%A0n%20h%E1%BA%A3o.png',
       },
       {
         'id': 'fb_19',
@@ -1595,6 +1613,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.workspace_premium_rounded,
         'color': const Color(0xFFFF9800),
         'unlocked': _lettersLearned + _vowelsLearned + _readingLearned >= 30,
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895801/khmerkid/badges/Nh%C3%A0%20v%C3%B4%20%C4%91%E1%BB%8Bch.png',
       },
       {
         'id': 'fb_20',
@@ -1602,6 +1621,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.school_rounded,
         'color': const Color(0xFFFF9800),
         'unlocked': _level >= 20,
+        'iconUrl': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895773/khmerkid/badges/B%E1%BA%ADc%20th%E1%BA%A7y%20Khmer.png',
       },
     ];
 

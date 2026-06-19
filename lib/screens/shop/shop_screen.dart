@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../services/score_service.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/app_page_route.dart';
 import '../home/daily_quest_screen.dart';
 
@@ -18,6 +19,24 @@ class _ShopScreenState extends State<ShopScreen> {
   Set<String> _purchasedItems = {};
   bool _isLoading = true;
   late ScoreService _scoreService;
+
+  static const Map<String, String> _cloudinaryImageMap = {
+    'Hộp quà kim cương thần kỳ.png': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895791/khmerkid/badges/H%E1%BB%99p%20qu%C3%A0%20kim%20c%C6%B0%C6%A1ng%20th%E1%BA%A7n%20k%E1%BB%B3.png',
+    'Huy hiệu siêu sao học tập.png': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895789/khmerkid/badges/Huy%20hi%E1%BB%87u%20si%C3%AAu%20sao%20h%E1%BB%8Dc%20t%E1%BA%ADp.png',
+    'Quả cầu tuyết phép thuật.png': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895804/khmerkid/badges/Qu%E1%BA%A3%20c%E1%BA%A7u%20tuy%E1%BA%BFt%20ph%C3%A9p%20thu%E1%BA%ADt.png',
+    'Quyển sách tri thức hoàng gia.png': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895804/khmerkid/badges/Quy%E1%BB%83n%20s%C3%A1ch%20tri%20th%E1%BB%A9c%20ho%C3%A0ng%20gia.png',
+    'hú voi con hiếu học.png': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895790/khmerkid/badges/h%C3%BA%20voi%20con%20hi%E1%BA%BFu%20h%E1%BB%8Dc.png',
+    'Cô khỉ con tinh nghịch.png': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895783/khmerkid/badges/C%C3%B4%20kh%E1%BB%89%20con%20tinh%20ngh%E1%BB%8Bch.png',
+    'Chú hổ con dũng cảm.png': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895779/khmerkid/badges/Ch%C3%BA%20h%E1%BB%95%20con%20d%C5%A9ng%20c%E1%BA%A3m.png',
+    'Chú rùa con kiên trì.png': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895780/khmerkid/badges/Ch%C3%BA%20r%C3%B9a%20con%20ki%C3%AAn%20tr%C3%AC.png',
+    'Thầy giáo cú mèo thông thái.png': 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895810/khmerkid/badges/Th%E1%BA%A7y%20gi%C3%A1o%20c%C3%BA%20m%C3%A8o%20th%C3%B4ng%20th%C3%A1i.png',
+  };
+
+  String? _getCloudinaryUrl(String? path) {
+    if (path == null) return null;
+    final filename = path.split('/').last;
+    return _cloudinaryImageMap[filename];
+  }
 
   final List<_ShopItem> _allItems = [
     // Featured Rewards
@@ -219,9 +238,27 @@ class _ShopScreenState extends State<ShopScreen> {
                   color: const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(20.r),
                 ),
-                child: item.imagePath != null
-                    ? Image.asset(item.imagePath!, fit: BoxFit.contain)
-                    : Center(child: Text(item.emoji ?? '🎁', style: TextStyle(fontSize: 52.sp))),
+                child: () {
+                  final cloudinaryUrl = _getCloudinaryUrl(item.imagePath);
+                  if (cloudinaryUrl != null) {
+                    return Image.network(
+                      AuthService.getOptimizedImageUrl(cloudinaryUrl, width: 150),
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return item.imagePath != null
+                            ? Image.asset(item.imagePath!, fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Center(child: Text(item.emoji ?? '🎁', style: TextStyle(fontSize: 52.sp))))
+                            : Center(child: Text(item.emoji ?? '🎁', style: TextStyle(fontSize: 52.sp)));
+                      },
+                    );
+                  }
+                  return item.imagePath != null
+                      ? Image.asset(item.imagePath!, fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Center(child: Text(item.emoji ?? '🎁', style: TextStyle(fontSize: 52.sp))))
+                      : Center(child: Text(item.emoji ?? '🎁', style: TextStyle(fontSize: 52.sp)));
+                }(),
               ),
               SizedBox(height: 16.h),
               Text('Mua ${item.name}?',
@@ -739,12 +776,27 @@ class _ShopScreenState extends State<ShopScreen> {
                   // Image/Emoji Container
                   Expanded(
                     child: Center(
-                      child: item.imagePath != null
-                          ? Image.asset(item.imagePath!, fit: BoxFit.contain)
-                          : Text(
-                              item.emoji ?? '🎁',
-                              style: TextStyle(fontSize: 40.sp),
-                            ),
+                      child: () {
+                        final cloudinaryUrl = _getCloudinaryUrl(item.imagePath);
+                        if (cloudinaryUrl != null) {
+                          return Image.network(
+                            AuthService.getOptimizedImageUrl(cloudinaryUrl, width: 150),
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return item.imagePath != null
+                                  ? Image.asset(item.imagePath!, fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) =>
+                                          Text(item.emoji ?? '🎁', style: TextStyle(fontSize: 40.sp)))
+                                  : Text(item.emoji ?? '🎁', style: TextStyle(fontSize: 40.sp));
+                            },
+                          );
+                        }
+                        return item.imagePath != null
+                            ? Image.asset(item.imagePath!, fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Text(item.emoji ?? '🎁', style: TextStyle(fontSize: 40.sp)))
+                            : Text(item.emoji ?? '🎁', style: TextStyle(fontSize: 40.sp));
+                      }(),
                     ),
                   ),
                   SizedBox(height: 4.h),

@@ -5,6 +5,7 @@ import '../../services/score_service.dart';
 import '../../services/auth_service.dart';
 import '../../constants/app_colors.dart';
 import '../main_screen.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Màn hình Thành tích — Grid badge tròn động 100% từ MongoDB
 class AchievementsScreen extends StatefulWidget {
@@ -314,7 +315,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                         SizedBox(width: 14.w),
                         Expanded(
                           child: Text(
-                            'Thành tích',
+                            context.translate('achievements.title'),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 20.sp,
                               fontWeight: FontWeight.w800,
@@ -505,7 +506,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Tiến độ của bạn',
+                  context.translate('achievements.progress_title'),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 10.sp,
                     fontWeight: FontWeight.w600,
@@ -576,27 +577,14 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 color: const Color(0xFFF0F5FF),
                 borderRadius: BorderRadius.circular(12.r),
               ),
-              child: RichText(
+              child: Text(
+                context.translatePlural('achievements.achievements_remaining', remaining),
                 textAlign: TextAlign.center,
-                text: TextSpan(
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF64748B),
-                    height: 1.3,
-                  ),
-                  children: [
-                    const TextSpan(text: 'Còn '),
-                    TextSpan(
-                      text: '$remaining',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const TextSpan(text: ' thành tích nữa!'),
-                  ],
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10.sp,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF64748B),
+                  height: 1.3,
                 ),
               ),
             ),
@@ -696,7 +684,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             Expanded(
               child: Center(
                 child: Text(
-                  name,
+                  context.translateBadgeName(name),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -718,7 +706,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                       Icon(Icons.check_circle_rounded, color: const Color(0xFF4CAF50), size: 11.sp),
                       SizedBox(width: 2.w),
                       Text(
-                        'Đã đạt',
+                        context.translate('achievements.unlocked'),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 9.sp,
                           fontWeight: FontWeight.w800,
@@ -801,7 +789,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             Expanded(
               child: Center(
                 child: Text(
-                  a.title,
+                  context.translateBadgeName(a.title),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -823,7 +811,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                       Icon(Icons.check_circle_rounded, color: const Color(0xFF4CAF50), size: 11.sp),
                       SizedBox(width: 2.w),
                       Text(
-                        'Đã đạt',
+                        context.translate('achievements.unlocked'),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 9.sp,
                           fontWeight: FontWeight.w800,
@@ -912,7 +900,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               SizedBox(height: 20.h),
               // Badge Name
               Text(
-                name,
+                context.translateBadgeName(name),
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 20.sp,
@@ -929,7 +917,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   borderRadius: BorderRadius.circular(20.r),
                 ),
                 child: Text(
-                  isUnlocked ? '🎉 Đã đạt được' : '🔒 Chưa mở khóa',
+                  context.translate(isUnlocked ? 'achievements.unlocked_status' : 'achievements.locked_status'),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w800,
@@ -940,7 +928,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               SizedBox(height: 16.h),
               // Description
               Text(
-                description,
+                context.translateBadgeDesc(name, description),
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14.sp,
@@ -964,7 +952,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     elevation: 2,
                   ),
                   child: Text(
-                    'Đóng',
+                    context.translate('common.close'),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w800,

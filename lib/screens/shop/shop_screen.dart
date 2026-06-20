@@ -5,6 +5,7 @@ import '../../services/score_service.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/app_page_route.dart';
 import '../home/daily_quest_screen.dart';
+import '../../l10n/app_localizations.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
@@ -212,11 +213,11 @@ class _ShopScreenState extends State<ShopScreen> {
 
   Future<void> _buyItem(_ShopItem item) async {
     if (!item.isConsumable && _purchasedItems.contains(item.id)) {
-      _showSnack('Bạn đã sở hữu ${item.name} rồi! ✅');
+      _showSnack(context.translate('shop.already_owned', args: {'name': context.translateShopItemName(item.id, item.name)}));
       return;
     }
     if (_starBalance < item.price) {
-      _showSnack('Chưa đủ sao! Bạn cần thêm ${item.price - _starBalance}⭐');
+      _showSnack(context.translate('shop.not_enough_stars', args: {'count': item.price - _starBalance}));
       return;
     }
 
@@ -261,13 +262,13 @@ class _ShopScreenState extends State<ShopScreen> {
                 }(),
               ),
               SizedBox(height: 16.h),
-              Text('Mua ${item.name}?',
+              Text(context.translate('shop.buy_confirm_title', args: {'name': context.translateShopItemName(item.id, item.name)}),
                   style: GoogleFonts.plusJakartaSans(fontSize: 20.sp, fontWeight: FontWeight.w800, color: const Color(0xFF2D3142))),
               SizedBox(height: 8.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Giá: ', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, color: const Color(0xFF9098A9))),
+                  Text(context.translate('shop.buy_confirm_price'), style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, color: const Color(0xFF9098A9))),
                   Image.asset('image/sao.png', width: 20.w, height: 20.w),
                   SizedBox(width: 4.w),
                   Text('${item.price}', style: GoogleFonts.plusJakartaSans(fontSize: 18.sp, fontWeight: FontWeight.w800, color: const Color(0xFFFFB300))),
@@ -283,7 +284,7 @@ class _ShopScreenState extends State<ShopScreen> {
                         padding: EdgeInsets.symmetric(vertical: 14.h),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
                       ),
-                      child: Text('Hủy', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w700, color: const Color(0xFF9098A9))),
+                      child: Text(context.translate('common.cancel'), style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w700, color: const Color(0xFF9098A9))),
                     ),
                   ),
                   SizedBox(width: 12.w),
@@ -296,7 +297,7 @@ class _ShopScreenState extends State<ShopScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
                         elevation: 0,
                       ),
-                      child: Text('Mua ngay', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w700, color: Colors.white)),
+                      child: Text(context.translate('shop.buy_now'), style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w700, color: Colors.white)),
                     ),
                   ),
                 ],
@@ -331,7 +332,7 @@ class _ShopScreenState extends State<ShopScreen> {
         });
         if (mounted) _showPurchaseSuccess(item);
       } else {
-        _showSnack('Có lỗi xảy ra khi mua hàng!');
+        _showSnack(context.translate('shop.error_buy'));
       }
     }
   }
@@ -356,10 +357,10 @@ class _ShopScreenState extends State<ShopScreen> {
                 child: Text('🎉', style: TextStyle(fontSize: 48.sp)),
               ),
               SizedBox(height: 20.h),
-              Text('Mua thành công!',
+              Text(context.translate('shop.buy_success_title'),
                   style: GoogleFonts.plusJakartaSans(fontSize: 22.sp, fontWeight: FontWeight.w800, color: const Color(0xFF43A047))),
               SizedBox(height: 8.h),
-              Text('Bạn đã sở hữu ${item.name}',
+              Text(context.translate('shop.buy_success_desc', args: {'name': context.translateShopItemName(item.id, item.name)}),
                   textAlign: TextAlign.center,
                   style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w600, color: const Color(0xFF9098A9))),
               SizedBox(height: 28.h),
@@ -373,7 +374,7 @@ class _ShopScreenState extends State<ShopScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
                     elevation: 0,
                   ),
-                  child: Text('Tuyệt vời!', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w800, color: Colors.white)),
+                  child: Text(context.translate('shop.great_btn'), style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w800, color: Colors.white)),
                 ),
               ),
             ],
@@ -498,7 +499,7 @@ class _ShopScreenState extends State<ShopScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Đổi thưởng',
+                          context.translate('shop.title'),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 21.sp,
                             fontWeight: FontWeight.w800,
@@ -507,7 +508,7 @@ class _ShopScreenState extends State<ShopScreen> {
                         ),
                         SizedBox(height: 2.h),
                         Text(
-                          'Dùng sao để đổi phần thưởng hấp dẫn',
+                          context.translate('shop.subtitle'),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11.sp,
                             fontWeight: FontWeight.w600,
@@ -556,10 +557,10 @@ class _ShopScreenState extends State<ShopScreen> {
 
   Widget _buildTabBar() {
     final List<Map<String, dynamic>> tabs = [
-      {'label': 'Tất cả', 'icon': Icons.card_giftcard_rounded},
-      {'label': 'Nhân vật', 'icon': Icons.face_rounded},
-      {'label': 'Vật phẩm', 'icon': Icons.science_rounded},
-      {'label': 'Khác', 'icon': Icons.local_play_rounded},
+      {'label': context.translate('shop.tab_all'), 'icon': Icons.card_giftcard_rounded},
+      {'label': context.translate('shop.tab_characters'), 'icon': Icons.face_rounded},
+      {'label': context.translate('shop.tab_items'), 'icon': Icons.science_rounded},
+      {'label': context.translate('shop.tab_others'), 'icon': Icons.local_play_rounded},
     ];
 
     return Container(
@@ -630,7 +631,7 @@ class _ShopScreenState extends State<ShopScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Featured rewards
-            _buildSectionHeader('Phần thưởng nổi bật', 0),
+            _buildSectionHeader(context.translate('shop.featured_rewards'), 0),
             SizedBox(
               height: 215.h,
               child: ListView.builder(
@@ -643,7 +644,7 @@ class _ShopScreenState extends State<ShopScreen> {
             ),
 
             // Characters
-            _buildSectionHeader('Nhân vật', 1),
+            _buildSectionHeader(context.translate('shop.characters'), 1),
             SizedBox(
               height: 200.h,
               child: ListView.builder(
@@ -656,7 +657,7 @@ class _ShopScreenState extends State<ShopScreen> {
             ),
 
             // Items
-            _buildSectionHeader('Vật phẩm', 2),
+            _buildSectionHeader(context.translate('shop.items'), 2),
             SizedBox(
               height: 200.h,
               child: ListView.builder(
@@ -716,7 +717,7 @@ class _ShopScreenState extends State<ShopScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Xem tất cả',
+                  context.translate('shop.view_all'),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w700,
@@ -802,7 +803,7 @@ class _ShopScreenState extends State<ShopScreen> {
                   SizedBox(height: 4.h),
                   // Name
                   Text(
-                    item.name,
+                    context.translateShopItemName(item.id, item.name),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
@@ -817,7 +818,7 @@ class _ShopScreenState extends State<ShopScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        item.description,
+                        context.translateShopItemDesc(item.id, item.description),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
@@ -830,7 +831,7 @@ class _ShopScreenState extends State<ShopScreen> {
                       if (showCount) ...[
                         SizedBox(height: 2.h),
                         Text(
-                          'Đang có: $ownedCount',
+                          context.translate('shop.owned_count', args: {'count': ownedCount}),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11.sp,
                             fontWeight: FontWeight.w800,
@@ -860,7 +861,7 @@ class _ShopScreenState extends State<ShopScreen> {
                           Icon(Icons.check_circle_rounded, size: 14.sp, color: const Color(0xFF43A047)),
                           SizedBox(width: 4.w),
                           Text(
-                            'Đã mua',
+                            context.translate('shop.already_purchased'),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 12.sp,
                               fontWeight: FontWeight.w800,
@@ -913,7 +914,11 @@ class _ShopScreenState extends State<ShopScreen> {
                     borderRadius: BorderRadius.circular(10.r),
                   ),
                   child: Text(
-                    item.badge!,
+                    item.badge == 'Nổi bật'
+                        ? context.translate('shop.badge_featured')
+                        : (item.badge == 'Mới'
+                            ? context.translate('shop.badge_new')
+                            : item.badge!),
                     style: GoogleFonts.plusJakartaSans(
                       color: Colors.white,
                       fontSize: 10.sp,
@@ -952,7 +957,7 @@ class _ShopScreenState extends State<ShopScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Hãy tích lũy thêm sao',
+                  context.translate('shop.bottom_banner_title'),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w800,
@@ -961,7 +966,7 @@ class _ShopScreenState extends State<ShopScreen> {
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  'Hoàn thành nhiệm vụ để nhận thêm sao nhé!',
+                  context.translate('shop.bottom_banner_desc'),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w600,
@@ -992,7 +997,7 @@ class _ShopScreenState extends State<ShopScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Làm nhiệm vụ',
+                  context.translate('shop.bottom_banner_btn'),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w800,

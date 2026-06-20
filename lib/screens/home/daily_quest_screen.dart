@@ -8,6 +8,7 @@ import '../../services/auth_service.dart';
 import '../../services/score_service.dart';
 import '../achievements/achievements_screen.dart';
 import '../shop/shop_screen.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Màn hình Nhiệm vụ — Header gradient + Điểm + Daily/Weekly + Thành tích
 class DailyQuestScreen extends StatefulWidget {
@@ -109,8 +110,9 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
   ScoreService? _score;
   List<dynamic> _backendBadges = [];
   Set<String> _unlockedBadgeIds = {};
+  // ignore: unused_field
   bool _loadingBadges = true;
-
+  // ignore: unused_field
   bool _loadingMissions = true;
 
   int get _totalPoints {
@@ -267,7 +269,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
       if (res['success'] == true) {
         messenger.showSnackBar(
           SnackBar(
-            content: const Text('🎉 Nhận phần thưởng thành công! Bé giỏi quá! ⭐'),
+            content: Text(context.translate('tasks.claim_reward_success')),
             backgroundColor: const Color(0xFF4CAF50),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -279,7 +281,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
       } else {
         messenger.showSnackBar(
           SnackBar(
-            content: Text('⚠️ Không thể nhận thưởng: ${res['message']}'),
+            content: Text(context.translate('tasks.claim_reward_failed', args: {'message': res['message']})),
             backgroundColor: const Color(0xFFFF5252),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -312,9 +314,11 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
     final s = d.inSeconds % 60;
     if (h > 24) {
       final days = d.inDays;
-      return 'Còn $days ngày ${h % 24}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+      final timeStr = '${(h % 24).toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+      return context.translate('tasks.time_remaining', args: {'days': days, 'time': timeStr});
     }
-    return 'Cập nhật sau: ${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    final timeStr = '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    return context.translate('tasks.update_in', args: {'time': timeStr});
   }
 
   @override
@@ -333,7 +337,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                 children: [
                   _buildPointsCard(),
                   SizedBox(height: 14.h),
-                  _buildSectionHeader('Nhiệm vụ hằng ngày', '⏱ ${_formatDuration(_dailyRemaining)}'),
+                  _buildSectionHeader(context.translate('tasks.title'), '⏱ ${_formatDuration(_dailyRemaining)}'),
                   SizedBox(height: 10.h),
                   ...List.generate(
                     _dailyQuests.length > 3 ? 3 : _dailyQuests.length,
@@ -343,7 +347,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                     ),
                   ),
                   SizedBox(height: 0),
-                  _buildSectionHeader('Nhiệm vụ hằng tuần', '⏱ ${_formatWeekly(_weeklyRemaining)}'),
+                  _buildSectionHeader(context.translate('tasks.weekly_tasks'), '⏱ ${_formatWeekly(_weeklyRemaining)}'),
                   SizedBox(height: 14.h),
                   _buildWeeklyRow(),
                   SizedBox(height: 28.h),
@@ -363,7 +367,8 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
     final h = d.inHours % 24;
     final m = d.inMinutes % 60;
     final s = d.inSeconds % 60;
-    return 'Còn $days ngày ${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    final timeStr = '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    return context.translate('tasks.time_remaining', args: {'days': days, 'time': timeStr});
   }
 
   // ═══════════════════ HEADER ═══════════════════
@@ -406,7 +411,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                       child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w)),
                   ),
                   SizedBox(width: 12.w),
-                  Text('Nhiệm vụ',
+                  Text(context.translate('tasks.quests_header'),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 22.sp, fontWeight: FontWeight.w800, color: Colors.white)),
                   const Spacer(),
@@ -520,7 +525,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        'Nhiệm vụ & Quà tặng',
+                        context.translate('tasks.points_gift'),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w800,
@@ -572,7 +577,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
             Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 14.sp),
             SizedBox(width: 4.w),
             Text(
-              'Đổi thưởng',
+              context.translate('tasks.claim_gift_btn'),
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 11.sp,
                 fontWeight: FontWeight.w800,
@@ -766,7 +771,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    quest.title,
+                    context.translateQuestTitle(quest.title),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w800,
@@ -775,7 +780,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                   ),
                   SizedBox(height: 3.h),
                   Text(
-                    quest.subtitle,
+                    context.translateQuestDesc(quest.title, quest.subtitle),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w500,
@@ -894,7 +899,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                               Icon(Icons.star_rounded, color: Colors.white, size: 16.sp),
                               SizedBox(width: 4.w),
                               Text(
-                                'NHẬN',
+                                context.translate('tasks.claim_btn'),
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12.sp,
                                   fontWeight: FontWeight.w900,
@@ -1031,7 +1036,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
             height: 34.h,
             child: Center(
               child: Text(
-                quest.title,
+                context.translateQuestTitle(quest.title),
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -1050,7 +1055,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Tiến độ',
+                context.translate('home.today_progress').split(' ').last,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 10.sp,
                   fontWeight: FontWeight.w600,
@@ -1109,7 +1114,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                       Icon(Icons.check_circle_rounded, color: const Color(0xFF43A047), size: 12.sp),
                       SizedBox(width: 4.w),
                       Text(
-                        'Đã nhận',
+                        context.translate('tasks.claimed_btn'),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 10.sp,
                           fontWeight: FontWeight.w800,
@@ -1148,7 +1153,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                             Icon(Icons.star_rounded, color: Colors.white, size: 12.sp),
                             SizedBox(width: 4.w),
                             Text(
-                              'NHẬN',
+                              context.translate('tasks.claim_btn'),
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10.sp,
                                 fontWeight: FontWeight.w900,
@@ -1207,7 +1212,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
     return Column(
       children: [
         Row(children: [
-          Text('Thành tích',
+          Text(context.translate('achievements.title'),
             style: GoogleFonts.plusJakartaSans(
               fontSize: 17.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
           const Spacer(),
@@ -1224,7 +1229,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                 borderRadius: BorderRadius.circular(10.r),
                 border: Border.all(color: const Color(0xFF1E88E5).withValues(alpha: 0.15))),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text('Xem tất cả',
+                Text(context.translate('tasks.view_all'),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1E88E5))),
                 SizedBox(width: 2.w),
@@ -1490,7 +1495,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
           ),
           SizedBox(height: 12.h),
           Text(
-            title,
+            context.translateBadgeName(title),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -1503,7 +1508,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
           ),
           SizedBox(height: 3.h),
           Text(
-            subtitle,
+            context.translateBadgeDesc(title, subtitle),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -1522,7 +1527,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                     Icon(Icons.check_circle_rounded, color: const Color(0xFF4CAF50), size: 11.sp),
                     SizedBox(width: 2.w),
                     Text(
-                      'Đã đạt',
+                      context.translate('tasks.unlocked'),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 9.sp,
                         fontWeight: FontWeight.w800,

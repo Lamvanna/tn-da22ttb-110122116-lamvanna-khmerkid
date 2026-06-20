@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 import 'letter_map_screen.dart';
 import 'spelling_hub_screen.dart';
 import 'writing_map_screen.dart';
@@ -85,50 +86,50 @@ class _LearnScreenState extends State<LearnScreen> {
     final vocabProg = totalVocab > 0 ? doneVocab / totalVocab : 0.0;
 
     return [
-      _Zone(n: 1, title: 'Học phụ âm', sub: 'Nhận biết 33 phụ âm Khmer',
+      _Zone(n: 1, title: context.translate('learning_path.consonants'), sub: context.translate('learning_path.consonants_sub'),
         icon: Icons.abc_rounded, img: 'image/Phụ âm.png', prog: lp, total: 33, done: _score?.lettersLearned ?? 0,
-        color: const Color(0xFF2979FF), stars: 10, btn: 'Bắt đầu học',
+        color: const Color(0xFF2979FF), stars: 10, btn: context.translate('learning_path.start'),
         onTap: () => _navigateTo(LetterMapView(onBack: () => Navigator.pop(context)))),
-      _Zone(n: 2, title: 'Học nguyên âm', sub: 'Học 24 nguyên âm Khmer',
+      _Zone(n: 2, title: context.translate('learning_path.vowels'), sub: context.translate('learning_path.vowels_sub'),
         icon: Icons.record_voice_over_rounded, img: 'image/Nguyên âm.png', prog: vp, total: 24, done: _score?.vowelsLearned ?? 0,
-        color: const Color(0xFFFF1744), stars: 10, btn: 'Bắt đầu học',
+        color: const Color(0xFFFF1744), stars: 10, btn: context.translate('learning_path.start'),
         onTap: () => _navigateTo(VowelScreen(onBack: () => Navigator.pop(context)))),
-      _Zone(n: 3, title: 'Học phụ âm o-ô', sub: 'Phân biệt 2 nhóm phụ âm hàng o và hàng ô',
+      _Zone(n: 3, title: context.translate('learning_path.o_o'), sub: context.translate('learning_path.o_o_sub'),
         icon: Icons.text_fields_rounded, img: 'image/Học phụ âm o và ô.png', prog: o_oProg, total: totalO_O, done: doneO_O,
-        color: const Color(0xFF43A047), stars: 10, btn: 'Bắt đầu học',
+        color: const Color(0xFF43A047), stars: 10, btn: context.translate('learning_path.start'),
         onTap: () => _navigateTo(ConsonantSeriesScreen(onBack: () => Navigator.pop(context)))),
-      _Zone(n: 4, title: 'Học số Khmer', sub: 'Học chữ số Khmer từ ០ đến ៩',
+      _Zone(n: 4, title: context.translate('learning_path.numbers'), sub: context.translate('learning_path.numbers_sub'),
         icon: Icons.calculate_rounded, img: 'image/Học số.png', prog: numProg, total: totalNumbers, done: doneNumbers,
-        color: const Color(0xFF00ACC1), stars: 10, btn: 'Bắt đầu học',
+        color: const Color(0xFF00ACC1), stars: 10, btn: context.translate('learning_path.start'),
         onTap: () => _navigateTo(NumberMapScreen(onBack: () => Navigator.pop(context)))),
-      _Zone(n: 5, title: 'Ghép vần', sub: 'Ghép âm thành tiếng và từ',
+      _Zone(n: 5, title: context.translate('learning_path.spelling'), sub: context.translate('learning_path.spelling_sub'),
         icon: Icons.spellcheck_rounded, img: 'image/Đánh vần.png', prog: spellProg, total: totalSpelling, done: doneSpelling,
-        color: const Color(0xFFF57C00), stars: 15, btn: 'Bắt đầu học',
+        color: const Color(0xFFF57C00), stars: 15, btn: context.translate('learning_path.start'),
         onTap: () => _navigateTo(const SpellingHubScreen())),
-      _Zone(n: 6, title: 'Học dấu', sub: 'Học các dấu Khmer ់ ំ ះ ៈ và các dấu thường dùng',
+      _Zone(n: 6, title: context.translate('learning_path.diacritics'), sub: context.translate('learning_path.diacritics_sub'),
         icon: Icons.format_shapes_rounded, img: 'image/Học dấu.png', prog: diacritProg, total: totalDiacritical, done: doneDiacritical,
-        color: const Color(0xFFFFD600), stars: 10, btn: 'Bắt đầu học',
+        color: const Color(0xFFFFD600), stars: 10, btn: context.translate('learning_path.start'),
         onTap: () => _navigateTo(DiacriticalMapScreen(onBack: () => Navigator.pop(context)))),
-      _Zone(n: 7, title: 'Tập đọc', sub: 'Làm quen và đọc câu đơn giản',
+      _Zone(n: 7, title: context.translate('learning_path.reading'), sub: context.translate('learning_path.reading_sub'),
         icon: Icons.auto_stories_rounded, img: 'image/Tập đọc.png',
         prog: (_score?.readingLearned ?? 0) / 5, total: 5, done: _score?.readingLearned ?? 0,
-        color: const Color(0xFF00B0FF), stars: 15, btn: 'Bắt đầu học',
+        color: const Color(0xFF00B0FF), stars: 15, btn: context.translate('learning_path.start'),
         onTap: () => _navigateTo(ReadingMapScreen(onBack: () => Navigator.pop(context)))),
-      _Zone(n: 8, title: 'Luyện viết', sub: 'Tập viết chữ Khmer đúng nét',
+      _Zone(n: 8, title: context.translate('learning_path.writing'), sub: context.translate('learning_path.writing_sub'),
         icon: Icons.draw_rounded, img: 'image/Tập viết.png', prog: writeProg, total: totalWriting, done: doneWriting,
-        color: const Color(0xFFFF9100), stars: 15, btn: 'Bắt đầu học',
+        color: const Color(0xFFFF9100), stars: 15, btn: context.translate('learning_path.start'),
         onTap: () => _navigateTo(const WritingMapScreen())),
-      _Zone(n: 9, title: 'Học từ vựng', sub: 'Học từ vựng theo các chủ đề',
+      _Zone(n: 9, title: context.translate('learning_path.vocabulary'), sub: context.translate('learning_path.vocabulary_sub'),
         icon: Icons.book_rounded, img: 'image/Sách.png', prog: vocabProg, total: totalVocab, done: doneVocab,
-        color: const Color(0xFF7E57C2), stars: 10, btn: 'Bắt đầu học',
+        color: const Color(0xFF7E57C2), stars: 10, btn: context.translate('learning_path.start'),
         onTap: () => _navigateTo(const VocabularyScreen())),
-      _Zone(n: 10, title: 'Đọc hiểu', sub: 'Hiểu nội dung và trả lời câu hỏi',
+      _Zone(n: 10, title: context.translate('learning_path.reading_comp'), sub: context.translate('learning_path.reading_comp_sub'),
         icon: Icons.menu_book_rounded, img: 'image/Đọc hiểu.png', prog: 0, total: 25, done: 0,
-        color: const Color(0xFFFF4081), stars: 20, btn: 'Sắp ra mắt', isComingSoon: true,
+        color: const Color(0xFFFF4081), stars: 20, btn: context.translate('learning_path.coming_soon'), isComingSoon: true,
         onTap: () => _showComingSoon(context)),
-      _Zone(n: 11, title: 'Khám phá văn hóa', sub: 'Tìm hiểu văn hóa Khmer',
+      _Zone(n: 11, title: context.translate('learning_path.culture'), sub: context.translate('learning_path.culture_sub'),
         icon: Icons.temple_buddhist_rounded, img: 'image/Khám phá văn hóa.png', prog: 0, total: 20, done: 0,
-        color: const Color(0xFF536DFE), stars: 20, btn: 'Sắp ra mắt', isComingSoon: true,
+        color: const Color(0xFF536DFE), stars: 20, btn: context.translate('learning_path.coming_soon'), isComingSoon: true,
         onTap: () => _showComingSoon(context)),
     ];
   }
@@ -162,7 +163,7 @@ class _LearnScreenState extends State<LearnScreen> {
       content: Row(children: [
         Icon(Icons.construction_rounded, color: Colors.white, size: 20.sp),
         SizedBox(width: 10.w),
-        Text('Tính năng này sắp ra mắt! 🚀',
+        Text(context.translate('learning_path.coming_soon_toast'),
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14.sp, fontWeight: FontWeight.w600, color: Colors.white)),
       ]),
@@ -237,7 +238,7 @@ class _LearnScreenState extends State<LearnScreen> {
                     children: [
                       Flexible(
                         child: Text(
-                          'Lộ trình học',
+                          context.translate('learning_path.title'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.center,
@@ -357,7 +358,7 @@ class _LearnScreenState extends State<LearnScreen> {
           Expanded(child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Tiếp tục học', style: GoogleFonts.plusJakartaSans(
+              Text(context.translate('learning_path.continue'), style: GoogleFonts.plusJakartaSans(
                 fontSize: 18.sp, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
               SizedBox(height: 8.h),
               Row(children: [
@@ -377,7 +378,7 @@ class _LearnScreenState extends State<LearnScreen> {
                         Text('${(value * 100).toInt()}%',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 17.sp, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
-                        Text('${zone.done}/${zone.total} bài', style: GoogleFonts.plusJakartaSans(
+                        Text(context.translate('learning_path.lessons_count', args: {'done': zone.done, 'total': zone.total}), style: GoogleFonts.plusJakartaSans(
                           fontSize: 8.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
                       ]),
                     ]),
@@ -394,7 +395,7 @@ class _LearnScreenState extends State<LearnScreen> {
                     SizedBox(height: 2.h),
                     Text('+${zone.stars}', style: GoogleFonts.plusJakartaSans(
                       fontSize: 12.sp, fontWeight: FontWeight.w800, color: const Color(0xFFF0A030))),
-                    Text('Điểm', style: GoogleFonts.plusJakartaSans(
+                    Text(context.translate('learning_path.points'), style: GoogleFonts.plusJakartaSans(
                       fontSize: 9.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
                   ]),
                 ),
@@ -413,7 +414,7 @@ class _LearnScreenState extends State<LearnScreen> {
                       color: const Color(0xFFF0A030).withValues(alpha: 0.30),
                       blurRadius: 6.r, offset: Offset(0, 2.h))]),
                   child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Text('Tiếp tục học', style: GoogleFonts.plusJakartaSans(
+                    Text(context.translate('learning_path.continue'), style: GoogleFonts.plusJakartaSans(
                       fontSize: 13.sp, fontWeight: FontWeight.w700, color: Colors.white)),
                     SizedBox(width: 6.w),
                     Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18.sp),
@@ -515,27 +516,34 @@ class _LearnScreenState extends State<LearnScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Left: Progress % and count
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('${(zone.prog * 100).toInt()}%', 
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12.sp, 
-                              fontWeight: FontWeight.w800, 
-                              color: zone.color)),
-                          SizedBox(width: 10.w),
-                          Text('${zone.done}/${zone.total} bài', 
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12.sp, 
-                              fontWeight: FontWeight.w600, 
-                              color: AppColors.textSecondary)),
-                        ],
+                      Flexible(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('${(zone.prog * 100).toInt()}%', 
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.sp, 
+                                fontWeight: FontWeight.w800, 
+                                color: zone.color)),
+                            SizedBox(width: 4.w),
+                            Flexible(
+                              child: Text(
+                                context.translate('learning_path.lessons_count', args: {'done': zone.done, 'total': zone.total}), 
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 10.sp, 
+                                  fontWeight: FontWeight.w600, 
+                                  color: AppColors.textSecondary)),
+                            ),
+                          ],
+                        ),
                       ),
+                      SizedBox(width: 4.w),
                       // Right: Button
                       GestureDetector(
                         onTap: zone.onTap,
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
                           decoration: BoxDecoration(
                             color: zone.isComingSoon ? zone.color.withValues(alpha: 0.4) : zone.color,
                             borderRadius: BorderRadius.circular(10.r),
@@ -553,10 +561,10 @@ class _LearnScreenState extends State<LearnScreen> {
                               if (zone.isComingSoon)
                                 Padding(
                                   padding: EdgeInsets.only(right: 4.w),
-                                  child: Icon(Icons.lock_rounded, size: 12.sp, color: Colors.white)),
+                                  child: Icon(Icons.lock_rounded, size: 11.sp, color: Colors.white)),
                               Text(zone.btn, 
                                 style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11.sp, 
+                                  fontSize: 10.sp, 
                                   fontWeight: FontWeight.w700, 
                                   color: Colors.white)),
                             ],
@@ -590,10 +598,10 @@ class _LearnScreenState extends State<LearnScreen> {
         Expanded(child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Đang phát triển', style: GoogleFonts.plusJakartaSans(
+            Text(context.translate('learning_path.developing'), style: GoogleFonts.plusJakartaSans(
               fontSize: 17.sp, fontWeight: FontWeight.w800, color: Colors.white)),
             SizedBox(height: 2.h),
-            Text('Nhiều bài học mới sẽ sớm ra mắt!', style: GoogleFonts.plusJakartaSans(
+            Text(context.translate('learning_path.more_lessons'), style: GoogleFonts.plusJakartaSans(
               fontSize: 12.sp, fontWeight: FontWeight.w500,
               color: Colors.white.withValues(alpha: 0.85))),
           ],

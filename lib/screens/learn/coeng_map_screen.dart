@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -152,7 +153,7 @@ class _CoengMapScreenState extends State<CoengMapScreen>
                         border: Border.all(color: Colors.white.withValues(alpha: 0.12))),
                       child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w))),
                   SizedBox(width: 12.w),
-                  Flexible(child: Text('Phụ âm chân ្',
+                  Flexible(child: Text(context.translate('learn.coeng_title'),
                     maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(fontSize: 20.sp, fontWeight: FontWeight.w800, color: Colors.white))),
                 ]),
@@ -301,18 +302,18 @@ class _GroupCard extends StatelessWidget {
             Row(children: [
               Container(padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                 decoration: BoxDecoration(color: isLocked ? const Color(0xFFE8EDF5) : color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10.r)),
-                child: Text('Bài ${group.number}', style: GoogleFonts.plusJakartaSans(fontSize: 11.sp, fontWeight: FontWeight.w800, color: isLocked ? const Color(0xFFB0B8C8) : color))),
+                child: Text(context.translate('learn.lesson_n', args: {'number': group.number}), style: GoogleFonts.plusJakartaSans(fontSize: 11.sp, fontWeight: FontWeight.w800, color: isLocked ? const Color(0xFFB0B8C8) : color))),
               SizedBox(width: 10.w),
-              Expanded(child: Text('Cụm ${group.cluster}',
+              Expanded(child: Text(context.translate('learn.cluster_label', args: {'cluster': group.cluster}),
                 style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w800, color: isLocked ? const Color(0xFFB0B8C8) : AppColors.textPrimary))),
               if (group.isCompleted)
                 Container(padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                   decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(8.r)),
-                  child: Text('Hoàn thành', style: GoogleFonts.plusJakartaSans(fontSize: 10.sp, fontWeight: FontWeight.w700, color: const Color(0xFF2E7D32))))
+                  child: Text(context.translate('common.done'), style: GoogleFonts.plusJakartaSans(fontSize: 10.sp, fontWeight: FontWeight.w700, color: const Color(0xFF2E7D32))))
               else if (!isLocked) Text('$pct%', style: GoogleFonts.plusJakartaSans(fontSize: 15.sp, fontWeight: FontWeight.w800, color: color)),
             ]),
             SizedBox(height: 4.h),
-            Text('Ghép ${group.cluster} với các nguyên âm',
+            Text(context.translate('learn.coeng_desc', args: {'cluster': group.cluster}),
               style: GoogleFonts.plusJakartaSans(fontSize: 12.sp, fontWeight: FontWeight.w500, color: isLocked ? const Color(0xFFC0C8D8) : AppColors.textSecondary)),
             SizedBox(height: 12.h),
             _buildCharCircles(color, isLocked),
@@ -323,7 +324,7 @@ class _GroupCard extends StatelessWidget {
                 child: Stack(children: [FractionallySizedBox(alignment: Alignment.centerLeft, widthFactor: group.progress.clamp(0.0, 1.0),
                   child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [color.withValues(alpha: 0.7), color]), borderRadius: BorderRadius.circular(4.r))))]))),
               SizedBox(width: 10.w),
-              Text('${group.doneCount}/${group.totalCount} chữ', style: GoogleFonts.plusJakartaSans(fontSize: 11.sp, fontWeight: FontWeight.w700, color: isLocked ? const Color(0xFFC0C8D8) : AppColors.textSecondary)),
+              Text(context.translate('learn.letters_completed_count', args: {'done': group.doneCount, 'total': group.totalCount}), style: GoogleFonts.plusJakartaSans(fontSize: 11.sp, fontWeight: FontWeight.w700, color: isLocked ? const Color(0xFFC0C8D8) : AppColors.textSecondary)),
               SizedBox(width: 8.w),
               Container(width: 34.w, height: 34.w,
                 decoration: BoxDecoration(shape: BoxShape.circle, color: isLocked ? const Color(0xFFE8EDF5) : color,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -146,7 +147,7 @@ class _DiacriticalMapScreenState extends State<DiacriticalMapScreen>
                         border: Border.all(color: Colors.white.withValues(alpha: 0.12))),
                       child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w))),
                   SizedBox(width: 12.w),
-                  Flexible(child: Text('Học dấu Khmer',
+                  Flexible(child: Text(context.translate('learn.learn_diacritic_khmer'),
                     maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(fontSize: 20.sp, fontWeight: FontWeight.w800, color: Colors.white))),
                 ]),
@@ -320,7 +321,7 @@ class _DiacriticalCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(10.r),
                           ),
                           child: Text(
-                            'Bài ${index + 1}',
+                            context.translate('learn.lesson_n', args: {'number': index + 1}),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11.sp,
                               fontWeight: FontWeight.w800,
@@ -331,7 +332,7 @@ class _DiacriticalCard extends StatelessWidget {
                         SizedBox(width: 10.w),
                         Expanded(
                           child: Text(
-                            'Dấu ${item.character}',
+                            context.translate('learn.diacritic_label', args: {'character': item.character}),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w800,
@@ -347,7 +348,7 @@ class _DiacriticalCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8.r),
                             ),
                             child: Text(
-                              'Hoàn thành',
+                              context.translate('common.done'),
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10.sp,
                                 fontWeight: FontWeight.w700,

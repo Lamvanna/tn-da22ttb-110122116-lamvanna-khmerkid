@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/khmer_number.dart';
@@ -264,7 +265,7 @@ class _NumberMapScreenState extends State<NumberMapScreen>
                         child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w)),
                     ),
                     SizedBox(width: 12.w),
-                    Flexible(child: Text('Học số Khmer',
+                    Flexible(child: Text(context.translate('learning_path.numbers'),
                       maxLines: 1, overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 20.sp, fontWeight: FontWeight.w800, color: Colors.white))),
@@ -389,7 +390,7 @@ class _NumberMapScreenState extends State<NumberMapScreen>
               decoration: BoxDecoration(
                 color: locked ? const Color(0xFFE8EEF5) : color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6.r)),
-              child: Text('Số ${item.value}', style: GoogleFonts.plusJakartaSans(
+              child: Text(context.translate('learn.number_label', args: {'value': item.value}), style: GoogleFonts.plusJakartaSans(
                 fontSize: 10.sp, fontWeight: FontWeight.w800,
                 color: locked ? const Color(0xFFB0BEC5) : color))),
             SizedBox(height: 4.h),

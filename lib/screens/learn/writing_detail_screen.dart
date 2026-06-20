@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -193,7 +194,7 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
         FeedbackDialog.showSuccess(
           context,
           xpEarned: 15,
-          message: 'Tuyệt vời! Con đã viết chính tả đúng hoàn toàn rồi! 🌟',
+          message: context.translate('learn.dictation_success'),
         );
         setState(() {
           _lesson.isLearned = true;
@@ -203,7 +204,7 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
       } else {
         FeedbackDialog.showFailure(
           context,
-          message: 'Chưa đúng rồi con ơi! Hãy nghe kỹ lại phát âm và gõ lại nhé! 💪',
+          message: context.translate('learn.incorrect_dictation_warning'),
         );
       }
     }
@@ -339,7 +340,7 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
                           SizedBox(width: 6.w),
                           Expanded(
                             child: Text(
-                              'Tập viết ${_current + 1}/${_lessons.length}',
+                              context.translate('learn.writing_count', args: {'done': _current + 1, 'total': _lessons.length}),
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 22.sp,
                                 fontWeight: FontWeight.w800,
@@ -464,7 +465,7 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Hãy nghe câu sau',
+                          context.translate('learn.listen_to_sentence'),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
@@ -630,7 +631,7 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
                 const Icon(Icons.edit_rounded, color: AppColors.violet, size: 16),
                 const SizedBox(width: 6),
                 Text(
-                  'Gõ câu bạn vừa nghe',
+                  context.translate('learn.type_sentence_heard'),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
@@ -667,7 +668,7 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
                       color: AppColors.textPrimary,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Nhập câu Khmer tại đây...',
+                      hintText: context.translate('learn.enter_khmer_sentence'),
                       hintStyle: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -773,7 +774,7 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
                     ),
                     SizedBox(width: 6.w),
                     Text(
-                      'Kiểm tra',
+                      context.translate('common.check'),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w800,
@@ -812,7 +813,7 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Tiếp',
+                        context.translate('common.next'),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w800,
@@ -1047,7 +1048,7 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
                   Icon(Icons.backspace_outlined, size: 16.sp, color: AppColors.violet),
                   const SizedBox(width: 4),
                   Text(
-                    'Xóa',
+                    context.translate('common.clear'),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w700,
@@ -1077,7 +1078,7 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
               ),
               child: Center(
                 child: Text(
-                  'Khoảng trắng',
+                  context.translate('learn.spacebar'),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
@@ -1142,7 +1143,7 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
                 fontSize: 22, fontWeight: FontWeight.w800,
                 color: AppColors.tertiary)),
             const SizedBox(height: 8),
-            Text('Bạn đã hoàn thành tất cả bài tập viết!',
+            Text(context.translate('learn.completed_all_writing'),
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14, fontWeight: FontWeight.w500,

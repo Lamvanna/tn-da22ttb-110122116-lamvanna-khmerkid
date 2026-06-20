@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -105,10 +106,10 @@ class _State extends State<VowelListenSheet> with SingleTickerProviderStateMixin
               child: Icon(Icons.headphones_rounded, color: Colors.white, size: 26.sp),
             ),
             SizedBox(height: 10.h),
-            Text('Nghe phát âm', style: GoogleFonts.plusJakartaSans(
+            Text(context.translate('learn.listen_pronunciation'), style: GoogleFonts.plusJakartaSans(
               fontSize: 20.sp, fontWeight: FontWeight.w800, color: Colors.white)),
             SizedBox(height: 4.h),
-            Text('Lắng nghe và ghi nhớ cách đọc', style: GoogleFonts.plusJakartaSans(
+            Text(context.translate('learn.listen_and_remember'), style: GoogleFonts.plusJakartaSans(
               fontSize: 13.sp, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.85))),
           ]),
         ),
@@ -187,21 +188,21 @@ class _State extends State<VowelListenSheet> with SingleTickerProviderStateMixin
             SizedBox(height: 12.h),
             // Status text
             Text(
-              _isPlaying ? 'Đang phát âm...'
-                : _playCount > 0 ? 'Đã nghe $_playCount lần • Nhấn nghe lại'
-                : 'Nhấn nút để nghe phát âm',
+              _isPlaying ? context.translate('learn.pronouncing')
+                : _playCount > 0 ? context.translate('learn.listened_count_label', args: {'count': _playCount})
+                : context.translate('learn.press_to_listen'),
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 13.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
             SizedBox(height: 24.h),
 
             // ── Speed chips ──
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Text('Tốc độ:', style: GoogleFonts.plusJakartaSans(
+              Text(context.translate('learn.speed_label'), style: GoogleFonts.plusJakartaSans(
                 fontSize: 13.sp, fontWeight: FontWeight.w600, color: AppColors.textHint)),
               SizedBox(width: 10.w),
-              _speedChip('🐢 Chậm', 0),
+              _speedChip('🐢 ' + context.translate('settings.speed_slow'), 0),
               SizedBox(width: 8.w),
-              _speedChip('🔊 Vừa', 1),
+              _speedChip('🔊 ' + context.translate('settings.speed_normal'), 1),
               SizedBox(width: 8.w),
               _speedChip('🐇 Nhanh', 2),
             ]),

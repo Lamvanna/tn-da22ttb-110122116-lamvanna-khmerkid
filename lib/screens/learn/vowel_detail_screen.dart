@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
@@ -224,10 +225,10 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Text('🎉', style: TextStyle(fontSize: 48.sp)),
             SizedBox(height: 12.h),
-            Text('Chúc mừng!', style: GoogleFonts.plusJakartaSans(
+            Text(context.translate('common.congratulations'), style: GoogleFonts.plusJakartaSans(
               fontSize: 24.sp, fontWeight: FontWeight.w800, color: AppColors.tertiary)),
             SizedBox(height: 8.h),
-            Text('Bạn đã hoàn thành nguyên âm "${_v.displayCharacter}"',
+            Text(context.translate('learn.completed_vowel', args: {'character': _v.displayCharacter}),
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w600,
                 color: AppColors.textSecondary)),
@@ -246,7 +247,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
                   backgroundColor: AppColors.tertiary,
                   padding: EdgeInsets.symmetric(vertical: 14.h),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r))),
-                child: Text('Học nguyên âm tiếp →', style: GoogleFonts.plusJakartaSans(
+                child: Text(context.translate('learn.next_vowel_btn'), style: GoogleFonts.plusJakartaSans(
                   fontSize: 16.sp, fontWeight: FontWeight.w700, color: Colors.white)),
               )),
               SizedBox(height: 8.h),
@@ -257,7 +258,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
                 padding: EdgeInsets.symmetric(vertical: 14.h),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
                 side: BorderSide(color: AppColors.violet)),
-              child: Text('Quay về danh sách', style: GoogleFonts.plusJakartaSans(
+              child: Text(context.translate('learn.back_to_list'), style: GoogleFonts.plusJakartaSans(
                 fontSize: 16.sp, fontWeight: FontWeight.w700, color: AppColors.violet)),
             )),
           ]),
@@ -385,7 +386,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
                             color: Colors.white, padding: EdgeInsets.zero,
                             constraints: BoxConstraints(minWidth: 44.w, minHeight: 44.w)),
                           SizedBox(width: 6.w),
-                          Expanded(child: Text('Nguyên âm ${_idx + 1}/${_vowels.length}',
+                          Expanded(child: Text(context.translate('learn.vowel_count', args: {'done': _idx + 1, 'total': _vowels.length}),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 24.sp, fontWeight: FontWeight.w800, color: Colors.white))),
                         ]),
@@ -527,7 +528,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
                             child: Text(
                               _v.exampleMeaning.isNotEmpty
                                   ? '${_v.exampleMeaning} • "${_v.pronunciation}"'
-                                  : 'Phát âm: "${_v.pronunciation}"',
+                                  : context.translate('learn.pronunciation_label') + ' "' + _v.pronunciation + '"',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w700,
@@ -644,21 +645,21 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
       Expanded(child: GestureDetector(
         onTap: _showListenSheet,
         child: _actionCard(
-          imagePath: 'image/Nghe.png', label: 'Nghe', sub: 'Nghe phát âm',
+          imagePath: 'image/Nghe.png', label: context.translate('common.listen'), sub: context.translate('learn.listen_pronunciation'),
           bgColor: const Color(0xFFE8F5E9), accentColor: const Color(0xFF43A047), stepIdx: 0),
       )),
       SizedBox(width: 8.w),
       Expanded(child: GestureDetector(
         onTap: _showSpeakSheet,
         child: _actionCard(
-          imagePath: 'image/Mic.png', label: 'Nói', sub: 'Luyện phát âm',
+          imagePath: 'image/Mic.png', label: context.translate('common.speak'), sub: context.translate('learn.practice_pronunciation'),
           bgColor: const Color(0xFFE3F2FD), accentColor: const Color(0xFF1E88E5), stepIdx: 1),
       )),
       SizedBox(width: 8.w),
       Expanded(child: GestureDetector(
         onTap: _showWriteSheet,
         child: _actionCard(
-          imagePath: 'image/Viết.png', label: 'Viết', sub: 'Tập viết chữ',
+          imagePath: 'image/Viết.png', label: context.translate('common.write'), sub: context.translate('learn.practice_writing_letter'),
           bgColor: const Color(0xFFEDE7F6), accentColor: const Color(0xFF5E35B1), stepIdx: 2),
       )),
     ]);
@@ -699,7 +700,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
   Widget _buildNavButtons() {
     final canPrev = _canGo(_idx - 1);
     final canNext = _canGo(_idx + 1);
-    final labels = ['Nghe', 'Nói', 'Viết'];
+    final labels = [context.translate('common.listen'), context.translate('common.speak'), context.translate('common.write')];
     final stepColors = [const Color(0xFF43A047), const Color(0xFF1E88E5), const Color(0xFF5E35B1)];
     return Row(children: [
       GestureDetector(
@@ -713,7 +714,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
             boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6.r, offset: Offset(0, 2.h))]),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Icon(Icons.chevron_left_rounded, color: canPrev ? const Color(0xFF1E88E5) : AppColors.textHint, size: 18.w),
-            Text('Trước', style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700, color: canPrev ? const Color(0xFF1E88E5) : AppColors.textHint)),
+            Text(context.translate('common.back'), style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700, color: canPrev ? const Color(0xFF1E88E5) : AppColors.textHint)),
           ]),
         ),
       ),
@@ -795,11 +796,11 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
             _goTo(_idx + 1);
           } else if (_idx < _vowels.length - 1) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Vui lòng hoàn thành tất cả hoạt động (Nghe, Nói, Viết) trước khi học bài tiếp theo.'),
-                backgroundColor: Colors.orange,
-                duration: Duration(seconds: 2),
-              ),
+              SnackBar(
+                  content: Text(context.translate('learn.complete_activities_warning')),
+                  backgroundColor: Colors.orange,
+                  duration: const Duration(seconds: 2),
+                ),
             );
           }
         },
@@ -811,7 +812,7 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
             borderRadius: BorderRadius.circular(20.r),
             boxShadow: canNext ? [BoxShadow(color: const Color(0xFF1E88E5).withValues(alpha: 0.35), blurRadius: 10.r, offset: Offset(0, 3.h))] : null),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Text(canNext ? 'Tiếp theo' : 'Khóa', style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: canNext ? Colors.white : AppColors.textHint)),
+            Text(canNext ? context.translate('common.next') : context.translate('common.locked'), style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: canNext ? Colors.white : AppColors.textHint)),
             SizedBox(width: 4.w),
             Icon(canNext ? Icons.chevron_right_rounded : Icons.lock_rounded, color: canNext ? Colors.white : AppColors.textHint, size: 18.w),
           ]),

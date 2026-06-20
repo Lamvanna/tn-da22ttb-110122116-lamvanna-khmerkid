@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../theme/design_tokens.dart';
-import '../../../theme/app_typography.dart';
-import '../../../widgets/kk/kk.dart';
 import '../daily_quest_screen.dart';
 import '../../../widgets/app_page_route.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// ════════════════════════════════════════════════════════════════════
 ///  DailyQuestWidget — Engagement core (2026 redesign)
@@ -27,8 +26,6 @@ class DailyQuestWidget extends StatelessWidget {
     this.total = 5,
     this.rewardStars = 25,
   });
-
-  double get _progress => total == 0 ? 0 : (completed / total).clamp(0, 1);
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +65,7 @@ class DailyQuestWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Nhiệm vụ hôm nay',
+                      context.translate('tasks.today_tasks'),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 15.sp,
                         fontWeight: FontWeight.w800,
@@ -77,7 +74,7 @@ class DailyQuestWidget extends StatelessWidget {
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      'Hoàn thành nhiệm vụ để nhận thưởng',
+                      context.translate('tasks.complete_to_reward'),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.sp,
                         fontWeight: FontWeight.w600,
@@ -107,7 +104,7 @@ class DailyQuestWidget extends StatelessWidget {
                           ),
                           SizedBox(width: 4.w),
                           Text(
-                            '$completed/$total nhiệm vụ',
+                            context.translate('tasks.tasks_count', args: {'completed': completed, 'total': total}),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 10.sp,
                               fontWeight: FontWeight.w700,

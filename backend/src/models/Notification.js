@@ -31,6 +31,11 @@ const notificationSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    reminderType: {
+      type: String,
+      enum: ['daily_first', 'daily_second', 'streak_warning', 'comeback', null],
+      default: null,
+    },
     data: {
       type: mongoose.Schema.Types.Mixed,
       default: {},

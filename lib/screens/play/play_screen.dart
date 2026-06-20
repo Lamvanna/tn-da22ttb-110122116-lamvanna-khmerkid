@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/score_service.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/app_page_route.dart';
@@ -80,110 +81,110 @@ class _PlayScreenState extends State<PlayScreen> {
     return [
       _GameZone(
         n: 1,
-        title: 'Bắt chữ Khmer',
-        sub: 'Khmer Letter Catch',
+        title: context.translate('games.game1_title'),
+        sub: context.translate('games.game1_sub'),
         icon: Icons.catching_pokemon_rounded,
         img: 'image/Bắt chữ Khmer.png',
         prog: getProg('Bắt chữ Khmer', altKey: 'catch_letter'),
         color: const Color(0xFF1A237E),
         stars: 10,
-        btn: 'Chơi ngay',
-        objective: 'Ôn tập cả phụ âm và nguyên âm Khmer bằng cách ghép chúng thành từ có nghĩa trong thời gian giới hạn.',
-        gameplay: 'Một từ tiếng Việt (nghĩa) hiện lên, bé phải chọn đúng phụ âm (bong bóng xanh) và nguyên âm (đỏ) để ghép thành từ Khmer. Ghép đúng liên tiếp tạo Combo nhân điểm, sai mất mạng!',
-        importance: 'Giúp trẻ hệ thống hóa kiến thức về cả phụ âm và nguyên âm, rèn phản xạ nhanh và kỹ năng ghép vần cơ bản.',
+        btn: context.translate('games.play_now'),
+        objective: context.translate('games.game1_obj'),
+        gameplay: context.translate('games.game1_play'),
+        importance: context.translate('games.game1_imp'),
         targetScreen: const LetterCatchGameScreen(),
       ),
       _GameZone(
         n: 2,
-        title: 'Giải cứu thú rừng',
-        sub: 'Khmer Word Search & Rescue',
+        title: context.translate('games.game2_title'),
+        sub: context.translate('games.game2_sub'),
         icon: Icons.forest_rounded,
         img: 'image/Giải cứu thú rừng.png',
         prog: getProg('Giải cứu thú rừng', altKey: 'match_word'),
         color: const Color(0xFF2E7D32),
         stars: 10,
-        btn: 'Chơi ngay',
-        objective: 'Tích lũy vốn từ vựng theo chủ đề (Trường học, Gia đình, Động vật) và rèn luyện kỹ năng viết chính tả của cả từ hoàn chỉnh.',
-        gameplay: 'Màn hình hiển thị lưới chữ cái Khmer 5x5 hoặc 6x6 nằm lộn xộn. Hệ thống phát hình ảnh/âm thanh con vật bị nhốt trong bong bóng (ví dụ: ដំរី - con voi). Bé phải dùng tư duy quan sát nhanh để tìm các ký tự ដ, ំ, រ, ី đứng liền kề và vuốt nối chúng lại.',
-        importance: 'Giúp trẻ tiểu học tăng cường khả năng quét hình ảnh, ghi nhớ thứ tự chính tả của từ phức tạp cực kỳ hiệu quả mà không cần học vẹt.',
+        btn: context.translate('games.play_now'),
+        objective: context.translate('games.game2_obj'),
+        gameplay: context.translate('games.game2_play'),
+        importance: context.translate('games.game2_imp'),
         targetScreen: const WordSearchGameScreen(),
       ),
       _GameZone(
         n: 3,
-        title: 'Đảo quốc Ngữ pháp',
-        sub: 'Khmer Sentence Builder Island',
+        title: context.translate('games.game3_title'),
+        sub: context.translate('games.game3_sub'),
         icon: Icons.explore_rounded,
         img: 'image/Đảo quốc Ngữ pháp.png',
         prog: getProg('Đảo quốc Ngữ pháp', altKey: 'arrange_letter'),
         color: const Color(0xFF0288D1),
         stars: 15,
-        btn: 'Chơi ngay',
-        objective: 'Học cấu trúc câu, ngữ pháp tiếng Khmer cơ bản (Chủ ngữ - Động từ - Tân ngữ) và cách sử dụng từ loại.',
-        gameplay: 'Bé hóa thân thành thuyền trưởng phiêu lưu qua các đảo giải mã mật thư đá cổ. Sắp xếp câu tiếng Khmer bị xáo trộn vị trí các từ bằng cách kéo thả đá chữ vào đúng vị trí để hoàn thành câu.',
-        importance: 'Giai đoạn tiểu học bắt đầu viết câu ngắn. Trò chơi này rèn luyện tư duy logic về ngữ pháp, giúp trẻ hiểu rõ vị trí của các từ loại trong câu.',
+        btn: context.translate('games.play_now'),
+        objective: context.translate('games.game3_obj'),
+        gameplay: context.translate('games.game3_play'),
+        importance: context.translate('games.game3_imp'),
         targetScreen: const SentenceBuilderGameScreen(),
       ),
       _GameZone(
         n: 4,
-        title: 'Khu vườn Toán học',
-        sub: 'Khmer Math & Number Garden',
+        title: context.translate('games.game4_title'),
+        sub: context.translate('games.game4_sub'),
         icon: Icons.calculate_rounded,
         img: 'image/Khu vườn Toán học.png',
         prog: getProg('Khu vườn Toán học', altKey: 'listening_quiz'),
         color: const Color(0xFFF57C00),
         stars: 12,
-        btn: 'Chơi ngay',
-        objective: 'Thành thạo Hệ thống chữ số Khmer truyền thống (០, ១, ២, ៣, ៤, ៥, ៦, ៧, ៨, ៩) thông qua các phép toán đơn giản.',
-        gameplay: 'Trong khu vườn xum xuê quả, hệ thống đưa ra phép toán đố bằng chữ Khmer (ví dụ: ២ + ៣ = ?). Bé kéo đúng chiếc giỏ mang đáp án chính xác (៥ hoặc từ chữ) để hứng quả táo rụng.',
-        importance: 'Học sinh tiểu học bắt buộc phải học hệ chữ số Khmer cổ của dân tộc mình. Sự kết hợp liên môn (Toán + Ngôn ngữ) này giúp việc học số Khmer trở nên dễ dàng, sinh động.',
+        btn: context.translate('games.play_now'),
+        objective: context.translate('games.game4_obj'),
+        gameplay: context.translate('games.game4_play'),
+        importance: context.translate('games.game4_imp'),
         targetScreen: const MathGardenGameScreen(),
       ),
       _GameZone(
         n: 5,
-        title: 'Cờ tỷ phú Khmer kỳ thú',
-        sub: 'Khmer Adventure Board Game',
+        title: context.translate('games.game5_title'),
+        sub: context.translate('games.game5_sub'),
         icon: Icons.casino_rounded,
         img: 'image/Cờ tỷ phú Khmer kỳ thú.png',
         prog: getProg('Cờ tỷ phú Khmer kỳ thú'),
         color: const Color(0xFFD32F2F),
         stars: 15,
-        btn: 'Chơi ngay',
+        btn: context.translate('games.play_now'),
         locked: true,
-        objective: 'Chinh phục toàn diện 4 kỹ năng tích hợp (Nghe - Nói - Đọc - Viết) thông qua bàn cờ thám hiểm.',
-        gameplay: 'Bé đổ xúc xắc để Voi con di chuyển qua Rừng phụ âm, Đầm lầy nguyên âm, Động phát âm và Đỉnh núi viết chữ, dứt điểm bằng trận chiến Boss Vua Bóng Tối hoáng tráng!',
-        importance: 'Hoạt động như một bài kiểm tra tổng hợp cuối chương (Summative Assessment) cực kỳ hấp dẫn, không áp lực mà kích thích tương tác toàn diện.',
+        objective: context.translate('games.game5_obj'),
+        gameplay: context.translate('games.game5_play'),
+        importance: context.translate('games.game5_imp'),
         targetScreen: const BoardGameScreen(),
       ),
       _GameZone(
         n: 6,
-        title: 'Nhà khảo cổ nhí',
-        sub: 'Khmer Sub-consonant Detective',
+        title: context.translate('games.game6_title'),
+        sub: context.translate('games.game6_sub'),
         icon: Icons.auto_awesome_rounded,
         img: 'image/Nhà khảo cổ nhí.png',
         prog: getProg('Nhà khảo cổ nhí'),
         color: const Color(0xFF7B1FA2),
         stars: 20,
-        btn: 'Chơi ngay',
+        btn: context.translate('games.play_now'),
         locked: true,
-        objective: 'Ghi nhớ và viết đúng các Chân chữ (Châng) - phần khó nhất và dễ viết sai nhất trong tiếng Khmer cấp độ tiểu học.',
-        gameplay: 'Bé đóng vai nhà khảo cổ đi tìm cổ vật chữ chôn giấu dưới các khối đá. Hệ thống đưa ra từ vựng bị khuyết chân chữ. Bé dùng kính lúp tìm kiếm và búa gõ khai quật chân chữ đúng.',
-        importance: 'Lên lớp 2, lớp 3 bắt đầu viết từ ghép phức tạp có chân chữ. Trò chơi thám hiểm đầy kịch tính này giúp trẻ ghi nhớ chân chữ vô cùng dễ dàng.',
+        objective: context.translate('games.game6_obj'),
+        gameplay: context.translate('games.game6_play'),
+        importance: context.translate('games.game6_imp'),
         targetScreen: const SubConsonantGameScreen(),
       ),
       _GameZone(
         n: 7,
-        title: 'Voi con vượt ải',
-        sub: 'Khmer Consonant Series Runner',
+        title: context.translate('games.game7_title'),
+        sub: context.translate('games.game7_sub'),
         icon: Icons.pets_rounded,
         img: 'image/Voi con vượt ải.png',
         prog: getProg('Voi con vượt ải'),
         color: const Color(0xFF00ACC1),
         stars: 15,
-        btn: 'Chơi ngay',
+        btn: context.translate('games.play_now'),
         locked: true,
-        objective: 'Luyện phản xạ phân biệt nhanh 33 phụ âm thuộc hai hàng giọng cực kỳ dễ nhầm lẫn: Giọng O (អ hàng 1) và Giọng Ô (អូ hàng 2).',
-        gameplay: 'Voi con thám hiểm vượt cổng rừng xanh. Phụ âm cổ xuất hiện kèm phát âm mẫu. Bé chạm chọn đúng cổng Giọng O (អ) hoặc Giọng Ô (អូ) để Voi con phóng qua an toàn.',
-        importance: 'Phân biệt hàng giọng O và Ô là bước ngoặt quyết định của việc ghép vần tiếng Khmer. Trò chơi giúp hình thành phản xạ thính giác và thị giác vô cùng nhạy bén.',
+        objective: context.translate('games.game7_obj'),
+        gameplay: context.translate('games.game7_play'),
+        importance: context.translate('games.game7_imp'),
         targetScreen: const ElephantRunGameScreen(),
       ),
     ];
@@ -198,7 +199,7 @@ class _PlayScreenState extends State<PlayScreen> {
             Icon(Icons.construction_rounded, color: Colors.white, size: 20.sp),
             SizedBox(width: 10.w),
             Text(
-              'Trò chơi này sắp được ra mắt! 🚀',
+              context.translate('games.coming_soon_toast'),
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
@@ -226,7 +227,7 @@ class _PlayScreenState extends State<PlayScreen> {
             SizedBox(width: 10.w),
             Flexible(
               child: Text(
-                'Trò chơi này chưa được mở khóa! Hãy hoàn thành các trò chơi trước đó nhé! 🔒',
+                context.translate('games.locked_toast'),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w600,
@@ -308,7 +309,7 @@ class _PlayScreenState extends State<PlayScreen> {
                     children: [
                       Flexible(
                         child: Text(
-                          'Thế giới trò chơi',
+                          context.translate('games.title'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.center,
@@ -440,7 +441,7 @@ class _PlayScreenState extends State<PlayScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Thử thách tiếp theo',
+                      context.translate('games.next_challenge'),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 18.sp,
                         fontWeight: FontWeight.w900,
@@ -491,7 +492,7 @@ class _PlayScreenState extends State<PlayScreen> {
                                       ),
                                     ),
                                     Text(
-                                      'Tiến độ',
+                                      context.translate('profile.progress'),
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 8.sp,
                                         fontWeight: FontWeight.w600,
@@ -527,7 +528,7 @@ class _PlayScreenState extends State<PlayScreen> {
                                 ),
                               ),
                               Text(
-                                'Điểm',
+                                context.translate('learning_path.points'),
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 9.sp,
                                   fontWeight: FontWeight.w600,
@@ -541,7 +542,7 @@ class _PlayScreenState extends State<PlayScreen> {
                     ),
                     SizedBox(height: 8.h),
                     GestureDetector(
-                      onTap: () => _showGameIntroDialog(context, game),
+                      onTap: () => _startGame(context, game),
                       child: Container(
                         width: double.infinity,
                         padding: EdgeInsets.symmetric(vertical: 10.h),
@@ -562,7 +563,7 @@ class _PlayScreenState extends State<PlayScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Chơi ngay thôi',
+                              context.translate('games.play_now_button'),
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13.sp,
                                 fontWeight: FontWeight.w700,
@@ -693,54 +694,60 @@ class _PlayScreenState extends State<PlayScreen> {
                       // Status Row
                       Row(
                         children: [
-                          () {
-                            String text;
-                            Color textColor;
-                            IconData icon;
+                          Expanded(
+                            child: () {
+                              String text;
+                              Color textColor;
+                              IconData icon;
 
-                            if (isLocked) {
-                              text = 'Chưa mở khóa';
-                              textColor = Colors.grey.shade500;
-                              icon = Icons.lock_outline_rounded;
-                            } else if (isComingSoon) {
-                              text = 'Sắp ra mắt';
-                              textColor = Colors.grey.shade500;
-                              icon = Icons.lock_outline_rounded;
-                            } else if (game.prog == 0.0) {
-                              text = 'Chưa chơi';
-                              textColor = Colors.grey.shade500;
-                              icon = Icons.play_circle_outline_rounded;
-                            } else if (game.prog >= 1.0) {
-                              text = 'Đã hoàn thành';
-                              textColor = const Color(0xFF43A047);
-                              icon = Icons.check_circle_outline_rounded;
-                            } else {
-                              text = 'Đang chinh phục';
-                              textColor = const Color(0xFFF57C00);
-                              icon = Icons.trending_up_rounded;
-                            }
+                              if (isLocked) {
+                                text = context.translate('games.locked');
+                                textColor = Colors.grey.shade500;
+                                icon = Icons.lock_outline_rounded;
+                              } else if (isComingSoon) {
+                                text = context.translate('games.coming_soon');
+                                textColor = Colors.grey.shade500;
+                                icon = Icons.lock_outline_rounded;
+                              } else if (game.prog == 0.0) {
+                                text = context.translate('games.not_played');
+                                textColor = Colors.grey.shade500;
+                                icon = Icons.play_circle_outline_rounded;
+                              } else if (game.prog >= 1.0) {
+                                text = context.translate('games.completed');
+                                textColor = const Color(0xFF43A047);
+                                icon = Icons.check_circle_outline_rounded;
+                              } else {
+                                text = context.translate('games.playing');
+                                textColor = const Color(0xFFF57C00);
+                                icon = Icons.trending_up_rounded;
+                              }
 
-                            return Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(icon, size: 14.sp, color: textColor),
-                                SizedBox(width: 4.w),
-                                Text(
-                                  text,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 11.5.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: textColor,
+                              return Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(icon, size: 14.sp, color: textColor),
+                                  SizedBox(width: 4.w),
+                                  Flexible(
+                                    child: Text(
+                                      text,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 11.5.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: textColor,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ],
-                            );
-                          }(),
-                          const Spacer(),
+                                ],
+                              );
+                            }(),
+                          ),
+                          SizedBox(width: 8.w),
                           GestureDetector(
                             onTap: isLocked
                                 ? () => _showLockedMessage(context)
-                                : () => _showGameIntroDialog(context, game),
+                                : () => _startGame(context, game),
                             child: Container(
                               padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
                               decoration: BoxDecoration(
@@ -763,8 +770,8 @@ class _PlayScreenState extends State<PlayScreen> {
                                     ),
                                   Text(
                                     isLocked
-                                        ? 'Chưa mở'
-                                        : (isComingSoon ? 'Sắp ra mắt' : game.btn),
+                                        ? context.translate('games.locked_btn')
+                                        : (isComingSoon ? context.translate('games.coming_soon_btn') : game.btn),
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 11.sp,
                                       fontWeight: FontWeight.w700,
@@ -788,252 +795,17 @@ class _PlayScreenState extends State<PlayScreen> {
     );
   }
 
-  // ── Custom Game Intro Dialog with Educational Metadata ──
-  void _showGameIntroDialog(BuildContext context, _GameZone game) {
+  // ── Start Game Directly ──
+  void _startGame(BuildContext context, _GameZone game) {
     HapticFeedback.lightImpact();
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
-          child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 24.r,
-                  offset: Offset(0, 10.h),
-                ),
-              ],
-            ),
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // 🎨 Banner Header
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
-                    decoration: BoxDecoration(
-                      color: game.color.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(28.r),
-                        topRight: Radius.circular(28.r),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 60.w,
-                          height: 60.w,
-                          decoration: BoxDecoration(
-                            color: game.color,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: game.color.withValues(alpha: 0.3),
-                                blurRadius: 10.r,
-                                offset: Offset(0, 4.h),
-                              ),
-                            ],
-                          ),
-                          child: Icon(game.icon, color: Colors.white, size: 30.sp),
-                        ),
-                        SizedBox(height: 12.h),
-                        Text(
-                          game.title,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 19.sp,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.textPrimary,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          game.sub,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textSecondary,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  Padding(
-                    padding: EdgeInsets.all(20.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 🎯 Mục tiêu
-                        _buildDialogSection(
-                          icon: Icons.track_changes_rounded,
-                          color: const Color(0xFF1E88E5),
-                          title: 'Mục tiêu học tập',
-                          content: game.objective,
-                        ),
-                        SizedBox(height: 16.h),
-
-                        // 🎮 Cách chơi
-                        _buildDialogSection(
-                          icon: Icons.sports_esports_rounded,
-                          color: const Color(0xFF43A047),
-                          title: 'Cách chơi',
-                          content: game.gameplay,
-                        ),
-                        SizedBox(height: 16.h),
-
-                        // 🏆 Tầm quan trọng
-                        _buildDialogSection(
-                          icon: Icons.verified_user_rounded,
-                          color: const Color(0xFFFF8F00),
-                          title: 'Ý nghĩa sư phạm',
-                          content: game.importance,
-                        ),
-                        SizedBox(height: 24.h),
-
-                        // 🚀 CTA Buttons
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextButton(
-                                style: TextButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14.r),
-                                    side: BorderSide(color: AppColors.textHint.withValues(alpha: 0.4)),
-                                  ),
-                                ),
-                                onPressed: () => Navigator.pop(context),
-                                child: Text(
-                                  'Đóng',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 12.w),
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: game.targetScreen == null
-                                        ? [Colors.grey.shade400, Colors.grey.shade500]
-                                        : [game.color, game.color.withValues(alpha: 0.85)],
-                                  ),
-                                  borderRadius: BorderRadius.circular(14.r),
-                                  boxShadow: game.targetScreen == null
-                                      ? []
-                                      : [
-                                          BoxShadow(
-                                            color: game.color.withValues(alpha: 0.3),
-                                            blurRadius: 8.r,
-                                            offset: Offset(0, 3.h),
-                                          ),
-                                        ],
-                                ),
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.transparent,
-                                    shadowColor: Colors.transparent,
-                                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14.r),
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    if (game.targetScreen == null) {
-                                      _showComingSoon(context);
-                                    } else if (game.targetScreen != null) {
-                                      Navigator.push(
-                                        context,
-                                        AppPageRoute(page: game.targetScreen!),
-                                      );
-                                    }
-                                  },
-                                  child: Text(
-                                    game.targetScreen == null ? 'Sắp ra mắt' : 'Bắt đầu chơi',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildDialogSection({
-    required IconData icon,
-    required Color color,
-    required String title,
-    required String content,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: EdgeInsets.all(6.w),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10.r),
-          ),
-          child: Icon(icon, color: color, size: 18.sp),
-        ),
-        SizedBox(width: 12.w),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              SizedBox(height: 3.h),
-              Text(
-                content,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11.5.sp,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+    if (game.targetScreen == null) {
+      _showComingSoon(context);
+    } else {
+      Navigator.push(
+        context,
+        AppPageRoute(page: game.targetScreen!),
+      );
+    }
   }
 
   // ── Dev Banner ──
@@ -1061,7 +833,7 @@ class _PlayScreenState extends State<PlayScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Đang phát triển game mới',
+                  context.translate('games.developing_new_game'),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 17.sp,
                     fontWeight: FontWeight.w800,
@@ -1070,7 +842,7 @@ class _PlayScreenState extends State<PlayScreen> {
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  'Thế giới trò chơi sẽ liên tục cập nhật!',
+                  context.translate('games.game_world_update_desc'),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w500,

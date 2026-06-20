@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
@@ -141,7 +142,7 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
       bool finalPassed = false;
       double finalScore = 0;
       int finalStars = 0;
-      String finalFeedback = 'Hãy thử viết lại nét nguyên âm nhé! 💪';
+      String finalFeedback = context.translate('learn.try_again_vowel_strokes');
       List<String> finalTips = [];
 
       try {
@@ -160,10 +161,10 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
           finalFeedback = mlResult.message;
         } else {
           if (mlResult.rejectionReason == RejectionReason.strokeCountMismatch) {
-            finalTips.add('Kiểm tra lại số nét viết nhé!');
+            finalTips.add(context.translate('learn.check_stroke_count'));
           }
           if (mlResult.rejectionReason == RejectionReason.notInTopThree) {
-            finalTips.add('Quan sát mẫu chữ rồi viết lại cho giống nhé!');
+            finalTips.add(context.translate('learn.observe_sample_write_same'));
           }
         }
 
@@ -207,7 +208,7 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
             finalStars = 0;
             finalFeedback = backendRes.feedback.isNotEmpty
                 ? backendRes.feedback
-                : 'Nét vẽ chưa đúng, con thử viết lại nhé! 💪';
+                : context.translate('learn.stroke_incorrect_try_again');
           }
         }
       } catch (e) {
@@ -314,7 +315,7 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
 
           // ── Header ──
           Text(
-            '✍️ Tập viết ${widget.vowel.displayCharacter}',
+            context.translate('learn.practice_writing_title', args: {'character': widget.vowel.displayCharacter}),
             style: GoogleFonts.plusJakartaSans(
               fontSize: 20.sp,
               fontWeight: FontWeight.w800,
@@ -323,7 +324,7 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
           ),
           SizedBox(height: 2.h),
           Text(
-            'Quan sát mẫu rồi viết theo nét mờ',
+            context.translate('learn.observe_sample_write_trace'),
             style: GoogleFonts.plusJakartaSans(
               fontSize: 13.sp,
               fontWeight: FontWeight.w500,
@@ -366,7 +367,7 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
                       borderRadius: BorderRadius.circular(10.r),
                     ),
                     child: Text(
-                      'Mẫu',
+                      context.translate('learn.sample'),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10.sp,
                         fontWeight: FontWeight.w700,
@@ -499,7 +500,7 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
                 Expanded(
                   child: _toolBtn(
                     icon: Icons.undo_rounded,
-                    label: 'Xóa nét',
+                    label: context.translate('common.clear_strokes'),
                     color: _strokes.isNotEmpty
                         ? AppColors.secondary
                         : AppColors.textHint,
@@ -582,12 +583,12 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
                           SizedBox(width: 6.w),
                           Text(
                             _checking
-                                ? 'Đang chấm...'
+                                ? context.translate('learn.grading')
                                 : _passed == null
-                                    ? 'Kiểm tra'
+                                    ? context.translate('common.check')
                                     : displayPassed
-                                        ? 'Tuyệt vời! 🎉'
-                                        : 'Làm lại',
+                                        ? context.translate('learn.excellent_emoji')
+                                        : context.translate('learn.redo'),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w700,
@@ -604,7 +605,7 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
                 Expanded(
                   child: _toolBtn(
                     icon: Icons.refresh_rounded,
-                    label: 'Làm lại',
+                    label: context.translate('learn.redo'),
                     color: AppColors.errorRed,
                     onTap: _clear,
                   ),
@@ -666,8 +667,8 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
                     Expanded(
                       child: Text(
                         displayPassed
-                            ? 'Tuyệt vời! $displayScore%'
-                            : 'Chưa đạt! $displayScore%',
+                            ? context.translate('learn.excellent_score', args: {'score': displayScore})
+                            : context.translate('learn.failed_score', args: {'score': displayScore}),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w800,
@@ -734,7 +735,7 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
                   if (_backendResult!.errors.isNotEmpty) ...[
                     SizedBox(height: 4.h),
                     Text(
-                      'Gợi ý sửa nét:',
+                      context.translate('learn.hint_strokes'),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.sp,
                         fontWeight: FontWeight.w800,
@@ -814,7 +815,7 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
                   if (!displayPassed && _recResult!.tips.isNotEmpty) ...[
                     SizedBox(height: 4.h),
                     Text(
-                      'Gợi ý:',
+                      context.translate('learn.hint'),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.sp,
                         fontWeight: FontWeight.w800,
@@ -857,7 +858,7 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
                       Navigator.pop(context);
                       m.showSnackBar(SnackBar(
                         content: Text(
-                          '🎉 Viết tuyệt vời! +10 XP',
+                          context.translate('learn.writing_success_xp'),
                           style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w700,
                             fontSize: 14.sp,
@@ -886,7 +887,7 @@ class _VowelWriteSheetState extends State<VowelWriteSheet>
                       ),
                       child: Center(
                         child: Text(
-                          'Hoàn thành ✅',
+                          context.translate('common.done_check'),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w700,

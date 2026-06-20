@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -102,7 +103,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
 
   Widget _buildHeader(BuildContext context) {
     return AppHeader(
-      title: '📚 Từ vựng Khmer',
+      title: context.translate('learn.vocabulary_title'),
       onBack: () => Navigator.pop(context),
       gradientColors: const [Color(0xFF7E57C2), Color(0xFF5C6BC0)],
     );
@@ -191,7 +192,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                     ),
                   ),
                   Text(
-                    '$learned/${cat.words.length} từ đã học',
+                    context.translate('learn.words_learned_count', args: {'done': learned, 'total': cat.words.length}),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w600,
@@ -294,7 +295,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                   ),
                   if (word.pronunciation.isNotEmpty)
                     Text(
-                      'Phát âm: ${word.pronunciation}',
+                      context.translate('learn.pronunciation_label') + ' ' + word.pronunciation,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.sp,
                         fontWeight: FontWeight.w500,

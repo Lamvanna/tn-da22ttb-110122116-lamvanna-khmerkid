@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -177,7 +178,7 @@ class _ClosedSyllableMapScreenState extends State<ClosedSyllableMapScreen>
                     ),
                     SizedBox(width: 12.w),
                     Flexible(
-                      child: Text('Vần đóng ់',
+                      child: Text(context.translate('learn.closed_syllable_title'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.plusJakartaSans(
@@ -391,14 +392,14 @@ class _GroupCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: isLocked ? const Color(0xFFE8EDF5) : color.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10.r)),
-                        child: Text('Bài ${group.number}',
+                        child: Text(context.translate('learn.lesson_n', args: {'number': group.number}),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11.sp, fontWeight: FontWeight.w800,
                             color: isLocked ? const Color(0xFFB0B8C8) : color)),
                       ),
                       SizedBox(width: 10.w),
                       Expanded(
-                        child: Text('Phụ âm ${group.consonant} + ់',
+                        child: Text(context.translate('learn.closed_syllable_title_group', args: {'consonant': group.consonant}),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 16.sp, fontWeight: FontWeight.w800,
                             color: isLocked ? const Color(0xFFB0B8C8) : AppColors.textPrimary)),
@@ -409,7 +410,7 @@ class _GroupCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: const Color(0xFFE8F5E9),
                             borderRadius: BorderRadius.circular(8.r)),
-                          child: Text('Hoàn thành',
+                          child: Text(context.translate('common.done'),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 10.sp, fontWeight: FontWeight.w700,
                               color: const Color(0xFF2E7D32))),
@@ -420,7 +421,7 @@ class _GroupCard extends StatelessWidget {
                             fontSize: 15.sp, fontWeight: FontWeight.w800, color: color)),
                     ]),
                     SizedBox(height: 4.h),
-                    Text('Ghép ${group.consonant} với phụ âm cuối + dấu ់',
+                    Text(context.translate('learn.closed_syllable_desc', args: {'consonant': group.consonant}),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.sp, fontWeight: FontWeight.w500,
                         color: isLocked ? const Color(0xFFC0C8D8) : AppColors.textSecondary)),
@@ -445,7 +446,7 @@ class _GroupCard extends StatelessWidget {
                         ),
                       ),
                       SizedBox(width: 10.w),
-                      Text('${group.doneCount}/${group.totalCount} chữ',
+                      Text(context.translate('learn.letters_completed_count', args: {'done': group.doneCount, 'total': group.totalCount}),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11.sp, fontWeight: FontWeight.w700,
                           color: isLocked ? const Color(0xFFC0C8D8) : AppColors.textSecondary)),

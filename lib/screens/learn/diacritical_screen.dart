@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -119,7 +120,7 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
               Text('🎉', style: TextStyle(fontSize: 48.sp)),
               SizedBox(height: 12.h),
               Text(
-                'Chúc mừng!',
+                context.translate('common.congratulations'),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 24.sp,
                   fontWeight: FontWeight.w800,
@@ -128,7 +129,7 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
               ),
               SizedBox(height: 8.h),
               Text(
-                'Bạn đã hoàn thành bài học dấu "${_lesson.name}"',
+                context.translate('learn.completed_diacritic', args: {'character': _lesson.name}),
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 16.sp,
@@ -170,7 +171,7 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
                       ),
                     ),
                     child: Text(
-                      'Bài tiếp theo →',
+                      context.translate('learn.next_lesson_btn'),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w700,
@@ -196,7 +197,7 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
                     side: BorderSide(color: AppColors.violet),
                   ),
                   child: Text(
-                    'Quay về bản đồ',
+                    context.translate('learn.back_to_map'),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
@@ -329,7 +330,7 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
                           SizedBox(width: 6.w),
                           Expanded(
                             child: Text(
-                              'Học Dấu ${_idx + 1}/${_lessons.length}',
+                              context.translate('learn.diacritic_count', args: {'done': _idx + 1, 'total': _lessons.length}),
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 24.sp,
                                 fontWeight: FontWeight.w800,
@@ -570,7 +571,7 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
                     ),
                   ),
                 ),
-                _buildFormulaBox(formula.result, const Color(0xFF58CC02), formula.resultLabel),
+                _buildFormulaBox(formula.result, const Color(0xFF58CC02), formula.resultLabel == 'Ví dụ' ? context.translate('learn.example') : formula.resultLabel),
               ],
             ),
           ),
@@ -613,7 +614,7 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
                           Expanded(
                             child: Text(
                               _lesson.description.isNotEmpty
-                                  ? 'Mô tả: ${_lesson.description}'
+                                  ? context.translate('learn.description_label') + ': ' + _lesson.description
                                   : 'Bài học dấu Khmer',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 14.sp,
@@ -793,8 +794,8 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
             onTap: () => setState(() => _activeSheet = _activeSheet == 2 ? 0 : 2),
             child: _actionCard(
               imagePath: 'image/Mic.png',
-              label: 'Nói',
-              sub: 'Luyện phát âm',
+              label: context.translate('common.speak'),
+              sub: context.translate('learn.practice_pronunciation'),
               bgColor: const Color(0xFFE3F2FD),
               accentColor: const Color(0xFF1E88E5),
               stepIdx: 1,
@@ -807,8 +808,8 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
             onTap: () => setState(() => _activeSheet = _activeSheet == 3 ? 0 : 3),
             child: _actionCard(
               imagePath: 'image/Viết.png',
-              label: 'Viết',
-              sub: 'Tập viết',
+              label: context.translate('common.write'),
+              sub: context.translate('learn.practice_writing'),
               bgColor: const Color(0xFFEDE7F6),
               accentColor: const Color(0xFF5E35B1),
               stepIdx: 2,
@@ -885,7 +886,7 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
     final hasPrev = _idx > 0;
     final hasNext = _idx < _lessons.length - 1;
     final canNext = _canGo(_idx + 1);
-    final labels = ['Nghe', 'Nói', 'Viết'];
+    final labels = ['Nghe', context.translate('common.speak'), context.translate('common.write')];
     final stepColors = [const Color(0xFF43A047), const Color(0xFF1E88E5), const Color(0xFF5E35B1)];
     return Row(
       children: [
@@ -901,7 +902,7 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.chevron_left_rounded, color: hasPrev ? const Color(0xFF1E88E5) : AppColors.textHint, size: 18.w),
-              Text('Trước', style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700, color: hasPrev ? const Color(0xFF1E88E5) : AppColors.textHint)),
+              Text(context.translate('common.back'), style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700, color: hasPrev ? const Color(0xFF1E88E5) : AppColors.textHint)),
             ]),
           ),
         ),
@@ -983,10 +984,10 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
               _goTo(_idx + 1);
             } else if (hasNext) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Vui lòng hoàn thành tất cả hoạt động (Nghe, Nói, Viết) trước khi học bài tiếp theo.'),
+                SnackBar(
+                  content: Text(context.translate('learn.complete_activities_warning')),
                   backgroundColor: Colors.orange,
-                  duration: Duration(seconds: 2),
+                  duration: const Duration(seconds: 2),
                 ),
               );
             }
@@ -1000,7 +1001,7 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
               boxShadow: canNext ? [BoxShadow(color: const Color(0xFF1E88E5).withValues(alpha: 0.35), blurRadius: 10.r, offset: Offset(0, 3.h))] : null,
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Text(canNext ? 'Tiếp theo' : 'Khóa', style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: canNext ? Colors.white : AppColors.textHint)),
+              Text(canNext ? context.translate('common.next') : context.translate('common.locked'), style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: canNext ? Colors.white : AppColors.textHint)),
               SizedBox(width: 4.w),
               Icon(canNext ? Icons.chevron_right_rounded : Icons.lock_rounded, color: canNext ? Colors.white : AppColors.textHint, size: 18.w),
             ]),
@@ -1260,9 +1261,9 @@ class _InlineListenContentState extends State<_InlineListenContent>
                   SizedBox(height: 8.h),
                   Text(
                     _isPlaying
-                        ? 'Đang phát âm...'
+                        ? context.translate('learn.pronouncing')
                         : _playCount > 0
-                        ? 'Đã nghe $_playCount lần • Nhấn nghe lại'
+                        ? context.translate('learn.listened_count_label', args: {'count': _playCount})
                         : 'Nhấn nút để nghe phát âm mẫu',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12.sp,
@@ -1378,7 +1379,7 @@ class _InlineWriteContentState extends State<_InlineWriteContent> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
             ),
             child: Text(
-              'Tôi đã hiểu',
+              context.translate('common.i_understand'),
               style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: Colors.white),
             ),
           ),
@@ -1461,7 +1462,7 @@ class _InlineWriteContentState extends State<_InlineWriteContent> {
               ),
               SizedBox(width: 8.w),
               Text(
-                _showHint ? 'Gợi ý viết' : 'Viết chữ',
+                _showHint ? context.translate('learn.writing_hint') : 'Viết chữ',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w800,
@@ -1492,7 +1493,7 @@ class _InlineWriteContentState extends State<_InlineWriteContent> {
                         Icon(Icons.refresh_rounded, size: 16.sp, color: AppColors.textHint),
                         SizedBox(width: 4.w),
                         Text(
-                          'Xóa',
+                          context.translate('common.clear'),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.w700,
@@ -1556,8 +1557,8 @@ class _InlineWriteContentState extends State<_InlineWriteContent> {
                           _passed == null
                               ? 'Kiểm tra'
                               : _passed!
-                              ? 'Đẹp lắm! 🎉'
-                              : 'Thử lại',
+                              ? context.translate('learn.beautiful_emoji')
+                              : context.translate('common.retry'),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.w700,
@@ -1595,7 +1596,7 @@ class _InlineWriteContentState extends State<_InlineWriteContent> {
                         ),
                         SizedBox(width: 4.w),
                         Text(
-                          'Gợi ý',
+                          context.translate('learn.hint'),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.w700,

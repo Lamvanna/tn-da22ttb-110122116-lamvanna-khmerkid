@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:io';
@@ -115,7 +116,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       messenger.showSnackBar(
         SnackBar(
-          content: const Text('🎉 Đã cập nhật ảnh đại diện mới thành công!'),
+          content: Text(context.translate('profile.change_avatar_success')),
           backgroundColor: const Color(0xFF4CAF50),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -127,7 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       debugPrint('Error picking avatar image: $e');
       messenger.showSnackBar(
         SnackBar(
-          content: const Text('⚠️ Không thể mở ảnh. Vui lòng kiểm tra quyền truy cập!'),
+          content: Text(context.translate('profile.avatar_error')),
           backgroundColor: const Color(0xFFFF5252),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -157,7 +158,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Đổi tên của bé ✏️',
+                context.translate('profile.change_name_title'),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w800,
@@ -166,7 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               SizedBox(height: 6.h),
               Text(
-                'Nhập biệt danh đáng yêu mới cho bé nhé:',
+                context.translate('profile.change_name_subtitle'),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w600,
@@ -185,7 +186,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 decoration: InputDecoration(
                   counterText: '',
-                  hintText: 'Nhập tên...',
+                  hintText: context.translate('profile.enter_name_hint'),
                   hintStyle: GoogleFonts.plusJakartaSans(
                     fontSize: 14.sp,
                     color: AppColors.textHint,
@@ -223,7 +224,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         side: const BorderSide(color: Color(0xFFCBD5E1)),
                       ),
                       child: Text(
-                        'Hủy',
+                        context.translate('common.cancel'),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w700,
@@ -246,7 +247,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         navigator.pop();
                         messenger.showSnackBar(
                           SnackBar(
-                            content: Text('🎉 Đã đổi tên thành "$newName" thành công!'),
+                            content: Text(context.translate('profile.rename_success', args: {'name': newName})),
                             backgroundColor: const Color(0xFF4CAF50),
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(
@@ -263,7 +264,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       child: Text(
-                        'Lưu',
+                        context.translate('common.save'),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w700,
@@ -317,7 +318,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             SizedBox(height: 20.h),
             Text(
-              'Thay đổi ảnh đại diện 📸',
+              context.translate('profile.change_avatar_title'),
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 20.sp,
                 fontWeight: FontWeight.w800,
@@ -326,7 +327,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             SizedBox(height: 6.h),
             Text(
-              'Chọn một bức ảnh thật đáng yêu từ điện thoại để làm hình đại diện của bé nhé:',
+              context.translate('profile.change_avatar_subtitle'),
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w600,
@@ -380,7 +381,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           SizedBox(height: 12.h),
                           Text(
-                            'Chọn từ thư viện',
+                            context.translate('profile.choose_gallery'),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w800,
@@ -389,7 +390,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           SizedBox(height: 4.h),
                           Text(
-                            'Ảnh có sẵn trong máy',
+                            context.translate('profile.gallery_desc'),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11.sp,
                               fontWeight: FontWeight.w600,
@@ -446,7 +447,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           SizedBox(height: 12.h),
                           Text(
-                            'Chụp ảnh mới',
+                            context.translate('profile.take_photo'),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w800,
@@ -455,7 +456,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           SizedBox(height: 4.h),
                           Text(
-                            'Chụp hình bé ngay',
+                            context.translate('profile.camera_desc'),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11.sp,
                               fontWeight: FontWeight.w600,
@@ -483,7 +484,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   backgroundColor: const Color(0xFFF8FAFC),
                 ),
                 child: Text(
-                  'Hủy bỏ',
+                  context.translate('common.cancel'),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
@@ -508,12 +509,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int get _vowelsLearned => _score != null ? _score!.vowelsLearned : 0;
   int get _readingLearned => _score != null ? _score!.readingLearned : 0;
 
-  String _levelTitle(int lv) {
-    if (lv >= 20) return 'Bậc thầy ngôn ngữ';
-    if (lv >= 15) return 'Nhà thông thái';
-    if (lv >= 10) return 'Nhà thám hiểm';
-    if (lv >= 5) return 'Nhà thám hiểm nhí';
-    return 'Mới bắt đầu';
+  String _levelTitle(BuildContext context, int lv) {
+    if (lv >= 20) return context.translate('profile.title_master');
+    if (lv >= 15) return context.translate('profile.title_wise');
+    if (lv >= 10) return context.translate('profile.title_explorer');
+    if (lv >= 5) return context.translate('profile.title_young_explorer');
+    return context.translate('profile.title_beginner');
   }
 
   int _getCurrentProgress(String reqType) {
@@ -925,7 +926,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           SizedBox(width: 6.w),
           Flexible(
             child: Text(
-              'Cấp $_level • ${_levelTitle(_level)}',
+              '${context.translate('level.prefix')} $_level • ${_levelTitle(context, _level)}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.plusJakartaSans(
@@ -978,7 +979,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             _statItem(
               iconIndex: 0,
-              label: 'Tổng số sao',
+              label: context.translate('profile.total_stars'),
               value: '$_stars',
               labelColor: const Color(0xFF64748B),
               valueColor: const Color(0xFF1E293B),
@@ -986,7 +987,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _divider(),
             _statItem(
               iconIndex: 1,
-              label: 'Chuỗi ngày',
+              label: context.translate('profile.streak'),
               value: '$_streak',
               labelColor: const Color(0xFF64748B),
               valueColor: const Color(0xFF1E293B),
@@ -994,7 +995,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _divider(),
             _statItem(
               iconIndex: 2,
-              label: 'Huy hiệu',
+              label: context.translate('profile.medals'),
               value: '$_medals',
               labelColor: const Color(0xFF64748B),
               valueColor: const Color(0xFF1E293B),
@@ -1002,8 +1003,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _divider(),
             _statItem(
               iconIndex: 3,
-              label: 'Thứ hạng',
-              value: 'Top $_rank',
+              label: context.translate('profile.rank'),
+              value: context.translate('profile.top_rank', args: {'rank': _rank}),
               labelColor: const Color(0xFF64748B),
               valueColor: const Color(0xFF1E293B),
             ),
@@ -1145,7 +1146,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               SizedBox(width: 10.w),
               Text(
-                'Tiến độ học tập',
+                context.translate('profile.study_progress'),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w800,
@@ -1164,7 +1165,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Row(
                     children: [
                       Text(
-                        'Chi tiết',
+                        context.translate('profile.detail'),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
@@ -1274,7 +1275,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           SizedBox(height: 3.h),
                           Text(
-                            'Tổng tiến độ',
+                            context.translate('profile.total_progress'),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 9.sp,
                               fontWeight: FontWeight.w700,
@@ -1294,7 +1295,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   children: [
                     _progressBar(
-                      'Học chữ cái',
+                      context.translate('profile.learn_letters'),
                       letters,
                       33,
                       const Color(0xFF4CAF50),
@@ -1302,7 +1303,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     SizedBox(height: 12.h),
                     _progressBar(
-                      'Đánh vần',
+                      context.translate('profile.spelling'),
                       spelling,
                       24,
                       const Color(0xFF2196F3),
@@ -1310,7 +1311,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     SizedBox(height: 12.h),
                     _progressBar(
-                      'Luyện viết',
+                      context.translate('profile.practice_writing'),
                       writing,
                       33,
                       const Color(0xFFFF9800),
@@ -1318,7 +1319,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     SizedBox(height: 12.h),
                     _progressBar(
-                      'Tập đọc',
+                      context.translate('profile.reading'),
                       reading,
                       15,
                       const Color(0xFF9C27B0),
@@ -1704,7 +1705,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               SizedBox(width: 10.w),
               Text(
-                'Thành tích',
+                context.translate('achievements.title'),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w800,
@@ -1751,7 +1752,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Row(
                     children: [
                       Text(
-                        'Tất cả',
+                        context.translate('achievements.all'),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
@@ -1904,7 +1905,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       SizedBox(height: 8.h),
                       Text(
-                        b['name'] as String,
+                        context.translateBadgeName(b['name'] as String),
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -1994,7 +1995,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Cài đặt hệ thống',
+                        context.translate('profile.system_settings'),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14.5.sp,
                           fontWeight: FontWeight.w800,
@@ -2004,7 +2005,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       SizedBox(height: 3.h),
                       Text(
-                        'Âm thanh, thông báo & tài khoản',
+                        context.translate('profile.system_settings_desc'),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11.sp,
                           fontWeight: FontWeight.w500,

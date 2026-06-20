@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
@@ -297,7 +298,7 @@ class _VowelScreenState extends State<VowelScreen>
                         child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w)),
                     ),
                     SizedBox(width: 12.w),
-                    Flexible(child: Text('Học nguyên âm Khmer',
+                    Flexible(child: Text(context.translate('learn.learn_vowel_khmer'),
                       maxLines: 1, overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 20.sp, fontWeight: FontWeight.w800, color: Colors.white))),
@@ -306,7 +307,7 @@ class _VowelScreenState extends State<VowelScreen>
                 SizedBox(height: 0.h),
                 Padding(
                   padding: EdgeInsets.only(left: 48.w),
-                  child: Text('$_doneCount/${_vowels.length} đã hoàn thành',
+                  child: Text(context.translate('learn.lessons_completed', args: {'done': _doneCount, 'total': _vowels.length}),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13.sp, fontWeight: FontWeight.w600,
                       color: Colors.white.withValues(alpha: 0.85))),
@@ -402,7 +403,7 @@ class _VowelScreenState extends State<VowelScreen>
                   decoration: BoxDecoration(
                     color: locked ? const Color(0xFFE8EEF5) : color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6.r)),
-                  child: Text('Bài $baiNum',
+                  child: Text(context.translate('learn.lesson_n', args: {'number': baiNum}),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10.sp, fontWeight: FontWeight.w800,
                       color: locked ? const Color(0xFFB0BEC5) : color)),

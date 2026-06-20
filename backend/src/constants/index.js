@@ -95,6 +95,8 @@ const MISSION_ACTIONS = {
 // ========================================
 const NOTIFICATION_TYPES = {
   DAILY_REMINDER: 'daily_reminder',
+  STUDY_REMINDER: 'study_reminder',
+  COMEBACK_REMINDER: 'comeback_reminder',
   REWARD: 'reward',
   BADGE_UNLOCKED: 'badge_unlocked',
   STREAK_UPDATE: 'streak_update',

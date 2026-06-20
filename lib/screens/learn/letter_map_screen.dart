@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../constants/app_colors.dart';
@@ -403,7 +404,7 @@ class _LetterMapViewState extends State<LetterMapView>
                       SizedBox(width: 12.w),
                       Flexible(
                         child: Text(
-                          'Học phụ âm',
+                          context.translate('learning_path.consonants'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.plusJakartaSans(
@@ -419,7 +420,7 @@ class _LetterMapViewState extends State<LetterMapView>
                   Padding(
                     padding: EdgeInsets.only(left: 48.w),
                     child: Text(
-                      '$_doneCount/$_totalLessons đã hoàn thành',
+                      context.translate('learn.lessons_completed', args: {'done': _doneCount, 'total': _totalLessons}),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w600,
@@ -573,7 +574,7 @@ class _LetterMapViewState extends State<LetterMapView>
                     borderRadius: BorderRadius.circular(6.r),
                   ),
                   child: Text(
-                    letter.isTest ? 'Kiểm tra' : 'Bài $baiNum',
+                    letter.isTest ? context.translate('common.test') : context.translate('learn.lesson_n', args: {'number': baiNum}),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10.sp,
                       fontWeight: FontWeight.w800,
@@ -588,7 +589,7 @@ class _LetterMapViewState extends State<LetterMapView>
                 SizedBox(height: 4.h),
                 if (letter.isTest) ...[
                   Text(
-                    letter.testRange == '1-40' ? 'Tổng hợp' : 'Bài ${letter.testRange}',
+                    letter.testRange == '1-40' ? context.translate('common.comprehensive') : context.translate('learn.lesson_n', args: {'number': letter.testRange}),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w800,
@@ -599,7 +600,7 @@ class _LetterMapViewState extends State<LetterMapView>
                     ),
                   ),
                   Text(
-                    letter.testRange == '1-40' ? 'Tất cả' : 'Ôn tập',
+                    letter.testRange == '1-40' ? context.translate('library.all') : context.translate('common.review'),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w500,

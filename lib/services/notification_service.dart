@@ -75,4 +75,22 @@ class NotificationService {
       return {'success': false, 'message': 'Không thể kết nối máy chủ: $e'};
     }
   }
+
+  /// Gửi thông báo nhắc học thử nghiệm (chỉ dành cho kiểm thử)
+  Future<Map<String, dynamic>> sendTestReminder() async {
+    try {
+      final res = await http.post(
+        Uri.parse('$_baseUrl/notifications/test-reminder'),
+        headers: _headers,
+      ).timeout(_timeout);
+
+      if (res.statusCode == 200) {
+        return {'success': true};
+      }
+      return {'success': false, 'message': 'Lỗi ${res.statusCode}'};
+    } catch (e) {
+      debugPrint('❌ [NotificationService] sendTestReminder error: $e');
+      return {'success': false, 'message': 'Không thể kết nối máy chủ: $e'};
+    }
+  }
 }

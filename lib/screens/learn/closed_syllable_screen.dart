@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -115,11 +116,11 @@ class _ClosedSyllableScreenState extends State<ClosedSyllableScreen>
             children: [
               Text('🎉', style: TextStyle(fontSize: 48.sp)),
               SizedBox(height: 12.h),
-              Text('Chúc mừng!',
+              Text(context.translate('common.congratulations'),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 24.sp, fontWeight: FontWeight.w800, color: AppColors.tertiary)),
               SizedBox(height: 8.h),
-              Text('Bạn đã hoàn thành vần đóng "${_lesson.combined}"',
+              Text(context.translate('learn.completed_closed_syllable', args: {'character': _lesson.combined}),
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 16.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
@@ -142,7 +143,7 @@ class _ClosedSyllableScreenState extends State<ClosedSyllableScreen>
                       backgroundColor: AppColors.tertiary,
                       padding: EdgeInsets.symmetric(vertical: 14.h),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r))),
-                    child: Text('Bài tiếp theo →',
+                    child: Text(context.translate('learn.next_lesson_btn'),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 16.sp, fontWeight: FontWeight.w700, color: Colors.white)),
                   ),
@@ -157,7 +158,7 @@ class _ClosedSyllableScreenState extends State<ClosedSyllableScreen>
                     padding: EdgeInsets.symmetric(vertical: 14.h),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
                     side: BorderSide(color: AppColors.violet)),
-                  child: Text('Quay về bản đồ',
+                  child: Text(context.translate('learn.back_to_map'),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 16.sp, fontWeight: FontWeight.w700, color: AppColors.violet)),
                 ),
@@ -256,7 +257,7 @@ class _ClosedSyllableScreenState extends State<ClosedSyllableScreen>
                             constraints: BoxConstraints(minWidth: 44.w, minHeight: 44.w)),
                           SizedBox(width: 6.w),
                           Expanded(
-                            child: Text('Vần đóng ${_idx + 1}/${_lessons.length}',
+                            child: Text(context.translate('learn.closed_syllable_count', args: {'done': _idx + 1, 'total': _lessons.length}),
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 24.sp, fontWeight: FontWeight.w800, color: Colors.white))),
                         ],
@@ -329,17 +330,17 @@ class _ClosedSyllableScreenState extends State<ClosedSyllableScreen>
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildFormulaBox(_lesson.initialConsonant, const Color(0xFF1CB0F6), 'Phụ âm đầu'),
+                _buildFormulaBox(_lesson.initialConsonant, const Color(0xFF1CB0F6), context.translate('learn.spelling_initial_consonant')),
                 Padding(
                   padding: EdgeInsets.only(top: 24.h),
                   child: Text('+', style: GoogleFonts.plusJakartaSans(
                     fontSize: 28.sp, fontWeight: FontWeight.w800, color: const Color(0xFFB0BEC5)))),
-                _buildFormulaBox(_lesson.finalConsonant, const Color(0xFFFF4B4B), 'P.âm cuối + ់'),
+                _buildFormulaBox(_lesson.finalConsonant, const Color(0xFFFF4B4B), context.translate('learn.spelling_final_consonant')),
                 Padding(
                   padding: EdgeInsets.only(top: 24.h),
                   child: Text('=', style: GoogleFonts.plusJakartaSans(
                     fontSize: 28.sp, fontWeight: FontWeight.w800, color: const Color(0xFFB0BEC5)))),
-                _buildFormulaBox(_lesson.combined, const Color(0xFF58CC02), 'Kết quả'),
+                _buildFormulaBox(_lesson.combined, const Color(0xFF58CC02), context.translate('learn.spelling_result')),
               ],
             ),
           ),
@@ -370,7 +371,7 @@ class _ClosedSyllableScreenState extends State<ClosedSyllableScreen>
                         SizedBox(width: 6.w),
                         Expanded(
                           child: Text(
-                            _lesson.meaning.isNotEmpty ? 'Nghĩa: ${_lesson.meaning}' : 'Bài luyện vần đóng',
+                            _lesson.meaning.isNotEmpty ? '${context.translate('learn.meaning_prefix')}${_lesson.meaning}' : context.translate('learn.closed_syllable_practice_desc'),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14.sp, fontWeight: FontWeight.w700, color: AppColors.textSecondary))),
                       ]),
@@ -442,7 +443,7 @@ class _ClosedSyllableScreenState extends State<ClosedSyllableScreen>
                 Expanded(
                   child: KhmerWriteWidget(
                     character: _lesson.combined,
-                    label: 'vần đóng',
+                    label: context.translate('learn.closed_syllable'),
                     isCompound: true,
                     showStrokeGuide: true, // hiển thị hướng nét nếu có guide data
                     enableOcr: false,
@@ -478,17 +479,17 @@ class _ClosedSyllableScreenState extends State<ClosedSyllableScreen>
       children: [
         Expanded(child: GestureDetector(
           onTap: () => setState(() => _activeSheet = _activeSheet == 1 ? 0 : 1),
-          child: _actionCard(imagePath: 'image/Nghe.png', label: 'Nghe', sub: 'Học đánh vần',
+          child: _actionCard(imagePath: 'image/Nghe.png', label: context.translate('common.listen'), sub: context.translate('learning_path.spelling'),
             bgColor: const Color(0xFFE8F5E9), accentColor: const Color(0xFF43A047), stepIdx: 0))),
         SizedBox(width: 8.w),
         Expanded(child: GestureDetector(
           onTap: () => setState(() => _activeSheet = _activeSheet == 2 ? 0 : 2),
-          child: _actionCard(imagePath: 'image/Mic.png', label: 'Nói', sub: 'Luyện phát âm',
+          child: _actionCard(imagePath: 'image/Mic.png', label: context.translate('common.speak'), sub: context.translate('learn.practice_pronunciation'),
             bgColor: const Color(0xFFE3F2FD), accentColor: const Color(0xFF1E88E5), stepIdx: 1))),
         SizedBox(width: 8.w),
         Expanded(child: GestureDetector(
           onTap: () => setState(() => _activeSheet = _activeSheet == 3 ? 0 : 3),
-          child: _actionCard(imagePath: 'image/Viết.png', label: 'Viết', sub: 'Tập viết chữ ghép',
+          child: _actionCard(imagePath: 'image/Viết.png', label: context.translate('common.write'), sub: context.translate('learn.practice_writing_compound'),
             bgColor: const Color(0xFFEDE7F6), accentColor: const Color(0xFF5E35B1), stepIdx: 2))),
       ],
     );
@@ -529,7 +530,7 @@ class _ClosedSyllableScreenState extends State<ClosedSyllableScreen>
     final hasPrev = _idx > 0;
     final hasNext = _idx < _lessons.length - 1;
     final canNext = _canGo(_idx + 1);
-    final labels = ['Nghe', 'Nói', 'Viết'];
+    final labels = [context.translate('common.listen'), context.translate('common.speak'), context.translate('common.write')];
     final stepColors = [const Color(0xFF43A047), const Color(0xFF1E88E5), const Color(0xFF5E35B1)];
     return Row(
       children: [
@@ -545,7 +546,7 @@ class _ClosedSyllableScreenState extends State<ClosedSyllableScreen>
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.chevron_left_rounded, color: hasPrev ? const Color(0xFF1E88E5) : AppColors.textHint, size: 18.w),
-              Text('Trước', style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700, color: hasPrev ? const Color(0xFF1E88E5) : AppColors.textHint)),
+              Text(context.translate('common.back'), style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700, color: hasPrev ? const Color(0xFF1E88E5) : AppColors.textHint)),
             ]),
           ),
         ),
@@ -627,10 +628,10 @@ class _ClosedSyllableScreenState extends State<ClosedSyllableScreen>
               _goTo(_idx + 1);
             } else if (hasNext) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Vui lòng hoàn thành tất cả hoạt động (Nghe, Nói, Viết) trước khi học bài tiếp theo.'),
+                SnackBar(
+                  content: Text(context.translate('learn.complete_activities_warning')),
                   backgroundColor: Colors.orange,
-                  duration: Duration(seconds: 2),
+                  duration: const Duration(seconds: 2),
                 ),
               );
             }
@@ -644,7 +645,7 @@ class _ClosedSyllableScreenState extends State<ClosedSyllableScreen>
               boxShadow: canNext ? [BoxShadow(color: const Color(0xFF1E88E5).withValues(alpha: 0.35), blurRadius: 10.r, offset: Offset(0, 3.h))] : null,
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Text(canNext ? 'Tiếp theo' : 'Khóa', style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: canNext ? Colors.white : AppColors.textHint)),
+              Text(canNext ? context.translate('common.next') : context.translate('common.locked'), style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: canNext ? Colors.white : AppColors.textHint)),
               SizedBox(width: 4.w),
               Icon(canNext ? Icons.chevron_right_rounded : Icons.lock_rounded, color: canNext ? Colors.white : AppColors.textHint, size: 18.w),
             ]),
@@ -721,7 +722,7 @@ class _InlineListenContentState extends State<_InlineListenContent>
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(Icons.headphones_rounded, color: AppColors.tertiary, size: 20.w),
           SizedBox(width: 8.w),
-          Text('Nghe vần đóng',
+          Text(context.translate('learn.listen_closed_syllable'),
             style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w800, color: AppColors.tertiaryDark)),
         ])),
       Expanded(
@@ -805,9 +806,9 @@ class _InlineListenContentState extends State<_InlineListenContent>
               ),
               SizedBox(height: 8.h),
               Text(
-                _isPlaying ? 'Đang phát âm vần đóng...'
-                    : _playCount > 0 ? 'Đã nghe $_playCount/2 lần • Nhấn nghe lại'
-                    : 'Nhấn nút để nghe đánh vần mẫu',
+                _isPlaying ? context.translate('learn.pronouncing_closed_syllable')
+                    : _playCount > 0 ? context.translate('learn.listened_closed_syllable_count_label', args: {'count': _playCount})
+                    : context.translate('learn.press_to_listen'),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12.sp, fontWeight: FontWeight.w600,
                   color: _isPlaying ? AppColors.tertiary : AppColors.textHint)),

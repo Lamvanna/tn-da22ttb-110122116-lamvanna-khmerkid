@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -189,7 +190,7 @@ class _ReadingScreenState extends State<ReadingScreen>
           FeedbackDialog.showSuccess(
             context,
             xpEarned: 15,
-            message: 'Tuyệt vời! Con đã đọc đúng hoàn toàn cả bài rồi! 🌟',
+            message: context.translate('learn.reading_success'),
           );
         } else if (correctCount > 0) {
           FeedbackDialog.showSuccess(
@@ -200,7 +201,7 @@ class _ReadingScreenState extends State<ReadingScreen>
         } else {
           FeedbackDialog.showFailure(
             context,
-            message: 'Chưa đúng rồi con ơi! Hãy nghe lại phát âm chuẩn và luyện đọc lại nhé! 💪',
+            message: context.translate('learn.incorrect_reading_warning'),
           );
         }
       }
@@ -579,7 +580,7 @@ class _ReadingScreenState extends State<ReadingScreen>
               Text('🎉', style: TextStyle(fontSize: 48.sp)),
               SizedBox(height: 12.h),
               Text(
-                'Chúc mừng!',
+                context.translate('common.congratulations'),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 24.sp,
                   fontWeight: FontWeight.w800,
@@ -630,7 +631,7 @@ class _ReadingScreenState extends State<ReadingScreen>
                       ),
                     ),
                     child: Text(
-                      'Bài tiếp theo →',
+                      context.translate('learn.next_lesson_btn'),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w700,
@@ -656,7 +657,7 @@ class _ReadingScreenState extends State<ReadingScreen>
                     side: BorderSide(color: AppColors.violet),
                   ),
                   child: Text(
-                    'Quay về bản đồ',
+                    context.translate('learn.back_to_map'),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
@@ -766,7 +767,7 @@ class _ReadingScreenState extends State<ReadingScreen>
                             ),
                           ),
                           Text(
-                            'Bài ${_currentLesson + 1}',
+                            context.translate('learn.lesson_n', args: {'number': _currentLesson + 1}),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 22.sp,
                               fontWeight: FontWeight.w800,
@@ -987,7 +988,7 @@ class _ReadingScreenState extends State<ReadingScreen>
                       ),
                       child: Icon(Icons.arrow_back_rounded, color: Colors.grey[700], size: 20.w))),
                   SizedBox(width: 12.w),
-                  Flexible(child: Text('Tập đọc',
+                  Flexible(child: Text(context.translate('learn.reading_title'),
                     maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(fontSize: 20.sp, fontWeight: FontWeight.w800, color: Colors.white))),
                 ]),
@@ -1072,7 +1073,7 @@ class _ReadingScreenState extends State<ReadingScreen>
                 onPressed: () => _goTo(_currentLesson - 1),
                 icon: Icon(Icons.chevron_left_rounded, color: Colors.white, size: 20.sp),
                 label: Text(
-                  'Trước',
+                  context.translate('common.back'),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
@@ -1107,7 +1108,7 @@ class _ReadingScreenState extends State<ReadingScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Tiếp theo',
+                      context.translate('common.next'),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w700,

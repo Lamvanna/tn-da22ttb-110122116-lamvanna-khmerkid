@@ -90,18 +90,21 @@ class _CategoryCardState extends State<CategoryCard> {
               ),
               // Label nổi bật ở dưới
               Padding(
-                padding: EdgeInsets.only(bottom: 10.h),
-                child: Text(widget.label,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16.sp, fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: 0.5,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black.withValues(alpha: 0.5),
-                        blurRadius: 8.r,
-                        offset: Offset(0, 2.h)),
-                    ])),
+                padding: EdgeInsets.symmetric(horizontal: 8.w).copyWith(bottom: 10.h),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(widget.label,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16.sp, fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          blurRadius: 8.r,
+                          offset: Offset(0, 2.h)),
+                      ])),
+                ),
               ),
             ],
           ),

@@ -12,6 +12,8 @@ import '../data/local/local_database.dart';
 import '../models/khmer_letter.dart';
 import '../models/khmer_vowel.dart';
 import '../models/khmer_number.dart';
+import 'handwriting_websocket_client.dart';
+import 'connectivity_service.dart';
 
 
 /// Dịch vụ Xác thực người dùng (AuthService) kết nối tới Backend Node.js
@@ -41,6 +43,7 @@ class AuthService extends ChangeNotifier {
   );
 
   static String _activeBaseUrl = 'http://192.168.1.4:5000/api';
+  static Future<void>? _detectFuture;
 
   /// Cổng & đường dẫn API của backend (dùng để ráp URL khi quét mạng)
   static const int _serverPort = 5000;
@@ -118,7 +121,12 @@ class AuthService extends ChangeNotifier {
   /// Tự động dò tìm IP máy chủ đang hoạt động.
   /// Thứ tự ưu tiên: IP nhập tay → IP đã lưu lần trước → danh sách cứng →
   /// quét subnet của thiết bị. Server tìm được sẽ được ghi nhớ.
-  static Future<void> detectActiveServer() async {
+  static Future<void> detectActiveServer() {
+    _detectFuture ??= _detectActiveServerImpl();
+    return _detectFuture!;
+  }
+
+  static Future<void> _detectActiveServerImpl() async {
     if (kIsWeb) {
       _activeBaseUrl = 'http://localhost:5000/api';
       return;
@@ -145,7 +153,7 @@ class AuthService extends ChangeNotifier {
     ];
 
     debugPrint('🔍 [AuthService] Dò tìm IP máy chủ trong danh sách ưu tiên...');
-    final found = await _firstResponding(priority);
+    final found = await _firstResponding(priority, timeout: const Duration(milliseconds: 200));
     if (found != null) {
       _activeBaseUrl = found;
       await prefs.setString(_kSavedServerUrl, found);
@@ -153,26 +161,31 @@ class AuthService extends ChangeNotifier {
       return;
     }
 
-    // 3) Quét subnet của thiết bị (router đổi DHCP, IP cứng không còn đúng)
-    debugPrint('🔎 [AuthService] Không thấy trong danh sách — quét subnet...');
-    final scanned = await _scanLocalSubnet();
-    if (scanned != null) {
-      _activeBaseUrl = scanned;
-      await prefs.setString(_kSavedServerUrl, scanned);
-      debugPrint('🚀 [AuthService] Quét subnet thấy máy chủ: $_activeBaseUrl');
-      return;
-    }
+    // 3) Quét subnet của thiết bị ở chế độ nền (Background Scan) để không cản trở luồng khởi chạy chính
+    debugPrint('🔎 [AuthService] Không thấy trong danh sách — chạy quét subnet nền...');
+    _scanLocalSubnet().then((scanned) async {
+      if (scanned != null) {
+        _activeBaseUrl = scanned;
+        final p = await SharedPreferences.getInstance();
+        await p.setString(_kSavedServerUrl, scanned);
+        debugPrint('🚀 [AuthService] Quét subnet nền tìm thấy máy chủ tại: $_activeBaseUrl');
+        // Đồng bộ/Kết nối lại sau khi tìm thấy máy chủ mới
+        HandwritingWebSocketClient.instance.connect();
+        SyncManager.instance.triggerSync();
+      }
+    });
 
-    debugPrint('⚠️ [AuthService] Không phát hiện server nào, dùng IP mặc định: $_activeBaseUrl');
+    debugPrint('⚠️ [AuthService] Chưa phát hiện server phản hồi nhanh, sử dụng IP mặc định/lần trước: $_activeBaseUrl');
   }
 
   /// Ping song song nhiều URL, trả về URL phản hồi đầu tiên (hoặc null).
-  static Future<String?> _firstResponding(List<String> urls) async {
+  static Future<String?> _firstResponding(List<String> urls,
+      {Duration timeout = const Duration(milliseconds: 900)}) async {
     final completer = Completer<String?>();
     var remaining = urls.length;
     if (remaining == 0) return null;
     for (final url in urls) {
-      _ping(url).then((ok) {
+      _ping(url, timeout: timeout).then((ok) {
         if (ok && !completer.isCompleted) {
           completer.complete(url);
         }
@@ -204,13 +217,13 @@ class AuthService extends ChangeNotifier {
       if (prefixes.isEmpty) return null;
 
       for (final prefix in prefixes) {
-        // Quét theo lô 32 host một lần để không nghẽn mạng
+        // Quét theo lô 32 host một lần để không nghẽn mạng (ping timeout 200ms)
         for (var start = 1; start <= 254; start += 32) {
           final batch = <String>[];
           for (var i = start; i < start + 32 && i <= 254; i++) {
             batch.add('http://$prefix$i:$_serverPort$_apiPath');
           }
-          final hit = await _firstResponding(batch);
+          final hit = await _firstResponding(batch, timeout: const Duration(milliseconds: 200));
           if (hit != null) return hit;
         }
       }
@@ -244,13 +257,43 @@ class AuthService extends ChangeNotifier {
       _accessToken = prefs.getString('accessToken');
       _refreshToken = prefs.getString('refreshToken');
 
-      // Tải thông tin cá nhân mới nhất từ server
-      final success = await fetchProfile();
+      // Tải thông tin cá nhân mới nhất từ server (nếu thiết bị online)
+      bool success = false;
+      final isOnline = ConnectivityService.instance.isOnline;
+      if (isOnline) {
+        // Gắn timeout ngắn (1 giây) khi đăng nhập tự động để không bị kẹt màn hình chào khi mạng yếu hoặc server treo
+        success = await fetchProfile(timeout: const Duration(milliseconds: 1000));
+      }
+
       if (!success) {
-        // Nếu access token hết hạn, thử refresh token
+        // Có 2 trường hợp fetchProfile thất bại hoặc không chạy:
+        // 1. Lỗi mạng / server offline (Không kết nối được)
+        // 2. Token thực sự hết hạn (Server trả về 401)
+        // Hãy kiểm tra xem có kết nối được mạng/server không.
+        bool isServerReachable = false;
+        if (isOnline) {
+          isServerReachable = await _ping(currentServerUrl, timeout: const Duration(milliseconds: 600));
+        }
+
+        if (!isServerReachable) {
+          // Server không liên lạc được hoặc thiết bị ngoại tuyến, dùng dữ liệu cached offline
+          final cachedProfile = prefs.getString('userProfile');
+          if (cachedProfile != null) {
+            _userProfile = jsonDecode(cachedProfile);
+            // Đồng bộ lên StorageService cục bộ
+            await _syncProfileToStorage(_userProfile!);
+            _isLoading = false;
+            notifyListeners();
+            // Cho phép vào app chế độ offline
+            debugPrint('📶 [AuthService] Thiết bị ngoại tuyến hoặc máy chủ không phản hồi, cho phép Đăng nhập Offline với profile đã lưu.');
+            return true;
+          }
+        }
+
+        // Nếu server hoạt động bình thường nhưng token lỗi, thử refresh token
         final refreshed = await refreshAccessToken();
         if (refreshed) {
-          await fetchProfile();
+          await fetchProfile(timeout: const Duration(milliseconds: 1000));
         } else {
           await logout();
           _isLoading = false;
@@ -264,6 +307,9 @@ class AuthService extends ChangeNotifier {
 
       // Trigger full sync in background after successful auto login
       SyncManager.instance.fullSync();
+
+      // Kết nối socket.io để lắng nghe thông báo real-time
+      HandwritingWebSocketClient.instance.connect();
 
       return true;
     } catch (e) {
@@ -352,6 +398,9 @@ class AuthService extends ChangeNotifier {
         // Trigger full sync sau khi đăng nhập
         SyncManager.instance.fullSync();
 
+        // Kết nối socket.io để lắng nghe thông báo real-time
+        HandwritingWebSocketClient.instance.connect();
+
         notifyListeners();
         return {'success': true, 'message': 'Đăng nhập thành công!'};
       } else {
@@ -418,6 +467,9 @@ class AuthService extends ChangeNotifier {
 
         // Trigger full sync sau khi đăng nhập Google
         SyncManager.instance.fullSync();
+
+        // Kết nối socket.io để lắng nghe thông báo real-time
+        HandwritingWebSocketClient.instance.connect();
 
         notifyListeners();
         return {'success': true, 'message': 'Đăng nhập Google thành công!'};
@@ -497,6 +549,9 @@ class AuthService extends ChangeNotifier {
         // Trigger full sync sau khi đăng nhập Mock
         SyncManager.instance.fullSync();
 
+        // Kết nối socket.io để lắng nghe thông báo real-time
+        HandwritingWebSocketClient.instance.connect();
+
         notifyListeners();
         return {'success': true, 'message': 'Đăng nhập bằng tài khoản Google giả lập thành công!'};
       } else {
@@ -514,7 +569,7 @@ class AuthService extends ChangeNotifier {
   }
 
   /// 5. Lấy thông tin cá nhân (Profile)
-  Future<bool> fetchProfile() async {
+  Future<bool> fetchProfile({Duration? timeout}) async {
     if (_accessToken == null) return false;
 
     try {
@@ -524,7 +579,7 @@ class AuthService extends ChangeNotifier {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_accessToken',
         },
-      ).timeout(_httpTimeout);
+      ).timeout(timeout ?? _httpTimeout);
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -784,6 +839,9 @@ class AuthService extends ChangeNotifier {
       _accessToken = null;
       _refreshToken = null;
       _userProfile = null;
+
+      // Ngắt kết nối socket
+      HandwritingWebSocketClient.instance.disconnect();
 
       // Xóa SharedPreferences local progress bằng StorageService
       try {

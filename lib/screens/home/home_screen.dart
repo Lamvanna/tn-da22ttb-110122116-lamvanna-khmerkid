@@ -12,6 +12,8 @@ import 'widgets/category_card.dart';
 import 'widgets/congrats_banner.dart';
 import '../../widgets/app_page_route.dart';
 
+import '../../l10n/app_localizations.dart';
+
 /// Màn hình Trang chủ — Màu tươi sáng theo mẫu
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -48,7 +50,7 @@ class HomeScreen extends StatelessWidget {
           Expanded(
             child: CategoryCard(
               imagePath: 'image/Học.png',
-              label: 'Học',
+              label: context.translate('nav.learn_home'),
               color: AppColors.primaryLight, // Xanh dương mềm
               height: 150.h,
               onTap: () => MainScreenState.of(context)?.switchTab(1),
@@ -58,7 +60,7 @@ class HomeScreen extends StatelessWidget {
           Expanded(
             child: CategoryCard(
               imagePath: 'image/Trò chơi.png',
-              label: 'Chơi',
+              label: context.translate('nav.play_home'),
               color: AppColors.coralLight, // Coral ấm
               height: 150.h,
               onTap: () => MainScreenState.of(context)?.switchTab(2),
@@ -77,7 +79,7 @@ class HomeScreen extends StatelessWidget {
           Expanded(
             child: CategoryCard(
               imagePath: 'image/Thư viện.png',
-              label: 'Thư viện',
+              label: context.translate('nav.library'),
               color: AppColors.tertiaryLight, // Teal / Green
               height: 120.h,
               onTap: () => Navigator.push(context,
@@ -88,7 +90,7 @@ class HomeScreen extends StatelessWidget {
           Expanded(
             child: CategoryCard(
               imagePath: 'image/Xếp hạng.png',
-              label: 'Xếp hạng',
+              label: context.translate('nav.leaderboard_home'),
               color: AppColors.secondaryLight, // Vàng cam ấm
               height: 120.h,
               onTap: () => Navigator.push(context,
@@ -99,7 +101,7 @@ class HomeScreen extends StatelessWidget {
           Expanded(
             child: CategoryCard(
               imagePath: 'image/Thành tích.png',
-              label: 'Thành tích',
+              label: context.translate('nav.achievements_home'),
               color: AppColors.violetLight, // Tím mềm
               height: 120.h,
               onTap: () => Navigator.push(context,

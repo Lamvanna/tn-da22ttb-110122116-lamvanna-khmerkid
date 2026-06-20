@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../l10n/app_localizations.dart';
 import '../constants/app_colors.dart';
 import '../services/scoring_service.dart';
 import '../services/score_service.dart';
@@ -348,6 +349,29 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
     return 0.0;
   }
 
+  String _getTranslatedLabel(BuildContext context, String rawLabel) {
+    switch (rawLabel.trim().toLowerCase()) {
+      case 'phụ âm':
+        return context.translate('learn.consonant').toLowerCase();
+      case 'nguyên âm':
+        return context.translate('learn.vowel').toLowerCase();
+      case 'chữ số':
+        return context.translate('learn.digit').toLowerCase();
+      case 'vần đóng':
+        return context.translate('learn.closed_syllable_title').toLowerCase();
+      case 'phụ âm chân':
+        return context.translate('learn.coeng_title').toLowerCase();
+      case 'chữ ghép':
+        return context.translate('learning_path.spelling').toLowerCase();
+      case 'chữ cái':
+        return context.translate('learn.character').toLowerCase();
+      case 'chữ':
+        return context.translate('learn.character').toLowerCase();
+      default:
+        return rawLabel;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isVowel = widget.character.contains('◌') ||
@@ -374,7 +398,9 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
               ),
               SizedBox(width: 8.w),
               Text(
-                _showHint ? 'Gợi ý viết ${widget.label}' : 'Viết ${widget.label}',
+                _showHint
+                    ? '${context.translate('learn.writing_hint')} ${_getTranslatedLabel(context, widget.label)}'
+                    : '${context.translate('common.write')} ${_getTranslatedLabel(context, widget.label)}',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w800,
@@ -417,7 +443,7 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
                             size: 16.sp, color: AppColors.textHint),
                         SizedBox(width: 4.w),
                         Text(
-                          'Xóa',
+                          context.translate('common.clear'),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.w700,
@@ -494,12 +520,12 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
                         SizedBox(width: 4.w),
                         Text(
                           _checking
-                              ? 'Đang chấm...'
+                              ? context.translate('learn.grading')
                               : _passed == null
-                                  ? 'Kiểm tra'
+                                  ? context.translate('common.check')
                                   : displayPassed
-                                      ? 'Tuyệt vời! 🎉'
-                                      : 'Thử lại',
+                                      ? context.translate('learn.excellent_emoji')
+                                      : context.translate('common.retry'),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.w700,
@@ -541,7 +567,7 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
                         ),
                         SizedBox(width: 4.w),
                         Text(
-                          'Gợi ý',
+                          context.translate('learn.hint'),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.w700,
@@ -771,10 +797,10 @@ class _KhmerWriteWidgetState extends State<KhmerWriteWidget>
                                     ),
                                     SizedBox(width: 8.w),
                                     Expanded(
-                                      child: Text(
+                                       child: Text(
                                         displayPassed
-                                            ? 'Tuyệt vời! $displayScore%'
-                                            : 'Chưa đạt! $displayScore%',
+                                            ? context.translate('learn.excellent_score', args: {'score': displayScore.round()})
+                                            : context.translate('learn.failed_score', args: {'score': displayScore.round()}),
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 14.sp,
                                           fontWeight: FontWeight.w800,

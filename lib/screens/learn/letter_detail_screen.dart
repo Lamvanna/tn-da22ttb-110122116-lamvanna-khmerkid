@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -268,7 +269,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
               Text('🎉', style: TextStyle(fontSize: 48.sp)),
               SizedBox(height: 12.h),
               Text(
-                'Chúc mừng!',
+                context.translate('common.congratulations'),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 24.sp,
                   fontWeight: FontWeight.w800,
@@ -277,7 +278,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
               ),
               SizedBox(height: 8.h),
               Text(
-                'Bạn đã hoàn thành chữ "${_letter.character}"',
+                context.translate('learn.completed_letter', args: {'character': _letter.character}),
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 16.sp,
@@ -323,7 +324,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                       ),
                     ),
                     child: Text(
-                      'Học chữ tiếp theo →',
+                      context.translate('learn.next_letter_btn'),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w700,
@@ -349,7 +350,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                     side: BorderSide(color: AppColors.violet),
                   ),
                   child: Text(
-                    'Quay về bản đồ',
+                    context.translate('learn.back_to_map'),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
@@ -506,7 +507,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                             SizedBox(width: 6.w),
                             Expanded(
                               child: Text(
-                                'Chữ cái ${_letters.sublist(0, _idx + 1).where((l) => !l.isTest).length}/${_letters.where((l) => !l.isTest).length}',
+                                context.translate('learn.letter_count', args: {'done': _letters.sublist(0, _idx + 1).where((l) => !l.isTest).length, 'total': _letters.where((l) => !l.isTest).length}),
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 24.sp,
                                   fontWeight: FontWeight.w800,
@@ -908,8 +909,8 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
             onTap: _showListenSheet,
             child: _actionCard(
               imagePath: 'image/Nghe.png',
-              label: 'Nghe',
-              sub: 'Nghe phát âm',
+              label: context.translate('common.listen'),
+              sub: context.translate('learn.listen_pronunciation'),
               bgColor: const Color(0xFFE8F5E9),
               accentColor: const Color(0xFF43A047),
               stepIdx: 0,
@@ -922,8 +923,8 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
             onTap: _showSpeakSheet,
             child: _actionCard(
               imagePath: 'image/Mic.png',
-              label: 'Nói',
-              sub: 'Luyện phát âm',
+              label: context.translate('common.speak'),
+              sub: context.translate('learn.practice_pronunciation'),
               bgColor: const Color(0xFFE3F2FD),
               accentColor: const Color(0xFF1E88E5),
               stepIdx: 1,
@@ -936,8 +937,8 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
             onTap: _showWriteSheet,
             child: _actionCard(
               imagePath: 'image/Viết.png',
-              label: 'Viết',
-              sub: 'Tập viết chữ',
+              label: context.translate('common.write'),
+              sub: context.translate('learn.practice_writing_letter'),
               bgColor: const Color(0xFFEDE7F6),
               accentColor: const Color(0xFF5E35B1),
               stepIdx: 2,
@@ -999,7 +1000,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
   Widget _buildNavButtons() {
     final canPrev = _idx > 0 && !_isLocked(_idx - 1);
     final canNext = _idx < _letters.length - 1 && !_isLocked(_idx + 1);
-    final labels = ['Nghe', 'Nói', 'Viết'];
+    final labels = [context.translate('common.listen'), context.translate('common.speak'), context.translate('common.write')];
     final stepColors = [const Color(0xFF43A047), const Color(0xFF1E88E5), const Color(0xFF5E35B1)];
     return Row(
       children: [
@@ -1015,7 +1016,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.chevron_left_rounded, color: canPrev ? const Color(0xFF1E88E5) : AppColors.textHint, size: 18.w),
-              Text('Trước', style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700, color: canPrev ? const Color(0xFF1E88E5) : AppColors.textHint)),
+              Text(context.translate('common.back'), style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700, color: canPrev ? const Color(0xFF1E88E5) : AppColors.textHint)),
             ]),
           ),
         ),
@@ -1097,10 +1098,10 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
               _goTo(_idx + 1);
             } else if (_idx < _letters.length - 1) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Vui lòng hoàn thành tất cả hoạt động (Nghe, Nói, Viết) trước khi học bài tiếp theo.'),
+                SnackBar(
+                  content: Text(context.translate('learn.complete_activities_warning')),
                   backgroundColor: Colors.orange,
-                  duration: Duration(seconds: 2),
+                  duration: const Duration(seconds: 2),
                 ),
               );
             }
@@ -1114,7 +1115,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
               boxShadow: canNext ? [BoxShadow(color: const Color(0xFF1E88E5).withValues(alpha: 0.35), blurRadius: 10.r, offset: Offset(0, 3.h))] : null,
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Text(canNext ? 'Tiếp theo' : 'Khóa', style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: canNext ? Colors.white : AppColors.textHint)),
+              Text(canNext ? context.translate('common.next') : context.translate('common.locked'), style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: canNext ? Colors.white : AppColors.textHint)),
               SizedBox(width: 4.w),
               Icon(canNext ? Icons.chevron_right_rounded : Icons.lock_rounded, color: canNext ? Colors.white : AppColors.textHint, size: 18.w),
             ]),

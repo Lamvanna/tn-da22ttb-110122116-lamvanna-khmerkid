@@ -6,6 +6,7 @@ import '../data/local/sync_queue_datasource.dart';
 import '../data/remote/progress_remote_datasource.dart';
 import '../services/auth_service.dart';
 import '../services/storage_service.dart';
+import '../services/local_notification_service.dart';
 import '../models/khmer_letter.dart';
 import '../models/khmer_vowel.dart';
 import '../models/khmer_number.dart';
@@ -86,6 +87,9 @@ class ProgressRepository {
 
     // Step 5: Try immediate sync if online
     _tryImmediateSync(lessonId, stars, lessonType, lessonOrder);
+
+    // Step 6: Cập nhật lịch thông báo nhắc học offline (đánh dấu đã học hôm nay)
+    LocalNotificationService().scheduleDailyReminders(studiedToday: true);
   }
 
   /// Auto-unlock bài tiếp theo
@@ -170,6 +174,30 @@ class ProgressRepository {
   /// Đếm số bài hoàn thành theo loại
   Future<int> getCompletedCount(String lessonType) async {
     return await _localDS.getCompletedCountByType(_userId, lessonType);
+  }
+
+  /// Kiểm tra xem bé đã hoàn thành bài học nào hôm nay chưa
+  Future<bool> hasStudiedToday() async {
+    try {
+      final now = DateTime.now();
+      final startOfToday = DateTime(now.year, now.month, now.day);
+      
+      final types = ['consonant', 'vowel', 'number', 'reading', 'diacritical', 'spelling', 'writing'];
+      for (final type in types) {
+        final progressList = await getProgressByType(type);
+        for (final p in progressList) {
+          if (p['isCompleted'] == true && p['completedAt'] != null) {
+            final date = DateTime.parse(p['completedAt'].toString());
+            if (date.isAfter(startOfToday)) {
+              return true;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) print('[ProgressRepo] Error checking studied today: $e');
+    }
+    return false;
   }
 
   // ═══════════════════════════════════════════════════════════════

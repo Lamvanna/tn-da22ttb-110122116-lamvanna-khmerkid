@@ -1,11 +1,11 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_writing.dart';
 import 'writing_detail_screen.dart';
-import '../../services/storage_service.dart';
 import '../../repositories/progress_repository.dart';
 
 /// Bản đồ tập viết Khmer — Premium learning path (zigzag) với các thẻ bài học chi tiết
@@ -237,7 +237,7 @@ class _WritingMapScreenState extends State<WritingMapScreen>
                       SizedBox(width: 12.w),
                       Flexible(
                         child: Text(
-                          'Tập viết Khmer',
+                          context.translate('learning_path.writing'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.plusJakartaSans(
@@ -253,7 +253,7 @@ class _WritingMapScreenState extends State<WritingMapScreen>
                   Padding(
                     padding: EdgeInsets.only(left: 48.w),
                     child: Text(
-                      '$_doneCount/${_lessons.length} đã hoàn thành',
+                      context.translate('learn.lessons_completed', args: {'done': _doneCount, 'total': _lessons.length}),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w600,
@@ -393,7 +393,7 @@ class _WritingMapScreenState extends State<WritingMapScreen>
                     borderRadius: BorderRadius.circular(6.r),
                   ),
                   child: Text(
-                    'Bài $baiNum',
+                    context.translate('learn.lesson_n', args: {'number': baiNum}),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10.sp,
                       fontWeight: FontWeight.w800,

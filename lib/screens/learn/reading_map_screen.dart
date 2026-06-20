@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -172,7 +173,7 @@ class _ReadingMapScreenState extends State<ReadingMapScreen>
                         border: Border.all(color: Colors.white.withValues(alpha: 0.12))),
                       child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w))),
                   SizedBox(width: 12.w),
-                  Flexible(child: Text('Tập đọc tiếng Khmer',
+                  Flexible(child: Text(context.translate('learn.reading_khmer'),
                     maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(fontSize: 20.sp, fontWeight: FontWeight.w800, color: Colors.white))),
                 ]),
@@ -306,7 +307,7 @@ class _ReadingMapScreenState extends State<ReadingMapScreen>
                     borderRadius: BorderRadius.circular(6.r),
                   ),
                   child: Text(
-                    'Bài $baiNum',
+                    context.translate('learn.lesson_n', args: {'number': baiNum}),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 9.sp,
                       fontWeight: FontWeight.w800,

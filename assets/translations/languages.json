@@ -1,0 +1,66 @@
+[
+  {
+    "code": "vi",
+    "flag": "🇻🇳",
+    "name": "Vietnamese",
+    "nativeName": "Tiếng Việt",
+    "fontFamily": "Plus Jakarta Sans",
+    "isRtl": false
+  },
+  {
+    "code": "km",
+    "flag": "🇰🇭",
+    "name": "Khmer",
+    "nativeName": "ភាសាខ្មែរ",
+    "fontFamily": "Kantumruy Pro",
+    "isRtl": false
+  },
+  {
+    "code": "en",
+    "flag": "🇺🇸",
+    "name": "English",
+    "nativeName": "English",
+    "fontFamily": "Plus Jakarta Sans",
+    "isRtl": false
+  },
+  {
+    "code": "zh",
+    "flag": "🇨🇳",
+    "name": "Chinese",
+    "nativeName": "中文",
+    "fontFamily": "Noto Sans SC",
+    "isRtl": false
+  },
+  {
+    "code": "ja",
+    "flag": "🇯🇵",
+    "name": "Japanese",
+    "nativeName": "日本語",
+    "fontFamily": "Noto Sans JP",
+    "isRtl": false
+  },
+  {
+    "code": "th",
+    "flag": "🇹🇭",
+    "name": "Thai",
+    "nativeName": "ภาษาไทย",
+    "fontFamily": "Sarabun",
+    "isRtl": false
+  },
+  {
+    "code": "ko",
+    "flag": "🇰🇷",
+    "name": "Korean",
+    "nativeName": "한국어",
+    "fontFamily": "Noto Sans KR",
+    "isRtl": false
+  },
+  {
+    "code": "ar",
+    "flag": "🇸🇦",
+    "name": "Arabic",
+    "nativeName": "العربية",
+    "fontFamily": "Cairo",
+    "isRtl": true
+  }
+]

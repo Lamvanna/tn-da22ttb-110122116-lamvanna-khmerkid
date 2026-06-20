@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/khmer_consonant_series.dart';
@@ -23,13 +24,24 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
   final List<KhmerConsonantSeries> _consonants = KhmerConsonantSeriesData.consonants;
   final List<KhmerVowel> _vowels = KhmerVowelData.vowels;
 
-  String _selectedCategory = 'Phụ âm hàng o';
-  final List<String> _categories = [
-    'Phụ âm hàng o',
-    'Phụ âm hàng ô',
-    'Nguyên âm hàng o',
-    'Nguyên âm hàng ô'
-  ];
+  late String _selectedCategory;
+  late final List<String> _categories;
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _selectedCategory = context.translate('learn.consonants_o');
+      _categories = [
+        context.translate('learn.consonants_o'),
+        context.translate('learn.consonants_oh'),
+        context.translate('learn.vowels_o'),
+        context.translate('learn.vowels_oh')
+      ];
+      _initialized = true;
+    }
+  }
 
   double get _nodeSize => 72.w;
 
@@ -57,7 +69,7 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
     super.dispose();
   }
 
-  bool get _isConsonant => _selectedCategory.startsWith('Phụ âm');
+  bool get _isConsonant => _selectedCategory.startsWith(context.translate('learn.consonant'));
   bool get _isSeriesO => _selectedCategory.endsWith('o');
 
   Color get _currentColor {
@@ -114,7 +126,7 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
                 selectedItemBuilder: (BuildContext context) {
                   return _categories.map<Widget>((String c) {
                     final isO = c.endsWith('o');
-                    final isConsonant = c.startsWith('Phụ âm');
+                    final isConsonant = c.startsWith(context.translate('learn.consonant'));
                     final cColor = isO ? const Color(0xFF66BB6A) : const Color(0xFF42A5F5);
                     final icon = isConsonant ? Icons.text_fields_rounded : Icons.record_voice_over_rounded;
                     return Row(
@@ -137,7 +149,7 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
                 },
                 items: _categories.map((c) {
                   final isO = c.endsWith('o');
-                  final isConsonant = c.startsWith('Phụ âm');
+                  final isConsonant = c.startsWith(context.translate('learn.consonant'));
                   final cColor = isO ? const Color(0xFF66BB6A) : const Color(0xFF42A5F5);
                   final icon = isConsonant ? Icons.text_fields_rounded : Icons.record_voice_over_rounded;
                   return DropdownMenuItem<String>(
@@ -315,7 +327,7 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
                         border: Border.all(color: Colors.white.withValues(alpha: 0.12))),
                       child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w))),
                   SizedBox(width: 12.w),
-                  Flexible(child: Text('Bảng Chữ Cái',
+                  Flexible(child: Text(context.translate('learn.alphabet_board'),
                     maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 20.sp, fontWeight: FontWeight.w800, color: Colors.white))),
@@ -423,7 +435,7 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
             decoration: BoxDecoration(
               color: _currentColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8.r)),
-            child: Text('Hàng ${_isSeriesO ? "o" : "ô"}', style: GoogleFonts.plusJakartaSans(
+            child: Text(context.translate('level.prefix') + ' ' + (_isSeriesO ? context.translate('learn.series_o') : context.translate('learn.series_oh')), style: GoogleFonts.plusJakartaSans(
               fontSize: 14.sp, fontWeight: FontWeight.w700,
               color: _currentColor))),
           SizedBox(height: 12.h),
@@ -437,7 +449,7 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
               decoration: BoxDecoration(
                 color: const Color(0xFFF5F7FA), borderRadius: BorderRadius.circular(16.r)),
               child: Column(children: [
-                Text('Ví dụ', style: GoogleFonts.plusJakartaSans(
+                Text(context.translate('learn.example'), style: GoogleFonts.plusJakartaSans(
                   fontSize: 12.sp, fontWeight: FontWeight.w600, color: const Color(0xFF9098A9))),
                 SizedBox(height: 4.h),
                 Text(item.example, style: GoogleFonts.battambang(

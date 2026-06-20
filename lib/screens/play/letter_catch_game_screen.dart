@@ -9,6 +9,7 @@ import '../../models/khmer_letter.dart';
 import '../../models/khmer_vowel.dart';
 import '../../services/score_service.dart';
 import '../../services/admin_service.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Trò chơi Bắt chữ Khmer — Premium High-Fidelity 3D UI giống mẫu HTML (Compile-Safe)
 class LetterCatchGameScreen extends StatefulWidget {
@@ -347,23 +348,82 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
 
   // Helper to format cooldown remaining seconds into readable time
   String _formatCooldown(int seconds) {
-    if (seconds <= 0) return '0 giây';
+    if (seconds <= 0) return context.translate('game_catch_letter.cooldown_zero');
     final h = seconds ~/ 3600;
     final m = (seconds % 3600) ~/ 60;
     final s = seconds % 60;
     
     if (h > 0) {
-      return '$h giờ $m phút';
+      return context.translate('game_catch_letter.cooldown_hours_mins', args: {
+        'hours': h.toString(),
+        'mins': m.toString(),
+      });
     } else if (m > 0) {
-      return '$m phút $s giây';
+      return context.translate('game_catch_letter.cooldown_mins_secs', args: {
+        'mins': m.toString(),
+        'secs': s.toString(),
+      });
     } else {
-      return '$s giây';
+      return context.translate('game_catch_letter.cooldown_secs', args: {
+        'secs': s.toString(),
+      });
     }
   }
 
-  void _showCooldownMessage(String itemName, int remainingSeconds) {
+  String _getTranslatedMeaning(String meaning) {
+    final sanitized = meaning.toLowerCase().trim()
+        .replaceAll('/', '_')
+        .replaceAll(' ', '_')
+        .replaceAll('đ', 'd')
+        .replaceAll('â', 'a')
+        .replaceAll('ă', 'a')
+        .replaceAll('ê', 'e')
+        .replaceAll('ô', 'o')
+        .replaceAll('ơ', 'o')
+        .replaceAll('ư', 'u')
+        .replaceAll('á', 'a')
+        .replaceAll('à', 'a')
+        .replaceAll('ả', 'a')
+        .replaceAll('ã', 'a')
+        .replaceAll('ạ', 'a')
+        .replaceAll('é', 'e')
+        .replaceAll('è', 'e')
+        .replaceAll('ẻ', 'e')
+        .replaceAll('ẽ', 'e')
+        .replaceAll('ẹ', 'e')
+        .replaceAll('í', 'i')
+        .replaceAll('ì', 'i')
+        .replaceAll('ỉ', 'i')
+        .replaceAll('ĩ', 'i')
+        .replaceAll('ị', 'i')
+        .replaceAll('ó', 'o')
+        .replaceAll('ò', 'o')
+        .replaceAll('ỏ', 'o')
+        .replaceAll('õ', 'o')
+        .replaceAll('ọ', 'o')
+        .replaceAll('ú', 'u')
+        .replaceAll('ù', 'u')
+        .replaceAll('ủ', 'u')
+        .replaceAll('ũ', 'u')
+        .replaceAll('ụ', 'u')
+        .replaceAll('ý', 'y')
+        .replaceAll('ỳ', 'y')
+        .replaceAll('ỷ', 'y')
+        .replaceAll('ỹ', 'y')
+        .replaceAll('ỵ', 'y');
+    
+    final translationKey = 'game_catch_letter.meaning_$sanitized';
+    final translated = context.translate(translationKey);
+    if (translated != translationKey) {
+      return translated;
+    }
+    return meaning;
+  }
+
+  void _showCooldownMessage(String itemKey, int remainingSeconds) {
     HapticFeedback.lightImpact();
     ScaffoldMessenger.of(context).clearSnackBars();
+    final itemName = context.translate('game_catch_letter.$itemKey');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -372,7 +432,10 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
             SizedBox(width: 10.w),
             Flexible(
               child: Text(
-                'Vật phẩm $itemName đang hồi phục! Cần thêm ${_formatCooldown(remainingSeconds)} ⏳',
+                context.translate('game_catch_letter.powerup_cooldown', args: {
+                  'name': itemName,
+                  'time': _formatCooldown(remainingSeconds),
+                }),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w600,
@@ -396,7 +459,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
     if (_showResult || _gameOver) return;
     if (_hintsLeft <= 0) {
       final remaining = _scoreService?.hintsCooldownRemaining ?? 0;
-      _showCooldownMessage('Gợi ý 🔍', remaining);
+      _showCooldownMessage('hint_name', remaining);
       return;
     }
     HapticFeedback.mediumImpact();
@@ -415,7 +478,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
     if (_showResult || _gameOver) return;
     if (_timePowerupsLeft <= 0) {
       final remaining = _scoreService?.timeCooldownRemaining ?? 0;
-      _showCooldownMessage('Thêm giờ ⏰', remaining);
+      _showCooldownMessage('time_name', remaining);
       return;
     }
     HapticFeedback.mediumImpact();
@@ -430,7 +493,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
     if (_showResult || _gameOver) return;
     if (_livesPowerupsLeft <= 0) {
       final remaining = _scoreService?.livesCooldownRemaining ?? 0;
-      _showCooldownMessage('Thêm mạng ❤️', remaining);
+      _showCooldownMessage('live_name', remaining);
       return;
     }
     HapticFeedback.mediumImpact();
@@ -445,7 +508,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
     if (_showResult || _gameOver || _isDoubleScoreActive) return;
     if (_doubleScorePowerupsLeft <= 0) {
       final remaining = _scoreService?.doubleScoreCooldownRemaining ?? 0;
-      _showCooldownMessage('Nhân đôi điểm ⭐', remaining);
+      _showCooldownMessage('double_name', remaining);
       return;
     }
     HapticFeedback.mediumImpact();
@@ -545,7 +608,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Đợi đã Bé ơi! 🥺',
+                context.translate('game_catch_letter.exit_title'),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w900,
@@ -555,7 +618,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
               ),
               SizedBox(height: 16.h),
               Text(
-                'Bé có chắc chắn muốn thoát trò chơi không? Tiến trình chơi hiện tại sẽ không được lưu lại đâu! 😭',
+                context.translate('game_catch_letter.exit_desc'),
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 15.sp,
@@ -595,7 +658,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                         ),
                         child: Center(
                           child: Text(
-                            'Tiếp tục chơi 🎮',
+                            context.translate('game_catch_letter.continue_playing'),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w900,
@@ -631,7 +694,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                         ),
                         child: Center(
                           child: Text(
-                            'Thoát 🚪',
+                            context.translate('game_catch_letter.exit_btn'),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w900,
@@ -728,14 +791,14 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
           ),
           SizedBox(height: 24.h),
           // Title
-          Text('Bắt chữ Khmer',
+          Text(context.translate('game_catch_letter.title'),
             style: GoogleFonts.plusJakartaSans(
               fontSize: 32.sp, fontWeight: FontWeight.w900, color: Colors.white,
               shadows: [
                 Shadow(color: const Color(0xFF1B5E20), offset: Offset(2.w, 2.h), blurRadius: 4),
               ])),
           SizedBox(height: 12.h),
-          Text('Ghép phụ âm + nguyên âm Khmer\nthành từ có nghĩa thật nhanh!',
+          Text(context.translate('game_catch_letter.subtitle'),
             textAlign: TextAlign.center,
             style: GoogleFonts.plusJakartaSans(
               fontSize: 16.sp, fontWeight: FontWeight.w700,
@@ -753,15 +816,15 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                 BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 4))
               ]),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              _ruleRow('🔵', 'Chọn phụ âm tương ứng'),
+              _ruleRow('🔵', context.translate('game_catch_letter.rule_consonant')),
               SizedBox(height: 10.h),
-              _ruleRow('🔴', 'Chọn nguyên âm tương ứng'),
+              _ruleRow('🔴', context.translate('game_catch_letter.rule_vowel')),
               SizedBox(height: 10.h),
-              _ruleRow('🔥', 'Tạo Combo nhân hệ số điểm'),
+              _ruleRow('🔥', context.translate('game_catch_letter.rule_combo')),
               SizedBox(height: 10.h),
-              _ruleRow('❤️', '3 Mạng chơi — Bảo vệ kỹ càng'),
+              _ruleRow('❤️', context.translate('game_catch_letter.rule_lives')),
               SizedBox(height: 10.h),
-              _ruleRow('🛡️', 'Sử dụng bảo bối trợ giúp ở dưới'),
+              _ruleRow('🛡️', context.translate('game_catch_letter.rule_powerups')),
             ]),
           ),
           SizedBox(height: 40.h),
@@ -780,7 +843,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                   const BoxShadow(color: Color(0xFF15803D), offset: Offset(0, 6), blurRadius: 0),
                   BoxShadow(color: Colors.black.withValues(alpha: 0.3), offset: const Offset(0, 8), blurRadius: 10),
                 ]),
-              child: Text('BẮT ĐẦU CHƠI',
+              child: Text(context.translate('games.start_playing').toUpperCase(),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 20.sp, fontWeight: FontWeight.w900, color: Colors.white,
                   shadows: [
@@ -1133,7 +1196,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    _currentSyllable.meaning.toUpperCase(),
+                    _getTranslatedMeaning(_currentSyllable.meaning).toUpperCase(),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 34.sp,
                       fontWeight: FontWeight.w900,
@@ -1153,7 +1216,9 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                           color: _lastCorrect ? const Color(0xFF81C784) : const Color(0xFFE57373),
                           width: 1)),
                       child: Text(
-                        _lastCorrect ? 'Chính xác! 🎉' : 'Bé thử lại nhé ⏰',
+                        _lastCorrect
+                            ? context.translate('game_catch_letter.correct_banner')
+                            : context.translate('game_catch_letter.incorrect_banner'),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.sp, fontWeight: FontWeight.bold,
                           color: _lastCorrect ? const Color(0xFF2E7D32) : const Color(0xFFC62828)),
@@ -1229,7 +1294,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                   const BoxShadow(color: Color(0xFF4527A0), offset: Offset(0, 3), blurRadius: 0),
                   BoxShadow(color: Colors.black.withOpacity(0.15), offset: const Offset(0, 4), blurRadius: 4),
                 ]),
-              child: Text('TỪ CẦN GHÉP',
+              child: Text(context.translate('game_catch_letter.to_combine'),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12.sp, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.5)),
             ),
@@ -1260,7 +1325,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
               ),
               borderRadius: BorderRadius.circular(8.r),
             ),
-            child: Text('PHỤ ÂM', style: GoogleFonts.plusJakartaSans(fontSize: 10.sp, fontWeight: FontWeight.w900, color: Colors.white))),
+            child: Text(context.translate('game_catch_letter.consonant_section'), style: GoogleFonts.plusJakartaSans(fontSize: 10.sp, fontWeight: FontWeight.w900, color: Colors.white))),
         ]),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -1298,7 +1363,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
               ),
               borderRadius: BorderRadius.circular(8.r),
             ),
-            child: Text('NGUYÊN ÂM', style: GoogleFonts.plusJakartaSans(fontSize: 10.sp, fontWeight: FontWeight.w900, color: Colors.white))),
+            child: Text(context.translate('game_catch_letter.vowel_section'), style: GoogleFonts.plusJakartaSans(fontSize: 10.sp, fontWeight: FontWeight.w900, color: Colors.white))),
         ]),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -1464,7 +1529,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
             ]
           ]),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text('XÁC NHẬN',
+          Text(context.translate('game_catch_letter.confirm_btn'),
             style: GoogleFonts.plusJakartaSans(
               fontSize: 18.sp,
               fontWeight: FontWeight.w900,
@@ -1586,7 +1651,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
             child: const Center(child: Text('🏆', style: TextStyle(fontSize: 60))),
           ),
           SizedBox(height: 16.h),
-          Text('KẾT THÚC HÀNH TRÌNH!',
+          Text(context.translate('game_catch_letter.game_over_title'),
             style: GoogleFonts.plusJakartaSans(
               fontSize: 26.sp, fontWeight: FontWeight.w900, color: const Color(0xFF1B5E20),
               shadows: [
@@ -1604,15 +1669,15 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                 BoxShadow(color: const Color(0xFF1B5E20).withOpacity(0.05), blurRadius: 16, offset: const Offset(0, 4))
               ]),
             child: Column(children: [
-              _statRow('⭐ Điểm tích lũy', '$_score'),
+              _statRow(context.translate('game_catch_letter.score_label'), '$_score'),
               SizedBox(height: 12.h),
-              _statRow('✅ Đúng', '$_correctCount / $_totalQuestions'),
+              _statRow(context.translate('game_catch_letter.correct_label'), '$_correctCount / $_totalQuestions'),
               SizedBox(height: 12.h),
-              _statRow('🎯 Chính xác', '$accuracy%'),
+              _statRow(context.translate('game_catch_letter.accuracy_label'), '$accuracy%'),
               SizedBox(height: 12.h),
-              _statRow('🔥 Combo cao nhất', 'x$_maxCombo'),
+              _statRow(context.translate('game_catch_letter.max_combo_label'), 'x$_maxCombo'),
               SizedBox(height: 12.h),
-              _statRow('📊 Cấp độ tối đa', 'Level $_level'),
+              _statRow(context.translate('game_catch_letter.max_level_label'), 'Level $_level'),
             ]),
           ),
           SizedBox(height: 32.h),
@@ -1628,7 +1693,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                   boxShadow: [
                     BoxShadow(color: Colors.black.withOpacity(0.05), offset: const Offset(0, 2), blurRadius: 2),
                   ]),
-                child: Center(child: Text('THOÁT', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w900, color: const Color(0xFF546E7A)))),
+                child: Center(child: Text(context.translate('game_catch_letter.exit_btn_gameover'), style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w900, color: const Color(0xFF546E7A)))),
               ),
             )),
             SizedBox(width: 12.w),
@@ -1644,7 +1709,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                   boxShadow: [
                     const BoxShadow(color: Color(0xFF00A343), offset: Offset(0, 4), blurRadius: 0),
                   ]),
-                child: Center(child: Text('CHƠI LẠI', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w900, color: Colors.white))),
+                child: Center(child: Text(context.translate('game_catch_letter.replay_btn_gameover'), style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w900, color: Colors.white))),
               ),
             )),
           ]),

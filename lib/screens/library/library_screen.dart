@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../services/admin_service.dart';
 import '../main_screen.dart';
+import '../../l10n/app_localizations.dart';
 import 'book_detail_screen.dart';
 import 'book_reader_screen.dart';
 import 'video_detail_screen.dart';
@@ -63,6 +64,40 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   List<DocItem> _latestDocs = [];
   bool _loading = true;
+
+  String _translateCategory(BuildContext context, String label) {
+    switch (label) {
+      case 'Tất cả':
+        return context.translate('library.all');
+      case 'Sách':
+        return context.translate('library.books');
+      case 'Truyện':
+        return context.translate('library.stories');
+      case 'Bài hát':
+        return context.translate('library.songs');
+      case 'Video':
+        return context.translate('library.videos');
+      case 'Kiến thức':
+        return context.translate('library.knowledge');
+      case 'Yêu thích':
+        return context.translate('library.favorites');
+      default:
+        return label;
+    }
+  }
+
+  String _translateBtnLabel(BuildContext context, String btnLabel) {
+    switch (btnLabel) {
+      case 'Đọc ngay':
+        return context.translate('library.read_now');
+      case 'Nghe ngay':
+        return context.translate('library.listen_now');
+      case 'Xem ngay':
+        return context.translate('library.watch_now');
+      default:
+        return btnLabel;
+    }
+  }
 
   @override
   void initState() {
@@ -244,7 +279,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             fontSize: 14.sp, color: const Color(0xFF2C3E50),
             fontWeight: FontWeight.w600),
           decoration: InputDecoration(
-            hintText: 'Tìm kiếm...',
+            hintText: context.translate('common.search'),
             hintStyle: GoogleFonts.plusJakartaSans(
               fontSize: 14.sp, fontWeight: FontWeight.w500,
               color: const Color(0xFF8896AB)),
@@ -340,7 +375,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Main title
-                        Text('Thư viện',
+                        Text(context.translate('library.title'),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 30.sp,
                             fontWeight: FontWeight.w900,
@@ -355,7 +390,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           )),
                         SizedBox(height: 6.h),
                         // Subtitle
-                        Text('Khám phá kho tài liệu học tập thú vị',
+                        Text(context.translate('library.subtitle'),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.w500,
@@ -436,7 +471,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
-                          tab.label,
+                          _translateCategory(context, tab.label),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 10.sp,
                             fontWeight: FontWeight.w800,
@@ -448,7 +483,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
-                          '${_getDocCountForLabel(tab.label)} tài liệu',
+                          context.translatePlural('library.documents_count', _getDocCountForLabel(tab.label)),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 7.5.sp,
                             fontWeight: FontWeight.w600,
@@ -481,7 +516,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           Padding(
             padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 14.h),
             child: Row(children: [
-              Text('Danh mục nổi bật',
+              Text(context.translate('library.featured_categories'),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 19.sp, fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary)),
@@ -499,7 +534,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   );
                 },
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Text('Xem tất cả',
+                  Text(context.translate('library.view_all'),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13.sp, fontWeight: FontWeight.w600,
                       color: const Color(0xFF4580C4))),
@@ -520,7 +555,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               itemBuilder: (context, index) {
                 final cat = _featuredCategories[index];
                 final count = _getDocCountForLabel(cat.title);
-                final countStr = '$count tài liệu';
+                final countStr = context.translatePlural('library.documents_count', count);
 
                 return GestureDetector(
                   onTap: () {
@@ -585,7 +620,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                              ),
                              SizedBox(height: 4.h),
                             // Title
-                            Text(cat.title,
+                            Text(_translateCategory(context, cat.title),
                               maxLines: 2, overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12.5.sp, fontWeight: FontWeight.w800,
@@ -628,7 +663,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         Padding(
           padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 14.h),
           child: Row(children: [
-            Text('$selectedLabel nổi bật',
+            Text(context.translate('library.featured_title', args: {'category': _translateCategory(context, selectedLabel)}),
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 19.sp, fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary)),
@@ -646,7 +681,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 );
               },
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text('Xem tất cả',
+                Text(context.translate('library.view_all'),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13.sp, fontWeight: FontWeight.w600,
                     color: const Color(0xFF4580C4))),
@@ -833,7 +868,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
         Padding(
           padding: EdgeInsets.fromLTRB(20.w, 22.h, 20.w, 14.h),
           child: Row(children: [
-            Text(selectedLabel == 'Tất cả' ? 'Tài liệu mới nhất' : 'Tài liệu $selectedLabel',
+            Text(selectedLabel == 'Tất cả'
+                ? context.translate('library.latest_documents')
+                : context.translate('library.latest_title', args: {'category': _translateCategory(context, selectedLabel)}),
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 19.sp, fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary)),
@@ -844,14 +881,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => CategoryListScreen(
-                      categoryTitle: selectedLabel == 'Tất cả' ? 'Tất cả tài liệu' : selectedLabel,
+                      categoryTitle: selectedLabel == 'Tất cả' ? context.translate('library.latest_documents') : _translateCategory(context, selectedLabel),
                       customItems: _latestDocs.isNotEmpty ? _latestDocs : _fallbackDocs,
                     ),
                   ),
                 );
               },
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text('Xem tất cả',
+                Text(context.translate('library.view_all'),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13.sp, fontWeight: FontWeight.w600,
                     color: const Color(0xFF4580C4))),
@@ -871,7 +908,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           Padding(
             padding: EdgeInsets.symmetric(vertical: 30.h),
             child: Text(
-              'Chưa có tài liệu nào trong danh mục này',
+              context.translate('library.no_documents'),
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w500,
@@ -1018,7 +1055,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   decoration: BoxDecoration(
                     color: const Color(0xFFFF6B6B).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8.r)),
-                  child: Text('Mới',
+                  child: Text(context.translate('library.new_badge'),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10.sp, fontWeight: FontWeight.w700,
                       color: const Color(0xFFFF6B6B))),
@@ -1046,7 +1083,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     Icon(doc.displayIcon, size: 11.sp, color: doc.displayColor),
                     SizedBox(width: 4.w),
                     Text(
-                      doc.displayType,
+                      _translateCategory(context, doc.displayType),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 9.5.sp,
                         fontWeight: FontWeight.w700,
@@ -1093,7 +1130,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                       Icon(doc.btnIcon, size: 12.sp, color: Colors.white),
                       SizedBox(width: 5.w),
-                      Text(doc.btnLabel,
+                      Text(_translateBtnLabel(context, doc.btnLabel),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 10.5.sp, fontWeight: FontWeight.w800,
                           color: Colors.white)),
@@ -1133,10 +1170,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(0, Icons.home_outlined, Icons.home_rounded, 'Trang chủ'),
-              _buildNavItem(1, Icons.school_outlined, Icons.school_rounded, 'Học tập'),
-              _buildNavItem(2, Icons.sports_esports_outlined, Icons.sports_esports_rounded, 'Trò chơi'),
-              _buildNavItem(3, Icons.person_outline_rounded, Icons.person_rounded, 'Hồ sơ'),
+              _buildNavItem(0, Icons.home_outlined, Icons.home_rounded, context.translate('nav.home')),
+              _buildNavItem(1, Icons.school_outlined, Icons.school_rounded, context.translate('nav.learn')),
+              _buildNavItem(2, Icons.sports_esports_outlined, Icons.sports_esports_rounded, context.translate('nav.games')),
+              _buildNavItem(3, Icons.person_outline_rounded, Icons.person_rounded, context.translate('nav.profile')),
             ],
           ),
         ),

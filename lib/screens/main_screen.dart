@@ -9,6 +9,8 @@ import 'learn/learn_screen.dart';
 import 'play/play_screen.dart';
 import 'profile/profile_screen.dart';
 
+import '../l10n/app_localizations.dart';
+
 /// Màn hình chính với Bottom Navigation Bar
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -73,10 +75,10 @@ class MainScreenState extends State<MainScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildNavItem(0, Icons.home_outlined, Icons.home_rounded, 'Trang chủ'),
-                _buildNavItem(1, Icons.school_outlined, Icons.school_rounded, 'Học tập'),
-                _buildNavItem(2, Icons.sports_esports_outlined, Icons.sports_esports_rounded, 'Trò chơi'),
-                _buildNavItem(3, Icons.person_outline_rounded, Icons.person_rounded, 'Hồ sơ'),
+                _buildNavItem(0, Icons.home_outlined, Icons.home_rounded, context.translate('nav.home')),
+                _buildNavItem(1, Icons.school_outlined, Icons.school_rounded, context.translate('nav.learn')),
+                _buildNavItem(2, Icons.sports_esports_outlined, Icons.sports_esports_rounded, context.translate('nav.games')),
+                _buildNavItem(3, Icons.person_outline_rounded, Icons.person_rounded, context.translate('nav.profile')),
               ],
             ),
           ),

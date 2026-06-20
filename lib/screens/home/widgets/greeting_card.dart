@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../constants/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Greeting card — mascot + speech bubble Khmer (tươi sáng, gọn gàng)
 class GreetingCard extends StatelessWidget {
@@ -29,30 +30,36 @@ class GreetingCard extends StatelessWidget {
                 child: Image.asset('image/Vật chào.png', fit: BoxFit.contain)),
               SizedBox(width: 14.w),
               // Speech bubble
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 14.h),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.headerMid, Color(0xFF7EB5EA)]),
-                  borderRadius: BorderRadius.circular(18.r),
-                  boxShadow: [BoxShadow(
-                    color: AppColors.headerMid.withValues(alpha: 0.20),
-                    blurRadius: 12.r, offset: Offset(0, 4.h))]),
-                child: Column(children: [
-                  Text('សួស្តី!',
-                    style: GoogleFonts.battambang(
-                      fontSize: 22.sp, fontWeight: FontWeight.w700,
-                      color: Colors.white)),
-                  Text('(Xin chào!)',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13.sp, fontWeight: FontWeight.w600,
-                      color: Colors.white.withValues(alpha: 0.9))),
-                ]),
+              Flexible(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 14.h),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.headerMid, Color(0xFF7EB5EA)]),
+                    borderRadius: BorderRadius.circular(18.r),
+                    boxShadow: [BoxShadow(
+                      color: AppColors.headerMid.withValues(alpha: 0.20),
+                      blurRadius: 12.r, offset: Offset(0, 4.h))]),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('សួស្តី!',
+                        style: GoogleFonts.battambang(
+                          fontSize: 22.sp, fontWeight: FontWeight.w700,
+                          color: Colors.white)),
+                      Text('(${context.translate('home.welcome_mascot')})',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.sp, fontWeight: FontWeight.w600,
+                          color: Colors.white.withValues(alpha: 0.9))),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
           SizedBox(height: 16.h),
-          Text('Hôm nay bé muốn học gì nhỉ? 🌟',
+          Text(context.translate('home.mascot_ask'),
             style: GoogleFonts.plusJakartaSans(
               fontSize: 15.sp, fontWeight: FontWeight.w700,
               color: AppColors.onBackground)),

@@ -35,6 +35,7 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import 'auth_service.dart';
 import 'khmer_handwriting_service.dart';
+import 'local_notification_service.dart';
 
 // ═══════════════════════════════════════════════════════════════════════
 // Data Models
@@ -297,6 +298,26 @@ class HandwritingWebSocketClient {
 
     _socket!.onError((err) {
       debugPrint('[HandwritingWS] Socket error: $err');
+    });
+
+    // ── Listen for new push notifications ──────────────────────────
+    _socket!.on('notification:new', (data) {
+      debugPrint('[HandwritingWS] 🔔 Received notification:new event');
+      try {
+        final Map<String, dynamic> dataMap = Map<String, dynamic>.from(data as Map);
+        final title = dataMap['title']?.toString() ?? 'Thông báo nhắc học';
+        final message = dataMap['message']?.toString() ?? '';
+        final idStr = dataMap['_id']?.toString() ?? dataMap['id']?.toString() ?? '';
+        
+        LocalNotificationService().showNotification(
+          id: idStr.hashCode,
+          title: title,
+          body: message,
+          payload: idStr,
+        );
+      } catch (e) {
+        debugPrint('[HandwritingWS] Error handling socket notification: $e');
+      }
     });
 
     // ── Listen for analysis results ───────────────────────────────

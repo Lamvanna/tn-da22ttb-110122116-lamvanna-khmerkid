@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -108,9 +109,9 @@ class _CoengScreenState extends State<CoengScreen>
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Text('🎉', style: TextStyle(fontSize: 48.sp)),
             SizedBox(height: 12.h),
-            Text('Chúc mừng!', style: GoogleFonts.plusJakartaSans(fontSize: 24.sp, fontWeight: FontWeight.w800, color: AppColors.tertiary)),
+            Text(context.translate('common.congratulations'), style: GoogleFonts.plusJakartaSans(fontSize: 24.sp, fontWeight: FontWeight.w800, color: AppColors.tertiary)),
             SizedBox(height: 8.h),
-            Text('Bạn đã hoàn thành phụ âm chân "${_lesson.combined}"',
+            Text(context.translate('learn.completed_coeng', args: {'character': _lesson.combined}),
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
             SizedBox(height: 6.h),
@@ -124,7 +125,7 @@ class _CoengScreenState extends State<CoengScreen>
                 onPressed: () { Navigator.pop(ctx); _goTo(_idx + 1); },
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.tertiary, padding: EdgeInsets.symmetric(vertical: 14.h),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r))),
-                child: Text('Bài tiếp theo →', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w700, color: Colors.white)))),
+                child: Text(context.translate('learn.next_lesson_btn'), style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w700, color: Colors.white)))),
               SizedBox(height: 8.h),
             ],
             SizedBox(width: double.infinity, child: OutlinedButton(
@@ -132,7 +133,7 @@ class _CoengScreenState extends State<CoengScreen>
               style: OutlinedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 14.h),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
                 side: BorderSide(color: AppColors.violet)),
-              child: Text('Quay về bản đồ', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w700, color: AppColors.violet)))),
+              child: Text(context.translate('learn.back_to_map'), style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w700, color: AppColors.violet)))),
           ]))));
   }
 
@@ -207,7 +208,7 @@ class _CoengScreenState extends State<CoengScreen>
                           constraints: BoxConstraints(minWidth: 44.w, minHeight: 44.w)),
                         SizedBox(width: 6.w),
                         Expanded(
-                          child: Text('Phụ âm chân ${_idx + 1}/${_lessons.length}',
+                          child: Text(context.translate('learn.coeng_count', args: {'done': _idx + 1, 'total': _lessons.length}),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 24.sp, fontWeight: FontWeight.w800, color: Colors.white))),
                       ],
@@ -276,16 +277,16 @@ class _CoengScreenState extends State<CoengScreen>
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildFormulaBox(_lesson.upperConsonant, const Color(0xFFFF6D00), 'P.âm trên'),
+              _buildFormulaBox(_lesson.upperConsonant, const Color(0xFFFF6D00), context.translate('learn.coeng_upper_consonant')),
               Padding(padding: EdgeInsets.only(top: 20.h),
                 child: Text('្', style: GoogleFonts.battambang(fontSize: 24.sp, fontWeight: FontWeight.w800, color: const Color(0xFFB0BEC5)))),
-              _buildFormulaBox(_lesson.lowerConsonant, const Color(0xFF1CB0F6), 'P.âm dưới'),
+              _buildFormulaBox(_lesson.lowerConsonant, const Color(0xFF1E88E5), context.translate('learn.coeng_lower_consonant')),
               Padding(padding: EdgeInsets.only(top: 20.h),
                 child: Text('+', style: GoogleFonts.plusJakartaSans(fontSize: 24.sp, fontWeight: FontWeight.w800, color: const Color(0xFFB0BEC5)))),
-              _buildFormulaBox(_lesson.vowel, const Color(0xFFFF4B4B), 'Nguyên âm'),
+              _buildFormulaBox(_lesson.vowel, const Color(0xFFFF4B4B), context.translate('learn.vowel')),
               Padding(padding: EdgeInsets.only(top: 20.h),
                 child: Text('=', style: GoogleFonts.plusJakartaSans(fontSize: 24.sp, fontWeight: FontWeight.w800, color: const Color(0xFFB0BEC5)))),
-              _buildFormulaBox(_lesson.combined, const Color(0xFF58CC02), 'Kết quả'),
+              _buildFormulaBox(_lesson.combined, const Color(0xFF58CC02), context.translate('learn.spelling_result')),
             ],
           ),
         ),
@@ -306,7 +307,7 @@ class _CoengScreenState extends State<CoengScreen>
               Row(children: [
                 Icon(Icons.volume_up_rounded, size: 16.w, color: const Color(0xFFFF6D00)),
                 SizedBox(width: 6.w),
-                Expanded(child: Text(_lesson.meaning.isNotEmpty ? 'Nghĩa: ${_lesson.meaning}' : 'Bài luyện phụ âm chân',
+                Expanded(child: Text(_lesson.meaning.isNotEmpty ? '${context.translate('learn.meaning_prefix')}${_lesson.meaning}' : context.translate('learn.coeng_practice_desc'),
                   style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: AppColors.textSecondary))),
               ]),
             ])),
@@ -356,7 +357,7 @@ class _CoengScreenState extends State<CoengScreen>
               Expanded(
                 child: KhmerWriteWidget(
                   character: _lesson.combined,
-                  label: 'phụ âm chân',
+                  label: context.translate('learn.coeng_sub_consonant'),
                   isCompound: true,
                   showStrokeGuide: true, // hiển thị hướng nét nếu có guide data
                   enableOcr: false,
@@ -379,15 +380,15 @@ class _CoengScreenState extends State<CoengScreen>
   Widget _buildActionRow() {
     return Row(children: [
       Expanded(child: GestureDetector(onTap: () => setState(() => _activeSheet = _activeSheet == 1 ? 0 : 1),
-        child: _actionCard(imagePath: 'image/Nghe.png', label: 'Nghe', sub: 'Học phát âm',
+        child: _actionCard(imagePath: 'image/Nghe.png', label: context.translate('common.listen'), sub: context.translate('learning_path.spelling'),
           bgColor: const Color(0xFFE8F5E9), accentColor: const Color(0xFF43A047), stepIdx: 0))),
       SizedBox(width: 8.w),
       Expanded(child: GestureDetector(onTap: () => setState(() => _activeSheet = _activeSheet == 2 ? 0 : 2),
-        child: _actionCard(imagePath: 'image/Mic.png', label: 'Nói', sub: 'Luyện phát âm',
+        child: _actionCard(imagePath: 'image/Mic.png', label: context.translate('common.speak'), sub: context.translate('learn.practice_pronunciation'),
           bgColor: const Color(0xFFE3F2FD), accentColor: const Color(0xFF1E88E5), stepIdx: 1))),
       SizedBox(width: 8.w),
       Expanded(child: GestureDetector(onTap: () => setState(() => _activeSheet = _activeSheet == 3 ? 0 : 3),
-        child: _actionCard(imagePath: 'image/Viết.png', label: 'Viết', sub: 'Tập viết',
+        child: _actionCard(imagePath: 'image/Viết.png', label: context.translate('common.write'), sub: context.translate('learn.practice_writing'),
           bgColor: const Color(0xFFEDE7F6), accentColor: const Color(0xFF5E35B1), stepIdx: 2))),
     ]);
   }
@@ -417,7 +418,7 @@ class _CoengScreenState extends State<CoengScreen>
     final hasPrev = _idx > 0;
     final hasNext = _idx < _lessons.length - 1;
     final canNext = _canGo(_idx + 1);
-    final labels = ['Nghe', 'Nói', 'Viết'];
+    final labels = [context.translate('common.listen'), context.translate('common.speak'), context.translate('common.write')];
     final stepColors = [const Color(0xFF43A047), const Color(0xFF1E88E5), const Color(0xFF5E35B1)];
     return Row(
       children: [
@@ -433,7 +434,7 @@ class _CoengScreenState extends State<CoengScreen>
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.chevron_left_rounded, color: hasPrev ? const Color(0xFF1E88E5) : AppColors.textHint, size: 18.w),
-              Text('Trước', style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700, color: hasPrev ? const Color(0xFF1E88E5) : AppColors.textHint)),
+              Text(context.translate('common.back'), style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700, color: hasPrev ? const Color(0xFF1E88E5) : AppColors.textHint)),
             ]),
           ),
         ),
@@ -515,10 +516,10 @@ class _CoengScreenState extends State<CoengScreen>
               _goTo(_idx + 1);
             } else if (hasNext) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Vui lòng hoàn thành tất cả hoạt động (Nghe, Nói, Viết) trước khi học bài tiếp theo.'),
+                SnackBar(
+                  content: Text(context.translate('learn.complete_activities_warning')),
                   backgroundColor: Colors.orange,
-                  duration: Duration(seconds: 2),
+                  duration: const Duration(seconds: 2),
                 ),
               );
             }
@@ -532,7 +533,7 @@ class _CoengScreenState extends State<CoengScreen>
               boxShadow: canNext ? [BoxShadow(color: const Color(0xFF1E88E5).withValues(alpha: 0.35), blurRadius: 10.r, offset: Offset(0, 3.h))] : null,
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Text(canNext ? 'Tiếp theo' : 'Khóa', style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: canNext ? Colors.white : AppColors.textHint)),
+              Text(canNext ? context.translate('common.next') : context.translate('common.locked'), style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w700, color: canNext ? Colors.white : AppColors.textHint)),
               SizedBox(width: 4.w),
               Icon(canNext ? Icons.chevron_right_rounded : Icons.lock_rounded, color: canNext ? Colors.white : AppColors.textHint, size: 18.w),
             ]),
@@ -588,7 +589,7 @@ class _InlineListenContentState extends State<_InlineListenContent> with SingleT
       Padding(padding: EdgeInsets.only(top: 18.h, bottom: 8.h),
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(Icons.headphones_rounded, color: AppColors.tertiary, size: 20.w), SizedBox(width: 8.w),
-          Text('Nghe phụ âm chân', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w800, color: AppColors.tertiaryDark)),
+          Text(context.translate('learn.listen_coeng'), style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w800, color: AppColors.tertiaryDark)),
         ])),
       Expanded(child: Align(alignment: const Alignment(0, -0.2),
         child: Padding(padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -643,7 +644,7 @@ class _InlineListenContentState extends State<_InlineListenContent> with SingleT
               ),
             ),
             SizedBox(height: 8.h),
-            Text(_isPlaying ? 'Đang phát âm...' : _playCount > 0 ? 'Đã nghe $_playCount lần • Nhấn nghe lại' : 'Nhấn nút để nghe phát âm mẫu',
+            Text(_isPlaying ? context.translate('learn.pronouncing') : _playCount > 0 ? context.translate('learn.listened_count_label', args: {'count': _playCount}) : context.translate('learn.press_to_listen'),
               style: GoogleFonts.plusJakartaSans(fontSize: 12.sp, fontWeight: FontWeight.w600, color: _isPlaying ? AppColors.tertiary : AppColors.textHint)),
           ]))))
     ]);
@@ -770,7 +771,7 @@ class _InlineWriteContentState extends State<_InlineWriteContent> {
             Icon(_showHint ? Icons.lightbulb_rounded : Icons.edit_rounded,
               color: _showHint ? AppColors.tertiary : AppColors.primary, size: 20.w),
             SizedBox(width: 8.w),
-            Text(_showHint ? 'Gợi ý viết' : 'Viết chữ', style: GoogleFonts.plusJakartaSans(
+            Text(_showHint ? context.translate('learn.writing_hint') : context.translate('common.write'), style: GoogleFonts.plusJakartaSans(
               fontSize: 16.sp, fontWeight: FontWeight.w800,
               color: _showHint ? AppColors.tertiaryDark : AppColors.primaryDark,
             )),
@@ -796,7 +797,7 @@ class _InlineWriteContentState extends State<_InlineWriteContent> {
                     child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                       Icon(Icons.refresh_rounded, size: 16.sp, color: AppColors.textHint),
                       SizedBox(width: 4.w),
-                      Text('Xóa', style: GoogleFonts.plusJakartaSans(
+                      Text(context.translate('common.clear'), style: GoogleFonts.plusJakartaSans(
                         fontSize: 13.sp, fontWeight: FontWeight.w700, color: AppColors.textHint,
                       )),
                     ]),
@@ -826,7 +827,7 @@ class _InlineWriteContentState extends State<_InlineWriteContent> {
                         size: 16.sp, color: Colors.white),
                       SizedBox(width: 4.w),
                       Text(
-                        _passed == null ? 'Kiểm tra' : _passed! ? 'Đẹp lắm! 🎉' : 'Thử lại',
+                        _passed == null ? context.translate('common.check') : _passed! ? context.translate('learn.beautiful_emoji') : context.translate('common.retry'),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 13.sp, fontWeight: FontWeight.w700, color: Colors.white,
                       )),
@@ -849,7 +850,7 @@ class _InlineWriteContentState extends State<_InlineWriteContent> {
                       Icon(Icons.lightbulb_outline_rounded, size: 16.sp,
                         color: _showHint ? AppColors.tertiaryDark : AppColors.textHint),
                       SizedBox(width: 4.w),
-                      Text('Gợi ý', style: GoogleFonts.plusJakartaSans(
+                      Text(context.translate('learn.hint'), style: GoogleFonts.plusJakartaSans(
                         fontSize: 13.sp, fontWeight: FontWeight.w700,
                         color: _showHint ? AppColors.tertiaryDark : AppColors.textHint,
                       )),

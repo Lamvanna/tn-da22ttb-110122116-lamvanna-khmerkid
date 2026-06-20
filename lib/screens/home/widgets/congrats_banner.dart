@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../constants/app_colors.dart';
 import '../daily_quest_screen.dart';
 import '../../../widgets/app_page_route.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Banner "Nhiệm vụ hôm nay" — nền trắng, tiến trình
 class CongratsBanner extends StatelessWidget {
@@ -18,6 +19,9 @@ class CongratsBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayTitle = title == 'Nhiệm vụ hôm nay' ? context.translate('tasks.today_tasks') : title;
+    final displayMessage = message == 'Hoàn thành nhiệm vụ để nhận thưởng' ? context.translate('tasks.complete_to_reward') : message;
+
     return GestureDetector(
       onTap: () => Navigator.push(context,
         AppPageRoute(page: const DailyQuestScreen())),
@@ -49,12 +53,12 @@ class CongratsBanner extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
+                  Text(displayTitle,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 15.sp, fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary)),
                   SizedBox(height: 2.h),
-                  Text(message,
+                  Text(displayMessage,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12.sp, fontWeight: FontWeight.w500,
                       color: AppColors.textSecondary)),
@@ -67,7 +71,7 @@ class CongratsBanner extends StatelessWidget {
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                       Icon(Icons.star_rounded, color: const Color(0xFFFFA726), size: 14.sp),
                       SizedBox(width: 4.w),
-                      Text('1/3 nhiệm vụ',
+                      Text(context.translate('tasks.tasks_count', args: {'completed': 1, 'total': 3}),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11.sp, fontWeight: FontWeight.w700,
                           color: AppColors.headerDark)),

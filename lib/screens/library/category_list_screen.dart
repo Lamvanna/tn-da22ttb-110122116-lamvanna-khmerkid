@@ -7,6 +7,7 @@ import 'book_detail_screen.dart';
 import 'book_reader_screen.dart';
 import 'video_detail_screen.dart';
 import 'song_player_screen.dart';
+import '../../l10n/app_localizations.dart';
 
 class CategoryListScreen extends StatelessWidget {
   final String categoryTitle;
@@ -17,6 +18,40 @@ class CategoryListScreen extends StatelessWidget {
     required this.categoryTitle,
     this.customItems,
   });
+
+  String _translateCategory(BuildContext context, String label) {
+    switch (label) {
+      case 'Tất cả':
+        return context.translate('library.all');
+      case 'Sách':
+        return context.translate('library.books');
+      case 'Truyện':
+        return context.translate('library.stories');
+      case 'Bài hát':
+        return context.translate('library.songs');
+      case 'Video':
+        return context.translate('library.videos');
+      case 'Kiến thức':
+        return context.translate('library.knowledge');
+      case 'Yêu thích':
+        return context.translate('library.favorites');
+      default:
+        return label;
+    }
+  }
+
+  String _translateBtnLabel(BuildContext context, String btnLabel) {
+    switch (btnLabel) {
+      case 'Đọc ngay':
+        return context.translate('library.read_now');
+      case 'Nghe ngay':
+        return context.translate('library.listen_now');
+      case 'Xem ngay':
+        return context.translate('library.watch_now');
+      default:
+        return btnLabel;
+    }
+  }
 
   List<_FeaturedCat> get _featuredCategories => [
     const _FeaturedCat(
@@ -61,7 +96,7 @@ class CategoryListScreen extends StatelessWidget {
         body: Column(
           children: [
             AppHeader(
-              title: 'Tất cả danh mục',
+              title: context.translate('library.all_categories'),
               onBack: () => Navigator.pop(context),
             ),
             Expanded(
@@ -79,7 +114,7 @@ class CategoryListScreen extends StatelessWidget {
                   final count = (customItems ?? DocItem.fallbackDocs)
                       .where((doc) => doc.matchesCategory(cat.title))
                       .length;
-                  final countStr = '$count tài liệu';
+                  final countStr = context.translatePlural('library.documents_count', count);
 
                   return GestureDetector(
                     onTap: () {
@@ -139,7 +174,7 @@ class CategoryListScreen extends StatelessWidget {
                                 ),
                                 SizedBox(height: 8.h),
                                 Text(
-                                  cat.title,
+                                  _translateCategory(context, cat.title),
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 14.sp, fontWeight: FontWeight.w800,
                                     color: Colors.white, height: 1.2),
@@ -186,7 +221,9 @@ class CategoryListScreen extends StatelessWidget {
       body: Column(
         children: [
           AppHeader(
-            title: categoryTitle,
+            title: categoryTitle == 'Tất cả danh mục' || categoryTitle == 'Tất cả'
+                ? context.translate('library.latest_documents')
+                : _translateCategory(context, categoryTitle),
             onBack: () => Navigator.pop(context),
           ),
           Expanded(
@@ -338,7 +375,7 @@ class CategoryListScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color(0xFFFF6B6B).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8.r)),
-                  child: Text('Mới',
+                  child: Text(context.translate('library.new_badge'),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10.sp, fontWeight: FontWeight.w700,
                       color: const Color(0xFFFF6B6B))),
@@ -366,7 +403,7 @@ class CategoryListScreen extends StatelessWidget {
                     Icon(doc.displayIcon, size: 11.sp, color: doc.displayColor),
                     SizedBox(width: 4.w),
                     Text(
-                      doc.displayType,
+                      _translateCategory(context, doc.displayType),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 9.5.sp,
                         fontWeight: FontWeight.w700,
@@ -413,7 +450,7 @@ class CategoryListScreen extends StatelessWidget {
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                       Icon(doc.btnIcon, size: 12.sp, color: Colors.white),
                       SizedBox(width: 5.w),
-                      Text(doc.btnLabel,
+                      Text(_translateBtnLabel(context, doc.btnLabel),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 10.5.sp, fontWeight: FontWeight.w800,
                           color: Colors.white)),

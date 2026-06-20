@@ -23,6 +23,7 @@ const passport = require('passport');
 // Config imports
 const connectDB = require('./src/config/database');
 const { initSocket } = require('./src/sockets');
+const { initStudyReminderCron } = require('./src/cron/studyReminderCron');
 
 // Route imports
 const routes = require('./src/routes');
@@ -47,6 +48,9 @@ connectDB();
 // ========================================
 const io = initSocket(server);
 app.set('io', io); // Make io accessible in routes/controllers
+
+// Initialize Cron Schedulers
+initStudyReminderCron();
 
 // ========================================
 // Global Middlewares

@@ -40,4 +40,16 @@ subprojects {
     }
 }
 
+subprojects {
+    if (project.name != "app") {
+        afterEvaluate {
+            if (hasProperty("android")) {
+                extensions.findByType<com.android.build.gradle.BaseExtension>()?.apply {
+                    compileSdkVersion(36)
+                }
+            }
+        }
+    }
+}
+
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -189,7 +190,7 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
                     ),
                     SizedBox(width: 12.w),
                     Flexible(
-                      child: Text('Ghép vần',
+                      child: Text(context.translate('learning_path.spelling'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.plusJakartaSans(
@@ -429,7 +430,7 @@ class _ConsonantGroupCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(10.r),
                           ),
                           child: Text(
-                            'Bài ${group.number}',
+                            context.translate('learn.lesson_n', args: {'number': group.number}),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11.sp,
                               fontWeight: FontWeight.w800,
@@ -443,7 +444,7 @@ class _ConsonantGroupCard extends StatelessWidget {
                         // Title: "Phụ âm ក"
                         Expanded(
                           child: Text(
-                            'Phụ âm ${group.consonant}',
+                            '${context.translate('learn.consonant')} ${group.consonant}',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w800,
@@ -463,7 +464,7 @@ class _ConsonantGroupCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8.r),
                             ),
                             child: Text(
-                              'Hoàn thành',
+                              context.translate('common.done'),
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10.sp,
                                 fontWeight: FontWeight.w700,
@@ -486,7 +487,7 @@ class _ConsonantGroupCard extends StatelessWidget {
 
                     // ── Subtitle ──
                     Text(
-                      'Ghép phụ âm ${group.consonant} với các nguyên âm',
+                      context.translate('learn.spelling_desc', args: {'consonant': group.consonant}),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w500,
@@ -536,7 +537,7 @@ class _ConsonantGroupCard extends StatelessWidget {
                         SizedBox(width: 10.w),
                         // Count
                         Text(
-                          '${group.doneCount}/${group.totalCount} chữ',
+                          context.translate('learn.letters_completed_count', args: {'done': group.doneCount, 'total': group.totalCount}),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11.sp,
                             fontWeight: FontWeight.w700,

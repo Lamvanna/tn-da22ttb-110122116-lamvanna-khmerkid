@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -46,8 +47,8 @@ class _SpellingHubScreenState extends State<SpellingHubScreen> {
     final modes = <_SpellingMode>[
       _SpellingMode(
         index: 1,
-        title: 'Phụ âm + Nguyên âm',
-        subtitle: 'Ghép phụ âm với nguyên âm cơ bản',
+        title: context.translate('learn.spelling_title_basic'),
+        subtitle: context.translate('learn.spelling_type_basic'),
         example: 'ក + ា = កា',
         imagePath: 'image/Học phụ âm và nguyên âm.png',
         color: const Color(0xFF7F39FB),
@@ -58,8 +59,8 @@ class _SpellingHubScreenState extends State<SpellingHubScreen> {
       ),
       _SpellingMode(
         index: 2,
-        title: 'Phụ âm + Phụ âm + dấu ់',
-        subtitle: 'Ghép vần đóng với dấu chặt cụt ់',
+        title: context.translate('learn.spelling_title_closed'),
+        subtitle: context.translate('learn.spelling_type_closed'),
         example: 'ក + ន + ់ = កន់',
         imagePath: 'image/Phụ âm va phụ âm.png',
         color: const Color(0xFF0084FF),
@@ -70,8 +71,8 @@ class _SpellingHubScreenState extends State<SpellingHubScreen> {
       ),
       _SpellingMode(
         index: 3,
-        title: 'Phụ âm có chân ្',
-        subtitle: 'Ghép vần với phụ âm chân (coeng)',
+        title: context.translate('learn.spelling_title_coeng'),
+        subtitle: context.translate('learn.spelling_type_coeng'),
         example: 'ក + ្ក = ក្ក',
         imagePath: 'image/phụ âm có chân.png',
         color: const Color(0xFFF97316),
@@ -114,7 +115,7 @@ class _SpellingHubScreenState extends State<SpellingHubScreen> {
                         SizedBox(width: 8.w),
                         Expanded(
                           child: Text(
-                            'Bé hãy chọn loại ghép vần để bắt đầu nhé!',
+                            context.translate('learn.choose_spelling_type'),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 12.5.sp,
                               fontWeight: FontWeight.w600,
@@ -227,7 +228,7 @@ class _SpellingHubScreenState extends State<SpellingHubScreen> {
                       SizedBox(width: 12.w),
                       Flexible(
                         child: Text(
-                          'Ghép vần',
+                          context.translate('learning_path.spelling'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.plusJakartaSans(
@@ -342,7 +343,7 @@ class _SpellingHubScreenState extends State<SpellingHubScreen> {
             SizedBox(width: 10.w),
             Expanded(
               child: Text(
-                'Sắp ra mắt — bé chờ một xíu nhé!',
+                context.translate('learn.coming_soon_wait'),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w600,
@@ -569,7 +570,7 @@ class _ModeCard extends StatelessWidget {
                           size: 10.sp, color: Colors.white),
                       SizedBox(width: 3.w),
                       Text(
-                        'Sắp có',
+                        context.translate('learn.coming_soon_short'),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 9.sp,
                           fontWeight: FontWeight.w800,
@@ -689,10 +690,10 @@ class _HubBottomNav extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(context, 0, Icons.home_outlined, Icons.home_rounded, 'Trang chủ'),
-              _buildNavItem(context, 1, Icons.school_outlined, Icons.school_rounded, 'Học tập'),
-              _buildNavItem(context, 2, Icons.sports_esports_outlined, Icons.sports_esports_rounded, 'Trò chơi'),
-              _buildNavItem(context, 3, Icons.person_outline_rounded, Icons.person_rounded, 'Hồ sơ'),
+              _buildNavItem(context, 0, Icons.home_outlined, Icons.home_rounded, context.translate('nav.home')),
+              _buildNavItem(context, 1, Icons.school_outlined, Icons.school_rounded, context.translate('nav.learn')),
+              _buildNavItem(context, 2, Icons.sports_esports_outlined, Icons.sports_esports_rounded, context.translate('nav.games')),
+              _buildNavItem(context, 3, Icons.person_outline_rounded, Icons.person_rounded, context.translate('nav.profile')),
             ],
           ),
         ),

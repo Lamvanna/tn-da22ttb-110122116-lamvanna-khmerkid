@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import '../../constants/app_colors.dart';
 import '../../services/auth_service.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/score_service.dart';
 import '../../services/storage_service.dart';
 import '../main_screen.dart';
@@ -233,7 +234,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                             height: 36.w,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.white.withValues(alpha: 0.15),
+                              color: Colors.white.withOpacity(0.15),
                             ),
                             child: Icon(
                               Icons.arrow_back_rounded,
@@ -244,7 +245,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         ),
                         const Spacer(),
                         Text(
-                          'Bảng xếp hạng',
+                          context.translate('leaderboard.title'),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.w700,
@@ -260,14 +261,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                     Container(
                       padding: EdgeInsets.all(3.w),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
+                        color: Colors.white.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(14.r),
                       ),
                       child: Row(
                         children: [
-                          _tab('Tuần này', 0),
-                          _tab('Tháng này', 1),
-                          _tab('Tất cả', 2),
+                           _tab(context.translate('leaderboard.weekly'), 0),
+                           _tab(context.translate('leaderboard.monthly'), 1),
+                           _tab(context.translate('leaderboard.all_time'), 2),
                         ],
                       ),
                     ),
@@ -285,128 +286,52 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       color: Color(0xFF1E88E5),
                     ),
                   )
-                : SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h),
-                    child: Column(
-                      children: [
-                        _buildPodium(),
-                        SizedBox(height: 16.h),
-                        ..._buildRankList(),
-                      ],
+                : SafeArea(
+                    top: false,
+                    bottom: _myRank <= 8,
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h),
+                      child: Column(
+                        children: [
+                          _buildPodium(),
+                          SizedBox(height: 16.h),
+                          ..._buildRankList(),
+                        ],
+                      ),
                     ),
                   ),
           ),
 
           // ═══ MY RANK — CHỈ HIỆN KHI KHÔNG CÓ TRONG LIST ═══
           if (_myRank > 8)
-            Padding(
-              padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 0),
-              child: _buildMyRank(),
-            ),
-        ],
-      ),
-      // ═══ BOTTOM NAV BAR ═══
-      extendBody: false,
-      bottomNavigationBar: _buildBottomNav(),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════
-  // BOTTOM NAVIGATION BAR
-  // ═══════════════════════════════════════════════════
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24.r),
-          topRight: Radius.circular(24.r),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 16.r,
-            offset: Offset(0, -4.h),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 9.h),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(0, Icons.home_outlined, Icons.home_rounded, 'Trang chủ'),
-              _buildNavItem(1, Icons.school_outlined, Icons.school_rounded, 'Học tập'),
-              _buildNavItem(2, Icons.sports_esports_outlined, Icons.sports_esports_rounded, 'Trò chơi'),
-              _buildNavItem(3, Icons.person_outline_rounded, Icons.person_rounded, 'Hồ sơ'),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(int index, IconData inactiveIcon, IconData activeIcon, String label) {
-    final bool isSelected = index == 0; // Bảng xếp hạng is opened from the Home screen (Trang chủ)
-    final Color color = isSelected ? AppColors.primary : AppColors.navInactive;
-
-    return Expanded(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          Navigator.pop(context);
-          final mainState = MainScreenState.of(context);
-          if (mainState != null) {
-            mainState.switchTab(index);
-          }
-          HapticFeedback.lightImpact();
-        },
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedScale(
-              scale: isSelected ? 1.12 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOutBack,
-              child: Icon(
-                isSelected ? activeIcon : inactiveIcon,
-                color: color,
-                size: 26.sp,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              label,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 11.sp,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                color: color,
-                height: 1.1,
-              ),
-            ),
-            SizedBox(height: 3.h),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              width: isSelected ? 20.w : 0.w,
-              height: 3.h,
+            Container(
+              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h),
               decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(1.5.r),
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20.r),
+                  topRight: Radius.circular(20.r),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 12.r,
+                    offset: Offset(0, -4.h),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                top: false,
+                bottom: true,
+                child: _buildMyRank(),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
 
-  // ══════════════════════════════════════════════════════════════
-  // TAB
-  // ══════════════════════════════════════════════════════════════
   Widget _tab(String text, int index) {
     final active = _selectedTab == index;
     return Expanded(
@@ -433,7 +358,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               fontWeight: FontWeight.w700,
               color: active
                   ? AppColors.headerMid
-                  : Colors.white.withValues(alpha: 0.7),
+                  : Colors.white.withOpacity(0.7),
             ),
           ),
         ),
@@ -449,59 +374,74 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     final second = _leaderboard.length >= 2 ? _leaderboard[1] : null;
     final third = _leaderboard.length >= 3 ? _leaderboard[2] : null;
 
-    return Container(
-      padding: EdgeInsets.fromLTRB(8.w, 16.h, 8.w, 14.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 16.r,
-            offset: Offset(0, 4.h),
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeOutBack,
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: 0.95 + (0.05 * value),
+          child: Opacity(
+            opacity: value.clamp(0.0, 1.0),
+            child: child,
           ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          // #2 — Silver
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(top: 28.h),
+        );
+      },
+      child: Container(
+        padding: EdgeInsets.fromLTRB(10.w, 16.h, 10.w, 16.h),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.white,
+              Color(0xFFF8FAFC),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(24.r),
+          border: Border.all(color: const Color(0xFFE2E8F0), width: 1.w),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1E293B).withOpacity(0.06),
+              blurRadius: 20.r,
+              offset: Offset(0, 8.h),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            // #2 — Silver (left)
+            Expanded(
               child: _podiumItem(
                 rank: 2,
                 data: second,
-                crownColor: const Color(0xFFB0BEC5),
-                medalColors: [const Color(0xFFC0C0C0), const Color(0xFFA8A8A8)],
-                avatarSize: 64.w,
+                medalColors: [const Color(0xFFCFD8DC), const Color(0xFF78909C)],
+                avatarSize: 60.w,
               ),
             ),
-          ),
-          // #1 — Gold (tallest)
-          Expanded(
-            child: _podiumItem(
-              rank: 1,
-              data: first,
-              crownColor: const Color(0xFFFFCA28),
-              medalColors: [const Color(0xFFFFCA28), const Color(0xFFE5A800)],
-              avatarSize: 80.w,
+            SizedBox(width: 6.w),
+            // #1 — Gold (center, tallest)
+            Expanded(
+              child: _podiumItem(
+                rank: 1,
+                data: first,
+                medalColors: [const Color(0xFFFFD54F), const Color(0xFFFF8F00)],
+                avatarSize: 76.w,
+              ),
             ),
-          ),
-          // #3 — Bronze
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(top: 36.h),
+            SizedBox(width: 6.w),
+            // #3 — Bronze (right)
+            Expanded(
               child: _podiumItem(
                 rank: 3,
                 data: third,
-                crownColor: const Color(0xFFCD7F32),
-                medalColors: [const Color(0xFFD4915E), const Color(0xFFB5733A)],
-                avatarSize: 58.w,
+                medalColors: [const Color(0xFFE0A96D), const Color(0xFF8A5A36)],
+                avatarSize: 52.w,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -509,19 +449,70 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   Widget _podiumItem({
     required int rank,
     required Map<String, dynamic>? data,
-    required Color crownColor,
     required List<Color> medalColors,
     required double avatarSize,
   }) {
     final bool isEmpty = data == null;
-    final String name = isEmpty ? 'Vị trí trống' : (data['name'] as String);
+    final String name = isEmpty
+        ? context.translate('common.empty_slot')
+        : ((data['isMe'] == true) ? context.translate('common.you') : (data['name'] as String));
     final int stars = isEmpty ? 0 : (data['stars'] as int);
     final String avatar = isEmpty ? '' : (data['avatar'] as String);
+
+    // Cấu hình bục (pedestal) của từng hạng
+    double pedestalMinHeight = 0;
+    List<Color> pedestalColors = [];
+    BoxShadow pedestalShadow;
+    Border pedestalBorder;
+
+    if (rank == 1) {
+      pedestalMinHeight = 115.h;
+      pedestalColors = isEmpty 
+          ? [const Color(0xFFF1F5F9), const Color(0xFFE2E8F0)]
+          : [const Color(0xFFFFD54F), const Color(0xFFFF8F00)];
+      pedestalBorder = Border.all(
+        color: isEmpty ? const Color(0xFFE2E8F0) : const Color(0xFFFFD700).withOpacity(0.6),
+        width: 1.5.w,
+      );
+      pedestalShadow = BoxShadow(
+        color: isEmpty ? Colors.transparent : const Color(0xFFFF8F00).withOpacity(0.22),
+        blurRadius: 12.r,
+        offset: Offset(0, 6.h),
+      );
+    } else if (rank == 2) {
+      pedestalMinHeight = 85.h;
+      pedestalColors = isEmpty
+          ? [const Color(0xFFF1F5F9), const Color(0xFFE2E8F0)]
+          : [const Color(0xFFECEFF1), const Color(0xFF90A4AE)];
+      pedestalBorder = Border.all(
+        color: isEmpty ? const Color(0xFFE2E8F0) : Colors.white.withOpacity(0.6),
+        width: 1.5.w,
+      );
+      pedestalShadow = BoxShadow(
+        color: isEmpty ? Colors.transparent : const Color(0xFF90A4AE).withOpacity(0.18),
+        blurRadius: 10.r,
+        offset: Offset(0, 4.h),
+      );
+    } else {
+      pedestalMinHeight = 70.h;
+      pedestalColors = isEmpty
+          ? [const Color(0xFFF1F5F9), const Color(0xFFE2E8F0)]
+          : [const Color(0xFFE0A96D), const Color(0xFF8A5A36)];
+      pedestalBorder = Border.all(
+        color: isEmpty ? const Color(0xFFE2E8F0) : const Color(0xFFD4915E).withOpacity(0.5),
+        width: 1.5.w,
+      );
+      pedestalShadow = BoxShadow(
+        color: isEmpty ? Colors.transparent : const Color(0xFF8A5A36).withOpacity(0.18),
+        blurRadius: 8.r,
+        offset: Offset(0, 3.h),
+      );
+    }
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Crown + Avatar stacked
+        // Vương miện + Avatar
         SizedBox(
           width: avatarSize + 20.w,
           height: avatarSize + 24.h,
@@ -529,7 +520,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             alignment: Alignment.center,
             clipBehavior: Clip.none,
             children: [
-              // Avatar with medal ring (layer dưới)
+              // Vòng tròn Avatar với viền kim loại đẹp
               Positioned(
                 bottom: 0,
                 child: Container(
@@ -546,28 +537,35 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: (isEmpty ? const Color(0xFFCBD5E1) : medalColors[0]).withValues(alpha: 0.4),
-                        blurRadius: 10.r,
+                        color: (isEmpty ? const Color(0xFFCBD5E1) : medalColors[0]).withOpacity(0.35),
+                        blurRadius: 8.r,
                         offset: Offset(0, 3.h),
                       ),
                     ],
                   ),
-                  padding: EdgeInsets.all(4.w),
-                  child: ClipOval(
-                    child: isEmpty 
-                        ? Container(
-                            color: const Color(0xFFF1F5F9),
-                            child: Icon(
-                              Icons.person_rounded,
-                              color: const Color(0xFF94A3B8),
-                              size: (avatarSize * 0.6).sp,
-                            ),
-                          )
-                        : _buildAvatarImage(avatar),
+                  padding: EdgeInsets.all(3.w),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    padding: EdgeInsets.all(1.w),
+                    child: ClipOval(
+                      child: isEmpty 
+                          ? Container(
+                              color: const Color(0xFFF1F5F9),
+                              child: Icon(
+                                Icons.person_rounded,
+                                color: const Color(0xFF94A3B8),
+                                size: (avatarSize * 0.5).sp,
+                              ),
+                            )
+                          : _buildAvatarImage(avatar),
+                    ),
                   ),
                 ),
               ),
-              // Crown (layer trên — hiện rõ)
+              // Vương miện nổi bật ở trên
               if (!isEmpty)
                 Positioned(
                   top: rank == 1 ? -22.h : -15.h,
@@ -582,40 +580,101 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           ),
         ),
         SizedBox(height: 8.h),
-        // Name
-        Text(
-          name,
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: rank == 1 ? 15.sp : 13.sp,
-            fontWeight: FontWeight.w800,
-            color: isEmpty ? const Color(0xFF94A3B8) : const Color(0xFF1E293B),
+        // Bục đứng (Pedestal Step)
+        Container(
+          width: double.infinity,
+          constraints: BoxConstraints(minHeight: pedestalMinHeight),
+          padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: pedestalColors,
+            ),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16.r),
+              topRight: Radius.circular(16.r),
+              bottomLeft: Radius.circular(12.r),
+              bottomRight: Radius.circular(12.r),
+            ),
+            border: pedestalBorder,
+            boxShadow: [pedestalShadow],
           ),
-        ),
-        SizedBox(height: 4.h),
-        // Stars
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.star_rounded,
-              size: 16.sp,
-              color: isEmpty ? const Color(0xFFCBD5E1) : const Color(0xFFFFCA28),
-            ),
-            SizedBox(width: 3.w),
-            Text(
-              '$stars sao',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: rank == 1 ? 14.sp : 12.sp,
-                fontWeight: FontWeight.w800,
-                color: isEmpty
-                    ? const Color(0xFF94A3B8)
-                    : (rank == 1 ? const Color(0xFFE65100) : const Color(0xFF6B7280)),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Badge tròn ghi thứ hạng bên trong bục
+              Container(
+                width: rank == 1 ? 26.w : 22.w,
+                height: rank == 1 ? 26.w : 22.w,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.95),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 3.r,
+                      offset: Offset(0, 1.5.h),
+                    ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  '$rank',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: rank == 1 ? 14.sp : 11.sp,
+                    fontWeight: FontWeight.w900,
+                    color: rank == 1
+                        ? const Color(0xFFD48A00)
+                        : rank == 2
+                            ? const Color(0xFF455A64)
+                            : const Color(0xFF8D6E63),
+                  ),
+                ),
               ),
-            ),
-          ],
+              SizedBox(height: 6.h),
+              // Tên bé học sinh
+              Text(
+                name,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: rank == 1 ? 12.5.sp : 11.sp,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(height: 3.h),
+              // Số sao đạt được
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.star_rounded,
+                      size: 13.sp,
+                      color: const Color(0xFFFFD54F),
+                    ),
+                    SizedBox(width: 2.w),
+                    Text(
+                      isEmpty ? '0' : '$stars',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: rank == 1 ? 11.5.sp : 10.5.sp,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -632,86 +691,161 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     return items;
   }
 
-  Widget _rankRow(int rank, Map<String, dynamic> data, bool isMe) {
+  Widget _rankRow(int rank, Map<String, dynamic> data, bool isMe, {EdgeInsetsGeometry? margin}) {
     return Container(
-      margin: EdgeInsets.only(bottom: 10.h),
+      margin: margin ?? EdgeInsets.only(bottom: 10.h),
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: isMe ? const Color(0xFFFFF8E1) : Colors.white,
+        color: isMe ? const Color(0xFFFFFBEB) : Colors.white,
         borderRadius: BorderRadius.circular(16.r),
         border: isMe
-            ? Border.all(color: const Color(0xFFFFB300), width: 2.w)
-            : Border.all(color: const Color(0xFFE8ECF2), width: 1.w),
+            ? Border.all(color: const Color(0xFFFFB300), width: 1.5.w)
+            : Border.all(color: const Color(0xFFF1F5F9), width: 1.w),
         boxShadow: [
           BoxShadow(
             color: isMe
-                ? const Color(0xFFFFB300).withValues(alpha: 0.15)
-                : Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10.r,
-            offset: Offset(0, 3.h),
+                ? const Color(0xFFFFB300).withOpacity(0.12)
+                : Colors.black.withOpacity(0.02),
+            blurRadius: 8.r,
+            offset: Offset(0, 2.h),
           ),
         ],
       ),
       child: Row(
         children: [
-          // Rank number
-          SizedBox(
-            width: 30.w,
-            child: Text(
-              '$rank',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w800,
-                color: isMe ? const Color(0xFFE65100) : const Color(0xFF374151),
-              ),
-            ),
-          ),
-          SizedBox(width: 10.w),
-          // Avatar
+          // Huy hiệu thứ hạng có màu sắc sinh động
+          _buildRankBadge(rank),
+          SizedBox(width: 12.w),
+          // Ảnh đại diện học sinh
           Container(
-            width: 50.w,
-            height: 50.w,
+            width: 46.w,
+            height: 46.w,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: isMe
-                    ? const Color(0xFFFFB300)
-                    : const Color(0xFFD1D5DB),
-                width: 2.w),
+                color: isMe ? const Color(0xFFFFCA28) : const Color(0xFFE2E8F0),
+                width: 1.5.w,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 4.r,
+                  offset: Offset(0, 2.h),
+                ),
+              ],
             ),
             child: ClipOval(
               child: _buildAvatarImage(data['avatar'] as String),
             ),
           ),
           SizedBox(width: 12.w),
-          // Name
+          // Tên hiển thị + Badge "Bạn" (Nếu là chính mình)
           Expanded(
-            child: Text(
-              isMe ? 'Bạn' : data['name'] as String,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w700,
-                color: isMe ? const Color(0xFFE65100) : AppColors.textPrimary,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    data['name'] as String,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14.sp,
+                      fontWeight: isMe ? FontWeight.w800 : FontWeight.w700,
+                      color: isMe ? const Color(0xFF8F6300) : AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                if (isMe) ...[
+                  SizedBox(width: 6.w),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFB300),
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
+                    child: Text(
+                      context.translate('common.you'),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          // Stars
-          Icon(
-            Icons.star_rounded,
-            size: 20.sp,
-            color: const Color(0xFFFFCA28),
-          ),
-          SizedBox(width: 4.w),
-          Text(
-            '${data['stars']} sao',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w700,
-              color: isMe ? const Color(0xFFE65100) : const Color(0xFF374151),
+          SizedBox(width: 8.w),
+          // Cục hiển thị số sao dạng Gold Pill cực kỳ chuyên nghiệp
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+            decoration: BoxDecoration(
+              color: isMe ? const Color(0xFFFFF8E8) : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(16.r),
+              border: Border.all(
+                color: isMe ? const Color(0xFFFFCA28).withOpacity(0.5) : const Color(0xFFE2E8F0),
+                width: 1.w,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.star_rounded,
+                  size: 16.sp,
+                  color: const Color(0xFFFFB300),
+                ),
+                SizedBox(width: 4.w),
+                Text(
+                  '${data['stars'] ?? 0}',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w800,
+                    color: isMe ? const Color(0xFF8F6300) : const Color(0xFF475569),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRankBadge(int rank) {
+    Color bgColor;
+    Color textColor;
+    if (rank == 4) {
+      bgColor = const Color(0xFFF2F0FF);
+      textColor = const Color(0xFF7367D6);
+    } else if (rank == 5) {
+      bgColor = const Color(0xFFFFF0EF);
+      textColor = const Color(0xFFD05A4F);
+    } else if (rank == 6) {
+      bgColor = const Color(0xFFEDF8F2);
+      textColor = const Color(0xFF3DA06A);
+    } else {
+      bgColor = const Color(0xFFF1F5F9);
+      textColor = const Color(0xFF64748B);
+    }
+
+    return Container(
+      width: 28.w,
+      height: 28.w,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        '$rank',
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w800,
+          color: textColor,
+        ),
       ),
     );
   }
@@ -721,11 +855,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   // ══════════════════════════════════════════════════════════════
   Widget _buildMyRank() {
     final myItem = _leaderboard.firstWhere((e) => e['isMe'] == true, orElse: () => {
-      'name': 'Bạn',
+      'name': context.translate('common.you'),
       'stars': _myStars,
       'avatar': 'image/Đại diện.png',
       'isMe': true,
     });
-    return _rankRow(_myRank, myItem, true);
+    return _rankRow(_myRank, myItem, true, margin: EdgeInsets.zero);
   }
 }

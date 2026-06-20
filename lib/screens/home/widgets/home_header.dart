@@ -7,6 +7,7 @@ import '../../../services/storage_service.dart';
 import '../../../services/score_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../constants/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Header trang chủ — Gradient xanh nhạt + avatar + stats card trắng
 class HomeHeader extends StatefulWidget {
@@ -52,7 +53,7 @@ class _HomeHeaderState extends State<HomeHeader> {
     if (!mounted) return;
     final user = AuthService().userProfile;
     setState(() {
-      _username = user?['name'] ?? (_storage?.getUsername() ?? 'Bé học giỏi');
+      _username = user?['name'] ?? (_storage?.getUsername() ?? context.translate('home.welcome_default'));
       _avatarUrl = user?['avatar'] ?? (_storage?.getAvatarUrl() ?? '');
       _level = user?['level'] ?? (_score?.level ?? 1);
       _streak = user?['streak'] ?? (_score?.streak ?? 0);
@@ -60,12 +61,12 @@ class _HomeHeaderState extends State<HomeHeader> {
     });
   }
 
-  String _getLevelTitle(int level) {
-    if (level >= 20) return 'Kim Cương';
-    if (level >= 15) return 'Bạch Kim';
-    if (level >= 10) return 'Sao Vàng';
-    if (level >= 5) return 'Sao Bạc';
-    return 'Mới bắt đầu';
+  String _getLevelTitle(BuildContext context, int level) {
+    if (level >= 20) return context.translate('level.diamond');
+    if (level >= 15) return context.translate('level.platinum');
+    if (level >= 10) return context.translate('level.gold');
+    if (level >= 5) return context.translate('level.silver');
+    return context.translate('level.beginner');
   }
 
   @override
@@ -159,7 +160,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                               fit: BoxFit.contain,
                             ),
                             SizedBox(width: 1.w),
-                            Text('Cấp $_level: ${_getLevelTitle(_level)}',
+                            Text('${context.translate('level.prefix')} $_level: ${_getLevelTitle(context, _level)}',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13.sp, fontWeight: FontWeight.w600,
                                 color: Colors.white.withValues(alpha: 0.9))),
@@ -194,12 +195,12 @@ class _HomeHeaderState extends State<HomeHeader> {
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   Image.asset('image/Lửa chuổi.png', width: 20.w, height: 20.h),
                   SizedBox(width: 5.w),
-                  Text('$_streak ngày', style: GoogleFonts.plusJakartaSans(
+                  Text(context.translatePlural('common.days_count', _streak), style: GoogleFonts.plusJakartaSans(
                     fontSize: 16.sp, fontWeight: FontWeight.w800,
                     color: AppColors.onBackground)),
                 ]),
                 SizedBox(height: 3.h),
-                Text('Chuỗi ngày', style: GoogleFonts.plusJakartaSans(
+                Text(context.translate('home.streak_title'), style: GoogleFonts.plusJakartaSans(
                   fontSize: 11.sp, fontWeight: FontWeight.w500,
                   color: AppColors.textHint)),
               ])),
@@ -210,12 +211,12 @@ class _HomeHeaderState extends State<HomeHeader> {
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   Image.asset('image/sao.png', width: 20.w, height: 20.h),
                   SizedBox(width: 5.w),
-                  Text('$_totalStars sao', style: GoogleFonts.plusJakartaSans(
+                  Text(context.translatePlural('common.stars_count', _totalStars), style: GoogleFonts.plusJakartaSans(
                     fontSize: 16.sp, fontWeight: FontWeight.w800,
                     color: AppColors.onBackground)),
                 ]),
                 SizedBox(height: 3.h),
-                Text('Điểm thưởng', style: GoogleFonts.plusJakartaSans(
+                Text(context.translate('home.reward_points'), style: GoogleFonts.plusJakartaSans(
                   fontSize: 11.sp, fontWeight: FontWeight.w500,
                   color: AppColors.textHint)),
               ])),
@@ -241,7 +242,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                           valueColor: const AlwaysStoppedAnimation(AppColors.headerMid)))),
                   ]),
                   SizedBox(height: 3.h),
-                  Text('Cấp độ hiện tại', style: GoogleFonts.plusJakartaSans(
+                  Text(context.translate('home.current_level'), style: GoogleFonts.plusJakartaSans(
                     fontSize: 11.sp, fontWeight: FontWeight.w500,
                     color: AppColors.textHint)),
                 ],

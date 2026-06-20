@@ -497,7 +497,12 @@ class DocItem {
     if (label == 'Tất cả') return true;
     if (label == 'Yêu thích') return rating >= 4.8;
     if (label == 'Truyện') {
-      return isStory;
+      // Truyện tab: bao gồm cả items có type='Truyện' lẫn Sách có isStory=true
+      return type == 'Truyện' || isStory;
+    }
+    if (label == 'Sách') {
+      // Tab Sách: chỉ hiển thị Sách KHÔNG phải truyện
+      return type == 'Sách' && !isStory;
     }
     if (label == 'Bài hát') {
       return type == 'Audio';

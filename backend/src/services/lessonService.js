@@ -36,6 +36,11 @@ class LessonService {
    * Get single lesson by ID
    */
   async getLessonById(lessonId) {
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(lessonId)) {
+      throw new AppError(MESSAGES.NOT_FOUND, 404);
+    }
+
     const lesson = await Lesson.findById(lessonId);
 
     if (!lesson) {

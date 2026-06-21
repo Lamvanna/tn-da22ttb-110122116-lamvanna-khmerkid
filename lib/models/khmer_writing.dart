@@ -4,12 +4,14 @@ class KhmerWriting {
   final String romanized;     // Phiên âm Latin
   final String type;          // 'consonant', 'vowel', 'combined'
   final String hint;          // Hướng dẫn viết
+  final String topicKey;      // Key đề tài/chủ đề riêng của bài viết
   int starRating;
   bool isLearned;
 
   KhmerWriting({
     required this.character,
     required this.romanized,
+    required this.topicKey,
     this.type = 'consonant',
     this.hint = '',
     this.starRating = 0,
@@ -22,52 +24,50 @@ class KhmerWritingData {
   KhmerWritingData._();
 
   static final List<KhmerWriting> lessons = [
-    // ══ Nhóm 1: Phụ âm cơ bản ══
-    KhmerWriting(character: 'ក', romanized: 'ko', type: 'consonant',
-      hint: 'Bắt đầu từ đầu bên trái, vẽ vòng tròn rồi kéo nét thẳng xuống'),
-    KhmerWriting(character: 'ខ', romanized: 'kho', type: 'consonant',
-      hint: 'Giống chữ ក nhưng thêm một nét cong bên phải'),
-    KhmerWriting(character: 'គ', romanized: 'ko', type: 'consonant',
-      hint: 'Vẽ vòng tròn rồi kéo hai nét thẳng xuống'),
-    KhmerWriting(character: 'ង', romanized: 'ngo', type: 'consonant',
-      hint: 'Vẽ vòng tròn nhỏ rồi kéo nét cong sang phải'),
-    KhmerWriting(character: 'ច', romanized: 'co', type: 'consonant',
-      hint: 'Bắt đầu bằng nét cong, rồi kéo xuống dưới'),
+    // ══ Nhóm 1: Động vật ══
+    KhmerWriting(character: 'ឆ្មា', romanized: 'chma', type: 'combined', topicKey: 'topic_1',
+      hint: 'Con mèo dễ thương'),
+    KhmerWriting(character: 'ឆ្កែ', romanized: 'chkae', type: 'combined', topicKey: 'topic_2',
+      hint: 'Con chó trung thành'),
+    KhmerWriting(character: 'គោ', romanized: 'ko', type: 'combined', topicKey: 'topic_3',
+      hint: 'Con bò kéo xe'),
+    KhmerWriting(character: 'សេះ', romanized: 'seh', type: 'combined', topicKey: 'topic_4',
+      hint: 'Con ngựa chạy nhanh'),
+    KhmerWriting(character: 'មាន់', romanized: 'moan', type: 'combined', topicKey: 'topic_5',
+      hint: 'Con gà gáy sáng'),
+    KhmerWriting(character: 'ត្រី', romanized: 'trey', type: 'combined', topicKey: 'topic_6',
+      hint: 'Con cá bơi dưới nước'),
+    KhmerWriting(character: 'ដំរី', romanized: 'damrei', type: 'combined', topicKey: 'topic_7',
+      hint: 'Con voi to lớn'),
 
-    // ══ Nhóm 2: Phụ âm nâng cao ══
-    KhmerWriting(character: 'ដ', romanized: 'do', type: 'consonant',
-      hint: 'Vẽ nét thẳng đứng rồi thêm vòng cong bên phải'),
-    KhmerWriting(character: 'ត', romanized: 'to', type: 'consonant',
-      hint: 'Vẽ hai vòng tròn nối liền nhau'),
-    KhmerWriting(character: 'ន', romanized: 'no', type: 'consonant',
-      hint: 'Vẽ nét cong mềm mại giống chữ U ngược'),
-    KhmerWriting(character: 'ប', romanized: 'bo', type: 'consonant',
-      hint: 'Bắt đầu từ trên, vẽ vòng tròn rồi kéo thẳng xuống'),
-    KhmerWriting(character: 'ម', romanized: 'mo', type: 'consonant',
-      hint: 'Vẽ hai vòng cong nối tiếp nhau'),
+    // ══ Nhóm 2: Gia đình ══
+    KhmerWriting(character: 'ប៉ា', romanized: 'pa', type: 'combined', topicKey: 'topic_8',
+      hint: 'Bố yêu thương bé'),
+    KhmerWriting(character: 'ម៉ែ', romanized: 'mae', type: 'combined', topicKey: 'topic_9',
+      hint: 'Mẹ hiền chăm sóc bé'),
+    KhmerWriting(character: 'តា', romanized: 'ta', type: 'combined', topicKey: 'topic_10',
+      hint: 'Ông kể chuyện hay'),
+    KhmerWriting(character: 'យាយ', romanized: 'yeay', type: 'combined', topicKey: 'topic_11',
+      hint: 'Bà ru bé ngủ'),
+    KhmerWriting(character: 'បង', romanized: 'bong', type: 'combined', topicKey: 'topic_12',
+      hint: 'Anh chị nhường nhịn bé'),
+    KhmerWriting(character: 'ប្អូន', romanized: 'paoun', type: 'combined', topicKey: 'topic_13',
+      hint: 'Em bé đáng yêu'),
 
-    // ══ Nhóm 3: Nguyên âm ══
-    KhmerWriting(character: 'ា', romanized: 'aa', type: 'vowel',
-      hint: 'Nét thẳng đứng đơn giản bên phải phụ âm'),
-    KhmerWriting(character: 'ិ', romanized: 'i', type: 'vowel',
-      hint: 'Dấu nhỏ đặt phía trên phụ âm'),
-    KhmerWriting(character: 'ី', romanized: 'ii', type: 'vowel',
-      hint: 'Hai dấu nhỏ đặt phía trên phụ âm'),
-    KhmerWriting(character: 'ុ', romanized: 'u', type: 'vowel',
-      hint: 'Dấu nhỏ đặt phía dưới phụ âm'),
-    KhmerWriting(character: 'ូ', romanized: 'uu', type: 'vowel',
-      hint: 'Dấu dưới kết hợp với nét bên phải'),
-
-    // ══ Nhóm 4: Chữ ghép ══
-    KhmerWriting(character: 'កា', romanized: 'kaa', type: 'combined',
-      hint: 'Viết phụ âm ក trước, rồi thêm nguyên âm ា'),
-    KhmerWriting(character: 'កី', romanized: 'kei', type: 'combined',
-      hint: 'Viết phụ âm ក trước, rồi thêm dấu ី phía trên'),
-    KhmerWriting(character: 'មា', romanized: 'maa', type: 'combined',
-      hint: 'Viết phụ âm ម trước, rồi thêm nguyên âm ា'),
-    KhmerWriting(character: 'ដី', romanized: 'dei', type: 'combined',
-      hint: 'Viết phụ âm ដ trước, rồi thêm dấu ី phía trên'),
-    KhmerWriting(character: 'កូ', romanized: 'kou', type: 'combined',
-      hint: 'Viết phụ âm ក trước, rồi thêm nguyên âm ូ'),
+    // ══ Nhóm 3: Trái cây & Đồ vật ══
+    KhmerWriting(character: 'ចេក', romanized: 'chek', type: 'combined', topicKey: 'topic_14',
+      hint: 'Chuối chín vàng ngọt'),
+    KhmerWriting(character: 'ដូង', romanized: 'doung', type: 'combined', topicKey: 'topic_15',
+      hint: 'Nước dừa thơm mát'),
+    KhmerWriting(character: 'ស្វាយ', romanized: 'svay', type: 'combined', topicKey: 'topic_16',
+      hint: 'Xoài chín ngọt lịm'),
+    KhmerWriting(character: 'សាលា', romanized: 'sala', type: 'combined', topicKey: 'topic_17',
+      hint: 'Trường học mến yêu'),
+    KhmerWriting(character: 'គ្រូ', romanized: 'kru', type: 'combined', topicKey: 'topic_18',
+      hint: 'Cô giáo dạy học'),
+    KhmerWriting(character: 'សៀវភៅ', romanized: 'sievphov', type: 'combined', topicKey: 'topic_19',
+      hint: 'Sách mở ra tri thức'),
+    KhmerWriting(character: 'ដៃ', romanized: 'dai', type: 'combined', topicKey: 'topic_20',
+      hint: 'Bàn tay bé nhỏ'),
   ];
 }

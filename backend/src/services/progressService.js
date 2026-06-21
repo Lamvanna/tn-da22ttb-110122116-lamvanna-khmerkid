@@ -157,7 +157,7 @@ class ProgressService {
   /**
    * POST /api/progress/complete — Hoàn thành 1 bài học
    */
-  async completeLesson(userId, lessonId, stars, lessonType, lessonOrder = null) {
+  async completeLesson(userId, lessonId, stars, lessonType, lessonOrder = null, xp = null) {
     const progress = await this.getOrCreateProgress(userId);
 
     // Tự động phân giải lessonOrder và lessonType nếu thiếu
@@ -192,6 +192,8 @@ class ProgressService {
     const existingIdx = progress.completedLessons.findIndex(
       l => l.lessonId === lessonId
     );
+
+    const isAlreadyCompleted = existingIdx >= 0 && progress.completedLessons[existingIdx].isCompleted;
 
     if (existingIdx >= 0) {
       // Update — take max stars
@@ -228,9 +230,28 @@ class ProgressService {
     // Update User gamification
     const user = await User.findById(userId);
     if (user) {
-      // Add XP & stars
-      const xpGain = stars * 5;
-      const starsGain = stars;
+      // Cộng stars + XP phải KHỚP với Flutter client step-by-step hoặc lấy động từ client gửi lên
+      let starsGain = 0;
+      let xpGain = 0;
+
+      if (!isAlreadyCompleted) {
+        if (xp !== null && xp !== undefined) {
+          starsGain = Number(stars) || 0;
+          xpGain = Number(xp) || 0;
+        } else {
+          if (resolvedType === 'consonant' || resolvedType === 'vowel' || resolvedType === 'number') {
+            starsGain = 8;
+            xpGain = 55;
+          } else if (resolvedType === 'spelling' || resolvedType === 'diacritical' || resolvedType === 'coeng' || resolvedType === 'closed_syllable') {
+            starsGain = 10;
+            xpGain = 60;
+          } else {
+            starsGain = stars;
+            xpGain = stars * 5;
+          }
+        }
+      }
+
       user.xp += xpGain;
       user.stars += starsGain;
 

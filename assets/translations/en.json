@@ -99,6 +99,7 @@
     "reading_sub": "Get familiar with reading simple sentences",
     "writing": "Writing Practice",
     "writing_sub": "Practice writing Khmer letters correctly",
+    "writing_title_map": "Writing Practice",
     "vocabulary": "Learn Vocabulary",
     "vocabulary_sub": "Learn vocabulary by topics",
     "reading_comp": "Reading Comprehension",
@@ -113,6 +114,42 @@
     "lessons_count": "{done}/{total} lessons",
     "points": "Points",
     "coming_soon_toast": "This feature is coming soon! 🚀"
+  },
+  "writing_topics": {
+    "topic_1": "ការសិក្សារៀនសូត្រ",
+    "topic_2": "ទៅសាលា",
+    "topic_3": "គ្រួសាររបស់ខ្ញុំ",
+    "topic_4": "សត្វព្រៃ",
+    "topic_5": "សត្វស្លាប",
+    "topic_6": "ជីវិតក្រោមទឹក",
+    "topic_7": "ធម្មជាតិ",
+    "topic_8": "សេចក្តីស្រឡាញ់",
+    "topic_9": "ការថែទាំ",
+    "topic_10": "រឿងនិទាន",
+    "topic_11": "ចម្រៀងបំពេ",
+    "topic_12": "ការចែករំលែក",
+    "topic_13": "ភាពគួរឱ្យស្រឡាញ់",
+    "topic_14": "អាហារសុខភាព",
+    "topic_15": "រដូវក្តៅ",
+    "topic_16": "ផ្លែឈើខ្មែរ",
+    "topic_17": "មិត្តភក្តិ",
+    "topic_18": "ចំណេះដឹង",
+    "topic_19": "ការអាន",
+    "topic_20": "អនាមัย"
+  },
+  "reading_topics": {
+    "topic_1": "ព្យញ្ជនៈមូលដ្ឋាន",
+    "topic_2": "ពាក្យសាមញ្ញ",
+    "topic_3": "ប្រយោគខ្លី",
+    "topic_4": "លេខខ្មែរ",
+    "topic_5": "អត្ថបទខ្លី"
+  },
+  "reading_subtitles": {
+    "topic_1": "Read consonants ក - ខ",
+    "topic_2": "Read 1-2 syllable words",
+    "topic_3": "Read simple sentences",
+    "topic_4": "Read numbers 1-10",
+    "topic_5": "Read short paragraphs"
   },
   "learn_letter": {
     "listen": "Listen Pronunciation",
@@ -434,6 +471,8 @@
     "reset_success": "Learning progress reset successfully"
   },
   "learn": {
+    "practice_writing": "Practice Writing",
+    "description_label": "Description",
     "completed_letter": "You have completed the letter \"{character}\"",
     "next_letter_btn": "Learn next letter →",
     "back_to_map": "Back to map",
@@ -514,7 +553,7 @@
     "learn_diacritic_khmer": "Learn Khmer Diacritics",
     "completed_diacritic": "You have completed the diacritic lesson \"{character}\"",
     "diacritic_count": "Diacritics {done}/{total}",
-    "reading_khmer": "Khmer Reading Practice",
+    "reading_khmer": "Reading Practice",
     "reading_success": "Excellent! You have read the entire lesson correctly! 🌟",
     "incorrect_reading_warning": "Not quite right! Please listen to the standard pronunciation and practice reading again! 💪",
     "reading_title": "Reading Practice",

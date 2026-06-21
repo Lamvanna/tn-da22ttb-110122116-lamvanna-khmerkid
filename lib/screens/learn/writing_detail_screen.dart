@@ -106,7 +106,7 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
         _inputCtrl.clear();
       });
     } else {
-      Future.delayed(const Duration(milliseconds: 2000), () {
+      Future.delayed(const Duration(milliseconds: 1200), () {
         if (!mounted) return;
         _showCompletionDialog();
       });
@@ -1148,185 +1148,187 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
               end: Alignment.bottomCenter,
             ),
           ),
-          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 28.h),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('🎉', style: TextStyle(fontSize: 56.sp)),
-              SizedBox(height: 16.h),
-              Text(
-                context.translate('common.congratulations'),
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 26.sp,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.tertiary,
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('🎉', style: TextStyle(fontSize: 56.sp)),
+                SizedBox(height: 16.h),
+                Text(
+                  context.translate('common.congratulations'),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 26.sp,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.tertiary,
+                  ),
                 ),
-              ),
-              SizedBox(height: 10.h),
-              Text(
-                context.translate('learn.completed_all_writing'),
-                textAlign: TextAlign.center,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                  height: 1.3,
+                SizedBox(height: 10.h),
+                Text(
+                  context.translate('learn.completed_all_writing'),
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                    height: 1.3,
+                  ),
                 ),
-              ),
-              SizedBox(height: 24.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Transform.translate(
-                    offset: Offset(0, 4.h),
-                    child: Transform.rotate(
-                      angle: -0.15,
-                      child: Icon(
-                        Icons.star_rounded,
-                        size: 40.w,
-                        color: const Color(0xFFFFD600),
-                        shadows: [
-                          Shadow(
-                            color: const Color(0xFFFFD600).withValues(alpha: 0.5),
-                            blurRadius: 8.r,
-                            offset: Offset(0, 2.h),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Transform.translate(
-                    offset: Offset(0, -6.h),
-                    child: Icon(
-                      Icons.star_rounded,
-                      size: 56.w,
-                      color: const Color(0xFFFFD600),
-                      shadows: [
-                        Shadow(
-                          color: const Color(0xFFFFD600).withValues(alpha: 0.6),
-                          blurRadius: 12.r,
-                          offset: Offset(0, 2.h),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Transform.translate(
-                    offset: Offset(0, 4.h),
-                    child: Transform.rotate(
-                      angle: 0.15,
-                      child: Icon(
-                        Icons.star_rounded,
-                        size: 40.w,
-                        color: const Color(0xFFFFD600),
-                        shadows: [
-                          Shadow(
-                            color: const Color(0xFFFFD600).withValues(alpha: 0.5),
-                            blurRadius: 8.r,
-                            offset: Offset(0, 2.h),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20.h),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 10.h),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFFF9C4), Color(0xFFFFF59D)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(24.r),
-                  border: Border.all(color: const Color(0xFFFFF176), width: 1.5.w),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFBC02D).withValues(alpha: 0.2),
-                      blurRadius: 8.r,
-                      offset: Offset(0, 3.h),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                SizedBox(height: 24.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 20.w),
-                    SizedBox(width: 4.w),
-                    Text(
-                      '+3 Sao',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFFF57F17),
-                      ),
-                    ),
-                    Container(
-                      margin: EdgeInsets.symmetric(horizontal: 12.w),
-                      width: 1.w,
-                      height: 16.h,
-                      color: const Color(0xFFF57F17).withValues(alpha: 0.3),
-                    ),
-                    Icon(Icons.bolt_rounded, color: const Color(0xFFFF9100), size: 20.w),
-                    SizedBox(width: 4.w),
-                    Text(
-                      '+15 XP',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFFE65100),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 28.h),
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.tertiary, AppColors.tertiaryDark],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                  borderRadius: BorderRadius.circular(16.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.tertiary.withValues(alpha: 0.35),
-                      blurRadius: 12.r,
+                    Transform.translate(
                       offset: Offset(0, 4.h),
+                      child: Transform.rotate(
+                        angle: -0.15,
+                        child: Icon(
+                          Icons.star_rounded,
+                          size: 40.w,
+                          color: const Color(0xFFFFD600),
+                          shadows: [
+                            Shadow(
+                              color: const Color(0xFFFFD600).withValues(alpha: 0.5),
+                              blurRadius: 8.r,
+                              offset: Offset(0, 2.h),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 10.w),
+                    Transform.translate(
+                      offset: Offset(0, -6.h),
+                      child: Icon(
+                        Icons.star_rounded,
+                        size: 56.w,
+                        color: const Color(0xFFFFD600),
+                        shadows: [
+                          Shadow(
+                            color: const Color(0xFFFFD600).withValues(alpha: 0.6),
+                            blurRadius: 12.r,
+                            offset: Offset(0, 2.h),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 10.w),
+                    Transform.translate(
+                      offset: Offset(0, 4.h),
+                      child: Transform.rotate(
+                        angle: 0.15,
+                        child: Icon(
+                          Icons.star_rounded,
+                          size: 40.w,
+                          color: const Color(0xFFFFD600),
+                          shadows: [
+                            Shadow(
+                              color: const Color(0xFFFFD600).withValues(alpha: 0.5),
+                              blurRadius: 8.r,
+                              offset: Offset(0, 2.h),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 14.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16.r),
+                SizedBox(height: 20.h),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 10.h),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFFF9C4), Color(0xFFFFF59D)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
+                    borderRadius: BorderRadius.circular(24.r),
+                    border: Border.all(color: const Color(0xFFFFF176), width: 1.5.w),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFBC02D).withValues(alpha: 0.2),
+                        blurRadius: 8.r,
+                        offset: Offset(0, 3.h),
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    'Quay về',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 20.w),
+                      SizedBox(width: 4.w),
+                      Text(
+                        '+3 Sao',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFFF57F17),
+                        ),
+                      ),
+                      Container(
+                        margin: EdgeInsets.symmetric(horizontal: 12.w),
+                        width: 1.w,
+                        height: 16.h,
+                        color: const Color(0xFFF57F17).withValues(alpha: 0.3),
+                      ),
+                      Icon(Icons.bolt_rounded, color: const Color(0xFFFF9100), size: 20.w),
+                      SizedBox(width: 4.w),
+                      Text(
+                        '+15 XP',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFFE65100),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 28.h),
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppColors.tertiary, AppColors.tertiaryDark],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                    borderRadius: BorderRadius.circular(16.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.tertiary.withValues(alpha: 0.35),
+                        blurRadius: 12.r,
+                        offset: Offset(0, 4.h),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                    ),
+                    child: Text(
+                      'Quay về',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

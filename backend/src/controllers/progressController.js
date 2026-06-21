@@ -33,7 +33,7 @@ class ProgressController {
   /** POST /api/progress/complete */
   async completeLesson(req, res, next) {
     try {
-      const { lessonId, stars, lessonType, lessonOrder } = req.body;
+      const { lessonId, stars, lessonType, lessonOrder, xp } = req.body;
 
       if (!lessonId) {
         return res.status(400).json({
@@ -47,7 +47,8 @@ class ProgressController {
         lessonId,
         stars || 0,
         lessonType || '',
-        lessonOrder !== undefined && lessonOrder !== null ? Number(lessonOrder) : null
+        lessonOrder !== undefined && lessonOrder !== null ? Number(lessonOrder) : null,
+        xp !== undefined && xp !== null ? Number(xp) : null
       );
       sendSuccess(res, 'Hoàn thành bài học thành công!', data);
     } catch (error) {

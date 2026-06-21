@@ -99,6 +99,7 @@
     "reading_sub": "Làm quen và đọc câu đơn giản",
     "writing": "Luyện viết",
     "writing_sub": "Tập viết chữ Khmer đúng nét",
+    "writing_title_map": "Luyện viết",
     "vocabulary": "Học từ vựng",
     "vocabulary_sub": "Học từ vựng theo các chủ đề",
     "reading_comp": "Đọc hiểu",
@@ -113,6 +114,42 @@
     "lessons_count": "{done}/{total} bài",
     "points": "Điểm",
     "coming_soon_toast": "Tính năng này sắp ra mắt! 🚀"
+  },
+  "writing_topics": {
+    "topic_1": "ការសិក្សារៀនសូត្រ",
+    "topic_2": "ទៅសាលា",
+    "topic_3": "គ្រួសាររបស់ខ្ញុំ",
+    "topic_4": "សត្វព្រៃ",
+    "topic_5": "សត្វស្លាប",
+    "topic_6": "ជីវិតក្រោមទឹក",
+    "topic_7": "ធម្មជាតិ",
+    "topic_8": "សេចក្តីស្រឡាញ់",
+    "topic_9": "ការថែទាំ",
+    "topic_10": "រឿងនិទាន",
+    "topic_11": "ចម្រៀងបំពេ",
+    "topic_12": "ការចែករំលែក",
+    "topic_13": "ភាពគួរឱ្យស្រឡាញ់",
+    "topic_14": "អាហារសុខភាព",
+    "topic_15": "រដូវក្តៅ",
+    "topic_16": "ផ្លែឈើខ្មែរ",
+    "topic_17": "មិត្តភក្តិ",
+    "topic_18": "ចំណេះដឹង",
+    "topic_19": "ការអាន",
+    "topic_20": "អនាម័យ"
+  },
+  "reading_topics": {
+    "topic_1": "ព្យញ្ជនៈមូលដ្ឋាន",
+    "topic_2": "ពាក្យសាមញ្ញ",
+    "topic_3": "ប្រយោគខ្លី",
+    "topic_4": "លេខខ្មែរ",
+    "topic_5": "អត្ថបទខ្លី"
+  },
+  "reading_subtitles": {
+    "topic_1": "Đọc phụ âm ក - ខ",
+    "topic_2": "Đọc từ 1-2 âm tiết",
+    "topic_3": "Đọc câu đơn giản",
+    "topic_4": "Đọc số từ 1-10",
+    "topic_5": "Đọc đoạn văn ngắn"
   },
   "learn_letter": {
     "listen": "Nghe phát âm",
@@ -434,6 +471,8 @@
     "reset_success": "Đã đặt lại tiến độ học"
   },
   "learn": {
+    "practice_writing": "Luyện viết",
+    "description_label": "Mô tả",
     "completed_letter": "Bạn đã hoàn thành chữ \"{character}\"",
     "next_letter_btn": "Học chữ tiếp theo →",
     "back_to_map": "Quay về bản đồ",
@@ -514,7 +553,7 @@
     "learn_diacritic_khmer": "Học dấu Khmer",
     "completed_diacritic": "Bạn đã hoàn thành bài học dấu \"{character}\"",
     "diacritic_count": "Học Dấu {done}/{total}",
-    "reading_khmer": "Tập đọc tiếng Khmer",
+    "reading_khmer": "Tập đọc",
     "reading_success": "Tuyệt vời! Con đã đọc đúng hoàn toàn cả bài rồi! 🌟",
     "incorrect_reading_warning": "Chưa đúng rồi con ơi! Hãy nghe lại phát âm chuẩn và luyện đọc lại nhé! 💪",
     "reading_title": "Tập đọc",

@@ -87,7 +87,7 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
         });
       }
     } catch (e) {
-      debugPrint('Error loading spelling progress: $e');
+      debugPrint('Error loading spelling progress from repository: $e');
     }
   }
 
@@ -112,6 +112,10 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
             padding: EdgeInsets.fromLTRB(10.w, 18.h, 16.w, 100.h),
             child: Column(
               children: List.generate(groups.length, (i) {
+                final group = groups[i];
+                final isLocked = i > 0 && !groups[i - 1].isCompleted;
+                final isCurrent = !group.isCompleted && (i == 0 || groups[i - 1].isCompleted);
+
                 // Staggered fade-in cho mỗi card
                 final delay = (i * 0.15).clamp(0.0, 1.0);
                 final end = (delay + 0.4).clamp(0.0, 1.0);
@@ -129,10 +133,12 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
                     ),
                   ),
                   child: _ConsonantGroupCard(
-                    group: groups[i],
+                    group: group,
                     isLast: i == groups.length - 1,
                     pulseCtrl: _pulseCtrl,
                     onOpenLesson: _openLesson,
+                    isLocked: isLocked,
+                    isCurrent: isCurrent,
                   ),
                 );
               }),
@@ -146,7 +152,6 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
   // ─── HEADER ───
   Widget _buildHeader() {
     final progress = _lessons.isNotEmpty ? _totalDone / _lessons.length : 0.0;
-    final pct = (progress * 100).toInt();
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -320,12 +325,16 @@ class _ConsonantGroupCard extends StatelessWidget {
   final bool isLast;
   final AnimationController pulseCtrl;
   final void Function(int) onOpenLesson;
+  final bool isLocked;
+  final bool isCurrent;
 
   const _ConsonantGroupCard({
     required this.group,
     required this.isLast,
     required this.pulseCtrl,
     required this.onOpenLesson,
+    required this.isLocked,
+    required this.isCurrent,
   });
 
   // Màu tím gradient theme cho ghép vần
@@ -342,10 +351,6 @@ class _ConsonantGroupCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _groupColor;
     final pct = (group.progress * 100).toInt();
-    final isCurrent = group.hasStarted && !group.isCompleted;
-    // Xác định trạng thái mở khóa: nhóm đầu tiên luôn mở, 
-    // các nhóm tiếp theo mở nếu nhóm trước đã bắt đầu
-    final isLocked = !group.hasStarted && group.number > 1;
 
     return IntrinsicHeight(
       child: Row(

@@ -74,12 +74,13 @@ class ProgressRemoteDataSource {
     required int stars,
     required String lessonType,
     required int lessonOrder,
+    int? xp,
   }) async {
     if (!_auth.isAuthenticated) return null;
 
     try {
       final url = Uri.parse('${_auth.baseUrl}/progress/complete');
-      if (kDebugMode) print('[ProgressRemoteDS] Completing lesson: $lessonId, order: $lessonOrder');
+      if (kDebugMode) print('[ProgressRemoteDS] Completing lesson: $lessonId, order: $lessonOrder, xp: $xp');
 
       final response = await http.post(
         url,
@@ -92,6 +93,7 @@ class ProgressRemoteDataSource {
           'stars': stars,
           'lessonType': lessonType,
           'lessonOrder': lessonOrder,
+          if (xp != null) 'xp': xp,
         }),
       ).timeout(const Duration(seconds: 8));
 

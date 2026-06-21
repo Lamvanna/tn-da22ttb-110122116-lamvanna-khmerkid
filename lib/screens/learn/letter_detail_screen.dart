@@ -13,6 +13,7 @@ import '../../widgets/khmer_listen_widget.dart';
 import '../../widgets/khmer_speak_widget.dart';
 import '../../widgets/khmer_write_widget.dart';
 import '../../widgets/confetti_overlay.dart';
+import '../../repositories/progress_repository.dart';
 
 /// Màn hình chi tiết học chữ cái Khmer
 /// Tích hợp TTS (nghe), stroke validation (viết)
@@ -40,6 +41,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
   int _activeSheet = 0;
   ScoreService? _score;
   bool _showConfetti = false;
+  bool _isAlreadyDone = false;
 
   @override
   void initState() {
@@ -81,17 +83,15 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
         );
       }).toList();
 
-      // 2. Tải nhanh từ bộ nhớ tạm local (SharedPreferences) trước để màn hình mở lên NGAY LẬP TỨC
+      // 2. Nạp trực tiếp từ ProgressRepository cache RAM trực tuyến
       try {
-        final storage = await StorageService.getInstance();
-        final localLetterProgress = storage.getLetterProgress();
+        final letterProgress = await ProgressRepository.instance.getProgressMap('consonant');
         for (int i = 0; i < fullList.length; i++) {
           if (!fullList[i].isTest) {
-            if (localLetterProgress.containsKey(i)) {
+            if (letterProgress.containsKey(i)) {
               fullList[i].isLearned = true;
-              fullList[i].starRating = localLetterProgress[i]!;
+              fullList[i].starRating = letterProgress[i]!;
             } else {
-              // Không mặc định đánh dấu đã học (isLearned = false) để tránh chưa học đã mở khóa
               fullList[i].isLearned = false;
               fullList[i].starRating = 0;
             }
@@ -103,7 +103,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
           });
         }
       } catch (e) {
-        debugPrint('⚠️ Error loading local cached letter progress in detail: $e');
+        debugPrint('⚠️ Error loading letter progress from repository in detail: $e');
       }
 
       // 3. Tải danh sách dynamic lessons từ database để lấy ID của từng chữ trong nền
@@ -123,56 +123,6 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
       for (final l in fullList) {
         if (!l.isTest && lessonIdMap.containsKey(l.character)) {
           l.id = lessonIdMap[l.character];
-        }
-      }
-
-      // 4. Tải danh sách các bài học đã hoàn thành của người dùng từ MongoDB Atlas
-      final List<dynamic> completedLessons = List<dynamic>.from(
-        AuthService().userProfile?['learningProgress']?['completedLessons'] ?? [],
-      );
-
-      final completedLetters = completedLessons
-          .where((l) {
-            if (l is Map) {
-              return l['type'] == 'consonant';
-            }
-            return false;
-          })
-          .map((l) => (l as Map)['khmerText']?.toString() ?? '')
-          .toSet();
-
-      final completedIds = completedLessons
-          .map((l) {
-            if (l is Map) {
-              return l['_id']?.toString() ?? l['id']?.toString() ?? '';
-            }
-            return l.toString();
-          })
-          .where((id) => id.isNotEmpty)
-          .toSet();
-
-      final storage = await StorageService.getInstance();
-
-      // 5. Đồng bộ trạng thái học tập thực tế và mở khóa mặc định các bài học ban đầu
-      for (int i = 0; i < fullList.length; i++) {
-        if (!fullList[i].isTest) {
-          final character = fullList[i].character;
-          final id = fullList[i].id;
-
-          bool isDone = completedLetters.contains(character);
-          if (!isDone && id != null && completedIds.contains(id)) {
-            isDone = true;
-          }
-
-          if (isDone) {
-            fullList[i].isLearned = true;
-            if (fullList[i].starRating == 0) {
-              fullList[i].starRating = 3;
-            }
-            await storage.saveLetterProgress(i, fullList[i].starRating);
-          } else {
-            // Giữ nguyên tiến trình local đã nạp từ bộ nhớ tạm, KHÔNG tự ý ghi đè về false
-          }
         }
       }
 
@@ -231,28 +181,34 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
     _letters[_idx].isLearned = true;
     _letters[_idx].starRating = 3;
 
-    // Show completion dialog after a 2-second delay to allow the confetti animation to play first
-    Future.delayed(const Duration(milliseconds: 2000), () {
-      if (!mounted) return;
-      _showCompletionDialog();
+    final lessonId = _letter.id ?? 'consonant_$_idx';
+    ProgressRepository.instance.isLessonCompleted(lessonId).then((done) {
+      if (mounted) {
+        setState(() {
+          _isAlreadyDone = done;
+        });
+      }
     });
 
-    // Save progress to local DB (Isar) and sync with MongoDB backend in the background asynchronously
-    Future.microtask(() async {
-      try {
-        final scoreService = await ScoreService.getInstance();
-        await scoreService.completeWholeLessonReward();
-        await scoreService.completeLetterLesson(
-          _idx,
-          3,
-          lessonId: _letter.id,
-          letterText: _letter.character,
-          transliteration: _letter.romanized,
-        );
-        if (mounted) setState(() {});
-      } catch (e) {
-        debugPrint('⚠️ Error completing letter lesson in background: $e');
-      }
+    ScoreService.getInstance().then((scoreService) {
+      return scoreService.completeLetterLesson(
+        _idx,
+        8,
+        xp: 55,
+        lessonId: _letter.id ?? 'consonant_$_idx',
+        letterText: _letter.character,
+        transliteration: _letter.romanized,
+      );
+    }).then((_) {
+      if (mounted) setState(() {});
+    }).catchError((e) {
+      debugPrint('⚠️ Error completing letter lesson: $e');
+    });
+
+    // Show completion dialog after a 1.2-second delay to allow the confetti animation to play first
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      if (!mounted) return;
+      _showCompletionDialog();
     });
   }
 
@@ -275,219 +231,248 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
               end: Alignment.bottomCenter,
             ),
           ),
-          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 28.h),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('🎉', style: TextStyle(fontSize: 56.sp)),
-              SizedBox(height: 16.h),
-              Text(
-                context.translate('common.congratulations'),
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 26.sp,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.tertiary,
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('🎉', style: TextStyle(fontSize: 56.sp)),
+                SizedBox(height: 16.h),
+                Text(
+                  context.translate('common.congratulations'),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 26.sp,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.tertiary,
+                  ),
                 ),
-              ),
-              SizedBox(height: 10.h),
-              Text(
-                context.translate('learn.completed_letter', args: {'character': _letter.character}),
-                textAlign: TextAlign.center,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                  height: 1.3,
+                SizedBox(height: 10.h),
+                Text(
+                  context.translate('learn.completed_letter', args: {'character': _letter.character}),
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                    height: 1.3,
+                  ),
                 ),
-              ),
-              SizedBox(height: 24.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Transform.translate(
-                    offset: Offset(0, 4.h),
-                    child: Transform.rotate(
-                      angle: -0.15,
+                SizedBox(height: 24.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Transform.translate(
+                      offset: Offset(0, 4.h),
+                      child: Transform.rotate(
+                        angle: -0.15,
+                        child: Icon(
+                          Icons.star_rounded,
+                          size: 40.w,
+                          color: const Color(0xFFFFD600),
+                          shadows: [
+                            Shadow(
+                              color: const Color(0xFFFFD600).withValues(alpha: 0.5),
+                              blurRadius: 8.r,
+                              offset: Offset(0, 2.h),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 10.w),
+                    Transform.translate(
+                      offset: Offset(0, -6.h),
                       child: Icon(
                         Icons.star_rounded,
-                        size: 40.w,
+                        size: 56.w,
                         color: const Color(0xFFFFD600),
                         shadows: [
                           Shadow(
-                            color: const Color(0xFFFFD600).withValues(alpha: 0.5),
-                            blurRadius: 8.r,
+                            color: const Color(0xFFFFD600).withValues(alpha: 0.6),
+                            blurRadius: 12.r,
                             offset: Offset(0, 2.h),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Transform.translate(
-                    offset: Offset(0, -6.h),
-                    child: Icon(
-                      Icons.star_rounded,
-                      size: 56.w,
-                      color: const Color(0xFFFFD600),
-                      shadows: [
-                        Shadow(
-                          color: const Color(0xFFFFD600).withValues(alpha: 0.6),
-                          blurRadius: 12.r,
-                          offset: Offset(0, 2.h),
+                    SizedBox(width: 10.w),
+                    Transform.translate(
+                      offset: Offset(0, 4.h),
+                      child: Transform.rotate(
+                        angle: 0.15,
+                        child: Icon(
+                          Icons.star_rounded,
+                          size: 40.w,
+                          color: const Color(0xFFFFD600),
+                          shadows: [
+                            Shadow(
+                              color: const Color(0xFFFFD600).withValues(alpha: 0.5),
+                              blurRadius: 8.r,
+                              offset: Offset(0, 2.h),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20.h),
+                if (!_isAlreadyDone)
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 10.h),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFF9C4), Color(0xFFFFF59D)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(24.r),
+                      border: Border.all(color: const Color(0xFFFFF176), width: 1.5.w),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFBC02D).withValues(alpha: 0.2),
+                          blurRadius: 8.r,
+                          offset: Offset(0, 3.h),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 20.w),
+                        SizedBox(width: 4.w),
+                        Text(
+                          '+8 Sao',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFFF57F17),
+                          ),
+                        ),
+                        Container(
+                          margin: EdgeInsets.symmetric(horizontal: 12.w),
+                          width: 1.w,
+                          height: 16.h,
+                          color: const Color(0xFFF57F17).withValues(alpha: 0.3),
+                        ),
+                        Icon(Icons.bolt_rounded, color: const Color(0xFFFF9100), size: 20.w),
+                        SizedBox(width: 4.w),
+                        Text(
+                          '+55 XP',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFFE65100),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(width: 10.w),
-                  Transform.translate(
-                    offset: Offset(0, 4.h),
-                    child: Transform.rotate(
-                      angle: 0.15,
-                      child: Icon(
-                        Icons.star_rounded,
-                        size: 40.w,
-                        color: const Color(0xFFFFD600),
-                        shadows: [
-                          Shadow(
-                            color: const Color(0xFFFFD600).withValues(alpha: 0.5),
-                            blurRadius: 8.r,
-                            offset: Offset(0, 2.h),
+                if (_isAlreadyDone)
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 10.h),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(24.r),
+                      border: Border.all(color: Colors.grey[300]!, width: 1.5.w),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.check_circle_outline_rounded, color: Colors.grey[600], size: 20.w),
+                        SizedBox(width: 8.w),
+                        Flexible(
+                          child: Text(
+                            'Đã hoàn thành (Không cộng thêm Sao)',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.grey[600],
+                            ),
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
+                SizedBox(height: 28.h),
+                if (hasNext) ...[
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [AppColors.tertiary, AppColors.tertiaryDark],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                      borderRadius: BorderRadius.circular(16.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.tertiary.withValues(alpha: 0.35),
+                          blurRadius: 12.r,
+                          offset: Offset(0, 4.h),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _goTo(_idx + 1);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 14.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            context.translate('learn.next_letter_btn'),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18.sp),
                         ],
                       ),
                     ),
                   ),
+                  SizedBox(height: 12.h),
                 ],
-              ),
-              SizedBox(height: 20.h),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 10.h),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFFF9C4), Color(0xFFFFF59D)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(24.r),
-                  border: Border.all(color: const Color(0xFFFFF176), width: 1.5.w),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFBC02D).withValues(alpha: 0.2),
-                      blurRadius: 8.r,
-                      offset: Offset(0, 3.h),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 20.w),
-                    SizedBox(width: 4.w),
-                    Text(
-                      '+5 Sao',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFFF57F17),
-                      ),
-                    ),
-                    Container(
-                      margin: EdgeInsets.symmetric(horizontal: 12.w),
-                      width: 1.w,
-                      height: 16.h,
-                      color: const Color(0xFFF57F17).withValues(alpha: 0.3),
-                    ),
-                    Icon(Icons.bolt_rounded, color: const Color(0xFFFF9100), size: 20.w),
-                    SizedBox(width: 4.w),
-                    Text(
-                      '+60 XP',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFFE65100),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 28.h),
-              if (hasNext) ...[
-                Container(
+                SizedBox(
                   width: double.infinity,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [AppColors.tertiary, AppColors.tertiaryDark],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                    borderRadius: BorderRadius.circular(16.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.tertiary.withValues(alpha: 0.35),
-                        blurRadius: 12.r,
-                        offset: Offset(0, 4.h),
-                      ),
-                    ],
-                  ),
-                  child: ElevatedButton(
+                  child: OutlinedButton(
                     onPressed: () {
                       Navigator.pop(ctx);
-                      _goTo(_idx + 1);
+                      Navigator.pop(context);
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      foregroundColor: Colors.white,
+                    style: OutlinedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 14.h),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16.r),
                       ),
+                      side: BorderSide(color: AppColors.violet.withValues(alpha: 0.5), width: 1.5.w),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          context.translate('learn.next_letter_btn'),
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(width: 8.w),
-                        Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18.sp),
-                      ],
+                    child: Text(
+                      context.translate('learn.back_to_map'),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.violet,
+                      ),
                     ),
                   ),
                 ),
-                SizedBox(height: 12.h),
               ],
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    Navigator.pop(context);
-                  },
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 14.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16.r),
-                    ),
-                    side: BorderSide(color: AppColors.violet.withValues(alpha: 0.5), width: 1.5.w),
-                  ),
-                  child: Text(
-                    context.translate('learn.back_to_map'),
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.violet,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

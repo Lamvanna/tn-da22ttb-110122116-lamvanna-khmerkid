@@ -256,7 +256,7 @@ class _ReadingMapScreenState extends State<ReadingMapScreen>
       final labelOnLeft = isNodeOnRight;
 
       // ── Label card ──
-      final labelW = 100.w;
+      final labelW = 110.w;
       final labelX = labelOnLeft
           ? x - _nodeSize / 2 - labelW - 10.w
           : x + _nodeSize / 2 + 10.w;
@@ -319,11 +319,11 @@ class _ReadingMapScreenState extends State<ReadingMapScreen>
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  item.title.split(':').last.trim(),
+                  context.translate('reading_topics.topic_$baiNum'),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12.sp,
+                  style: GoogleFonts.battambang(
+                    fontSize: 13.sp,
                     fontWeight: FontWeight.w800,
                     height: 1.2,
                     color: locked
@@ -332,7 +332,7 @@ class _ReadingMapScreenState extends State<ReadingMapScreen>
                   ),
                 ),
                 Text(
-                  item.subtitle,
+                  context.translate('reading_subtitles.topic_$baiNum'),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                   style: GoogleFonts.plusJakartaSans(
@@ -402,54 +402,21 @@ class _ReadingMapScreenState extends State<ReadingMapScreen>
                         scale: _pulseAnim.value,
                         child: child,
                       ),
-                      child: _circle(item, color, done, curr, locked),
+                      child: _circle(baiNum, item, color, done, curr, locked),
                     )
-                  : _circle(item, color, done, curr, locked),
+                  : _circle(baiNum, item, color, done, curr, locked),
             ),
           ),
         ),
       );
 
-      // ── Lesson number badge ──
-      if (!locked) {
-        widgets.add(
-          Positioned(
-            left: x + _nodeSize / 2 - 16.w,
-            top: y - _nodeSize / 2 - 4.h,
-            child: Container(
-              width: 22.w,
-              height: 22.w,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: color,
-                border: Border.all(color: Colors.white, width: 2.w),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.4),
-                    blurRadius: 4,
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  '$baiNum',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      }
     }
 
     return widgets;
   }
 
   Widget _circle(
+    int baiNum,
     KhmerReading item,
     Color color,
     bool done,
@@ -522,9 +489,12 @@ class _ReadingMapScreenState extends State<ReadingMapScreen>
       ),
       child: Center(
         child: Text(
-          item.emoji,
-          style: TextStyle(
-            fontSize: 28.sp,
+          '$baiNum',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 26.sp,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            height: 1.0,
             shadows: [
               Shadow(
                 color: Colors.black.withValues(alpha: 0.3),

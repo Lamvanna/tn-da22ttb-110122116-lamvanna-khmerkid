@@ -172,6 +172,15 @@ userSchema.index({ rank: 1 });
 userSchema.index({ xp: -1 });
 userSchema.index({ level: -1 });
 
+userSchema.pre('save', async function (next) {
+  if (this.isModified('xp')) {
+    const { calculateLevel } = require('../utils/helpers');
+    const levelInfo = calculateLevel(this.xp);
+    this.level = levelInfo.level;
+  }
+  next();
+});
+
 // ========================================
 // Pre-save: Hash password
 // ========================================

@@ -56,8 +56,8 @@ class _HomeHeaderState extends State<HomeHeader> {
       _username = user?['name'] ?? (_storage?.getUsername() ?? context.translate('home.welcome_default'));
       _avatarUrl = user?['avatar'] ?? (_storage?.getAvatarUrl() ?? '');
       _level = user?['level'] ?? (_score?.level ?? 1);
-      _streak = user?['streak'] ?? (_score?.streak ?? 0);
-      _totalStars = user?['stars'] ?? (_score?.totalStars ?? 0);
+      _streak = _score?.streak ?? (user?['streak'] ?? 0);
+      _totalStars = _score?.totalStars ?? (user?['stars'] ?? 0);
     });
   }
 

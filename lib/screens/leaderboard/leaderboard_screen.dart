@@ -22,7 +22,7 @@ class LeaderboardScreen extends StatefulWidget {
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
   ScoreService? _score;
-  int _selectedTab = 1; // 0: Tuần, 1: Tháng, 2: Tất cả
+  int _selectedTab = 0; // 0: Tháng này, 1: Tất cả
   int _myStars = 0;
   bool _loading = false;
 
@@ -55,8 +55,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       final token = prefs.getString('accessToken') ?? auth.accessToken;
       
       String endpoint = '/rank/top';
-      if (_selectedTab == 0) endpoint = '/rank/weekly';
-      if (_selectedTab == 1) endpoint = '/rank/monthly';
+      if (_selectedTab == 0) endpoint = '/rank/monthly';
       
       final url = Uri.parse('${auth.baseUrl}$endpoint');
       final response = await http.get(
@@ -97,8 +96,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           if (isSameId || isSameName) {
             item['isMe'] = true;
             item['avatar'] = myAvatar;
-            // Chỉ ghi đè số sao trọn đời nếu ở tab "Tất cả" (All time), các tab Tuần/Tháng giữ nguyên số sao tích lũy trong kỳ từ server
-            if (_selectedTab == 2) {
+            // Chỉ ghi đè số sao trọn đời nếu ở tab "Tất cả" (All time), các tab Tháng giữ nguyên số sao tích lũy trong kỳ từ server
+            if (_selectedTab == 1) {
               item['stars'] = _myStars;
             }
             meInList = true;
@@ -110,7 +109,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           realList.add({
             'id': myId,
             'name': myName,
-            'stars': _selectedTab == 2 ? _myStars : 0,
+            'stars': _selectedTab == 1 ? _myStars : 0,
             'avatar': myAvatar,
             'isMe': true,
           });
@@ -266,9 +265,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       ),
                       child: Row(
                         children: [
-                           _tab(context.translate('leaderboard.weekly'), 0),
-                           _tab(context.translate('leaderboard.monthly'), 1),
-                           _tab(context.translate('leaderboard.all_time'), 2),
+                           _tab(context.translate('leaderboard.monthly'), 0),
+                           _tab(context.translate('leaderboard.all_time'), 1),
                         ],
                       ),
                     ),

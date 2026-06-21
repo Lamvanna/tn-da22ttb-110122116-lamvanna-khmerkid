@@ -97,6 +97,10 @@ class _CoengMapScreenState extends State<CoengMapScreen>
             padding: EdgeInsets.fromLTRB(10.w, 18.h, 16.w, 100.h),
             child: Column(
               children: List.generate(groups.length, (i) {
+                final group = groups[i];
+                final isLocked = i > 0 && !groups[i - 1].isCompleted;
+                final isCurrent = !group.isCompleted && (i == 0 || groups[i - 1].isCompleted);
+
                 final delay = (i * 0.12).clamp(0.0, 1.0);
                 final end = (delay + 0.4).clamp(0.0, 1.0);
                 final anim = CurvedAnimation(
@@ -108,10 +112,13 @@ class _CoengMapScreenState extends State<CoengMapScreen>
                     opacity: anim.value,
                     child: Transform.translate(offset: Offset(0, 20 * (1 - anim.value)), child: child)),
                   child: _GroupCard(
-                    group: groups[i],
+                    group: group,
                     isLast: i == groups.length - 1,
                     pulseCtrl: _pulseCtrl,
-                    onOpenLesson: _openLesson));
+                    onOpenLesson: _openLesson,
+                    isLocked: isLocked,
+                    isCurrent: isCurrent,
+                  ));
               }),
             ),
           ),
@@ -221,7 +228,11 @@ class _CoengMapScreenState extends State<CoengMapScreen>
     HapticFeedback.lightImpact();
     Navigator.push(context,
       MaterialPageRoute(builder: (_) => CoengScreen(initialIndex: idx)),
-    ).then((_) { if (mounted) setState(() {}); });
+    ).then((_) {
+      if (mounted) {
+        _loadScore();
+      }
+    });
   }
 }
 
@@ -257,8 +268,17 @@ class _GroupCard extends StatelessWidget {
   final bool isLast;
   final AnimationController pulseCtrl;
   final void Function(int) onOpenLesson;
+  final bool isLocked;
+  final bool isCurrent;
 
-  const _GroupCard({required this.group, required this.isLast, required this.pulseCtrl, required this.onOpenLesson});
+  const _GroupCard({
+    required this.group,
+    required this.isLast,
+    required this.pulseCtrl,
+    required this.onOpenLesson,
+    required this.isLocked,
+    required this.isCurrent,
+  });
 
   Color get _groupColor {
     const colors = [Color(0xFFFF6D00), Color(0xFFE65100), Color(0xFFF4511E), Color(0xFFFF8F00), Color(0xFFEF6C00)];
@@ -269,8 +289,6 @@ class _GroupCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _groupColor;
     final pct = (group.progress * 100).toInt();
-    final isCurrent = group.hasStarted && !group.isCompleted;
-    final isLocked = !group.hasStarted && group.number > 1;
 
     return IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
       SizedBox(width: 52.w, child: Column(children: [

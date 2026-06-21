@@ -105,6 +105,10 @@ class _ClosedSyllableMapScreenState extends State<ClosedSyllableMapScreen>
             padding: EdgeInsets.fromLTRB(10.w, 18.h, 16.w, 100.h),
             child: Column(
               children: List.generate(groups.length, (i) {
+                final group = groups[i];
+                final isLocked = i > 0 && !groups[i - 1].isCompleted;
+                final isCurrent = !group.isCompleted && (i == 0 || groups[i - 1].isCompleted);
+
                 final delay = (i * 0.15).clamp(0.0, 1.0);
                 final end = (delay + 0.4).clamp(0.0, 1.0);
                 final anim = CurvedAnimation(
@@ -121,10 +125,12 @@ class _ClosedSyllableMapScreenState extends State<ClosedSyllableMapScreen>
                     ),
                   ),
                   child: _GroupCard(
-                    group: groups[i],
+                    group: group,
                     isLast: i == groups.length - 1,
                     pulseCtrl: _pulseCtrl,
                     onOpenLesson: _openLesson,
+                    isLocked: isLocked,
+                    isCurrent: isCurrent,
                   ),
                 );
               }),
@@ -254,7 +260,9 @@ class _ClosedSyllableMapScreenState extends State<ClosedSyllableMapScreen>
     Navigator.push(context,
       MaterialPageRoute(builder: (_) => ClosedSyllableScreen(initialIndex: idx)),
     ).then((_) {
-      if (mounted) setState(() {});
+      if (mounted) {
+        _loadScore();
+      }
     });
   }
 }
@@ -306,12 +314,16 @@ class _GroupCard extends StatelessWidget {
   final bool isLast;
   final AnimationController pulseCtrl;
   final void Function(int) onOpenLesson;
+  final bool isLocked;
+  final bool isCurrent;
 
   const _GroupCard({
     required this.group,
     required this.isLast,
     required this.pulseCtrl,
     required this.onOpenLesson,
+    required this.isLocked,
+    required this.isCurrent,
   });
 
   Color get _groupColor {
@@ -329,8 +341,6 @@ class _GroupCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _groupColor;
     final pct = (group.progress * 100).toInt();
-    final isCurrent = group.hasStarted && !group.isCompleted;
-    final isLocked = !group.hasStarted && group.number > 1;
 
     return IntrinsicHeight(
       child: Row(

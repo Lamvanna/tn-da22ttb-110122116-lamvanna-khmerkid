@@ -56,15 +56,14 @@ class _NumberMapScreenState extends State<NumberMapScreen>
 
   Future<void> _loadScore() async {
     _score = await ScoreService.getInstance();
-    // 1. Tải nhanh từ bộ nhớ tạm local (Isar ProgressRepository) trước để giao diện hiện lên NGAY LẬP TỨC
+    // 1. Tải từ bộ nhớ cache RAM của ProgressRepository (Online-driven)
     try {
-      final localNumberProgress = await ProgressRepository.instance.getProgressMap('number');
+      final numberProgress = await ProgressRepository.instance.getProgressMap('number');
       for (int i = 0; i < _items.length; i++) {
-        if (localNumberProgress.containsKey(i)) {
+        if (numberProgress.containsKey(i)) {
           _items[i].isLearned = true;
-          _items[i].starRating = localNumberProgress[i]!;
+          _items[i].starRating = numberProgress[i]!;
         } else {
-          // Không mở khóa sẵn bài nào (mặc định học từ bài đầu tiên)
           _items[i].isLearned = false;
           _items[i].starRating = 0;
         }
@@ -77,10 +76,10 @@ class _NumberMapScreenState extends State<NumberMapScreen>
       debugPrint('⚠️ Error loading local cached number progress: $e');
     }
 
-    // 2. Chạy bất đồng bộ tải từ MongoDB Atlas trong nền
+    // 2. Chạy tải nền từ MongoDB để cập nhật mới nhất
     try {
-      // Tải lại tiến trình học tập mới nhất từ database MongoDB Atlas
-      await AuthService().fetchProfile();
+      await ProgressRepository.instance.loadRemoteProgress();
+      final numberProgress = await ProgressRepository.instance.getProgressMap('number');
 
       // Tải danh sách dynamic lessons từ database để lấy Object ID thực tế
       try {
@@ -103,52 +102,15 @@ class _NumberMapScreenState extends State<NumberMapScreen>
         debugPrint('⚠️ Error fetching dynamic number IDs: $ex');
       }
 
-      final List<dynamic> completedLessons = List<dynamic>.from(
-        AuthService().userProfile?['learningProgress']?['completedLessons'] ?? [],
-      );
-      
-      final completedNumbers = completedLessons
-          .where((l) {
-            if (l is Map) {
-              return l['type'] == 'number';
-            }
-            return false;
-          })
-          .map((l) => (l as Map)['khmerText']?.toString() ?? '')
-          .toSet();
-
-      final completedLessonIds = completedLessons
-          .map((l) {
-            if (l is Map) {
-              return l['_id']?.toString() ?? l['id']?.toString() ?? '';
-            }
-            return l.toString();
-          })
-          .where((id) => id.isNotEmpty)
-          .toSet();
-
-      final storage = await StorageService.getInstance();
-
       if (mounted) {
         setState(() {
           for (int i = 0; i < _items.length; i++) {
-            final character = _items[i].character;
-            final id = _items[i].id;
-
-            bool isDone = completedNumbers.contains(character);
-            if (!isDone && id != null && completedLessonIds.contains(id)) {
-              isDone = true;
-            }
-
-            if (isDone) {
+            if (numberProgress.containsKey(i)) {
               _items[i].isLearned = true;
-              if (_items[i].starRating == 0) {
-                _items[i].starRating = 3;
-              }
-              // Đồng bộ ngược lại bộ nhớ tạm
-              storage.saveNumberProgress(i, _items[i].starRating);
+              _items[i].starRating = numberProgress[i]!;
             } else {
-              // Giữ nguyên tiến trình local đã nạp từ bộ nhớ tạm, KHÔNG tự ý ghi đè về false
+              _items[i].isLearned = false;
+              _items[i].starRating = 0;
             }
           }
         });

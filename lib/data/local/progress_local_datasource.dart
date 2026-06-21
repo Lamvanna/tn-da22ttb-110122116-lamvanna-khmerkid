@@ -62,6 +62,24 @@ class ProgressLocalDataSource {
   /// Bulk save/update progress (khi sync từ server)
   Future<void> bulkSaveProgress(String userId, List<Map<String, dynamic>> progressList) async {
     await _isar.writeTxn(() async {
+      // 1. Xóa các record đã sync cục bộ nhưng không còn tồn tại trên server (bị reset trên server)
+      final localSynced = await _isar.userProgress
+          .filter()
+          .userIdEqualTo(userId)
+          .isSyncedEqualTo(true)
+          .findAll();
+
+      final serverLessonIds = progressList.map((p) => p['lessonId']?.toString() ?? '').toSet();
+
+      final toDelete = localSynced.where((p) => !serverLessonIds.contains(p.lessonId)).map((p) => p.id).toList();
+      if (toDelete.isNotEmpty) {
+        await _isar.userProgress.deleteAll(toDelete);
+        if (kDebugMode) {
+          print('[Isar] Deleted ${toDelete.length} legacy synced records because they are not on server.');
+        }
+      }
+
+      // 2. Lưu hoặc cập nhật dữ liệu từ server
       for (final p in progressList) {
         final lessonId = p['lessonId'] as String;
 

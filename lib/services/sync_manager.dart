@@ -128,6 +128,15 @@ class SyncManager {
       // Dọn dẹp items đã sync
       await _syncQueue.removeSynced();
 
+      // Tải lại thông tin cá nhân mới nhất từ server sau khi đồng bộ thành công
+      if (successCount > 0) {
+        try {
+          await AuthService().fetchProfile();
+        } catch (e) {
+          if (kDebugMode) print('[SyncManager] ⚠️ Error fetching profile after sync: $e');
+        }
+      }
+
       if (failCount == 0) {
         _updateStatus(SyncStatus.synced);
       } else {

@@ -11,6 +11,10 @@ import 'spelling_map_screen.dart';
 import 'closed_syllable_map_screen.dart';
 import 'coeng_map_screen.dart';
 
+import '../../models/khmer_spelling.dart';
+import '../../models/khmer_closed_syllable.dart';
+import '../../models/khmer_coeng.dart';
+
 import '../../services/score_service.dart';
 
 /// Màn trung gian — chọn loại Ghép vần.
@@ -44,6 +48,17 @@ class _SpellingHubScreenState extends State<SpellingHubScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final spellingDone = _score?.spellingLearned ?? 0;
+    final spellingTotal = KhmerSpellingData.lessons.length;
+    final isSpellingCompleted = spellingTotal > 0 && spellingDone >= spellingTotal;
+
+    final closedDone = _score?.closedSyllableLearned ?? 0;
+    final closedTotal = KhmerClosedSyllableData.lessons.length;
+    final isClosedCompleted = closedTotal > 0 && closedDone >= closedTotal;
+
+    final coengDone = _score?.coengLearned ?? 0;
+    final coengTotal = KhmerCoengData.lessons.length;
+
     final modes = <_SpellingMode>[
       _SpellingMode(
         index: 1,
@@ -54,8 +69,11 @@ class _SpellingHubScreenState extends State<SpellingHubScreen> {
         color: const Color(0xFF7F39FB),
         gradient: const [Color(0xFF9F6BFF), Color(0xFF6B21A8)],
         ready: true,
+        progress: spellingTotal > 0 ? spellingDone / spellingTotal : 0.0,
+        done: spellingDone,
+        total: spellingTotal,
         onTap: () => Navigator.push(
-            context, AppPageRoute(page: const SpellingMapScreen())),
+            context, AppPageRoute(page: const SpellingMapScreen())).then((_) => _loadScore()),
       ),
       _SpellingMode(
         index: 2,
@@ -65,9 +83,18 @@ class _SpellingHubScreenState extends State<SpellingHubScreen> {
         imagePath: 'image/Phụ âm va phụ âm.png',
         color: const Color(0xFF0084FF),
         gradient: const [Color(0xFF339CFF), Color(0xFF0056B3)],
-        ready: true,
-        onTap: () => Navigator.push(
-            context, AppPageRoute(page: const ClosedSyllableMapScreen())),
+        ready: isSpellingCompleted,
+        progress: closedTotal > 0 ? closedDone / closedTotal : 0.0,
+        done: closedDone,
+        total: closedTotal,
+        onTap: () {
+          if (isSpellingCompleted) {
+            Navigator.push(
+                context, AppPageRoute(page: const ClosedSyllableMapScreen())).then((_) => _loadScore());
+          } else {
+            _showLockedMessage(context);
+          }
+        },
       ),
       _SpellingMode(
         index: 3,
@@ -77,9 +104,18 @@ class _SpellingHubScreenState extends State<SpellingHubScreen> {
         imagePath: 'image/phụ âm có chân.png',
         color: const Color(0xFFF97316),
         gradient: const [Color(0xFFFB923C), Color(0xFFC2410C)],
-        ready: true,
-        onTap: () => Navigator.push(
-            context, AppPageRoute(page: const CoengMapScreen())),
+        ready: isSpellingCompleted && isClosedCompleted,
+        progress: coengTotal > 0 ? coengDone / coengTotal : 0.0,
+        done: coengDone,
+        total: coengTotal,
+        onTap: () {
+          if (isSpellingCompleted && isClosedCompleted) {
+            Navigator.push(
+                context, AppPageRoute(page: const CoengMapScreen())).then((_) => _loadScore());
+          } else {
+            _showLockedMessage(context);
+          }
+        },
       ),
     ];
 
@@ -324,26 +360,26 @@ class _SpellingHubScreenState extends State<SpellingHubScreen> {
     );
   }
 
-  void _showComingSoon(BuildContext context) {
+  void _showLockedMessage(BuildContext context) {
     HapticFeedback.lightImpact();
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 88.h),
-        backgroundColor: const Color(0xFF2E3849),
+        backgroundColor: const Color(0xFFE53935),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16.r),
         ),
         duration: const Duration(seconds: 2),
         content: Row(
           children: [
-            Icon(Icons.access_time_rounded,
-                color: const Color(0xFFFFD740), size: 20.sp),
+            Icon(Icons.lock_rounded,
+                color: Colors.white, size: 20.sp),
             SizedBox(width: 10.w),
             Expanded(
               child: Text(
-                context.translate('learn.coming_soon_wait'),
+                'Bé cần hoàn thành phần học trước để mở khóa nhé!',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w600,
@@ -370,6 +406,9 @@ class _SpellingMode {
   final Color color;
   final List<Color> gradient;
   final bool ready;
+  final double progress;
+  final int done;
+  final int total;
   final VoidCallback onTap;
 
   const _SpellingMode({
@@ -381,6 +420,9 @@ class _SpellingMode {
     required this.color,
     required this.gradient,
     required this.ready,
+    required this.progress,
+    required this.done,
+    required this.total,
     required this.onTap,
   });
 }
@@ -416,16 +458,20 @@ class _ModeCard extends StatelessWidget {
                         : const Color(0xFFFFF9F2),
                 borderRadius: BorderRadius.circular(22.r),
                 border: Border.all(
-                  color: mode.index == 1
-                      ? const Color(0xFFEAD8FF)
-                      : mode.index == 2
-                          ? const Color(0xFFD0E3FF)
-                          : const Color(0xFFFFE3C6),
+                  color: !ready
+                      ? const Color(0xFFE0E5F0)
+                      : mode.index == 1
+                          ? const Color(0xFFEAD8FF)
+                          : mode.index == 2
+                              ? const Color(0xFFD0E3FF)
+                              : const Color(0xFFFFE3C6),
                   width: 1.5.w,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: mode.color.withValues(alpha: ready ? 0.08 : 0.04),
+                    color: ready
+                        ? mode.color.withValues(alpha: 0.08)
+                        : Colors.black.withValues(alpha: 0.03),
                     blurRadius: 16.r,
                     offset: Offset(0, 6.h),
                   ),
@@ -457,7 +503,7 @@ class _ModeCard extends StatelessWidget {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13.5.sp,
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.textPrimary,
+                                color: ready ? AppColors.textPrimary : const Color(0xFFB0B8C8),
                                 letterSpacing: -0.4,
                                 height: 1.2,
                               ),
@@ -472,35 +518,93 @@ class _ModeCard extends StatelessWidget {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11.5.sp,
                               fontWeight: FontWeight.w500,
-                              color: AppColors.textSecondary,
+                              color: ready ? AppColors.textSecondary : const Color(0xFFC0C8D8),
                               height: 1.4,
                             ),
                           ),
                           SizedBox(height: 12.h),
-                          // Example chip
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10.w, vertical: 6.h),
-                            decoration: BoxDecoration(
-                                color: mode.color.withValues(
-                                    alpha: ready ? 0.12 : 0.06),
-                                borderRadius: BorderRadius.circular(12.r),
-                                border: Border.all(
-                                  color: mode.color.withValues(
-                                      alpha: ready ? 0.28 : 0.10),
-                                  width: 1,
-                                )),
-                            child: Text(
-                              mode.example,
-                              style: GoogleFonts.battambang(
-                                fontSize: 13.5.sp,
-                                fontWeight: FontWeight.w700,
-                                color: ready
-                                    ? mode.color
-                                    : const Color(0xFF8390A8),
-                                height: 1.2,
+                          // Progress + Example row
+                          Row(
+                            children: [
+                              // Example chip
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 10.w, vertical: 6.h),
+                                decoration: BoxDecoration(
+                                    color: mode.color.withValues(
+                                        alpha: ready ? 0.12 : 0.06),
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    border: Border.all(
+                                      color: mode.color.withValues(
+                                          alpha: ready ? 0.28 : 0.10),
+                                      width: 1,
+                                    )),
+                                child: Text(
+                                  mode.example,
+                                  style: GoogleFonts.battambang(
+                                    fontSize: 13.5.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: ready
+                                        ? mode.color
+                                        : const Color(0xFF8390A8),
+                                    height: 1.2,
+                                  ),
+                                ),
                               ),
-                            ),
+                              if (ready) ...[
+                                SizedBox(width: 8.w),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            '${(mode.progress * 100).toInt()}%',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 10.5.sp,
+                                              fontWeight: FontWeight.w800,
+                                              color: mode.color,
+                                            ),
+                                          ),
+                                          Text(
+                                            '${mode.done}/${mode.total}',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 9.5.sp,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 3.h),
+                                      Container(
+                                        height: 5.h,
+                                        decoration: BoxDecoration(
+                                          color: mode.color.withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(3.r),
+                                        ),
+                                        child: Stack(
+                                          children: [
+                                            FractionallySizedBox(
+                                              alignment: Alignment.centerLeft,
+                                              widthFactor: mode.progress.clamp(0.0, 1.0),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: mode.color,
+                                                  borderRadius: BorderRadius.circular(3.r),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ],
                       ),

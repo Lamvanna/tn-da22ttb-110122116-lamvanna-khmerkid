@@ -48,6 +48,11 @@ class LessonRemoteDataSource {
 
   /// Tải 1 bài học theo ID
   Future<Map<String, dynamic>?> fetchLessonById(String lessonId) async {
+    // Bỏ qua các ID không phải MongoDB ObjectId (VD: 'writing_0')
+    if (!RegExp(r'^[0-9a-fA-F]{24}$').hasMatch(lessonId)) {
+      if (kDebugMode) print('[LessonRemoteDS] Skipped invalid ObjectId: $lessonId');
+      return null;
+    }
     try {
       final url = Uri.parse('${_auth.baseUrl}/lessons/$lessonId');
       final headers = <String, String>{

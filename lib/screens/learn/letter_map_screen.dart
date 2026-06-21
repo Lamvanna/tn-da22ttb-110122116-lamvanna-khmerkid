@@ -62,52 +62,40 @@ class _LetterMapViewState extends State<LetterMapView>
     // ─── CHẨN ĐOÁN TIẾN ĐỘ ĐỒNG BỘ ───
     final auth = AuthService();
     debugPrint('🔍 [LetterMap Diagnostic] isAuthenticated: ${auth.isAuthenticated}');
-    debugPrint('🔍 [LetterMap Diagnostic] userProfile name: ${auth.userProfile?['name']}');
-    debugPrint('🔍 [LetterMap Diagnostic] userProfile email: ${auth.userProfile?['email']}');
-    final completed = auth.userProfile?['learningProgress']?['completedLessons'];
-    debugPrint('🔍 [LetterMap Diagnostic] completedLessons type: ${completed?.runtimeType}, length: ${completed is List ? completed.length : 0}');
-    if (completed is List && completed.isNotEmpty) {
-      debugPrint('🔍 [LetterMap Diagnostic] First 5 completed lessons: ${completed.take(5).toList()}');
-    }
 
-    // 1. Tải nhanh từ bộ nhớ tạm local (Isar ProgressRepository) trước để giao diện hiện lên NGAY LẬP TỨC
+    // 1. Tải từ bộ nhớ cache RAM của ProgressRepository (Online-driven)
     try {
-      final allLocalProgress = await ProgressRepository.instance.getProgressByType('consonant');
-      debugPrint('🔍 [LetterMap Diagnostic] allLocalProgress consonant items: ${allLocalProgress.map((e) => "${e['lessonId']}: order=${e['lessonOrder']}, stars=${e['stars']}, isCompleted=${e['isCompleted']}").toList()}');
-      final localLetterProgress = await ProgressRepository.instance.getProgressMap('consonant');
-      debugPrint('🔍 [LetterMap Diagnostic] localLetterProgress map: $localLetterProgress');
+      final letterProgress = await ProgressRepository.instance.getProgressMap('consonant');
+      debugPrint('🔍 [LetterMap Diagnostic] letterProgress map: $letterProgress');
       
       // Khôi phục các bài học bình thường
       for (int i = 0; i < _letters.length; i++) {
         if (!_letters[i].isTest) {
-          if (localLetterProgress.containsKey(i)) {
+          if (letterProgress.containsKey(i)) {
             _letters[i].isLearned = true;
-            _letters[i].starRating = localLetterProgress[i]!;
+            _letters[i].starRating = letterProgress[i]!;
           } else {
-            // Không mở khóa sẵn bài nào (mặc định học từ bài đầu tiên)
             _letters[i].isLearned = false;
             _letters[i].starRating = 0;
           }
         }
       }
 
-      // Tự động mở khóa và hoàn thành các bài Test nếu tất cả bài học trước nó đã xong
-      final storage = await StorageService.getInstance();
-      await _checkAndUnlockTestNodes(storage);
+      await _checkAndUnlockTestNodes();
 
       if (mounted) {
         setState(() {});
         WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrent());
       }
     } catch (e) {
-      debugPrint('⚠️ Error loading local cached letter progress: $e');
+      debugPrint('⚠️ Error loading letter progress from repository: $e');
     }
 
-    // 2. Chạy bất đồng bộ tải từ MongoDB Atlas trong nền
+    // 2. Chạy tải nền từ MongoDB để cập nhật mới nhất
     try {
-      // Tải lại tiến trình học tập mới nhất từ database MongoDB Atlas
-      await AuthService().fetchProfile();
-
+      await ProgressRepository.instance.loadRemoteProgress();
+      final letterProgress = await ProgressRepository.instance.getProgressMap('consonant');
+      
       // Tải danh sách dynamic lessons từ database để lấy Object ID thực tế
       try {
         final lessonService = await LessonService.getInstance();
@@ -129,73 +117,30 @@ class _LetterMapViewState extends State<LetterMapView>
         debugPrint('⚠️ Error fetching dynamic consonant IDs: $ex');
       }
 
-      final List<dynamic> completedLessons = List<dynamic>.from(
-        AuthService().userProfile?['learningProgress']?['completedLessons'] ?? [],
-      );
-      
-      final completedLetters = completedLessons
-          .where((l) {
-            if (l is Map) {
-              return l['type'] == 'consonant';
-            }
-            return false;
-          })
-          .map((l) => (l as Map)['khmerText']?.toString() ?? '')
-          .toSet();
-
-      final completedLessonIds = completedLessons
-          .map((l) {
-            if (l is Map) {
-              return l['_id']?.toString() ?? l['id']?.toString() ?? '';
-            }
-            return l.toString();
-          })
-          .where((id) => id.isNotEmpty)
-          .toSet();
-
-      debugPrint('🔍 [LetterMap Diagnostic] completedLetters: $completedLetters');
-      debugPrint('🔍 [LetterMap Diagnostic] completedLessonIds: $completedLessonIds');
-      debugPrint('🔍 [LetterMap Diagnostic] _letters mapped IDs: ${_letters.where((l) => !l.isTest).map((l) => "${l.character}: ${l.id}").toList()}');
-
-      final storage = await StorageService.getInstance();
-
       for (int i = 0; i < _letters.length; i++) {
         if (!_letters[i].isTest) {
-          final character = _letters[i].character;
-          final id = _letters[i].id;
-
-          bool isDone = completedLetters.contains(character);
-          if (!isDone && id != null && completedLessonIds.contains(id)) {
-            isDone = true;
-          }
-
-          if (isDone) {
+          if (letterProgress.containsKey(i)) {
             _letters[i].isLearned = true;
-            if (_letters[i].starRating == 0) {
-              _letters[i].starRating = 3;
-            }
-            // Đồng bộ ngược lại bộ nhớ tạm
-            await storage.saveLetterProgress(i, _letters[i].starRating);
+            _letters[i].starRating = letterProgress[i]!;
           } else {
-            // Giữ nguyên tiến trình local đã nạp từ bộ nhớ tạm, KHÔNG tự ý ghi đè về false
+            _letters[i].isLearned = false;
+            _letters[i].starRating = 0;
           }
         }
       }
 
-      // Tự động mở khóa và hoàn thành các bài Test sau khi tải trực tuyến
-      await _checkAndUnlockTestNodes(storage);
+      await _checkAndUnlockTestNodes();
 
       if (mounted) {
         setState(() {});
-        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrent());
       }
     } catch (e) {
-      debugPrint('⚠️ Error loading online letter progress: $e');
+      debugPrint('⚠️ Error updating letter progress from remote: $e');
     }
   }
 
   /// Tự động hoàn thành bài kiểm tra nếu bé đã học hết các phụ âm của nhóm đó
-  Future<void> _checkAndUnlockTestNodes(StorageService storage) async {
+  Future<void> _checkAndUnlockTestNodes() async {
     for (int i = 0; i < _letters.length; i++) {
       if (_letters[i].isTest) {
         bool allPrecedingDone = true;
@@ -210,7 +155,6 @@ class _LetterMapViewState extends State<LetterMapView>
           if (_letters[i].starRating == 0) {
             _letters[i].starRating = 3;
           }
-          await storage.saveLetterProgress(i, _letters[i].starRating);
         } else {
           // Bất kỳ bài test nào (ngoại trừ bài test đầu tiên mặc định ở index 5) nếu chưa đủ điều kiện thì khóa lại
           if (i != 5) {

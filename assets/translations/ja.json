@@ -58,8 +58,45 @@
     "spelling_desc": "子音と母音を組み合わせる練習",
     "writing": "手書き練習",
     "writing_desc": "正しい書き順に沿って文字をなぞる",
+    "writing_title_map": "手書き練習",
     "test": "総合テスト",
     "test_desc": "レッスン後に実力を確認"
+  },
+  "writing_topics": {
+    "topic_1": "ការសិក្សារៀនសូត្រ",
+    "topic_2": "ទៅសាលា",
+    "topic_3": "គ្រួសាររបស់ខ្ញុំ",
+    "topic_4": "សត្វព្រៃ",
+    "topic_5": "សត្វស្លាប",
+    "topic_6": "ជីវិតក្រោមទឹក",
+    "topic_7": "ធម្មជាតិ",
+    "topic_8": "សេចក្តីស្រឡាញ់",
+    "topic_9": "ការថែទាំ",
+    "topic_10": "រឿងនិទាន",
+    "topic_11": "ចម្រៀងបំពេ",
+    "topic_12": "ការចែករំលែក",
+    "topic_13": "ភាពគួរឱ្យស្រឡាញ់",
+    "topic_14": "អាហារសុខភាព",
+    "topic_15": "រដូវក្តៅ",
+    "topic_16": "ផ្លែឈើខ្មែរ",
+    "topic_17": "មិត្តភក្តិ",
+    "topic_18": "ចំណេះដឹង",
+    "topic_19": "ការអាន",
+    "topic_20": "អនាម័យ"
+  },
+  "reading_topics": {
+    "topic_1": "ព្យញ្ជនៈមូលដ្ឋាន",
+    "topic_2": "ពាក្យសាមញ្ញ",
+    "topic_3": "ប្រយោគខ្លី",
+    "topic_4": "លេខខ្មែរ",
+    "topic_5": "អត្ថបទខ្លី"
+  },
+  "reading_subtitles": {
+    "topic_1": "子音 ក - ខ の読解",
+    "topic_2": "1-2音節の単語の読解",
+    "topic_3": "簡単な文章の読解",
+    "topic_4": "1-10の数字の読解",
+    "topic_5": "短い段落の読解"
   },
   "learn_letter": {
     "listen": "発音を聞く",
@@ -228,6 +265,8 @@
     "version": "バージョン"
   },
   "learn": {
+    "practice_writing": "手書きの練習",
+    "description_label": "説明",
     "spelling_title_basic": "子音 + 母音",
     "spelling_title_closed": "子音 + 子音 + 記号 ់",
     "spelling_title_coeng": "足文字 ្",

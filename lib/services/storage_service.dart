@@ -387,6 +387,22 @@ class StorageService {
     }
   }
 
+  /// Xóa chỉ các khóa bản đồ tiến độ bài học (dùng khi đồng bộ từ Isar/Server)
+  Future<void> clearOnlyLessonProgress() async {
+    const keys = [
+      _keyLetterProgress,
+      _keyVowelProgress,
+      _keyReadingProgress,
+      _keyNumberProgress,
+      _keyDiacriticalProgress,
+      _keySpellingProgress,
+      _keyWritingProgress,
+    ];
+    for (final k in keys) {
+      await _prefs?.remove(_uKey(k));
+    }
+  }
+
   // ─── POWER-UPS REGENERATION SYSTEM ───────────────────────────
   static const _keyHintsCount = 'pu_hints_count';
   static const _keyHintsLastReg = 'pu_hints_last_reg';

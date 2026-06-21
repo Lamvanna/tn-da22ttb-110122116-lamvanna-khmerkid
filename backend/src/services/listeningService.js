@@ -54,8 +54,10 @@ class ListeningService {
     });
 
     // Update user XP and skill progress
-    await userService.addXP(userId, XP_CONFIG.PER_LISTENING, io);
-    await userService.addStars(userId, stars);
+    if (!data.skipGamification) {
+      await userService.addXP(userId, XP_CONFIG.PER_LISTENING, io);
+      await userService.addStars(userId, stars);
+    }
     await userService.updateSkillProgress(userId, 'listening', score);
 
     if (passed && lessonId) {

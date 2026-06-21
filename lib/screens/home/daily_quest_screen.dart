@@ -426,7 +426,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                     child: Row(children: [
                       Text('🔥', style: TextStyle(fontSize: 14.sp)),
                       SizedBox(width: 4.w),
-                      Text('${AuthService().userProfile?['streak'] ?? 0}',
+                      Text('${_score?.streak ?? (AuthService().userProfile?['streak'] ?? 0)}',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14.sp, fontWeight: FontWeight.w800, color: Colors.white)),
                     ]),
@@ -443,7 +443,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                     child: Row(children: [
                       Icon(Icons.star_rounded, color: const Color(0xFFFFD54F), size: 16.sp),
                       SizedBox(width: 4.w),
-                      Text('${AuthService().userProfile?['stars'] ?? 0}',
+                      Text('${_score?.totalStars ?? (AuthService().userProfile?['stars'] ?? 0)}',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14.sp, fontWeight: FontWeight.w800, color: Colors.white)),
                     ]),

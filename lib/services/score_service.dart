@@ -22,15 +22,13 @@ class ScoreService {
   }
 
   // ─── GETTERS ─────────────────────────────────────────────────
+  /// Stars từ backend MongoDB (source of truth)
   int get totalStars {
-    final local = _storage.getStars();
-    final remote = AuthService().userProfile?['stars'] ?? 0;
-    return local > remote ? local : remote;
+    return (AuthService().userProfile?['stars'] as num?)?.toInt() ?? _storage.getStars();
   }
+  /// XP từ backend MongoDB (source of truth)
   int get totalXp {
-    final local = _storage.getXp();
-    final remote = AuthService().userProfile?['xp'] ?? 0;
-    return local > remote ? local : remote;
+    return (AuthService().userProfile?['xp'] as num?)?.toInt() ?? _storage.getXp();
   }
   int get streak {
     final local = _storage.getStreak();
@@ -117,12 +115,7 @@ class ScoreService {
       xp = 25;
     }
     
-    if (stars > 0) {
-      await _storage.addStars(stars);
-    }
-    if (xp > 0) {
-      await _storage.addXp(xp);
-    }
+    // Stars/XP do backend cộng khi hoàn thành bài (qua completeLesson API)
     await _storage.updateStreak();
     return {'stars': stars, 'xp': xp};
   }
@@ -131,18 +124,14 @@ class ScoreService {
   Future<Map<String, int>> completeBonusReward() async {
     int stars = 1;
     int xp = 10;
-    await _storage.addStars(stars);
-    await _storage.addXp(xp);
+    // Stars/XP do backend cộng
     await _storage.updateStreak();
     return {'stars': stars, 'xp': xp};
   }
 
-  /// Nhận toàn bộ thưởng 5 sao và 60 XP khi hoàn thành bài học 3 bước
-  Future<Map<String, int>> completeWholeLessonReward() async {
-    int stars = 5;
-    int xp = 60;
-    await _storage.addStars(stars);
-    await _storage.addXp(xp);
+  /// Nhận toàn bộ thưởng (mặc định 5 sao và 60 XP) khi hoàn thành bài học 3 bước
+  Future<Map<String, int>> completeWholeLessonReward({int stars = 5, int xp = 60}) async {
+    // Stars/XP do backend cộng
     await _storage.updateStreak();
     return {'stars': stars, 'xp': xp};
   }
@@ -154,35 +143,34 @@ class ScoreService {
     required String? lessonId,
     String letterText = 'ក',
     String transliteration = 'ko',
+    int? xp,
   }) async {
-    // Note: Stars and XP are now awarded step-by-step and as a bonus, so we don't add them here to avoid double-counting.
-    int earnedStars = 0;
-    int earnedXp = 0;
+    int earnedStars = stars;
+    int earnedXp = xp ?? (stars * 10);
 
     // Check achievements
     await _checkAchievements();
 
-    // Lưu cục bộ SharedPreferences (tương thích cũ)
-    await _storage.saveLetterProgress(letterIndex, stars);
-    await _storage.addStars(earnedStars);
-    await _storage.addXp(earnedXp);
+    // Cập nhật streak
     await _storage.updateStreak();
 
-    // Lưu vào Isar ProgressRepository (Isolated đa người dùng)
+    final resolvedId = lessonId ?? 'consonant_$letterIndex';
+
+    // Lưu trực tiếp lên MongoDB thông qua ProgressRepository
     try {
       await ProgressRepository.instance.completeLesson(
-        lessonId: lessonId ?? 'consonant_$letterIndex',
+        lessonId: resolvedId,
         lessonType: 'consonant',
         lessonOrder: letterIndex,
-        stars: stars,
+        stars: earnedStars,
+        xp: earnedXp,
       );
     } catch (e) {
-      debugPrint('⚠️ Error saving letter progress to Isar: $e');
+      debugPrint('⚠️ Error completing letter lesson: $e');
     }
 
-    // Đồng bộ lên backend MongoDB Atlas
-    await _syncListeningResult(100, lessonId: lessonId);
-    await _syncWritingResult(100, lessonId: lessonId);
+    // Đồng bộ lên backend MongoDB Atlas các kết quả phụ nếu cần
+    await _syncListeningResult(100, lessonId: resolvedId);
 
     return {'stars': earnedStars, 'xp': earnedXp};
   }
@@ -194,65 +182,63 @@ class ScoreService {
     required String? lessonId,
     String vowelText = 'ា',
     String transliteration = 'aa',
+    int? xp,
   }) async {
-    // Note: Stars and XP are now awarded step-by-step and as a bonus, so we don't add them here to avoid double-counting.
-    int earnedStars = 0;
-    int earnedXp = 0;
+    int earnedStars = stars;
+    int earnedXp = xp ?? (stars * 10);
 
     await _checkAchievements();
 
-    // Lưu cục bộ SharedPreferences (tương thích cũ)
-    await _storage.saveVowelProgress(vowelIndex, stars);
-    await _storage.addStars(earnedStars);
-    await _storage.addXp(earnedXp);
     await _storage.updateStreak();
 
-    // Lưu vào Isar ProgressRepository (Isolated đa người dùng)
+    final resolvedId = lessonId ?? 'vowel_$vowelIndex';
+
     try {
       await ProgressRepository.instance.completeLesson(
-        lessonId: lessonId ?? 'vowel_$vowelIndex',
+        lessonId: resolvedId,
         lessonType: 'vowel',
         lessonOrder: vowelIndex,
-        stars: stars,
+        stars: earnedStars,
+        xp: earnedXp,
       );
     } catch (e) {
-      debugPrint('⚠️ Error saving vowel progress to Isar: $e');
+      debugPrint('⚠️ Error completing vowel lesson: $e');
     }
 
-    // Đồng bộ lên backend MongoDB Atlas
-    await _syncListeningResult(100, lessonId: lessonId);
-    await _syncWritingResult(100, lessonId: lessonId);
+    await _syncListeningResult(100, lessonId: resolvedId);
 
     return {'stars': earnedStars, 'xp': earnedXp};
   }
 
   /// Hoàn thành bài học tập đọc
-  Future<Map<String, int>> completeReadingLesson(int readingIndex, int stars, {required String? lessonId}) async {
+  Future<Map<String, int>> completeReadingLesson(
+    int readingIndex,
+    int stars, {
+    required String? lessonId,
+    int? xp,
+  }) async {
     int earnedStars = stars;
-    int earnedXp = stars * 5;
+    int earnedXp = xp ?? (stars * 5);
 
     await _checkAchievements();
 
-    // Lưu cục bộ SharedPreferences (tương thích cũ)
-    await _storage.saveReadingProgress(readingIndex, stars);
-    await _storage.addStars(earnedStars);
-    await _storage.addXp(earnedXp);
     await _storage.updateStreak();
 
-    // Lưu vào Isar ProgressRepository (Isolated đa người dùng)
+    final resolvedId = lessonId ?? 'reading_$readingIndex';
+
     try {
       await ProgressRepository.instance.completeLesson(
-        lessonId: lessonId ?? 'reading_$readingIndex',
+        lessonId: resolvedId,
         lessonType: 'reading',
         lessonOrder: readingIndex,
-        stars: stars,
+        stars: earnedStars,
+        xp: earnedXp,
       );
     } catch (e) {
-      debugPrint('⚠️ Error saving reading progress to Isar: $e');
+      debugPrint('⚠️ Error completing reading lesson: $e');
     }
 
-    // Đồng bộ lên backend MongoDB Atlas
-    await _syncReadingResult(100, lessonId: lessonId);
+    await _syncReadingResult(100, lessonId: resolvedId);
 
     return {'stars': earnedStars, 'xp': earnedXp};
   }
@@ -264,34 +250,30 @@ class ScoreService {
     required String? lessonId,
     String numberText = '០',
     String transliteration = '0',
+    int? xp,
   }) async {
-    // Note: Stars and XP are now awarded step-by-step and as a bonus, so we don't add them here to avoid double-counting.
-    int earnedStars = 0;
-    int earnedXp = 0;
+    int earnedStars = stars;
+    int earnedXp = xp ?? (stars * 10);
 
     await _checkAchievements();
 
-    // Lưu cục bộ SharedPreferences (tương thích cũ)
-    await _storage.saveNumberProgress(numberIndex, stars);
-    await _storage.addStars(earnedStars);
-    await _storage.addXp(earnedXp);
     await _storage.updateStreak();
 
-    // Lưu vào Isar ProgressRepository (Isolated đa người dùng)
+    final resolvedId = lessonId ?? 'number_$numberIndex';
+
     try {
       await ProgressRepository.instance.completeLesson(
-        lessonId: lessonId ?? 'number_$numberIndex',
+        lessonId: resolvedId,
         lessonType: 'number',
         lessonOrder: numberIndex,
-        stars: stars,
+        stars: earnedStars,
+        xp: earnedXp,
       );
     } catch (e) {
-      debugPrint('⚠️ Error saving number progress to Isar: $e');
+      debugPrint('⚠️ Error completing number lesson: $e');
     }
 
-    // Đồng bộ lên backend MongoDB Atlas
-    await _syncListeningResult(100, lessonId: lessonId);
-    await _syncWritingResult(100, lessonId: lessonId);
+    await _syncListeningResult(100, lessonId: resolvedId);
 
     return {'stars': earnedStars, 'xp': earnedXp};
   }
@@ -303,34 +285,30 @@ class ScoreService {
     required String? lessonId,
     String diacriticalText = '់',
     String transliteration = '់',
+    int? xp,
   }) async {
-    // Note: Stars and XP are now awarded step-by-step and as a bonus, so we don't add them here to avoid double-counting.
-    int earnedStars = 0;
-    int earnedXp = 0;
+    int earnedStars = stars;
+    int earnedXp = xp ?? (stars * 10);
 
     await _checkAchievements();
 
-    // Lưu cục bộ SharedPreferences (tương thích cũ)
-    await _storage.saveDiacriticalProgress(diacriticalIndex, stars);
-    await _storage.addStars(earnedStars);
-    await _storage.addXp(earnedXp);
     await _storage.updateStreak();
 
-    // Lưu vào Isar ProgressRepository (Isolated đa người dùng)
+    final resolvedId = lessonId ?? 'diacritical_$diacriticalIndex';
+
     try {
       await ProgressRepository.instance.completeLesson(
-        lessonId: lessonId ?? 'diacritical_$diacriticalIndex',
+        lessonId: resolvedId,
         lessonType: 'diacritical',
         lessonOrder: diacriticalIndex,
-        stars: stars,
+        stars: earnedStars,
+        xp: earnedXp,
       );
     } catch (e) {
-      debugPrint('⚠️ Error saving diacritical progress to Isar: $e');
+      debugPrint('⚠️ Error completing diacritical lesson: $e');
     }
 
-    // Đồng bộ lên backend MongoDB Atlas
-    await _syncListeningResult(100, lessonId: lessonId);
-    await _syncWritingResult(100, lessonId: lessonId);
+    await _syncListeningResult(100, lessonId: resolvedId);
 
     return {'stars': earnedStars, 'xp': earnedXp};
   }
@@ -342,34 +320,30 @@ class ScoreService {
     required String? lessonId,
     String spellingText = 'កា',
     String transliteration = 'kaa',
+    int? xp,
   }) async {
-    // Note: Stars and XP are now awarded step-by-step and as a bonus, so we don't add them here to avoid double-counting.
-    int earnedStars = 0;
-    int earnedXp = 0;
+    int earnedStars = stars;
+    int earnedXp = xp ?? (stars * 10);
 
     await _checkAchievements();
 
-    // Lưu cục bộ SharedPreferences (tương thích cũ)
-    await _storage.saveSpellingProgress(spellingIndex, stars);
-    await _storage.addStars(earnedStars);
-    await _storage.addXp(earnedXp);
     await _storage.updateStreak();
 
-    // Lưu vào Isar ProgressRepository (Isolated đa người dùng)
+    final resolvedId = lessonId ?? 'spelling_$spellingIndex';
+
     try {
       await ProgressRepository.instance.completeLesson(
-        lessonId: lessonId ?? 'spelling_$spellingIndex',
+        lessonId: resolvedId,
         lessonType: 'spelling',
         lessonOrder: spellingIndex,
-        stars: stars,
+        stars: earnedStars,
+        xp: earnedXp,
       );
     } catch (e) {
-      debugPrint('⚠️ Error saving spelling progress to Isar: $e');
+      debugPrint('⚠️ Error completing spelling lesson: $e');
     }
 
-    // Đồng bộ lên backend MongoDB Atlas
-    await _syncListeningResult(100, lessonId: lessonId);
-    await _syncWritingResult(100, lessonId: lessonId);
+    await _syncListeningResult(100, lessonId: resolvedId);
 
     return {'stars': earnedStars, 'xp': earnedXp};
   }
@@ -382,9 +356,10 @@ class ScoreService {
     List<List<Offset>>? strokes,
     String? targetCharacter,
     bool passed = true,
+    int? xp,
   }) async {
     int earnedStars = stars;
-    int earnedXp = stars * 5;
+    int earnedXp = xp ?? (stars * 5);
 
     await _checkAchievements();
 
@@ -404,22 +379,18 @@ class ScoreService {
     }
 
     if (finalPassed) {
-      // Lưu cục bộ SharedPreferences (tương thích cũ)
-      await _storage.saveWritingProgress(writingIndex, earnedStars);
-      await _storage.addStars(earnedStars);
-      await _storage.addXp(earnedXp);
       await _storage.updateStreak();
 
-      // Lưu vào Isar ProgressRepository (Isolated đa người dùng)
       try {
         await ProgressRepository.instance.completeLesson(
           lessonId: lessonId ?? 'writing_$writingIndex',
           lessonType: 'writing',
           lessonOrder: writingIndex,
           stars: earnedStars,
+          xp: earnedXp,
         );
       } catch (e) {
-        debugPrint('⚠️ Error saving writing progress to Isar: $e');
+        debugPrint('⚠️ Error completing writing lesson: $e');
       }
     } else {
       earnedStars = 0;
@@ -462,8 +433,7 @@ class ScoreService {
     int earnedStars = (score / 10).ceil().clamp(1, 5);
     int earnedXp = score;
 
-    await _storage.addStars(earnedStars);
-    await _storage.addXp(earnedXp);
+    // Stars/XP do backend xử lý qua _syncGameResult
     await _storage.saveGameScore(gameName, score);
     await _storage.updateStreak();
 
@@ -526,6 +496,13 @@ class ScoreService {
   }
 
   int _countLearned(String type, int Function() storageCountGetter) {
+    // 1. Hãy thử lấy từ RAM cache của ProgressRepository trước (chứa đủ cả ID dạng Object và ID dự phòng)
+    final cacheCount = ProgressRepository.instance.getCompletedCountSync(type);
+    if (cacheCount > 0) {
+      return cacheCount;
+    }
+
+    // 2. Fallback sang userProfile completedLessons
     final lp = AuthService().userProfile?['learningProgress'];
     final completed = lp?['completedLessons'] as List?;
     if (completed != null && completed.isNotEmpty) {
@@ -556,6 +533,12 @@ class ScoreService {
 
   /// Tổng số bài ghép vần đã học
   int get spellingLearned => _countLearned('spelling', () => _storage.getSpellingProgress().length);
+
+  /// Tổng số bài vần đóng đã học
+  int get closedSyllableLearned => _countLearned('closed_syllable', () => 0);
+
+  /// Tổng số bài phụ âm chân đã học
+  int get coengLearned => _countLearned('coeng', () => 0);
 
   /// Tổng số bài luyện viết đã học
   int get writingLearned => _countLearned('writing', () => _storage.getWritingProgress().length);
@@ -690,6 +673,7 @@ class ScoreService {
           'answers': [],
           'correctAnswers': score,
           'totalQuestions': 100,
+          'skipGamification': true,
         }),
       );
       if (kDebugMode) print('[ScoreService] Listening Sync Status: ${response.statusCode}');
@@ -734,6 +718,7 @@ class ScoreService {
           'answers': score,
           'correctAnswers': score,
           'totalQuestions': 100,
+          'skipGamification': true,
         }),
       );
       if (kDebugMode) print('[ScoreService] Reading Sync Status: ${response.statusCode}');

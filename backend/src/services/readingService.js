@@ -55,8 +55,10 @@ class ReadingService {
     });
 
     // Update user stats
-    await userService.addXP(userId, XP_CONFIG.PER_READING, io);
-    await userService.addStars(userId, stars);
+    if (!data.skipGamification) {
+      await userService.addXP(userId, XP_CONFIG.PER_READING, io);
+      await userService.addStars(userId, stars);
+    }
     await userService.updateSkillProgress(userId, 'reading', score);
 
     if (passed && lessonId) {

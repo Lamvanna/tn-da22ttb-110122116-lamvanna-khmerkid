@@ -14,7 +14,7 @@ const listeningResultSchema = new mongoose.Schema(
       required: true,
     },
     lessonId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: 'Lesson',
     },
     score: {

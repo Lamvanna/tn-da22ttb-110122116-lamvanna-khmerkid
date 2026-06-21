@@ -56,15 +56,14 @@ class _VowelScreenState extends State<VowelScreen>
   }
 
   Future<void> _loadScore() async {
-    // 1. Tải nhanh từ bộ nhớ tạm local (Isar ProgressRepository) trước để giao diện hiện lên NGAY LẬP TỨC
+    // 1. Tải từ bộ nhớ cache RAM của ProgressRepository (Online-driven)
     try {
-      final localVowelProgress = await ProgressRepository.instance.getProgressMap('vowel');
+      final vowelProgress = await ProgressRepository.instance.getProgressMap('vowel');
       for (int i = 0; i < _vowels.length; i++) {
-        if (localVowelProgress.containsKey(i)) {
+        if (vowelProgress.containsKey(i)) {
           _vowels[i].isLearned = true;
-          _vowels[i].starRating = localVowelProgress[i]!;
+          _vowels[i].starRating = vowelProgress[i]!;
         } else {
-          // Không mở khóa sẵn bài nào (mặc định học từ bài đầu tiên)
           _vowels[i].isLearned = false;
           _vowels[i].starRating = 0;
         }
@@ -74,13 +73,13 @@ class _VowelScreenState extends State<VowelScreen>
         WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrent());
       }
     } catch (e) {
-      debugPrint('⚠️ Error loading local cached vowel progress: $e');
+      debugPrint('⚠️ Error loading vowel progress from repository: $e');
     }
 
-    // 2. Chạy bất đồng bộ tải từ MongoDB Atlas trong nền
+    // 2. Chạy tải nền từ MongoDB để cập nhật mới nhất
     try {
-      // Tải lại tiến trình học tập mới nhất từ database MongoDB Atlas
-      await AuthService().fetchProfile();
+      await ProgressRepository.instance.loadRemoteProgress();
+      final vowelProgress = await ProgressRepository.instance.getProgressMap('vowel');
 
       // Tải danh sách dynamic lessons từ database để lấy Object ID thực tế
       try {
@@ -103,55 +102,17 @@ class _VowelScreenState extends State<VowelScreen>
         debugPrint('⚠️ Error fetching dynamic vowel IDs: $ex');
       }
 
-      final List<dynamic> completedLessons = List<dynamic>.from(
-        AuthService().userProfile?['learningProgress']?['completedLessons'] ?? [],
-      );
-      
-      final completedVowels = completedLessons
-          .where((l) {
-            if (l is Map) {
-              return l['type'] == 'vowel';
-            }
-            return false;
-          })
-          .map((l) => (l as Map)['khmerText']?.toString() ?? '')
-          .toSet();
-
-      final completedLessonIds = completedLessons
-          .map((l) {
-            if (l is Map) {
-              return l['_id']?.toString() ?? l['id']?.toString() ?? '';
-            }
-            return l.toString();
-          })
-          .where((id) => id.isNotEmpty)
-          .toSet();
-
-      final storage = await StorageService.getInstance();
-
       for (int i = 0; i < _vowels.length; i++) {
-        final character = _vowels[i].character;
-        final id = _vowels[i].id;
-
-        bool isDone = completedVowels.contains(character);
-        if (!isDone && id != null && completedLessonIds.contains(id)) {
-          isDone = true;
-        }
-
-        if (isDone) {
+        if (vowelProgress.containsKey(i)) {
           _vowels[i].isLearned = true;
-          if (_vowels[i].starRating == 0) {
-            _vowels[i].starRating = 3;
-          }
-          // Đồng bộ ngược lại bộ nhớ tạm
-          await storage.saveVowelProgress(i, _vowels[i].starRating);
+          _vowels[i].starRating = vowelProgress[i]!;
         } else {
-          // Giữ nguyên tiến trình local đã nạp từ bộ nhớ tạm, KHÔNG tự ý ghi đè về false
+          _vowels[i].isLearned = false;
+          _vowels[i].starRating = 0;
         }
       }
       if (mounted) {
         setState(() {});
-        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrent());
       }
     } catch (e) {
       debugPrint('⚠️ Error loading online vowel progress: $e');

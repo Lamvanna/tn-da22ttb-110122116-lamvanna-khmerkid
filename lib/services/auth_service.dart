@@ -7,11 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'storage_service.dart';
 import 'sync_manager.dart';
-import '../repositories/progress_repository.dart';
 import '../data/local/local_database.dart';
-import '../models/khmer_letter.dart';
-import '../models/khmer_vowel.dart';
-import '../models/khmer_number.dart';
 import 'handwriting_websocket_client.dart';
 import 'connectivity_service.dart';
 
@@ -864,110 +860,36 @@ class AuthService extends ChangeNotifier {
   }
 
   /// Đồng bộ hồ sơ từ Backend sang bộ lưu trữ SharedPreferences nội bộ (cho trang chủ hiển thị)
-  /// + Lưu vào Isar ProfileCache
   Future<void> _syncProfileToStorage(Map<String, dynamic> profile) async {
     try {
       final storage = await StorageService.getInstance();
       await storage.setUsername(profile['name'] ?? 'Bé học giỏi');
-      await storage.setStars(profile['stars'] ?? 0);
-      await storage.setXp(profile['xp'] ?? 0);
+      // Backend là nguồn dữ liệu chính (source of truth) cho Stars/XP
+      await storage.setStars((profile['stars'] as num?)?.toInt() ?? 0);
+      await storage.setXp((profile['xp'] as num?)?.toInt() ?? 0);
       await storage.setStreak(profile['streak'] ?? 0);
       await storage.setAvatarUrl(profile['avatar'] ?? '');
-
-      final List<Map<String, dynamic>> progressListForIsar = [];
-
-      // Đồng bộ các tiến độ bài học từ profile completedLessons sang SharedPreferences
-      final dynamic lp = profile['learningProgress'];
-      if (lp != null && lp['completedLessons'] != null) {
-        final completed = lp['completedLessons'] as List<dynamic>;
-        for (final item in completed) {
-          if (item is Map<String, dynamic>) {
-            final type = item['type']?.toString();
-            final khmerText = item['khmerText']?.toString();
-            final lessonId = item['_id']?.toString() ?? item['id']?.toString() ?? '';
-            int order = (item['order'] as num?)?.toInt() ?? 0;
-            final stars = 3; // Mặc định 3 sao nếu đã hoàn thành bài học
-
-            // Ánh xạ khmerText về chỉ số index 0-based của client
-            if (khmerText != null && khmerText.isNotEmpty) {
-              if (type == 'consonant') {
-                final idx = KhmerLetterData.consonants.indexWhere((l) => !l.isTest && l.character == khmerText);
-                if (idx != -1) {
-                  order = idx;
-                }
-              } else if (type == 'vowel') {
-                final idx = KhmerVowelData.vowels.indexWhere((v) => v.character == khmerText);
-                if (idx != -1) {
-                  order = idx;
-                }
-              } else if (type == 'number') {
-                final idx = KhmerNumberData.numbers.indexWhere((n) => n.character == khmerText);
-                if (idx != -1) {
-                  order = idx;
-                }
-              }
-            }
-            
-            if (type == 'consonant') {
-              await storage.saveLetterProgress(order, stars);
-            } else if (type == 'vowel') {
-              await storage.saveVowelProgress(order, stars);
-            } else if (type == 'number') {
-              await storage.saveNumberProgress(order, stars);
-            } else if (type == 'reading') {
-              await storage.saveReadingProgress(order, stars);
-            } else if (type == 'diacritical') {
-              await storage.saveDiacriticalProgress(order, stars);
-            } else if (type == 'spelling') {
-              await storage.saveSpellingProgress(order, stars);
-            } else if (type == 'writing') {
-              await storage.saveWritingProgress(order, stars);
-            }
-
-            if (lessonId.isNotEmpty && type != null) {
-              progressListForIsar.add({
-                'lessonId': lessonId,
-                'lessonType': type,
-                'lessonOrder': order,
-                'stars': stars,
-                'isCompleted': true,
-                'isUnlocked': true,
-              });
-            }
-          }
-        }
-      }
-
-      // Lưu vào Isar ProfileCache
-      try {
-        await ProgressRepository.instance.saveProfileCache(profile);
-      } catch (_) {}
-
-      // Lưu trực tiếp tiến độ bài học vào Isar
-      if (progressListForIsar.isNotEmpty) {
-        final userId = profile['_id']?.toString() ?? profile['id']?.toString() ?? 'local';
-        if (userId != 'local') {
-          try {
-            await ProgressRepository.instance.bulkSaveProgress(userId, progressListForIsar);
-            if (kDebugMode) {
-              print('[AuthService] Synced ${progressListForIsar.length} completed lessons directly from profile to Isar.');
-            }
-          } catch (e) {
-            if (kDebugMode) {
-              print('[AuthService] ⚠️ Error saving profile progress directly to Isar: $e');
-            }
-          }
-        }
-      }
-
-      // Đồng bộ thêm tiến độ từ local Isar (nếu có sẵn) sang SharedPreferences
-      try {
-        await ProgressRepository.instance.syncLocalProgressToSharedPreferences();
-      } catch (_) {}
 
       debugPrint('🔄 Đồng bộ profile từ server lên Local Storage thành công! (Name: ${profile['name']}, Stars: ${profile['stars']}, XP: ${profile['xp']}, Avatar: ${profile['avatar']})');
     } catch (e) {
       debugPrint('⚠️ Error syncing profile to storage: $e');
+    }
+  }
+
+  /// Cập nhật số sao và XP tạm thời (Optimistic UI Update) ngay khi hoàn thành để tạo cảm giác mượt mà tức thì
+  void addStarsAndXpOptimistically(int stars, int xp) {
+    if (_userProfile != null) {
+      _userProfile!['stars'] = (_userProfile!['stars'] as num? ?? 0).toInt() + stars;
+      _userProfile!['xp'] = (_userProfile!['xp'] as num? ?? 0).toInt() + xp;
+      
+      StorageService.getInstance().then((storage) {
+        storage.setStars((_userProfile!['stars'] as num).toInt());
+        storage.setXp((_userProfile!['xp'] as num).toInt());
+      }).catchError((e) {
+        debugPrint('⚠️ Error updating storage optimistically: $e');
+      });
+
+      notifyListeners();
     }
   }
 }

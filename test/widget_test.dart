@@ -8,7 +8,7 @@ void main() {
     tester.view.physicalSize = const Size(3000, 3000);
     tester.view.devicePixelRatio = 1.0;
 
-    await tester.pumpWidget(const KhmerKidApp());
+    await tester.pumpWidget(const KhmerKidApp(isLoggedIn: false, isAdmin: false));
 
     // Verify the splash screen is displayed initially with "Đang tải..."
     expect(find.text('Đang tải...'), findsOneWidget);

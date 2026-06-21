@@ -4,7 +4,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/khmer_consonant_series.dart';
 import '../../models/khmer_vowel.dart';
+import '../../models/khmer_letter.dart';
 import '../../services/score_service.dart';
+import '../../services/storage_service.dart';
+import 'letter_detail_screen.dart';
+import 'vowel_detail_screen.dart';
 
 class ConsonantSeriesScreen extends StatefulWidget {
   final VoidCallback onBack;
@@ -59,6 +63,39 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
 
   Future<void> _loadScore() async {
     _score = await ScoreService.getInstance();
+    try {
+      final storage = await StorageService.getInstance();
+      final letterProgress = storage.getLetterProgress();
+      final vowelProgress = storage.getVowelProgress();
+
+      // Update consonants progress dynamically
+      for (int i = 0; i < _consonants.length; i++) {
+        final c = _consonants[i];
+        final mainIndex = KhmerLetterData.consonants.indexWhere((item) => item.character == c.character);
+        if (mainIndex != -1 && letterProgress.containsKey(mainIndex)) {
+          c.isLearned = true;
+          c.starRating = letterProgress[mainIndex]!;
+        } else {
+          c.isLearned = false;
+          c.starRating = 0;
+        }
+      }
+
+      // Update vowels progress dynamically
+      for (int i = 0; i < _vowels.length; i++) {
+        final v = _vowels[i];
+        final mainIndex = KhmerVowelData.vowels.indexWhere((item) => item.character == v.character);
+        if (mainIndex != -1 && vowelProgress.containsKey(mainIndex)) {
+          v.isLearned = true;
+          v.starRating = vowelProgress[mainIndex]!;
+        } else {
+          v.isLearned = false;
+          v.starRating = 0;
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error loading progress in ConsonantSeriesScreen: $e');
+    }
     if (mounted) setState(() {});
   }
 
@@ -282,6 +319,22 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
               color: Colors.white.withValues(alpha: 0.95),
             ),
           ),
+          if (done) ...[
+            SizedBox(height: 2.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                3,
+                (starIndex) => Icon(
+                  Icons.star_rounded,
+                  size: 14.sp,
+                  color: starIndex < item.starRating
+                      ? const Color(0xFFFFD600)
+                      : Colors.white.withValues(alpha: 0.3),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -441,6 +494,21 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
           SizedBox(height: 12.h),
           Text('${item.romanized} — ${item.pronunciation}', style: GoogleFonts.plusJakartaSans(
             fontSize: 18.sp, fontWeight: FontWeight.w600, color: const Color(0xFF718096))),
+          SizedBox(height: 12.h),
+          // Row of stars for completed status in bottom sheet
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              3,
+              (starIndex) => Icon(
+                Icons.star_rounded,
+                size: 28.sp,
+                color: item.isLearned && starIndex < item.starRating
+                    ? const Color(0xFFFFB300)
+                    : const Color(0xFFE0E0E0),
+              ),
+            ),
+          ),
           SizedBox(height: 16.h),
           if (item.example.isNotEmpty)
             Container(
@@ -458,6 +526,71 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
                   fontSize: 14.sp, fontWeight: FontWeight.w600, color: const Color(0xFF718096))),
               ])),
           SizedBox(height: 24.h),
+          // Learn/Practice CTA Button
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [_currentColor, Color.lerp(_currentColor, Colors.black, 0.15)!],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.circular(16.r),
+              boxShadow: [
+                BoxShadow(
+                  color: _currentColor.withValues(alpha: 0.35),
+                  blurRadius: 12.r,
+                  offset: Offset(0, 4.h),
+                ),
+              ],
+            ),
+            child: ElevatedButton(
+              onPressed: () {
+                if (item is KhmerConsonantSeries) {
+                  final mainIndex = KhmerLetterData.consonants.indexWhere((c) => c.character == item.character);
+                  if (mainIndex != -1) {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => LetterDetailScreen(initialIndex: mainIndex)),
+                    ).then((_) => _loadScore());
+                  }
+                } else if (item is KhmerVowel) {
+                  final mainIndex = KhmerVowelData.vowels.indexWhere((v) => v.character == item.character);
+                  if (mainIndex != -1) {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => VowelDetailScreen(initialIndex: mainIndex)),
+                    ).then((_) => _loadScore());
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 14.h),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.play_circle_filled_rounded, color: Colors.white, size: 20.sp),
+                  SizedBox(width: 8.w),
+                  Text(
+                    item.isLearned ? 'Luyện tập lại' : 'Bắt đầu học ngay',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: 8.h),
         ]),
       ),
     );

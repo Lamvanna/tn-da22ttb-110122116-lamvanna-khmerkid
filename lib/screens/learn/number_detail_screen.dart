@@ -185,6 +185,7 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
     _completedSteps[_idx] ??= {};
     if (_completedSteps[_idx]!.contains(step)) return;
     setState(() => _completedSteps[_idx]!.add(step));
+
     if (_completedSteps[_idx]!.length == 3) _onCompleted();
   }
 
@@ -196,6 +197,7 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
 
     try {
       final scoreService = await ScoreService.getInstance();
+      await scoreService.completeWholeLessonReward();
       await scoreService.completeNumberLesson(
         _idx,
         3,
@@ -203,11 +205,12 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
         numberText: _num.character,
         transliteration: _num.romanized,
       );
+      if (mounted) setState(() {});
     } catch (e) {
       debugPrint('Error saving number progress: $e');
     }
 
-    Future.delayed(const Duration(milliseconds: 300), () {
+    Future.delayed(const Duration(milliseconds: 2000), () {
       if (!mounted) return;
       _showCompletionDialog();
     });
@@ -219,61 +222,208 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
       context: context,
       barrierDismissible: false,
       builder: (ctx) => Dialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
-        child: Padding(
-          padding: EdgeInsets.all(24.w),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text('🎉', style: TextStyle(fontSize: 48.sp)),
-            SizedBox(height: 12.h),
-            Text(context.translate('common.congratulations'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28.r),
+        ),
+        backgroundColor: Colors.white,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28.r),
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFFFFFF), Color(0xFFF9FBFF)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 28.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('🎉', style: TextStyle(fontSize: 56.sp)),
+              SizedBox(height: 16.h),
+              Text(
+                context.translate('common.congratulations'),
                 style: GoogleFonts.plusJakartaSans(
-                    fontSize: 24.sp,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary)),
-            SizedBox(height: 8.h),
-            Text(context.translate('learn.completed_number', args: {'value': _num.value, 'character': _num.character}),
+                  fontSize: 26.sp,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.tertiary,
+                ),
+              ),
+              SizedBox(height: 10.h),
+              Text(
+                context.translate('learn.completed_number', args: {'value': _num.value, 'character': _num.character}),
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary)),
-            SizedBox(height: 6.h),
-            Row(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                  height: 1.3,
+                ),
+              ),
+              SizedBox(height: 24.h),
+              Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                    3,
-                    (i) => Icon(Icons.star_rounded,
-                        size: 28.sp, color: const Color(0xFFFFB300)))),
-            SizedBox(height: 6.h),
-            Text('+15 XP ⭐',
-                style: GoogleFonts.plusJakartaSans(
-                    fontSize: 22.sp,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFFFFB300))),
-            SizedBox(height: 20.h),
-            if (hasNext) ...[
-              SizedBox(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Transform.translate(
+                    offset: Offset(0, 4.h),
+                    child: Transform.rotate(
+                      angle: -0.15,
+                      child: Icon(
+                        Icons.star_rounded,
+                        size: 40.w,
+                        color: const Color(0xFFFFD600),
+                        shadows: [
+                          Shadow(
+                            color: const Color(0xFFFFD600).withValues(alpha: 0.5),
+                            blurRadius: 8.r,
+                            offset: Offset(0, 2.h),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Transform.translate(
+                    offset: Offset(0, -6.h),
+                    child: Icon(
+                      Icons.star_rounded,
+                      size: 56.w,
+                      color: const Color(0xFFFFD600),
+                      shadows: [
+                        Shadow(
+                          color: const Color(0xFFFFD600).withValues(alpha: 0.6),
+                          blurRadius: 12.r,
+                          offset: Offset(0, 2.h),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Transform.translate(
+                    offset: Offset(0, 4.h),
+                    child: Transform.rotate(
+                      angle: 0.15,
+                      child: Icon(
+                        Icons.star_rounded,
+                        size: 40.w,
+                        color: const Color(0xFFFFD600),
+                        shadows: [
+                          Shadow(
+                            color: const Color(0xFFFFD600).withValues(alpha: 0.5),
+                            blurRadius: 8.r,
+                            offset: Offset(0, 2.h),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20.h),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 10.h),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFF9C4), Color(0xFFFFF59D)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(24.r),
+                  border: Border.all(color: const Color(0xFFFFF176), width: 1.5.w),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFBC02D).withValues(alpha: 0.2),
+                      blurRadius: 8.r,
+                      offset: Offset(0, 3.h),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 20.w),
+                    SizedBox(width: 4.w),
+                    Text(
+                      '+5 Sao',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFFF57F17),
+                      ),
+                    ),
+                    Container(
+                      margin: EdgeInsets.symmetric(horizontal: 12.w),
+                      width: 1.w,
+                      height: 16.h,
+                      color: const Color(0xFFF57F17).withValues(alpha: 0.3),
+                    ),
+                    Icon(Icons.bolt_rounded, color: const Color(0xFFFF9100), size: 20.w),
+                    SizedBox(width: 4.w),
+                    Text(
+                      '+60 XP',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFFE65100),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 28.h),
+              if (hasNext) ...[
+                Container(
                   width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppColors.tertiary, AppColors.tertiaryDark],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                    borderRadius: BorderRadius.circular(16.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.tertiary.withValues(alpha: 0.35),
+                        blurRadius: 12.r,
+                        offset: Offset(0, 4.h),
+                      ),
+                    ],
+                  ),
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.pop(ctx);
                       _goTo(_idx + 1);
                     },
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        padding: EdgeInsets.symmetric(vertical: 14.h),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14.r))),
-                    child: Text(context.translate('learn.next_number_btn'),
-                        style: GoogleFonts.plusJakartaSans(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          context.translate('learn.next_number_btn'),
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 16.sp,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white)),
-                  )),
-              SizedBox(height: 8.h),
-            ],
-            SizedBox(
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18.sp),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 12.h),
+              ],
+              SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () {
@@ -281,17 +431,24 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
                     Navigator.pop(context);
                   },
                   style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 14.h),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14.r)),
-                      side: const BorderSide(color: AppColors.primary)),
-                  child: Text(context.translate('learn.back_to_list'),
-                      style: GoogleFonts.plusJakartaSans(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary)),
-                )),
-          ]),
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16.r),
+                    ),
+                    side: BorderSide(color: AppColors.violet.withValues(alpha: 0.5), width: 1.5.w),
+                  ),
+                  child: Text(
+                    context.translate('learn.back_to_list'),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.violet,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -862,73 +1019,76 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
       ),
       SizedBox(width: 6.w),
       Expanded(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(5, (i) {
-            if (i.isOdd) {
-              final stepI = i ~/ 2;
-              final prevDone = _isStepComplete(stepI);
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(3, (_) => Container(
-                  width: 4.w,
-                  height: 2.5.h,
-                  margin: EdgeInsets.symmetric(horizontal: 1.5.w),
-                  decoration: BoxDecoration(
-                    color: prevDone
-                        ? stepColors[stepI].withValues(alpha: 0.5)
-                        : const Color(0xFFE0E0E0),
-                    borderRadius: BorderRadius.circular(1.r),
-                  ),
-                )),
-              );
-            }
-            final stepI = i ~/ 2;
-            final done = _isStepComplete(stepI);
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 28.w,
-                  height: 28.w,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: done
-                          ? [stepColors[stepI], stepColors[stepI].withValues(alpha: 0.7)]
-                          : [const Color(0xFFE8E8E8), const Color(0xFFD8D8D8)],
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(5, (i) {
+              if (i.isOdd) {
+                final stepI = i ~/ 2;
+                final prevDone = _isStepComplete(stepI);
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(3, (_) => Container(
+                    width: 4.w,
+                    height: 2.5.h,
+                    margin: EdgeInsets.symmetric(horizontal: 1.5.w),
+                    decoration: BoxDecoration(
+                      color: prevDone
+                          ? stepColors[stepI].withValues(alpha: 0.5)
+                          : const Color(0xFFE0E0E0),
+                      borderRadius: BorderRadius.circular(1.r),
                     ),
-                    boxShadow: done
-                        ? [BoxShadow(color: stepColors[stepI].withValues(alpha: 0.35), blurRadius: 6.r, offset: Offset(0, 2.h))]
-                        : null,
-                  ),
-                  child: Center(
-                    child: done
-                        ? Icon(Icons.check_rounded, size: 14.w, color: Colors.white)
-                        : Text(
-                            '${stepI + 1}',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
+                  )),
+                );
+              }
+              final stepI = i ~/ 2;
+              final done = _isStepComplete(stepI);
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 28.w,
+                    height: 28.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: done
+                            ? [stepColors[stepI], stepColors[stepI].withValues(alpha: 0.7)]
+                            : [const Color(0xFFE8E8E8), const Color(0xFFD8D8D8)],
+                      ),
+                      boxShadow: done
+                          ? [BoxShadow(color: stepColors[stepI].withValues(alpha: 0.35), blurRadius: 6.r, offset: Offset(0, 2.h))]
+                          : null,
+                    ),
+                    child: Center(
+                      child: done
+                          ? Icon(Icons.check_rounded, size: 14.w, color: Colors.white)
+                          : Text(
+                              '${stepI + 1}',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
+                    ),
                   ),
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  labels[stepI],
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 9.sp,
-                    fontWeight: FontWeight.w700,
-                    color: done ? stepColors[stepI] : AppColors.textHint,
+                  SizedBox(height: 2.h),
+                  Text(
+                    labels[stepI],
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 9.sp,
+                      fontWeight: FontWeight.w700,
+                      color: done ? stepColors[stepI] : AppColors.textHint,
+                    ),
                   ),
-                ),
-              ],
-            );
-          }),
+                ],
+              );
+            }),
+          ),
         ),
       ),
       SizedBox(width: 6.w),

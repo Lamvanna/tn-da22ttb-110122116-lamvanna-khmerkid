@@ -22,9 +22,21 @@ class ScoreService {
   }
 
   // ─── GETTERS ─────────────────────────────────────────────────
-  int get totalStars => AuthService().userProfile?['stars'] ?? 0;
-  int get totalXp => AuthService().userProfile?['xp'] ?? 0;
-  int get streak => AuthService().userProfile?['streak'] ?? 0;
+  int get totalStars {
+    final local = _storage.getStars();
+    final remote = AuthService().userProfile?['stars'] ?? 0;
+    return local > remote ? local : remote;
+  }
+  int get totalXp {
+    final local = _storage.getXp();
+    final remote = AuthService().userProfile?['xp'] ?? 0;
+    return local > remote ? local : remote;
+  }
+  int get streak {
+    final local = _storage.getStreak();
+    final remote = AuthService().userProfile?['streak'] ?? 0;
+    return local > remote ? local : remote;
+  }
   int get level => AuthService().userProfile?['level'] ?? 1;
   int get rank => AuthService().userProfile?['rank'] ?? 1;
 
@@ -89,6 +101,52 @@ class ScoreService {
     await _storage.addPurchasedItem(itemKey);
   }
 
+  /// Nhận thưởng cho từng hoạt động nhỏ trong bài học
+  /// step: 0 = Nghe, 1 = Nói, 2 = Viết
+  Future<Map<String, int>> completeStepReward(int step) async {
+    int stars = 0;
+    int xp = 0;
+    if (step == 0) {
+      stars = 1;
+      xp = 10;
+    } else if (step == 1) {
+      stars = 1;
+      xp = 15;
+    } else if (step == 2) {
+      stars = 2;
+      xp = 25;
+    }
+    
+    if (stars > 0) {
+      await _storage.addStars(stars);
+    }
+    if (xp > 0) {
+      await _storage.addXp(xp);
+    }
+    await _storage.updateStreak();
+    return {'stars': stars, 'xp': xp};
+  }
+
+  /// Nhận thưởng bonus hoàn thành cả 3 hoạt động
+  Future<Map<String, int>> completeBonusReward() async {
+    int stars = 1;
+    int xp = 10;
+    await _storage.addStars(stars);
+    await _storage.addXp(xp);
+    await _storage.updateStreak();
+    return {'stars': stars, 'xp': xp};
+  }
+
+  /// Nhận toàn bộ thưởng 5 sao và 60 XP khi hoàn thành bài học 3 bước
+  Future<Map<String, int>> completeWholeLessonReward() async {
+    int stars = 5;
+    int xp = 60;
+    await _storage.addStars(stars);
+    await _storage.addXp(xp);
+    await _storage.updateStreak();
+    return {'stars': stars, 'xp': xp};
+  }
+
   /// Hoàn thành bài học chữ cái
   Future<Map<String, int>> completeLetterLesson(
     int letterIndex,
@@ -97,8 +155,9 @@ class ScoreService {
     String letterText = 'ក',
     String transliteration = 'ko',
   }) async {
-    int earnedStars = stars;
-    int earnedXp = stars * 5;
+    // Note: Stars and XP are now awarded step-by-step and as a bonus, so we don't add them here to avoid double-counting.
+    int earnedStars = 0;
+    int earnedXp = 0;
 
     // Check achievements
     await _checkAchievements();
@@ -136,8 +195,9 @@ class ScoreService {
     String vowelText = 'ា',
     String transliteration = 'aa',
   }) async {
-    int earnedStars = stars;
-    int earnedXp = stars * 5;
+    // Note: Stars and XP are now awarded step-by-step and as a bonus, so we don't add them here to avoid double-counting.
+    int earnedStars = 0;
+    int earnedXp = 0;
 
     await _checkAchievements();
 
@@ -205,8 +265,9 @@ class ScoreService {
     String numberText = '០',
     String transliteration = '0',
   }) async {
-    int earnedStars = stars;
-    int earnedXp = stars * 5;
+    // Note: Stars and XP are now awarded step-by-step and as a bonus, so we don't add them here to avoid double-counting.
+    int earnedStars = 0;
+    int earnedXp = 0;
 
     await _checkAchievements();
 
@@ -243,8 +304,9 @@ class ScoreService {
     String diacriticalText = '់',
     String transliteration = '់',
   }) async {
-    int earnedStars = stars;
-    int earnedXp = stars * 5;
+    // Note: Stars and XP are now awarded step-by-step and as a bonus, so we don't add them here to avoid double-counting.
+    int earnedStars = 0;
+    int earnedXp = 0;
 
     await _checkAchievements();
 
@@ -281,8 +343,9 @@ class ScoreService {
     String spellingText = 'កា',
     String transliteration = 'kaa',
   }) async {
-    int earnedStars = stars;
-    int earnedXp = stars * 5;
+    // Note: Stars and XP are now awarded step-by-step and as a bonus, so we don't add them here to avoid double-counting.
+    int earnedStars = 0;
+    int earnedXp = 0;
 
     await _checkAchievements();
 

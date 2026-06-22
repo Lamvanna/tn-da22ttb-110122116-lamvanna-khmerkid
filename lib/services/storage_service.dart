@@ -538,4 +538,20 @@ class StorageService {
     final remaining = cooldownSec - elapsedSec;
     return remaining.clamp(0, cooldownSec);
   }
+
+  // --- Backend Sync Helpers ---
+  Future<void> setHintsCount(int count) async => await _prefs?.setInt(_uKey(_keyHintsCount), count);
+  Future<void> setTimeCount(int count) async => await _prefs?.setInt(_uKey(_keyTimeCount), count);
+  Future<void> setLivesCount(int count) async => await _prefs?.setInt(_uKey(_keyLivesCount), count);
+  Future<void> setDoubleCount(int count) async => await _prefs?.setInt(_uKey(_keyDoubleCount), count);
+
+  Future<void> setHintsLastReg(int ms) async => await _prefs?.setInt(_uKey(_keyHintsLastReg), ms);
+  Future<void> setTimeLastReg(int ms) async => await _prefs?.setInt(_uKey(_keyTimeLastReg), ms);
+  Future<void> setLivesLastReg(int ms) async => await _prefs?.setInt(_uKey(_keyLivesLastReg), ms);
+  Future<void> setDoubleLastReg(int ms) async => await _prefs?.setInt(_uKey(_keyDoubleLastReg), ms);
+
+  int getHintsLastReg() => _prefs?.getInt(_uKey(_keyHintsLastReg)) ?? DateTime.now().millisecondsSinceEpoch;
+  int getTimeLastReg() => _prefs?.getInt(_uKey(_keyTimeLastReg)) ?? DateTime.now().millisecondsSinceEpoch;
+  int getLivesLastReg() => _prefs?.getInt(_uKey(_keyLivesLastReg)) ?? DateTime.now().millisecondsSinceEpoch;
+  int getDoubleLastReg() => _prefs?.getInt(_uKey(_keyDoubleLastReg)) ?? DateTime.now().millisecondsSinceEpoch;
 }

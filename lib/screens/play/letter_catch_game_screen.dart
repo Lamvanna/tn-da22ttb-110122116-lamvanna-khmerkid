@@ -48,7 +48,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
 
   // ── State ──
   int _lives = 3;
-  int _score = 150; // Khởi đầu 150 điểm cho sinh động giống HTML
+  int _score = 0; // Khởi đầu từ 0 điểm
   int _combo = 0;
   int _maxCombo = 0;
   int _level = 2; // Khởi đầu Level 2 giống HTML
@@ -78,6 +78,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
   int _doubleScorePowerupsLeft = 1;
   bool _isDoubleScoreActive = false;
   ScoreService? _scoreService;
+  Map<String, dynamic>? _rewardResult;
 
   // Animations
   late AnimationController _shakeCtrl;
@@ -173,7 +174,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
     setState(() {
       _gameStarted = true;
       _lives = 3;
-      _score = 150;
+      _score = 0;
       _combo = 0;
       _maxCombo = 0;
       _level = 1;
@@ -181,6 +182,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
       _correctCount = 0;
       _totalQuestions = 0;
       _gameOver = false;
+      _rewardResult = null;
       _hintsLeft = _scoreService?.hintsLeft ?? 2;
       _timePowerupsLeft = _scoreService?.timePowerupsLeft ?? 2;
       _livesPowerupsLeft = _scoreService?.livesPowerupsLeft ?? 1;
@@ -332,8 +334,19 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
 
     if (_lives <= 0) {
       // Đồng bộ kết quả tổng kết lên backend database
-      ScoreService.getInstance().then((s) {
-        s.completeGame('Bắt chữ Khmer', _score, syncToBackend: true);
+      ScoreService.getInstance().then((s) async {
+        final result = await s.completeGame(
+          'Bắt chữ Khmer',
+          _score,
+          syncToBackend: true,
+          correctAnswers: _correctCount,
+          totalQuestions: _totalQuestions,
+        );
+        if (mounted) {
+          setState(() {
+            _rewardResult = result;
+          });
+        }
       });
       Future.delayed(const Duration(milliseconds: 1500), () {
         if (mounted) setState(() => _gameOver = true);
@@ -986,20 +999,17 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                    colors: [Color(0xFFFFF176), Color(0xFFFBC02D)]),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(20.r),
-                  border: Border.all(color: Colors.white, width: 1.5.w),
+                  border: Border.all(color: const Color(0xFFFFD54F), width: 1.5.w),
                   boxShadow: [
-                    const BoxShadow(color: Color(0xFFF57F17), offset: Offset(0, 2), blurRadius: 0),
-                    BoxShadow(color: Colors.black.withOpacity(0.1), offset: const Offset(0, 3), blurRadius: 3),
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.05), offset: const Offset(0, 3), blurRadius: 3),
                   ]),
                 child: Row(children: [
-                  Icon(Icons.star_rounded, color: Colors.white, size: 18.w),
+                  Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 18.w),
                   SizedBox(width: 4.w),
                   Text('$_score',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w900, color: Colors.white)),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w900, color: const Color(0xFFF57C00))),
                 ]),
               ),
               SizedBox(width: 8.w),
@@ -1635,96 +1645,432 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
   Widget _buildGameOverScreen() {
     final accuracy = _totalQuestions > 0 ? (_correctCount / _totalQuestions * 100).toInt() : 0;
     return Center(
-      child: Padding(
-        padding: EdgeInsets.all(24.w),
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Container(
-            width: 120.w, height: 120.w,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFD54F), Color(0xFFFF8F00)]),
-              border: Border.all(color: Colors.white, width: 4.w),
-              boxShadow: [
-                BoxShadow(color: const Color(0xFFE65100).withOpacity(0.2), blurRadius: 24, offset: const Offset(0, 8))
-              ]),
-            child: const Center(child: Text('🏆', style: TextStyle(fontSize: 60))),
-          ),
-          SizedBox(height: 16.h),
-          Text(context.translate('game_catch_letter.game_over_title'),
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 26.sp, fontWeight: FontWeight.w900, color: const Color(0xFF1B5E20),
-              shadows: [
-                Shadow(color: Colors.white.withOpacity(0.8), offset: Offset(2.w, 2.h), blurRadius: 4),
-              ])),
-          SizedBox(height: 24.h),
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(24.w),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.95),
-              borderRadius: BorderRadius.circular(24.r),
-              border: Border.all(color: const Color(0xFFE8F5E9)),
-              boxShadow: [
-                BoxShadow(color: const Color(0xFF1B5E20).withOpacity(0.05), blurRadius: 16, offset: const Offset(0, 4))
-              ]),
-            child: Column(children: [
-              _statRow(context.translate('game_catch_letter.score_label'), '$_score'),
-              SizedBox(height: 12.h),
-              _statRow(context.translate('game_catch_letter.correct_label'), '$_correctCount / $_totalQuestions'),
-              SizedBox(height: 12.h),
-              _statRow(context.translate('game_catch_letter.accuracy_label'), '$accuracy%'),
-              SizedBox(height: 12.h),
-              _statRow(context.translate('game_catch_letter.max_combo_label'), 'x$_maxCombo'),
-              SizedBox(height: 12.h),
-              _statRow(context.translate('game_catch_letter.max_level_label'), 'Level $_level'),
-            ]),
-          ),
-          SizedBox(height: 32.h),
-          Row(children: [
-            Expanded(child: GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 14.h),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(color: const Color(0xFFCFD8DC)),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.05), offset: const Offset(0, 2), blurRadius: 2),
-                  ]),
-                child: Center(child: Text(context.translate('game_catch_letter.exit_btn_gameover'), style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w900, color: const Color(0xFF546E7A)))),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Glowing Trophy Container
+            Container(
+              width: 130.w,
+              height: 130.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFD54F), Color(0xFFFF8F00)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                border: Border.all(color: Colors.white, width: 4.w),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFE65100).withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                  BoxShadow(
+                    color: const Color(0xFFFFD54F).withOpacity(0.2),
+                    blurRadius: 30,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-            )),
-            SizedBox(width: 12.w),
-            Expanded(child: GestureDetector(
-              onTap: _startGame,
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 14.h),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF00E676), Color(0xFF00C853)]),
-                  borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
-                  boxShadow: [
-                    const BoxShadow(color: Color(0xFF00A343), offset: Offset(0, 4), blurRadius: 0),
-                  ]),
-                child: Center(child: Text(context.translate('game_catch_letter.replay_btn_gameover'), style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w900, color: Colors.white))),
+              padding: EdgeInsets.all(20.w),
+              child: Image.asset(
+                'image/cúp hồ sơ.png',
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Center(
+                  child: Text('🏆', style: TextStyle(fontSize: 60)),
+                ),
               ),
-            )),
-          ]),
-        ]),
+            ),
+            SizedBox(height: 20.h),
+            Text(
+              context.translate('game_catch_letter.game_over_title'),
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 26.sp,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF1B5E20),
+                letterSpacing: 0.5,
+                shadows: [
+                  Shadow(
+                    color: Colors.white.withOpacity(0.8),
+                    offset: Offset(2.w, 2.h),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+            ),
+            if (_rewardResult != null) ...[
+              SizedBox(height: 16.h),
+              _buildRatingBadge(_rewardResult!['rating'].toString()),
+              SizedBox(height: 16.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFFDE7), Color(0xFFFFF9C4)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                        borderRadius: BorderRadius.circular(20.r),
+                        border: Border.all(color: const Color(0xFFFFF59D), width: 1.5.w),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFF57F17).withOpacity(0.08),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Image.asset(
+                            'image/sao.png',
+                            width: 44.w,
+                            height: 44.h,
+                            fit: BoxFit.contain,
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            '+${_rewardResult!['stars']}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFFE65100),
+                            ),
+                          ),
+                          Text(
+                            'Sao vàng',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFFF57F17),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16.w),
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFF3E0), Color(0xFFFFE0B2)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                        borderRadius: BorderRadius.circular(20.r),
+                        border: Border.all(color: const Color(0xFFFFCC80), width: 1.5.w),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFE65100).withOpacity(0.08),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Image.asset(
+                            'image/XP.png',
+                            width: 44.w,
+                            height: 44.h,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.bolt_rounded,
+                              color: Colors.orange.shade800,
+                              size: 44.r,
+                            ),
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            '+${_rewardResult!['xp']}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFFD84315),
+                            ),
+                          ),
+                          Text(
+                            'Điểm XP',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFFE65100),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            SizedBox(height: 24.h),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(20.w),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(24.r),
+                border: Border.all(color: Colors.white, width: 2.w),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF1B5E20).withOpacity(0.06),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  _buildPremiumStatTile(
+                    label: context.translate('game_catch_letter.score_label'),
+                    value: '$_score',
+                    fallbackIcon: Icons.emoji_events_rounded,
+                    themeColor: const Color(0xFFF57C00),
+                  ),
+                  SizedBox(height: 12.h),
+                  _buildPremiumStatTile(
+                    label: context.translate('game_catch_letter.correct_label'),
+                    value: '$_correctCount / $_totalQuestions',
+                    fallbackIcon: Icons.check_circle_rounded,
+                    themeColor: const Color(0xFF2E7D32),
+                  ),
+                  SizedBox(height: 12.h),
+                  _buildPremiumStatTile(
+                    label: context.translate('game_catch_letter.accuracy_label'),
+                    value: '$accuracy%',
+                    fallbackIcon: Icons.track_changes_rounded,
+                    themeColor: const Color(0xFF1565C0),
+                  ),
+                  SizedBox(height: 12.h),
+                  _buildPremiumStatTile(
+                    label: context.translate('game_catch_letter.max_combo_label'),
+                    value: 'x$_maxCombo',
+                    fallbackIcon: Icons.local_fire_department_rounded,
+                    themeColor: const Color(0xFFC62828),
+                  ),
+                  SizedBox(height: 12.h),
+                  _buildPremiumStatTile(
+                    label: context.translate('game_catch_letter.max_level_label'),
+                    value: 'Level $_level',
+                    fallbackIcon: Icons.bar_chart_rounded,
+                    themeColor: const Color(0xFF6A1B9A),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 28.h),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      height: 52.h,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(color: const Color(0xFFCFD8DC), width: 2.w),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFB0BEC5),
+                            offset: Offset(0, 4.h),
+                            blurRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          context.translate('game_catch_letter.exit_btn_gameover'),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF546E7A),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 16.w),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _startGame,
+                    child: Container(
+                      height: 52.h,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF00E676), Color(0xFF00C853)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5.w),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF009624),
+                            offset: Offset(0, 4.h),
+                            blurRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          context.translate('game_catch_letter.replay_btn_gameover'),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _statRow(String label, String value) {
-    return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(label, style: GoogleFonts.plusJakartaSans(
-        fontSize: 15.sp, fontWeight: FontWeight.w800, color: const Color(0xFF374151))),
-      Text(value, style: GoogleFonts.plusJakartaSans(
-        fontSize: 18.sp, fontWeight: FontWeight.w900, color: const Color(0xFFE65100))),
-    ]);
+  Widget _buildRatingBadge(String rating) {
+    Color bgColor = const Color(0xFFFFF8E1);
+    Color borderColor = const Color(0xFFFFD54F);
+    Color textColor = const Color(0xFFE65100);
+
+    if (rating.contains('🌱')) {
+      bgColor = const Color(0xFFE8F5E9);
+      borderColor = const Color(0xFFA5D6A7);
+      textColor = const Color(0xFF2E7D32);
+    } else if (rating.contains('👍')) {
+      bgColor = const Color(0xFFE3F2FD);
+      borderColor = const Color(0xFF90CAF9);
+      textColor = const Color(0xFF1565C0);
+    } else if (rating.contains('🎉')) {
+      bgColor = const Color(0xFFF3E5F5);
+      borderColor = const Color(0xFFCE93D8);
+      textColor = const Color(0xFF7B1FA2);
+    } else if (rating.contains('🌟')) {
+      bgColor = const Color(0xFFFFF8E1);
+      borderColor = const Color(0xFFFFE082);
+      textColor = const Color(0xFFE65100);
+    } else if (rating.contains('👑')) {
+      bgColor = const Color(0xFFFFF3E0);
+      borderColor = const Color(0xFFFFCC80);
+      textColor = const Color(0xFFD84315);
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(30.r),
+        border: Border.all(color: borderColor, width: 2.w),
+        boxShadow: [
+          BoxShadow(
+            color: textColor.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Text(
+        'XẾP LOẠI: $rating',
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 18.sp,
+          fontWeight: FontWeight.w900,
+          color: textColor,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPremiumStatTile({
+    required String label,
+    required String value,
+    required IconData fallbackIcon,
+    required Color themeColor,
+  }) {
+    String cleanLabel = label;
+    String emoji = '';
+    
+    if (label.isNotEmpty) {
+      final runes = label.runes;
+      final firstChar = runes.first;
+      if (firstChar > 127) {
+        emoji = String.fromCharCode(firstChar);
+        cleanLabel = String.fromCharCodes(runes.skip(1)).trim();
+      }
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: themeColor.withOpacity(0.12), width: 1.5.w),
+        boxShadow: [
+          BoxShadow(
+            color: themeColor.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.r),
+            decoration: BoxDecoration(
+              color: themeColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: emoji.isNotEmpty
+                ? Text(
+                    emoji,
+                    style: TextStyle(fontSize: 18.sp),
+                  )
+                : Icon(
+                    fallbackIcon,
+                    color: themeColor,
+                    size: 18.r,
+                  ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Text(
+              cleanLabel,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF4B5563),
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w900,
+              color: themeColor,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

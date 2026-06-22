@@ -669,7 +669,7 @@
     "cooldown_zero": "0 giây",
     "powerup_cooldown": "Vật phẩm {name} đang hồi phục! Cần thêm {time} ⏳",
     "game_over_title": "KẾT THÚC HÀNH TRÌNH!",
-    "score_label": "⭐ Điểm tích lũy",
+    "score_label": "🏆 Điểm tích lũy",
     "correct_label": "✅ Đúng",
     "accuracy_label": "🎯 Chính xác",
     "max_combo_label": "🔥 Combo cao nhất",

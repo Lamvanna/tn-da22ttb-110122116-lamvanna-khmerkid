@@ -1094,19 +1094,51 @@ class _ElephantRunGameScreenState extends State<ElephantRunGameScreen>
 
   Widget _buildGameOverScreen() {
     return Center(
-      child: Padding(
-        padding: EdgeInsets.all(24.w),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('😢', style: TextStyle(fontSize: 64.sp)),
+            // Sad Face Badge
+            Container(
+              width: 120.w,
+              height: 120.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFEF9A9A), Color(0xFFE57373)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                border: Border.all(color: Colors.white, width: 4.w),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFC62828).withOpacity(0.25),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Text('😢', style: TextStyle(fontSize: 60)),
+              ),
+            ),
             SizedBox(height: 20.h),
             Text(
               'Ải đã khép lại!',
+              textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 28.sp,
+                fontSize: 26.sp,
                 fontWeight: FontWeight.w900,
                 color: const Color(0xFFC62828),
+                shadows: [
+                  Shadow(
+                    color: Colors.white.withOpacity(0.8),
+                    offset: Offset(2.w, 2.h),
+                    blurRadius: 4,
+                  ),
+                ],
               ),
             ),
             SizedBox(height: 12.h),
@@ -1116,28 +1148,45 @@ class _ElephantRunGameScreenState extends State<ElephantRunGameScreen>
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey.shade800,
+                color: const Color(0xFF4B5563),
                 height: 1.5,
               ),
             ),
-            SizedBox(height: 32.h),
+            SizedBox(height: 24.h),
             Container(
               width: double.infinity,
-              padding: EdgeInsets.all(24.w),
+              padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withOpacity(0.95),
                 borderRadius: BorderRadius.circular(24.r),
-                border: Border.all(color: const Color(0xFFFFCDD2), width: 2.w),
+                border: Border.all(color: Colors.white, width: 2.w),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFC62828).withOpacity(0.08),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
-                  _statRow('⭐ Điểm số đạt được', '$_score'),
+                  _buildPremiumStatTile(
+                    label: '⭐ Điểm số đạt được',
+                    value: '$_score',
+                    fallbackIcon: Icons.emoji_events_rounded,
+                    themeColor: const Color(0xFFF57C00),
+                  ),
                   SizedBox(height: 12.h),
-                  _statRow('🚪 Số cổng đã vượt qua', '$_currentRoundIdx / 5'),
+                  _buildPremiumStatTile(
+                    label: '🚪 Số cổng đã vượt qua',
+                    value: '$_currentRoundIdx / 5',
+                    fallbackIcon: Icons.door_sliding_rounded,
+                    themeColor: const Color(0xFFE57373),
+                  ),
                 ],
               ),
             ),
-            SizedBox(height: 40.h),
+            SizedBox(height: 32.h),
             Row(
               children: [
                 Expanded(
@@ -1147,19 +1196,26 @@ class _ElephantRunGameScreenState extends State<ElephantRunGameScreen>
                       Navigator.pop(context);
                     },
                     child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      height: 52.h,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16.r),
-                        border: Border.all(color: const Color(0xFFC62828), width: 2.w),
+                        border: Border.all(color: const Color(0xFFCFD8DC), width: 2.w),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFB0BEC5),
+                            offset: Offset(0, 4.h),
+                            blurRadius: 0,
+                          ),
+                        ],
                       ),
                       child: Center(
                         child: Text(
                           'Thoát',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 16.sp,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFFC62828),
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF546E7A),
                           ),
                         ),
                       ),
@@ -1171,20 +1227,29 @@ class _ElephantRunGameScreenState extends State<ElephantRunGameScreen>
                   child: GestureDetector(
                     onTap: _startGame,
                     child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      height: 52.h,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF00ACC1), Color(0xFF80DEEA)],
+                          colors: [Color(0xFF00ACC1), Color(0xFF00838F)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
                         ),
                         borderRadius: BorderRadius.circular(16.r),
-                        border: Border.all(color: const Color(0xFF006064), width: 2.w),
+                        border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5.w),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF006064),
+                            offset: Offset(0, 4.h),
+                            blurRadius: 0,
+                          ),
+                        ],
                       ),
                       child: Center(
                         child: Text(
                           'Chơi lại',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 16.sp,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w900,
                             color: Colors.white,
                           ),
                         ),
@@ -1202,21 +1267,57 @@ class _ElephantRunGameScreenState extends State<ElephantRunGameScreen>
 
   Widget _buildVictoryScreen() {
     return Center(
-      child: Padding(
-        padding: EdgeInsets.all(24.w),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('🏆', style: TextStyle(fontSize: 64.sp)),
+            // Glowing Trophy Container
+            Container(
+              width: 130.w,
+              height: 130.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFD54F), Color(0xFFFF8F00)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                border: Border.all(color: Colors.white, width: 4.w),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF00E676).withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.all(20.w),
+              child: Image.asset(
+                'image/cúp hồ sơ.png',
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Center(
+                  child: Text('🏆', style: TextStyle(fontSize: 60)),
+                ),
+              ),
+            ),
             SizedBox(height: 20.h),
             Text(
               'ẢI CHINH PHỤC THÀNH CÔNG!',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 22.sp,
-                fontWeight: FontWeight.w900,
-                color: const Color(0xFF00E676),
-              ),
               textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 24.sp,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF2E7D32),
+                shadows: [
+                  Shadow(
+                    color: Colors.white.withOpacity(0.8),
+                    offset: Offset(2.w, 2.h),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
             ),
             SizedBox(height: 12.h),
             Text(
@@ -1225,47 +1326,76 @@ class _ElephantRunGameScreenState extends State<ElephantRunGameScreen>
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey.shade800,
+                color: const Color(0xFF374151),
                 height: 1.5,
               ),
             ),
-            SizedBox(height: 32.h),
+            SizedBox(height: 24.h),
             Container(
               width: double.infinity,
-              padding: EdgeInsets.all(24.w),
+              padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withOpacity(0.95),
                 borderRadius: BorderRadius.circular(24.r),
-                border: Border.all(color: const Color(0xFFB9F6CA), width: 2.w),
+                border: Border.all(color: Colors.white, width: 2.w),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF00E676).withOpacity(0.06),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
-                  _statRow('⭐ Điểm số thăng tiến', '$_score'),
+                  _buildPremiumStatTile(
+                    label: '⭐ Điểm số thăng tiến',
+                    value: '$_score',
+                    fallbackIcon: Icons.emoji_events_rounded,
+                    themeColor: const Color(0xFFF57C00),
+                  ),
                   SizedBox(height: 12.h),
-                  _statRow('🎁 Thưởng chiến thắng', '+15 Sao vàng 🌟'),
+                  _buildPremiumStatTile(
+                    label: '🎁 Thưởng chiến thắng',
+                    value: '+15 Sao vàng 🌟',
+                    fallbackIcon: Icons.card_giftcard_rounded,
+                    themeColor: const Color(0xFF2E7D32),
+                  ),
                 ],
               ),
             ),
-            SizedBox(height: 40.h),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00ACC1),
-                  padding: EdgeInsets.symmetric(vertical: 14.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.r),
+            SizedBox(height: 32.h),
+            GestureDetector(
+              onTap: () {
+                Navigator.pop(context);
+              },
+              child: Container(
+                height: 52.h,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF00ACC1), Color(0xFF00838F)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
+                  borderRadius: BorderRadius.circular(16.r),
+                  border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5.w),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF006064),
+                      offset: Offset(0, 4.h),
+                      blurRadius: 0,
+                    ),
+                  ],
                 ),
-                child: Text(
-                  'Trở về thế giới trò chơi',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
+                child: Center(
+                  child: Text(
+                    'Trở về thế giới trò chơi',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -1277,26 +1407,81 @@ class _ElephantRunGameScreenState extends State<ElephantRunGameScreen>
   }
 
   Widget _statRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF37474F),
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildPremiumStatTile({
+    required String label,
+    required String value,
+    required IconData fallbackIcon,
+    required Color themeColor,
+  }) {
+    String cleanLabel = label;
+    String emoji = '';
+    
+    if (label.isNotEmpty) {
+      final runes = label.runes;
+      final firstChar = runes.first;
+      if (firstChar > 127) {
+        emoji = String.fromCharCode(firstChar);
+        cleanLabel = String.fromCharCodes(runes.skip(1)).trim();
+      }
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: themeColor.withOpacity(0.12), width: 1.5.w),
+        boxShadow: [
+          BoxShadow(
+            color: themeColor.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
-        ),
-        Text(
-          value,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w900,
-            color: const Color(0xFFE65100),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.r),
+            decoration: BoxDecoration(
+              color: themeColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: emoji.isNotEmpty
+                ? Text(
+                    emoji,
+                    style: TextStyle(fontSize: 18.sp),
+                  )
+                : Icon(
+                    fallbackIcon,
+                    color: themeColor,
+                    size: 18.r,
+                  ),
           ),
-        ),
-      ],
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Text(
+              cleanLabel,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF4B5563),
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w900,
+              color: themeColor,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

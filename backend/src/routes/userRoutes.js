@@ -20,6 +20,7 @@ router.use(authenticate);
 
 router.get('/profile', userController.getProfile);
 router.put('/profile', updateProfileValidator, validate, userController.updateProfile);
+router.put('/inventory', userController.updateInventory);
 router.get('/rank', userController.getUserRank);
 
 // Accumulate Stars & XP APIs (Gamified Reward System)

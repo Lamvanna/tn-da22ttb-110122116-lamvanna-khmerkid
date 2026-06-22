@@ -82,6 +82,21 @@ class UserService {
   }
 
   /**
+   * Update user inventory
+   */
+  async updateInventory(userId, inventoryData) {
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: { inventory: inventoryData } },
+      { new: true, runValidators: true }
+    );
+    if (!user) {
+      throw new AppError(MESSAGES.USER_NOT_FOUND, 404);
+    }
+    return user.toJSON();
+  }
+
+  /**
    * Add XP to user and check for level up
    * @param {string} userId - User ID
    * @param {number} xpAmount - XP to add

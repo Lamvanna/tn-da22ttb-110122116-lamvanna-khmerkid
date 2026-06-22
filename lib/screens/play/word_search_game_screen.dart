@@ -32,6 +32,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
   Timer? _timer;
   bool _gameStarted = false;
   bool _gameOver = false;
+  Map<String, dynamic>? _rewardResult;
 
   // Powerups State
   int _hintsLeft = 2;
@@ -258,6 +259,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
       _selectedPoints.clear();
       _isRoundCompleted = false;
       _gameOver = false;
+      _rewardResult = null;
       _hintsLeft = _scoreService?.hintsLeft ?? 2;
       _timePowerupsLeft = _scoreService?.timePowerupsLeft ?? 2;
       _livesPowerupsLeft = _scoreService?.livesPowerupsLeft ?? 1;
@@ -292,7 +294,15 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
       _lives = 0;
       _gameOver = true;
     });
-    _scoreService?.completeGame('Giải cứu thú rừng', _score, syncToBackend: true);
+    _scoreService?.completeGame(
+      'Giải cứu thú rừng',
+      _score,
+      syncToBackend: true,
+      correctAnswers: _currentLevelIdx,
+      totalQuestions: _levels.length,
+    ).then((result) {
+      if (mounted) setState(() => _rewardResult = result);
+    });
   }
 
   void _onCellTap(int row, int col) {
@@ -353,7 +363,15 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
       });
       
       if (_gameOver) {
-        _scoreService?.completeGame('Giải cứu thú rừng', _score, syncToBackend: true);
+        _scoreService?.completeGame(
+          'Giải cứu thú rừng',
+          _score,
+          syncToBackend: true,
+          correctAnswers: _currentLevelIdx,
+          totalQuestions: _levels.length,
+        ).then((result) {
+          if (mounted) setState(() => _rewardResult = result);
+        });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -523,9 +541,23 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
     }
   }
 
-  void _showGameFinishedDialog() {
+  void _showGameFinishedDialog() async {
     _timer?.cancel();
-    _scoreService?.completeGame('Giải cứu thú rừng', _score, syncToBackend: true);
+    final result = await _scoreService?.completeGame(
+      'Giải cứu thú rừng',
+      _score,
+      syncToBackend: true,
+      correctAnswers: _levels.length,
+      totalQuestions: _levels.length,
+    );
+    if (mounted) {
+      setState(() {
+        _rewardResult = result;
+      });
+    }
+
+    if (!mounted) return;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -583,6 +615,56 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
                 ),
               ),
               SizedBox(height: 16.h),
+              if (_rewardResult != null) ...[
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF8E1),
+                    borderRadius: BorderRadius.circular(20.r),
+                    border: Border.all(color: const Color(0xFFFFD54F), width: 1.5.w),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'XẾP LOẠI: ${_rewardResult!['rating']}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFFE65100),
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset('image/sao.png', width: 22.w, height: 22.h),
+                          SizedBox(width: 4.w),
+                          Text(
+                            '+${_rewardResult!['stars']} Sao',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFFF57F17),
+                            ),
+                          ),
+                          SizedBox(width: 16.w),
+                          const Icon(Icons.bolt_rounded, color: Colors.orange, size: 22),
+                          SizedBox(width: 4.w),
+                          Text(
+                            '+${_rewardResult!['xp']} XP',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.orange.shade800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 16.h),
+              ],
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                 decoration: BoxDecoration(
@@ -1233,110 +1315,413 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
 
   Widget _buildGameOverScreen() {
     return Center(
-      child: Padding(
-        padding: EdgeInsets.all(24.w),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Glowing Trophy Container
             Container(
-              width: 120.w, height: 120.w,
+              width: 130.w,
+              height: 130.w,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFFFD54F), Color(0xFFFF8F00)]),
+                  colors: [Color(0xFFFFD54F), Color(0xFFFF8F00)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 border: Border.all(color: Colors.white, width: 4.w),
                 boxShadow: [
-                  BoxShadow(color: const Color(0xFFE65100).withOpacity(0.2), blurRadius: 24, offset: const Offset(0, 8))
-                ]),
-              child: const Center(child: Text('🏆', style: TextStyle(fontSize: 60))),
+                  BoxShadow(
+                    color: const Color(0xFFE65100).withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                  BoxShadow(
+                    color: const Color(0xFFFFD54F).withOpacity(0.2),
+                    blurRadius: 30,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.all(20.w),
+              child: Image.asset(
+                'image/cúp hồ sơ.png',
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Center(
+                  child: Text('🏆', style: TextStyle(fontSize: 60)),
+                ),
+              ),
             ),
-            SizedBox(height: 16.h),
-            Text('KẾT THÚC HÀNH TRÌNH!',
+            SizedBox(height: 20.h),
+            Text(
+              'KẾT THÚC HÀNH TRÌNH!',
+              textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 26.sp, fontWeight: FontWeight.w900, color: const Color(0xFF1B5E20),
+                fontSize: 26.sp,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF1B5E20),
+                letterSpacing: 0.5,
                 shadows: [
-                  Shadow(color: Colors.white.withOpacity(0.8), offset: Offset(2.w, 2.h), blurRadius: 4),
-                ])),
+                  Shadow(
+                    color: Colors.white.withOpacity(0.8),
+                    offset: Offset(2.w, 2.h),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+            ),
+            if (_rewardResult != null) ...[
+              SizedBox(height: 16.h),
+              _buildRatingBadge(_rewardResult!['rating'].toString()),
+              SizedBox(height: 16.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFFDE7), Color(0xFFFFF9C4)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                        borderRadius: BorderRadius.circular(20.r),
+                        border: Border.all(color: const Color(0xFFFFF59D), width: 1.5.w),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFF57F17).withOpacity(0.08),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Image.asset(
+                            'image/sao.png',
+                            width: 44.w,
+                            height: 44.h,
+                            fit: BoxFit.contain,
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            '+${_rewardResult!['stars']}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFFE65100),
+                            ),
+                          ),
+                          Text(
+                            'Sao vàng',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFFF57F17),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16.w),
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFF3E0), Color(0xFFFFE0B2)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                        borderRadius: BorderRadius.circular(20.r),
+                        border: Border.all(color: const Color(0xFFFFCC80), width: 1.5.w),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFE65100).withOpacity(0.08),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Image.asset(
+                            'image/XP.png',
+                            width: 44.w,
+                            height: 44.h,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.bolt_rounded,
+                              color: Colors.orange.shade800,
+                              size: 44.r,
+                            ),
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            '+${_rewardResult!['xp']}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFFD84315),
+                            ),
+                          ),
+                          Text(
+                            'Điểm XP',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFFE65100),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             SizedBox(height: 24.h),
             Container(
               width: double.infinity,
-              padding: EdgeInsets.all(24.w),
+              padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.95),
+                color: Colors.white.withOpacity(0.9),
                 borderRadius: BorderRadius.circular(24.r),
-                border: Border.all(color: const Color(0xFFE8F5E9)),
+                border: Border.all(color: Colors.white, width: 2.w),
                 boxShadow: [
-                  BoxShadow(color: const Color(0xFF1B5E20).withOpacity(0.05), blurRadius: 16, offset: const Offset(0, 8))
-                ]),
-              child: Column(children: [
-                _statRow('⭐ Điểm số đạt được', '$_score'),
-                SizedBox(height: 12.h),
-                _statRow('🦁 Số thú giải cứu', '$_currentLevelIdx / ${_levels.length}'),
-              ]),
+                  BoxShadow(
+                    color: const Color(0xFF1B5E20).withOpacity(0.06),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  _buildPremiumStatTile(
+                    label: '⭐ Điểm số đạt được',
+                    value: '$_score',
+                    fallbackIcon: Icons.emoji_events_rounded,
+                    themeColor: const Color(0xFFF57C00),
+                  ),
+                  SizedBox(height: 12.h),
+                  _buildPremiumStatTile(
+                    label: '🦁 Số thú giải cứu',
+                    value: '$_currentLevelIdx / ${_levels.length}',
+                    fallbackIcon: Icons.pets_rounded,
+                    themeColor: const Color(0xFF2E7D32),
+                  ),
+                ],
+              ),
             ),
-            SizedBox(height: 32.h),
-            Row(children: [
-              Expanded(child: GestureDetector(
-                onTap: () {
-                  _timer?.cancel();
-                  Navigator.pop(context);
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 14.h),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(16.r),
-                    border: Border.all(color: const Color(0xFFCFD8DC)),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.05), offset: const Offset(0, 2), blurRadius: 2),
-                    ]),
-                  child: Center(child: Text('THOÁT', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w900, color: const Color(0xFF546E7A)))),
+            SizedBox(height: 28.h),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      _timer?.cancel();
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      height: 52.h,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(color: const Color(0xFFCFD8DC), width: 2.w),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFB0BEC5),
+                            offset: Offset(0, 4.h),
+                            blurRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          'THOÁT',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF546E7A),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              )),
-              SizedBox(width: 12.w),
-              Expanded(child: GestureDetector(
-                onTap: _startGame,
-                child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 14.h),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF00E676), Color(0xFF00C853)]),
-                    borderRadius: BorderRadius.circular(16.r),
-                    border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
-                    boxShadow: [
-                      const BoxShadow(color: Color(0xFF00A343), offset: Offset(0, 4), blurRadius: 0),
-                    ]),
-                  child: Center(child: Text('CHƠI LẠI', style: GoogleFonts.plusJakartaSans(fontSize: 16.sp, fontWeight: FontWeight.w900, color: Colors.white))),
+                SizedBox(width: 16.w),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _startGame,
+                    child: Container(
+                      height: 52.h,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF00E676), Color(0xFF00C853)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5.w),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF009624),
+                            offset: Offset(0, 4.h),
+                            blurRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          'CHƠI LẠI',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              )),
-            ]),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _statRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 15.sp,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF374151),
+  Widget _buildRatingBadge(String rating) {
+    Color bgColor = const Color(0xFFFFF8E1);
+    Color borderColor = const Color(0xFFFFD54F);
+    Color textColor = const Color(0xFFE65100);
+
+    if (rating.contains('🌱')) {
+      bgColor = const Color(0xFFE8F5E9);
+      borderColor = const Color(0xFFA5D6A7);
+      textColor = const Color(0xFF2E7D32);
+    } else if (rating.contains('👍')) {
+      bgColor = const Color(0xFFE3F2FD);
+      borderColor = const Color(0xFF90CAF9);
+      textColor = const Color(0xFF1565C0);
+    } else if (rating.contains('🎉')) {
+      bgColor = const Color(0xFFF3E5F5);
+      borderColor = const Color(0xFFCE93D8);
+      textColor = const Color(0xFF7B1FA2);
+    } else if (rating.contains('🌟')) {
+      bgColor = const Color(0xFFFFF8E1);
+      borderColor = const Color(0xFFFFE082);
+      textColor = const Color(0xFFE65100);
+    } else if (rating.contains('👑')) {
+      bgColor = const Color(0xFFFFF3E0);
+      borderColor = const Color(0xFFFFCC80);
+      textColor = const Color(0xFFD84315);
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(30.r),
+        border: Border.all(color: borderColor, width: 2.w),
+        boxShadow: [
+          BoxShadow(
+            color: textColor.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
+        ],
+      ),
+      child: Text(
+        'XẾP LOẠI: $rating',
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 18.sp,
+          fontWeight: FontWeight.w900,
+          color: textColor,
+          letterSpacing: 0.5,
         ),
-        Text(
-          value,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w900,
-            color: const Color(0xFFE65100),
+      ),
+    );
+  }
+
+  Widget _buildPremiumStatTile({
+    required String label,
+    required String value,
+    required IconData fallbackIcon,
+    required Color themeColor,
+  }) {
+    String cleanLabel = label;
+    String emoji = '';
+    
+    if (label.isNotEmpty) {
+      final runes = label.runes;
+      final firstChar = runes.first;
+      if (firstChar > 127) {
+        emoji = String.fromCharCode(firstChar);
+        cleanLabel = String.fromCharCodes(runes.skip(1)).trim();
+      }
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: themeColor.withOpacity(0.12), width: 1.5.w),
+        boxShadow: [
+          BoxShadow(
+            color: themeColor.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
-        ),
-      ],
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.r),
+            decoration: BoxDecoration(
+              color: themeColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: emoji.isNotEmpty
+                ? Text(
+                    emoji,
+                    style: TextStyle(fontSize: 18.sp),
+                  )
+                : Icon(
+                    fallbackIcon,
+                    color: themeColor,
+                    size: 18.r,
+                  ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Text(
+              cleanLabel,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF4B5563),
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w900,
+              color: themeColor,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1371,20 +1756,17 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                    colors: [Color(0xFFFFF176), Color(0xFFFBC02D)]),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(20.r),
-                  border: Border.all(color: Colors.white, width: 1.5.w),
+                  border: Border.all(color: const Color(0xFFFFD54F), width: 1.5.w),
                   boxShadow: [
-                    const BoxShadow(color: Color(0xFFF57F17), offset: Offset(0, 2), blurRadius: 0),
-                    BoxShadow(color: Colors.black.withOpacity(0.1), offset: const Offset(0, 3), blurRadius: 3),
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.05), offset: const Offset(0, 3), blurRadius: 3),
                   ]),
                 child: Row(children: [
-                  Icon(Icons.star_rounded, color: Colors.white, size: 18.w),
+                  Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 18.w),
                   SizedBox(width: 4.w),
                   Text('$_score',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w900, color: Colors.white)),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w900, color: const Color(0xFFF57C00))),
                 ]),
               ),
               SizedBox(width: 8.w),

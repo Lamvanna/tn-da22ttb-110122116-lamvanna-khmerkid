@@ -145,6 +145,16 @@ const userSchema = new mongoose.Schema(
         lastPracticed: Date,
       }],
     },
+    inventory: {
+      hints: { type: Number, default: 2 },
+      timePowerups: { type: Number, default: 2 },
+      livesPowerups: { type: Number, default: 1 },
+      doubleScorePowerups: { type: Number, default: 1 },
+      hintsLastReg: { type: Number, default: Date.now },
+      timePowerupsLastReg: { type: Number, default: Date.now },
+      livesPowerupsLastReg: { type: Number, default: Date.now },
+      doubleScorePowerupsLastReg: { type: Number, default: Date.now },
+    },
 
     // ========================================
     // Activity Tracking

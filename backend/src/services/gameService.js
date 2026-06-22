@@ -6,7 +6,7 @@
 
 const GameResult = require('../models/GameResult');
 const userService = require('./userService');
-const { calculateStars } = require('../utils/helpers');
+const { calculateStars, calculateGameStars, calculateGameXP } = require('../utils/helpers');
 const { XP_CONFIG } = require('../constants');
 
 class GameService {
@@ -16,7 +16,8 @@ class GameService {
   async saveResult(userId, data, io = null) {
     const { gameType, score, level, time, correctAnswers, totalQuestions } = data;
 
-    const stars = calculateStars(score);
+    const stars = calculateGameStars(correctAnswers || 0, totalQuestions || 0, score);
+    const xpEarned = calculateGameXP(stars);
 
     const result = await GameResult.create({
       userId,
@@ -27,11 +28,11 @@ class GameService {
       time: time || 0,
       correctAnswers: correctAnswers || 0,
       totalQuestions: totalQuestions || 0,
-      xpEarned: XP_CONFIG.PER_GAME,
+      xpEarned,
     });
 
     // Update user stats
-    await userService.addXP(userId, XP_CONFIG.PER_GAME, io);
+    await userService.addXP(userId, xpEarned, io);
     await userService.addStars(userId, stars);
 
     // Increment total games played
@@ -42,7 +43,7 @@ class GameService {
 
     return {
       ...result.toObject(),
-      xpEarned: XP_CONFIG.PER_GAME,
+      xpEarned,
     };
   }
 

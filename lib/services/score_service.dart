@@ -70,15 +70,77 @@ class ScoreService {
   int get livesPowerupsLeft => _storage.getLivesPowerupsCount();
   int get doubleScorePowerupsLeft => _storage.getDoubleScorePowerupsCount();
 
-  Future<void> useHint() async => await _storage.useHint();
-  Future<void> useTimePowerup() async => await _storage.useTimePowerup();
-  Future<void> useLivesPowerup() async => await _storage.useLivesPowerup();
-  Future<void> useDoubleScorePowerup() async => await _storage.useDoubleScorePowerup();
+  Future<void> useHint() async {
+    await _storage.useHint();
+    await _syncInventoryToBackend();
+  }
+  Future<void> useTimePowerup() async {
+    await _storage.useTimePowerup();
+    await _syncInventoryToBackend();
+  }
+  Future<void> useLivesPowerup() async {
+    await _storage.useLivesPowerup();
+    await _syncInventoryToBackend();
+  }
+  Future<void> useDoubleScorePowerup() async {
+    await _storage.useDoubleScorePowerup();
+    await _syncInventoryToBackend();
+  }
 
-  Future<void> addHints(int amount) async => await _storage.addHints(amount);
-  Future<void> addTimePowerups(int amount) async => await _storage.addTimePowerups(amount);
-  Future<void> addLivesPowerups(int amount) async => await _storage.addLivesPowerups(amount);
-  Future<void> addDoubleScorePowerups(int amount) async => await _storage.addDoubleScorePowerups(amount);
+  Future<void> addHints(int amount) async {
+    await _storage.addHints(amount);
+    await _syncInventoryToBackend();
+  }
+  Future<void> addTimePowerups(int amount) async {
+    await _storage.addTimePowerups(amount);
+    await _syncInventoryToBackend();
+  }
+  Future<void> addLivesPowerups(int amount) async {
+    await _storage.addLivesPowerups(amount);
+    await _syncInventoryToBackend();
+  }
+  Future<void> addDoubleScorePowerups(int amount) async {
+    await _storage.addDoubleScorePowerups(amount);
+    await _syncInventoryToBackend();
+  }
+
+  Future<void> _syncInventoryToBackend() async {
+    try {
+      final authService = AuthService();
+      if (!authService.isAuthenticated) return;
+
+      final url = Uri.parse('${authService.baseUrl}/users/inventory');
+      final response = await http.put(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${authService.accessToken}',
+        },
+        body: jsonEncode({
+          'hints': hintsLeft,
+          'timePowerups': timePowerupsLeft,
+          'livesPowerups': livesPowerupsLeft,
+          'doubleScorePowerups': doubleScorePowerupsLeft,
+          'hintsLastReg': _storage.getHintsLastReg(),
+          'timePowerupsLastReg': _storage.getTimeLastReg(),
+          'livesPowerupsLastReg': _storage.getLivesLastReg(),
+          'doubleScorePowerupsLastReg': _storage.getDoubleLastReg(),
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (kDebugMode) print('[ScoreService] Đồng bộ inventory lên CSDL thành công!');
+        // Cập nhật profile mới để đảm bảo tính nhất quán
+        await authService.fetchProfile();
+      } else {
+        if (kDebugMode) {
+          print('[ScoreService] Đồng bộ inventory thất bại. Mã lỗi: ${response.statusCode}, Nội dung: ${response.body}');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) print('[ScoreService] Lỗi đồng bộ inventory: $e');
+    }
+  }
 
   int get hintsCooldownRemaining => _storage.getHintsCooldownRemaining();
   int get timeCooldownRemaining => _storage.getTimePowerupsCooldownRemaining();
@@ -428,22 +490,93 @@ class ScoreService {
     return {'stars': earnedStars, 'xp': earnedXp, 'testStars': stars};
   }
 
+  /// Tính toán số sao nhận được dựa trên số câu đúng và tổng số câu
+  int calculateGameStars(int correct, int total) {
+    if (total <= 0) return 0;
+    
+    // Thang điểm tối đa 20 câu đúng ứng với 20⭐.
+    // Chuyển đổi tỉ lệ đúng sang thang điểm 20:
+    final scaledCorrect = ((correct / total) * 20).round().clamp(0, 20);
+
+    if (scaledCorrect <= 2) return 0;
+    if (scaledCorrect <= 4) return 1;
+    if (scaledCorrect <= 6) return 2;
+    if (scaledCorrect <= 8) return 3;
+    if (scaledCorrect <= 10) return 5;
+    if (scaledCorrect == 11) return 7;
+    if (scaledCorrect == 12) return 9;
+    if (scaledCorrect == 13) return 11;
+    if (scaledCorrect == 14) return 13;
+    if (scaledCorrect == 15) return 15;
+    if (scaledCorrect == 16) return 17;
+    if (scaledCorrect == 17) return 18;
+    if (scaledCorrect == 18) return 19;
+    return 20; // 19 - 20
+  }
+
+  /// Tính toán XP nhận được dựa trên số sao đạt được
+  int calculateGameXp(int stars) {
+    // XP = (Sao đạt được ÷ 20) × 70 (làm tròn số nguyên, tối đa 70 XP)
+    return ((stars / 20.0) * 70.0).round().clamp(0, 70);
+  }
+
+  /// Tính xếp loại dựa trên tỉ lệ đúng
+  String calculateGameRating(int correct, int total) {
+    if (total <= 0) return '🌱 Cần cố gắng';
+    final accuracy = ((correct / total) * 100).round();
+    if (accuracy >= 100) return '👑 Hoàn hảo';
+    if (accuracy >= 85) return '🌟 Xuất sắc';
+    if (accuracy >= 70) return '🎉 Tốt';
+    if (accuracy >= 50) return '👍 Khá';
+    return '🌱 Cần cố gắng';
+  }
+
   /// Hoàn thành mini-game
-  Future<Map<String, int>> completeGame(String gameName, int score, {bool syncToBackend = true}) async {
-    int earnedStars = (score / 10).ceil().clamp(1, 5);
-    int earnedXp = score;
+  Future<Map<String, dynamic>> completeGame(
+    String gameName,
+    int score, {
+    bool syncToBackend = true,
+    int? correctAnswers,
+    int? totalQuestions,
+  }) async {
+    int stars = 0;
+    int xp = 0;
+    String rating = '🌱 Cần cố gắng';
 
-    // Stars/XP do backend xử lý qua _syncGameResult
-    await _storage.saveGameScore(gameName, score);
-    await _storage.updateStreak();
-
-    await _checkAchievements();
-
-    if (syncToBackend) {
-      await _syncGameResult(gameName, score);
+    if (correctAnswers != null && totalQuestions != null && totalQuestions > 0) {
+      stars = calculateGameStars(correctAnswers, totalQuestions);
+      xp = calculateGameXp(stars);
+      rating = calculateGameRating(correctAnswers, totalQuestions);
+    } else {
+      final scorePercent = score.clamp(0, 100);
+      stars = calculateGameStars((scorePercent / 5).round(), 20);
+      xp = calculateGameXp(stars);
+      rating = calculateGameRating(scorePercent, 100);
     }
 
-    return {'stars': earnedStars, 'xp': earnedXp};
+    // Lưu local
+    await _storage.saveGameScore(gameName, score);
+
+    // Chỉ cộng sao, XP và cập nhật thành tích khi game kết thúc (syncToBackend = true)
+    if (syncToBackend) {
+      await _storage.addStars(stars);
+      await _storage.addXp(xp);
+      await _storage.updateStreak();
+      await _checkAchievements();
+
+      await _syncGameResult(
+        gameName,
+        score,
+        correctAnswers: correctAnswers,
+        totalQuestions: totalQuestions,
+      );
+    }
+
+    return {
+      'stars': stars,
+      'xp': xp,
+      'rating': rating,
+    };
   }
 
   /// Học từ vựng
@@ -599,7 +732,12 @@ class ScoreService {
       _storage.getUnlockedAchievements().contains(id);
 
   /// Đồng bộ kết quả game lên backend MongoDB Atlas
-  Future<void> _syncGameResult(String gameName, int score) async {
+  Future<void> _syncGameResult(
+    String gameName,
+    int score, {
+    int? correctAnswers,
+    int? totalQuestions,
+  }) async {
     try {
       final authService = AuthService();
       if (!authService.isAuthenticated) {
@@ -634,8 +772,8 @@ class ScoreService {
           'score': score,
           'level': 1,
           'time': 45,
-          'correctAnswers': (score / 10).ceil().clamp(1, 10),
-          'totalQuestions': 10,
+          'correctAnswers': correctAnswers ?? (score / 10).ceil().clamp(1, 10),
+          'totalQuestions': totalQuestions ?? 10,
         }),
       );
 

@@ -669,7 +669,7 @@
     "cooldown_zero": "0 seconds",
     "powerup_cooldown": "Item {name} is recovering! Need {time} more ⏳",
     "game_over_title": "ADVENTURE OVER!",
-    "score_label": "⭐ Score",
+    "score_label": "🏆 Score",
     "correct_label": "✅ Correct",
     "accuracy_label": "🎯 Accuracy",
     "max_combo_label": "🔥 Max Combo",

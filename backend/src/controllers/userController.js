@@ -29,6 +29,16 @@ class UserController {
     }
   }
 
+  /** PUT /api/users/inventory */
+  async updateInventory(req, res, next) {
+    try {
+      const user = await userService.updateInventory(req.user._id, req.body);
+      sendSuccess(res, MESSAGES.UPDATE_SUCCESS, user);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   /** GET /api/users/rank */
   async getUserRank(req, res, next) {
     try {

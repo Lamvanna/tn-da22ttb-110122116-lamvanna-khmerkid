@@ -13,11 +13,54 @@ const {
 
 describe('Khmer Kids Game Rewards System Tests', () => {
   describe('calculateStars', () => {
-    test('should return stars equal to correct answers for valid inputs', () => {
+    test('should return stars according to the new reward mapping for valid inputs', () => {
+      // 0 - 2 correct -> 0⭐
       expect(calculateStars(0)).toBe(0);
-      expect(calculateStars(5)).toBe(5);
-      expect(calculateStars(10)).toBe(10);
+      expect(calculateStars(1)).toBe(0);
+      expect(calculateStars(2)).toBe(0);
+      
+      // 3 - 4 correct -> 1⭐
+      expect(calculateStars(3)).toBe(1);
+      expect(calculateStars(4)).toBe(1);
+
+      // 5 - 6 correct -> 2⭐
+      expect(calculateStars(5)).toBe(2);
+      expect(calculateStars(6)).toBe(2);
+
+      // 7 - 8 correct -> 3⭐
+      expect(calculateStars(7)).toBe(3);
+      expect(calculateStars(8)).toBe(3);
+
+      // 9 - 10 correct -> 5⭐
+      expect(calculateStars(9)).toBe(5);
+      expect(calculateStars(10)).toBe(5);
+
+      // 11 correct -> 7⭐
+      expect(calculateStars(11)).toBe(7);
+
+      // 12 correct -> 9⭐
+      expect(calculateStars(12)).toBe(9);
+
+      // 13 correct -> 11⭐
+      expect(calculateStars(13)).toBe(11);
+
+      // 14 correct -> 13⭐
+      expect(calculateStars(14)).toBe(13);
+
+      // 15 correct -> 15⭐
       expect(calculateStars(15)).toBe(15);
+
+      // 16 correct -> 17⭐
+      expect(calculateStars(16)).toBe(17);
+
+      // 17 correct -> 18⭐
+      expect(calculateStars(17)).toBe(18);
+
+      // 18 correct -> 19⭐
+      expect(calculateStars(18)).toBe(19);
+
+      // 19 - 20 correct -> 20⭐
+      expect(calculateStars(19)).toBe(20);
       expect(calculateStars(20)).toBe(20);
     });
 
@@ -40,18 +83,12 @@ describe('Khmer Kids Game Rewards System Tests', () => {
   });
 
   describe('calculateBonusStars', () => {
-    test('should return 0 bonus stars for correct answers under 17', () => {
+    test('should return 0 bonus stars for any correct answers (bonus merged into base stars)', () => {
       expect(calculateBonusStars(0)).toBe(0);
       expect(calculateBonusStars(10)).toBe(0);
       expect(calculateBonusStars(15)).toBe(0);
-      expect(calculateBonusStars(16)).toBe(0);
-    });
-
-    test('should return correct bonus stars according to the reward table', () => {
-      expect(calculateBonusStars(17)).toBe(5);
-      expect(calculateBonusStars(18)).toBe(8);
-      expect(calculateBonusStars(19)).toBe(12);
-      expect(calculateBonusStars(20)).toBe(20);
+      expect(calculateBonusStars(17)).toBe(0);
+      expect(calculateBonusStars(20)).toBe(0);
     });
 
     test('should throw error for out-of-bounds inputs', () => {
@@ -61,12 +98,22 @@ describe('Khmer Kids Game Rewards System Tests', () => {
   });
 
   describe('calculateXP', () => {
-    test('should return correct basic XP (+10 per correct answer)', () => {
+    test('should return correct XP based on stars achieved (XP = Math.round(stars / 20 * 70))', () => {
+      // 0 - 2 correct -> 0 stars -> 0 XP
       expect(calculateXP(0)).toBe(0);
-      expect(calculateXP(1)).toBe(10);
-      expect(calculateXP(10)).toBe(100);
-      expect(calculateXP(15)).toBe(150);
-      expect(calculateXP(20)).toBe(200);
+      expect(calculateXP(2)).toBe(0);
+      
+      // 3 - 4 correct -> 1 star -> 4 XP
+      expect(calculateXP(3)).toBe(4);
+      
+      // 9 - 10 correct -> 5 stars -> 18 XP
+      expect(calculateXP(10)).toBe(18);
+
+      // 15 correct -> 15 stars -> 53 XP
+      expect(calculateXP(15)).toBe(53);
+
+      // 20 correct -> 20 stars -> 70 XP
+      expect(calculateXP(20)).toBe(70);
     });
 
     test('should throw error for out-of-bounds inputs', () => {
@@ -76,12 +123,12 @@ describe('Khmer Kids Game Rewards System Tests', () => {
   });
 
   describe('calculatePerfectReward', () => {
-    test('should return perfect badge and bonuses if score is 20/20', () => {
+    test('should return perfect badge and zero bonus rewards if score is 20/20', () => {
       const reward = calculatePerfectReward(20);
       expect(reward).toEqual({
         perfectBadge: true,
-        bonusStars: 20,
-        bonusXP: 100,
+        bonusStars: 0,
+        bonusXP: 0,
       });
     });
 

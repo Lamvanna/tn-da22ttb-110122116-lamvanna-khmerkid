@@ -39,7 +39,7 @@ async function resetUserStars() {
   await user.save();
   
   console.log(`✅ Done! Stars: ${user.stars}, XP: ${user.xp}`);
-  console.log('Flutter client sẽ hiển thị đúng từ local storage.');
+  console.log('Flutter client sẽ hiển thị đúng từ bộ nhớ thiết bị.');
 
   await mongoose.disconnect();
 }

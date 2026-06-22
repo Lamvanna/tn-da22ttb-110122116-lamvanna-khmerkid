@@ -72,6 +72,48 @@ const calculateStars = (percentage) => {
 };
 
 /**
+ * Calculate stars from game correctAnswers, totalQuestions, or score percentage
+ * @param {number} correct - Number of correct answers
+ * @param {number} total - Total questions
+ * @param {number} scorePercent - Fallback score percentage (0-100)
+ * @returns {number} Stars earned (0-20)
+ */
+const calculateGameStars = (correct, total, scorePercent) => {
+  let accuracy = 0;
+  if (total > 0) {
+    accuracy = (correct / total) * 100;
+  } else if (scorePercent !== undefined) {
+    accuracy = scorePercent;
+  }
+  const scaledCorrect = Math.min(20, Math.max(0, Math.round((accuracy / 100) * 20)));
+  
+  if (scaledCorrect <= 2) return 0;
+  if (scaledCorrect <= 4) return 1;
+  if (scaledCorrect <= 6) return 2;
+  if (scaledCorrect <= 8) return 3;
+  if (scaledCorrect <= 10) return 5;
+  if (scaledCorrect === 11) return 7;
+  if (scaledCorrect === 12) return 9;
+  if (scaledCorrect === 13) return 11;
+  if (scaledCorrect === 14) return 13;
+  if (scaledCorrect === 15) return 15;
+  if (scaledCorrect === 16) return 17;
+  if (scaledCorrect === 17) return 18;
+  if (scaledCorrect === 18) return 19;
+  return 20;
+};
+
+/**
+ * Calculate XP from stars earned
+ * @param {number} stars - Stars earned (0-20)
+ * @returns {number} XP earned (0-70)
+ */
+const calculateGameXP = (stars) => {
+  return Math.round((stars / 20) * 70);
+};
+
+
+/**
  * Check if score passes the threshold
  * @param {number} score - Score percentage
  * @returns {boolean} Whether the score passes
@@ -191,6 +233,8 @@ module.exports = {
   totalXpForLevel,
   calculateLevel,
   calculateStars,
+  calculateGameStars,
+  calculateGameXP,
   isPassed,
   calculateStreak,
   slugify,

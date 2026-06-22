@@ -12,7 +12,20 @@
  */
 function calculateStars(correctAnswers) {
   validateCorrectAnswers(correctAnswers);
-  return correctAnswers;
+  if (correctAnswers <= 2) return 0;
+  if (correctAnswers <= 4) return 1;
+  if (correctAnswers <= 6) return 2;
+  if (correctAnswers <= 8) return 3;
+  if (correctAnswers <= 10) return 5;
+  if (correctAnswers === 11) return 7;
+  if (correctAnswers === 12) return 9;
+  if (correctAnswers === 13) return 11;
+  if (correctAnswers === 14) return 13;
+  if (correctAnswers === 15) return 15;
+  if (correctAnswers === 16) return 17;
+  if (correctAnswers === 17) return 18;
+  if (correctAnswers === 18) return 19;
+  return 20;
 }
 
 /**
@@ -29,10 +42,6 @@ function calculateStars(correctAnswers) {
  */
 function calculateBonusStars(correctAnswers) {
   validateCorrectAnswers(correctAnswers);
-  if (correctAnswers === 20) return 20;
-  if (correctAnswers === 19) return 12;
-  if (correctAnswers === 18) return 8;
-  if (correctAnswers === 17) return 5;
   return 0;
 }
 
@@ -45,7 +54,8 @@ function calculateBonusStars(correctAnswers) {
  */
 function calculateXP(correctAnswers) {
   validateCorrectAnswers(correctAnswers);
-  return correctAnswers * 10;
+  const stars = calculateStars(correctAnswers);
+  return Math.round((stars / 20) * 70);
 }
 
 /**
@@ -62,8 +72,8 @@ function calculatePerfectReward(correctAnswers) {
   if (correctAnswers === 20) {
     return {
       perfectBadge: true,
-      bonusStars: 20,
-      bonusXP: 100,
+      bonusStars: 0,
+      bonusXP: 0,
     };
   }
   return {

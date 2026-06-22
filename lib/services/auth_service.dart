@@ -870,7 +870,21 @@ class AuthService extends ChangeNotifier {
       await storage.setStreak(profile['streak'] ?? 0);
       await storage.setAvatarUrl(profile['avatar'] ?? '');
 
-      debugPrint('🔄 Đồng bộ profile từ server lên Local Storage thành công! (Name: ${profile['name']}, Stars: ${profile['stars']}, XP: ${profile['xp']}, Avatar: ${profile['avatar']})');
+      // Đồng bộ Inventory từ CSDL vào thiết bị
+      final inv = profile['inventory'];
+      if (inv != null) {
+        if (inv['hints'] != null) await storage.setHintsCount((inv['hints'] as num).toInt());
+        if (inv['timePowerups'] != null) await storage.setTimeCount((inv['timePowerups'] as num).toInt());
+        if (inv['livesPowerups'] != null) await storage.setLivesCount((inv['livesPowerups'] as num).toInt());
+        if (inv['doubleScorePowerups'] != null) await storage.setDoubleCount((inv['doubleScorePowerups'] as num).toInt());
+
+        if (inv['hintsLastReg'] != null) await storage.setHintsLastReg((inv['hintsLastReg'] as num).toInt());
+        if (inv['timePowerupsLastReg'] != null) await storage.setTimeLastReg((inv['timePowerupsLastReg'] as num).toInt());
+        if (inv['livesPowerupsLastReg'] != null) await storage.setLivesLastReg((inv['livesPowerupsLastReg'] as num).toInt());
+        if (inv['doubleScorePowerupsLastReg'] != null) await storage.setDoubleLastReg((inv['doubleScorePowerupsLastReg'] as num).toInt());
+      }
+
+      debugPrint('🔄 Đồng bộ profile và inventory từ server lên thiết bị thành công! (Name: ${profile['name']}, Stars: ${profile['stars']}, XP: ${profile['xp']}, Avatar: ${profile['avatar']})');
     } catch (e) {
       debugPrint('⚠️ Error syncing profile to storage: $e');
     }

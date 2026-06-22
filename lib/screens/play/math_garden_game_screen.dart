@@ -25,6 +25,7 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
   bool _isRoundCompleted = false;
   bool? _isCorrectAnswer;
   ScoreService? _scoreService;
+  Map<String, dynamic>? _rewardResult;
 
   // Game Loop variables
   int _lives = 3;
@@ -152,7 +153,7 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
         bgGradient: [const Color(0xFFF57C00), const Color(0xFFFFB74D)],
       ),
       _MathLevel(
-        question: 'Bé hãy tính phép cộng sau bằng chữ số Khmer: ១ + ½ = ?',
+        question: 'Bé hãy tính phép cộng sau bằng chữ số Khmer: ១ + ២ = ?',
         khmerProblem: '១ + ២ = ?', // 1 + 2 = 3
         choices: ['២', '៣', '៤'],
         correctAnswer: '៣', // 3
@@ -194,6 +195,171 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
         visualEmojis: ['🍄', '🍄', '🍄', '🍄', '🍄', '🍄', '🍄', '🍄', '🍄'],
         gardenName: 'Góc Nấm Mưa',
         bgGradient: [const Color(0xFF00796B), const Color(0xFF4DB6AC)],
+      ),
+      _MathLevel(
+        question: 'Bé hãy giúp đếm số quả cam ngọt ngào trên cành nhé! 🍊',
+        khmerProblem: '🍊 🍊 🍊 🍊 🍊 🍊',
+        choices: ['៥', '៦', '៧'],
+        correctAnswer: '៦',
+        romanized: 'prăm-muoy',
+        arabicMeaning: '6',
+        visualEmojis: ['🍊', '🍊', '🍊', '🍊', '🍊', '🍊'],
+        gardenName: 'Vườn Cam Ngọt',
+        bgGradient: [const Color(0xFFE65100), const Color(0xFFFFB74D)],
+      ),
+      _MathLevel(
+        question: 'Chú thỏ trắng nhổ được bao nhiêu củ cà rốt giòn ngọt? 🥕',
+        khmerProblem: '🥕 🥕 🥕 🥕',
+        choices: ['៣', '៤', '៥'],
+        correctAnswer: '៤',
+        romanized: 'buon',
+        arabicMeaning: '4',
+        visualEmojis: ['🥕', '🥕', '🥕', '🥕'],
+        gardenName: 'Góc Cà Rốt',
+        bgGradient: [const Color(0xFFF57C00), const Color(0xFFFF9800)],
+      ),
+      _MathLevel(
+        question: 'Bé hãy đếm xem có bao nhiêu bông hoa sen nở dưới ao? 🪷',
+        khmerProblem: '🪷 🪷 🪷 🪷 🪷 🪷 🪷 🪷',
+        choices: ['៧', '៨', '៩'],
+        correctAnswer: '៨',
+        romanized: 'prăm-bei',
+        arabicMeaning: '8',
+        visualEmojis: ['🪷', '🪷', '🪷', '🪷', '🪷', '🪷', '🪷', '🪷'],
+        gardenName: 'Hồ Hoa Sen',
+        bgGradient: [const Color(0xFF00ACC1), const Color(0xFF4DD0E1)],
+      ),
+      _MathLevel(
+        question: 'Có bao nhiêu quả dâu tây đỏ mọng chín ngọt ngào? 🍓',
+        khmerProblem: '🍓 🍓 🍓 🍓 🍓 🍓 🍓 🍓 🍓 🍓',
+        choices: ['៨', '៩', '១០'],
+        correctAnswer: '១០',
+        romanized: 'dop',
+        arabicMeaning: '10',
+        visualEmojis: ['🍓', '🍓', '🍓', '🍓', '🍓', '🍓', '🍓', '🍓', '🍓', '🍓'],
+        gardenName: 'Vườn Dâu Tây',
+        bgGradient: [const Color(0xFFEF5350), const Color(0xFFE57373)],
+      ),
+      _MathLevel(
+        question: 'Bé hãy đếm xem có bao nhiêu bạn cá vàng đang bơi lội vui vẻ? 🐟',
+        khmerProblem: '🐟 🐟 🐟',
+        choices: ['២', '៣', '៤'],
+        correctAnswer: '៣',
+        romanized: 'bei',
+        arabicMeaning: '3',
+        visualEmojis: ['🐟', '🐟', '🐟'],
+        gardenName: 'Ao Cá Vàng',
+        bgGradient: [const Color(0xFF29B6F6), const Color(0xFF81D4FA)],
+      ),
+      _MathLevel(
+        question: 'Bé hãy giúp bạn ong mật tính toán phép tính: ៣ + ៤ = ?',
+        khmerProblem: '៣ + ៤ = ?',
+        choices: ['៦', '៧', '៨'],
+        correctAnswer: '៧',
+        romanized: 'prăm-pi',
+        arabicMeaning: '7',
+        visualEmojis: ['🌹', '🌹', '🌹', '➕', '🌹', '🌹', '🌹', '🌹'],
+        gardenName: 'Đồi Hoa Hồng',
+        bgGradient: [const Color(0xFFAB47BC), const Color(0xFFCE93D8)],
+      ),
+      _MathLevel(
+        question: 'Bé giúp chú chim nhỏ hái dưa hấu: ៦ - ៣ = ?',
+        khmerProblem: '៦ - ៣ = ?',
+        choices: ['២', '៣', '៤'],
+        correctAnswer: '៣',
+        romanized: 'bei',
+        arabicMeaning: '3',
+        visualEmojis: ['🍉', '🍉', '🍉', '🍉', '🍉', '🍉', '➖', '🍉', '🍉', '🍉'],
+        gardenName: 'Vườn Dưa Hấu',
+        bgGradient: [const Color(0xFF4CAF50), const Color(0xFF81C784)],
+      ),
+      _MathLevel(
+        question: 'Bé hãy tính kết quả phép tính đố vui của chú sóc con: ៤ + ៥ = ?',
+        khmerProblem: '៤ + ៥ = ?',
+        choices: ['៨', '៩', '១០'],
+        correctAnswer: '៩',
+        romanized: 'prăm-buon',
+        arabicMeaning: '9',
+        visualEmojis: ['🌰', '🌰', '🌰', '🌰', '➕', '🌰', '🌰', '🌰', '🌰', '🌰'],
+        gardenName: 'Khu Vườn Bí Ngô',
+        bgGradient: [const Color(0xFFFF9800), const Color(0xFFFFB74D)],
+      ),
+      _MathLevel(
+        question: 'Bé hãy tính kết quả giúp thỏ con: ៨ - ៤ = ?',
+        khmerProblem: '៨ - ៤ = ?',
+        choices: ['៣', '៤', '៥'],
+        correctAnswer: '៤',
+        romanized: 'buon',
+        arabicMeaning: '4',
+        visualEmojis: ['🍇', '🍇', '🍇', '🍇', '🍇', '🍇', '🍇', '🍇', '➖', '🍇', '🍇', '🍇', '🍇'],
+        gardenName: 'Vườn Nho Tím',
+        bgGradient: [const Color(0xFF5C6BC0), const Color(0xFF9FA8DA)],
+      ),
+      _MathLevel(
+        question: 'Bé hãy đếm xem có bao nhiêu quả cherry mọng đỏ trên cành? 🍒',
+        khmerProblem: '🍒 🍒',
+        choices: ['១', '២', '៣'],
+        correctAnswer: '២',
+        romanized: 'pi',
+        arabicMeaning: '2',
+        visualEmojis: ['🍒', '🍒'],
+        gardenName: 'Vườn Cherry',
+        bgGradient: [const Color(0xFFEF5350), const Color(0xFFFF8A80)],
+      ),
+      _MathLevel(
+        question: 'Bé giúp gấu con làm phép tính sau: ២ + ៦ = ?',
+        khmerProblem: '២ + ៦ = ?',
+        choices: ['៧', '៨', '៩'],
+        correctAnswer: '៨',
+        romanized: 'prăm-bei',
+        arabicMeaning: '8',
+        visualEmojis: ['🐝', '🐝', '➕', '🐝', '🐝', '🐝', '🐝', '🐝', '🐝'],
+        gardenName: 'Khu Vườn Ong Mật',
+        bgGradient: [const Color(0xFFFFC107), const Color(0xFFFFE082)],
+      ),
+      _MathLevel(
+        question: 'Bé hãy giải phép tính đố của khỉ con nhé: ៩ - ៥ = ?',
+        khmerProblem: '៩ - ៥ = ?',
+        choices: ['៣', '៤', '៥'],
+        correctAnswer: '៤',
+        romanized: 'buon',
+        arabicMeaning: '4',
+        visualEmojis: ['🍍', '🍍', '🍍', '🍍', '🍍', '🍍', '🍍', '🍍', '🍍', '➖', '🍍', '🍍', '🍍', '🍍', '🍍'],
+        gardenName: 'Vườn Dứa Thơm',
+        bgGradient: [const Color(0xFF009688), const Color(0xFF80CBC4)],
+      ),
+      _MathLevel(
+        question: 'Đố bé biết trong ổ của gà mái vàng có bao nhiêu quả trứng? 🥚',
+        khmerProblem: '🥚',
+        choices: ['០', '១', '២'],
+        correctAnswer: '១',
+        romanized: 'muoy',
+        arabicMeaning: '1',
+        visualEmojis: ['🥚'],
+        gardenName: 'Đồi Trứng Phục Sinh',
+        bgGradient: [const Color(0xFFFFCC80), const Color(0xFFFFE0B2)],
+      ),
+      _MathLevel(
+        question: 'Bé hãy giúp chú ếch xanh tính phép cộng sau: ៥ + ៥ = ?',
+        khmerProblem: '៥ + ៥ = ?',
+        choices: ['៩', '១០', '១១'],
+        correctAnswer: '១០',
+        romanized: 'dop',
+        arabicMeaning: '10',
+        visualEmojis: ['🐸', '🐸', '🐸', '🐸', '🐸', '➕', '🐸', '🐸', '🐸', '🐸', '🐸'],
+        gardenName: 'Đầm Lầy Ếch Xanh',
+        bgGradient: [const Color(0xFF2E7D32), const Color(0xFF81C784)],
+      ),
+      _MathLevel(
+        question: 'Phép tính cuối cùng đố bé: ៧ - ៣ = ?',
+        khmerProblem: '៧ - ៣ = ?',
+        choices: ['៣', '៤', '៥'],
+        correctAnswer: '៤',
+        romanized: 'buon',
+        arabicMeaning: '4',
+        visualEmojis: ['🍅', '🍅', '🍅', '🍅', '🍅', '🍅', '🍅', '➖', '🍅', '🍅', '🍅'],
+        gardenName: 'Khu Vườn Cà Chua',
+        bgGradient: [const Color(0xFFEF5350), const Color(0xFFE57373)],
       ),
     ];
   }
@@ -394,6 +560,7 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
       _isRoundCompleted = false;
       _isCorrectAnswer = null;
       _gameOver = false;
+      _rewardResult = null;
       _hintsLeft = _scoreService?.hintsLeft ?? 2;
       _timePowerupsLeft = _scoreService?.timePowerupsLeft ?? 2;
       _livesPowerupsLeft = _scoreService?.livesPowerupsLeft ?? 1;
@@ -430,7 +597,15 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
       _lives = 0;
       _gameOver = true;
     });
-    _scoreService?.completeGame('math_garden', _score, syncToBackend: true);
+    _scoreService?.completeGame(
+      'math_garden',
+      _score,
+      syncToBackend: true,
+      correctAnswers: _currentLevelIdx,
+      totalQuestions: _levels.length,
+    ).then((result) {
+      if (mounted) setState(() => _rewardResult = result);
+    });
   }
 
   void _onChoiceSelected(String choice) {
@@ -461,7 +636,15 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
       });
 
       if (_gameOver) {
-        _scoreService?.completeGame('math_garden', _score, syncToBackend: true);
+        _scoreService?.completeGame(
+          'math_garden',
+          _score,
+          syncToBackend: true,
+          correctAnswers: _currentLevelIdx,
+          totalQuestions: _levels.length,
+        ).then((result) {
+          if (mounted) setState(() => _rewardResult = result);
+        });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -569,9 +752,23 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
     }
   }
 
-  void _showGameFinishedDialog() {
+  void _showGameFinishedDialog() async {
     _timer?.cancel();
-    _scoreService?.completeGame('math_garden', _score, syncToBackend: true);
+    final result = await _scoreService?.completeGame(
+      'math_garden',
+      _score,
+      syncToBackend: true,
+      correctAnswers: _levels.length,
+      totalQuestions: _levels.length,
+    );
+    if (mounted) {
+      setState(() {
+        _rewardResult = result;
+      });
+    }
+
+    if (!mounted) return;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -607,6 +804,56 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
                 ),
               ),
               SizedBox(height: 16.h),
+              if (_rewardResult != null) ...[
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF8E1),
+                    borderRadius: BorderRadius.circular(20.r),
+                    border: Border.all(color: const Color(0xFFFFD54F), width: 1.5.w),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'XẾP LOẠI: ${_rewardResult!['rating']}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFFE65100),
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset('image/sao.png', width: 22.w, height: 22.h),
+                          SizedBox(width: 4.w),
+                          Text(
+                            '+${_rewardResult!['stars']} Sao',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFFF57F17),
+                            ),
+                          ),
+                          SizedBox(width: 16.w),
+                          const Icon(Icons.bolt_rounded, color: Colors.orange, size: 22),
+                          SizedBox(width: 4.w),
+                          Text(
+                            '+${_rewardResult!['xp']} XP',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.orange.shade800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 16.h),
+              ],
               Text(
                 'Tổng điểm đạt được: +$_score Điểm 🌟',
                 style: GoogleFonts.plusJakartaSans(
@@ -803,8 +1050,10 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
         final shouldPop = await _showExitConfirmationDialog(context);
-        if (shouldPop && context.mounted) {
-          Navigator.of(context).pop(result);
+        if (shouldPop) {
+          if (context.mounted) Navigator.of(context).pop(result);
+        } else {
+          _resumeTimer();
         }
       },
       child: Scaffold(
@@ -1074,17 +1323,42 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
 
   Widget _buildGameOverScreen() {
     return Center(
-      child: Padding(
-        padding: EdgeInsets.all(24.w),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('😢', style: TextStyle(fontSize: 64.sp)),
+            // Sad Face Badge
+            Container(
+              width: 120.w,
+              height: 120.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFEF9A9A), Color(0xFFE57373)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                border: Border.all(color: Colors.white, width: 4.w),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFC62828).withOpacity(0.25),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Text('😢', style: TextStyle(fontSize: 60)),
+              ),
+            ),
             SizedBox(height: 20.h),
             Text(
               'Hết lượt chơi rồi!',
+              textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 28.sp,
+                fontSize: 26.sp,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
                 shadows: [
@@ -1103,34 +1377,156 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w700,
-                color: Colors.white.withValues(alpha: 0.95),
+                color: Colors.white.withOpacity(0.95),
                 height: 1.5,
               ),
             ),
-            SizedBox(height: 32.h),
+            if (_rewardResult != null) ...[
+              SizedBox(height: 20.h),
+              _buildRatingBadge(_rewardResult!['rating'].toString()),
+              SizedBox(height: 16.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFFDE7), Color(0xFFFFF9C4)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                        borderRadius: BorderRadius.circular(20.r),
+                        border: Border.all(color: const Color(0xFFFFF59D), width: 1.5.w),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFF57F17).withOpacity(0.08),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Image.asset(
+                            'image/sao.png',
+                            width: 44.w,
+                            height: 44.h,
+                            fit: BoxFit.contain,
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            '+${_rewardResult!['stars']}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFFE65100),
+                            ),
+                          ),
+                          Text(
+                            'Sao vàng',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFFF57F17),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16.w),
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFF3E0), Color(0xFFFFE0B2)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                        borderRadius: BorderRadius.circular(20.r),
+                        border: Border.all(color: const Color(0xFFFFCC80), width: 1.5.w),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFE65100).withOpacity(0.08),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Image.asset(
+                            'image/XP.png',
+                            width: 44.w,
+                            height: 44.h,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.bolt_rounded,
+                              color: Colors.orange.shade800,
+                              size: 44.r,
+                            ),
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            '+${_rewardResult!['xp']}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFFD84315),
+                            ),
+                          ),
+                          Text(
+                            'Điểm XP',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFFE65100),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            SizedBox(height: 24.h),
             Container(
               width: double.infinity,
-              padding: EdgeInsets.all(24.w),
+              padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.25),
+                color: Colors.white.withOpacity(0.9),
                 borderRadius: BorderRadius.circular(24.r),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5.w),
+                border: Border.all(color: Colors.white, width: 2.w),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 16.r,
+                    color: const Color(0xFFE65100).withOpacity(0.06),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
               child: Column(
                 children: [
-                  _statRow('⭐ Điểm số đạt được', '$_score'),
+                  _buildPremiumStatTile(
+                    label: '⭐ Điểm số đạt được',
+                    value: '$_score',
+                    fallbackIcon: Icons.emoji_events_rounded,
+                    themeColor: const Color(0xFFF57C00),
+                  ),
                   SizedBox(height: 12.h),
-                  _statRow('🍎 Số vườn đã khám phá', '$_currentLevelIdx / ${_levels.length}'),
+                  _buildPremiumStatTile(
+                    label: '🍎 Số vườn đã khám phá',
+                    value: '$_currentLevelIdx / ${_levels.length}',
+                    fallbackIcon: Icons.grass_rounded,
+                    themeColor: const Color(0xFF2E7D32),
+                  ),
                 ],
               ),
             ),
-            SizedBox(height: 40.h),
+            SizedBox(height: 32.h),
             Row(
               children: [
                 Expanded(
@@ -1140,21 +1536,16 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
                       Navigator.pop(context);
                     },
                     child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      height: 52.h,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16.r),
-                        border: Border.all(color: const Color(0xFFB0BEC5), width: 1.5.w),
+                        border: Border.all(color: const Color(0xFFCFD8DC), width: 2.w),
                         boxShadow: [
-                          const BoxShadow(
-                            color: Color(0xFFB0BEC5),
-                            offset: Offset(0, 4),
-                            blurRadius: 0,
-                          ),
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            offset: const Offset(0, 4),
-                            blurRadius: 4,
+                            color: const Color(0xFFB0BEC5),
+                            offset: Offset(0, 4.h),
+                            blurRadius: 0,
                           ),
                         ],
                       ),
@@ -1163,8 +1554,8 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
                           'Thoát',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 16.sp,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF374151),
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF546E7A),
                           ),
                         ),
                       ),
@@ -1176,7 +1567,7 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
                   child: GestureDetector(
                     onTap: _startGame,
                     child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      height: 52.h,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [Color(0xFFFFB74D), Color(0xFFE65100)],
@@ -1184,17 +1575,12 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
                           end: Alignment.bottomCenter,
                         ),
                         borderRadius: BorderRadius.circular(16.r),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5.w),
+                        border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5.w),
                         boxShadow: [
-                          const BoxShadow(
-                            color: Color(0xFFBF360C),
-                            offset: Offset(0, 4),
-                            blurRadius: 0,
-                          ),
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            offset: const Offset(0, 4),
-                            blurRadius: 4,
+                            color: const Color(0xFFBF360C),
+                            offset: Offset(0, 4.h),
+                            blurRadius: 0,
                           ),
                         ],
                       ),
@@ -1205,12 +1591,6 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black.withValues(alpha: 0.3),
-                                offset: const Offset(0, 1),
-                              ),
-                            ],
                           ),
                         ),
                       ),
@@ -1223,32 +1603,133 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
         ),
       ),
     );
-  }
+  }  Widget _buildRatingBadge(String rating) {
+    Color bgColor = const Color(0xFFFFF8E1);
+    Color borderColor = const Color(0xFFFFD54F);
+    Color textColor = const Color(0xFFE65100);
 
-  Widget _statRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 15.sp,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
+    if (rating.contains('🌱')) {
+      bgColor = const Color(0xFFE8F5E9);
+      borderColor = const Color(0xFFA5D6A7);
+      textColor = const Color(0xFF2E7D32);
+    } else if (rating.contains('👍')) {
+      bgColor = const Color(0xFFE3F2FD);
+      borderColor = const Color(0xFF90CAF9);
+      textColor = const Color(0xFF1565C0);
+    } else if (rating.contains('🎉')) {
+      bgColor = const Color(0xFFF3E5F5);
+      borderColor = const Color(0xFFCE93D8);
+      textColor = const Color(0xFF7B1FA2);
+    } else if (rating.contains('🌟')) {
+      bgColor = const Color(0xFFFFF8E1);
+      borderColor = const Color(0xFFFFE082);
+      textColor = const Color(0xFFE65100);
+    } else if (rating.contains('👑')) {
+      bgColor = const Color(0xFFFFF3E0);
+      borderColor = const Color(0xFFFFCC80);
+      textColor = const Color(0xFFD84315);
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(30.r),
+        border: Border.all(color: borderColor, width: 2.w),
+        boxShadow: [
+          BoxShadow(
+            color: textColor.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
+        ],
+      ),
+      child: Text(
+        'XẾP LOẠI: $rating',
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 18.sp,
+          fontWeight: FontWeight.w900,
+          color: textColor,
+          letterSpacing: 0.5,
         ),
-        Text(
-          value,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w900,
-            color: const Color(0xFFFFF176),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
+  Widget _buildPremiumStatTile({
+    required String label,
+    required String value,
+    required IconData fallbackIcon,
+    required Color themeColor,
+  }) {
+    String cleanLabel = label;
+    String emoji = '';
+    
+    if (label.isNotEmpty) {
+      final runes = label.runes;
+      final firstChar = runes.first;
+      if (firstChar > 127) {
+        emoji = String.fromCharCode(firstChar);
+        cleanLabel = String.fromCharCodes(runes.skip(1)).trim();
+      }
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: themeColor.withOpacity(0.12), width: 1.5.w),
+        boxShadow: [
+          BoxShadow(
+            color: themeColor.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.r),
+            decoration: BoxDecoration(
+              color: themeColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: emoji.isNotEmpty
+                ? Text(
+                    emoji,
+                    style: TextStyle(fontSize: 18.sp),
+                  )
+                : Icon(
+                    fallbackIcon,
+                    color: themeColor,
+                    size: 18.r,
+                  ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Text(
+              cleanLabel,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF4B5563),
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w900,
+              color: themeColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
   Widget _buildHeader(_MathLevel level) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
@@ -1262,8 +1743,10 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
               GestureDetector(
                 onTap: () async {
                   final shouldPop = await _showExitConfirmationDialog(context);
-                  if (shouldPop && mounted) {
-                    Navigator.pop(context);
+                  if (shouldPop) {
+                    if (mounted) Navigator.pop(context);
+                  } else {
+                    _resumeTimer();
                   }
                 },
                 child: Container(
@@ -1282,20 +1765,17 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                    colors: [Color(0xFFFFF176), Color(0xFFFBC02D)]),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(20.r),
-                  border: Border.all(color: Colors.white, width: 1.5.w),
+                  border: Border.all(color: const Color(0xFFFFD54F), width: 1.5.w),
                   boxShadow: [
-                    const BoxShadow(color: Color(0xFFF57F17), offset: Offset(0, 2), blurRadius: 0),
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.1), offset: const Offset(0, 3), blurRadius: 3),
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.05), offset: const Offset(0, 3), blurRadius: 3),
                   ]),
                 child: Row(children: [
-                  Icon(Icons.star_rounded, color: Colors.white, size: 18.w),
+                  Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 18.w),
                   SizedBox(width: 4.w),
                   Text('$_score',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w900, color: Colors.white)),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, fontWeight: FontWeight.w900, color: const Color(0xFFF57C00))),
                 ]),
               ),
               SizedBox(width: 8.w),

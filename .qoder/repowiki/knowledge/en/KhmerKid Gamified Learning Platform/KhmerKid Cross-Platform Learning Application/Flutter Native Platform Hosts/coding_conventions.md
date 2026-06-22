@@ -1,0 +1,2 @@
+- Native functionality is exposed to Flutter via named MethodChannels with consistent error handling patterns (success/error/notImplemented).
+- Platform-specific entry points (MainActivity/AppDelegate) are kept minimal, delegating most logic to the Flutter engine or generated registrants.

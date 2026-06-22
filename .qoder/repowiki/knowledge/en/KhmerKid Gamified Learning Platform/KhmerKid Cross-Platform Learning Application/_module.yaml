@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: frontend
+title: KhmerKid Cross-Platform Learning Application
+scope:
+    - lib/
+    - android/
+    - ios/
+    - assets/
+source_files: []
+depends_on: []
+related_to: []

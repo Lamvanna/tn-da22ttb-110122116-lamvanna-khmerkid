@@ -1,0 +1,1 @@
+A Flutter-based educational app for primary school children to learn Khmer script, featuring offline-first architecture, gamification, and real-time handwriting recognition.

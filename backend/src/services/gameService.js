@@ -6,6 +6,7 @@
 
 const GameResult = require('../models/GameResult');
 const userService = require('./userService');
+const missionService = require('./missionService');
 const { calculateStars, calculateGameStars, calculateGameXP } = require('../utils/helpers');
 const { XP_CONFIG } = require('../constants');
 
@@ -40,6 +41,13 @@ class GameService {
     await User.findByIdAndUpdate(userId, {
       $inc: { 'learningProgress.totalGamesPlayed': 1 },
     });
+
+    // Update mission progress for playing a game
+    try {
+      await missionService.updateProgress(userId, 'play_game');
+    } catch (missionErr) {
+      console.error('Error updating mission progress:', missionErr.message);
+    }
 
     return {
       ...result.toObject(),

@@ -132,6 +132,13 @@ const userSchema = new mongoose.Schema(
       readingLevel: { type: Number, default: 0, min: 0, max: 100 },
       writingLevel: { type: Number, default: 0, min: 0, max: 100 },
 
+      // Activity counters (for badge requirements)
+      writingPracticeCount: { type: Number, default: 0 },
+      readingCorrectCount: { type: Number, default: 0 },
+      speakingSuccessCount: { type: Number, default: 0 },
+      listeningCompleteCount: { type: Number, default: 0 },
+      readingLessonsCompleted: { type: Number, default: 0 },
+
       // Completed lessons by type
       completedLessons: [{
         type: mongoose.Schema.Types.ObjectId,
@@ -155,6 +162,9 @@ const userSchema = new mongoose.Schema(
       livesPowerupsLastReg: { type: Number, default: Date.now },
       doubleScorePowerupsLastReg: { type: Number, default: Date.now },
     },
+    purchasedItems: [{
+      type: String,
+    }],
 
     // ========================================
     // Activity Tracking

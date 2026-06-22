@@ -35,11 +35,21 @@ void main() async {
   // 3. Dò tìm máy chủ và tiến hành tự động đăng nhập nhanh trước khi khởi chạy giao diện
   bool isLoggedIn = false;
   bool isAdmin = false;
+  
+  // Dò tìm máy chủ trong thời gian ngắn (tối đa 1200ms), không chặn luồng chính nếu lỗi hoặc quá hạn
   try {
-    // Chờ dò tìm máy chủ tối đa 800 mili giây
     await AuthService.detectActiveServer().timeout(
-      const Duration(milliseconds: 800),
-    );
+      const Duration(milliseconds: 1200),
+    ).catchError((e) {
+      debugPrint('⚠️ Dò tìm máy chủ quá thời gian hoặc gặp lỗi: $e');
+      return null;
+    });
+  } catch (e) {
+    debugPrint('⚠️ Lỗi dò tìm máy chủ: $e');
+  }
+
+  // Tiến hành tự động đăng nhập (hỗ trợ chế độ offline tự động nếu máy chủ không hoạt động)
+  try {
     isLoggedIn = await AuthService().tryAutoLogin();
     if (isLoggedIn) {
       final profile = AuthService().userProfile;

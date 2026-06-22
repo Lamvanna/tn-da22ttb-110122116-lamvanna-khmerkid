@@ -1,0 +1,1 @@
+Orchestrates a unified Flutter codebase with platform-specific native hosts and static assets to deliver an offline-first, multilingual educational experience for Khmer script learning.

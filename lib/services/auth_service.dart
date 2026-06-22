@@ -884,6 +884,12 @@ class AuthService extends ChangeNotifier {
         if (inv['doubleScorePowerupsLastReg'] != null) await storage.setDoubleLastReg((inv['doubleScorePowerupsLastReg'] as num).toInt());
       }
 
+      // Đồng bộ danh sách vật phẩm đã mua từ CSDL vào thiết bị
+      final purchasedItems = profile['purchasedItems'];
+      if (purchasedItems != null && purchasedItems is List) {
+        await storage.setPurchasedItems(purchasedItems.map((e) => e.toString()).toSet());
+      }
+
       debugPrint('🔄 Đồng bộ profile và inventory từ server lên thiết bị thành công! (Name: ${profile['name']}, Stars: ${profile['stars']}, XP: ${profile['xp']}, Avatar: ${profile['avatar']})');
     } catch (e) {
       debugPrint('⚠️ Error syncing profile to storage: $e');
@@ -904,6 +910,44 @@ class AuthService extends ChangeNotifier {
       });
 
       notifyListeners();
+    }
+  }
+
+  /// Mua vật phẩm trong shop - gọi API backend để trừ sao và lưu vào CSDL
+  Future<Map<String, dynamic>> purchaseItem({
+    required String itemId,
+    required String itemType,
+    required int price,
+    String? powerUpType,
+  }) async {
+    if (_accessToken == null) return {'success': false, 'message': 'Chưa đăng nhập'};
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/users/purchase-item'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_accessToken',
+        },
+        body: jsonEncode({
+          'itemId': itemId,
+          'itemType': itemType,
+          'price': price,
+          'powerUpType': powerUpType,
+        }),
+      ).timeout(_httpTimeout);
+
+      final responseData = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        // Cập nhật profile mới nhất để đồng bộ sao và vật phẩm
+        await fetchProfile();
+        return {'success': true, 'data': responseData['data']};
+      } else {
+        return {'success': false, 'message': responseData['message'] ?? 'Lỗi mua vật phẩm'};
+      }
+    } catch (e) {
+      debugPrint('❌ Error purchasing item: $e');
+      return {'success': false, 'message': 'Không thể kết nối máy chủ: $e'};
     }
   }
 }

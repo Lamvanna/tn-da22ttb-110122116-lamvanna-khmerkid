@@ -18,9 +18,11 @@
 
 const StandardCharacter = require('../models/StandardCharacter');
 const WritingProgress = require('../models/WritingProgress');
+const User = require('../models/User');
 const { analyzeStrokes } = require('../services/aiStrokeAnalyzer');
 const { analyzeVowelStrokes } = require('../services/aiVowelStrokeAnalyzer');
 const { analyzeCompoundStrokes } = require('../services/aiCompoundStrokeAnalyzer');
+const missionService = require('../services/missionService');
 
 // ═══════════════════════════════════════════════════════════════════════
 // Validation Helpers
@@ -240,6 +242,12 @@ function registerWritingHandler(socket, io) {
       if (userId) {
         try {
           await WritingProgress.recordAttempt(userId, targetCharacter, analysisResult);
+          // Tăng counter luyện viết (cho badge)
+          await User.findByIdAndUpdate(userId, {
+            $inc: { 'learningProgress.writingPracticeCount': 1 }
+          });
+          // Update mission progress for writing practice
+          await missionService.updateProgress(userId, 'write_lesson');
           console.log(
             `✅ [WritingHandler] Progress saved for user ${userId}, ` +
             `char "${targetCharacter}", score: ${analysisResult.similarityScore}`

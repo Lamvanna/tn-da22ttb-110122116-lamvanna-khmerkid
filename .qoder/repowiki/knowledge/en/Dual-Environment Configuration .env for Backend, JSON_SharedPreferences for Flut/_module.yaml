@@ -1,0 +1,19 @@
+schema_version: 1
+module_path: configuration_system
+title: 'Dual-Environment Configuration: .env for Backend, JSON/SharedPreferences for Flutter Client'
+scope: []
+source_files:
+    - backend/.env.example
+    - backend/server.js
+    - backend/src/config/database.js
+    - backend/src/config/cloudinary.js
+    - backend/src/config/passport.js
+    - backend/src/constants/index.js
+    - pubspec.yaml
+    - lib/main.dart
+    - lib/services/auth_service.dart
+    - lib/services/storage_service.dart
+    - lib/l10n/language_manager.dart
+    - assets/translations/languages.json
+depends_on: []
+related_to: []

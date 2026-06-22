@@ -1,0 +1,13 @@
+schema_version: 1
+module_path: logging_system
+title: Logging System — Minimal Console-Based Logging with Morgan HTTP Middleware
+scope: []
+source_files:
+    - backend/server.js
+    - backend/src/middlewares/errorHandler.js
+    - backend/src/config/database.js
+    - backend/package.json
+    - lib/main.dart
+    - pubspec.yaml
+depends_on: []
+related_to: []

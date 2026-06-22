@@ -1,0 +1,4 @@
+- Android host: `MainActivity.kt` extends `FlutterActivity` and registers a `MethodChannel` (`com.khmerkid/audio_recorder`) to handle native audio recording via `MediaRecorder`, exposing `startRecording` and `stopRecording` methods to Dart.
+- iOS host: `AppDelegate.swift` and `SceneDelegate.swift` bootstrap the Flutter engine using `FlutterAppDelegate` and `FlutterSceneDelegate`, relying on `GeneratedPluginRegistrant` for plugin discovery.
+- Build configuration: Android uses Kotlin DSL Gradle scripts (`build.gradle.kts`) targeting SDK 36 and Java 17, while iOS uses Xcode project structures with Flutter-generated xcconfig files for environment management.
+- Permissions: Android manifest declares extensive permissions for audio, notifications, and storage, indicating a media-rich application scope.

@@ -71,6 +71,8 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
 
   Future<void> _loadScoreService() async {
     _scoreService = await ScoreService.getInstance();
+    // Đồng bộ vật phẩm hồi phục lên CSDL khi vào game
+    await _scoreService?.syncRegeneratedInventory();
     if (mounted) {
       setState(() {
         _hintsLeft = _scoreService?.hintsLeft ?? 2;
@@ -377,19 +379,10 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
       HapticFeedback.vibrate();
 
       if (wrongAttempts == 1) {
-        // Lần sai thứ nhất: KHÔNG trừ tim
+        // Lần sai thứ nhất: KHÔNG trừ tim, chỉ tô đỏ từ sai
         setState(() {
           _mismatchIndex = mismatchIdx;
         });
-
-        final incorrectWord = _selectedWords[mismatchIdx];
-        final correctIdxOfSelectedWord = currentLevel.correctWords.indexOf(incorrectWord);
-        final correctType = correctIdxOfSelectedWord != -1 
-            ? currentLevel.wordTypes[correctIdxOfSelectedWord] 
-            : WordType.object;
-            
-        final targetSlotType = currentLevel.wordTypes[mismatchIdx];
-        _showFirstWrongAttemptHint(incorrectWord, targetSlotType, correctType);
       } else {
         // Lần sai thứ hai: Trừ 1 mạng tim + hiện đáp án đúng 2 giây
         wrongAttempts = 0;
@@ -419,51 +412,6 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
         }
       }
     }
-  }
-
-  void _showFirstWrongAttemptHint(String word, WordType targetSlotType, WordType correctType) {
-    final targetLabel = _getWordTypeLabel(targetSlotType);
-    final meaning = _levels[_currentLevelIdx].wordMeanings[word] ?? '';
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Text('💡', style: TextStyle(fontSize: 22.sp)),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Gợi ý đảo cổ:',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      fontSize: 13.sp,
-                    ),
-                  ),
-                  Text(
-                    'Từ "$word" ($meaning) có phải thuộc vị trí $targetLabel không? Bé hãy thử sắp xếp lại nhé!',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      fontSize: 11.5.sp,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: const Color(0xFFF57C00),
-        duration: const Duration(seconds: 4),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-        margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      ),
-    );
   }
 
   void _showSecondWrongAttemptHelp(_SentenceLevel level) {

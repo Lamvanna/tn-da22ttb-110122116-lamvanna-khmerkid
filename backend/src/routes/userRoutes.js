@@ -22,6 +22,7 @@ router.get('/profile', userController.getProfile);
 router.put('/profile', updateProfileValidator, validate, userController.updateProfile);
 router.put('/inventory', userController.updateInventory);
 router.get('/rank', userController.getUserRank);
+router.post('/purchase-item', userController.purchaseItem);
 
 // Accumulate Stars & XP APIs (Gamified Reward System)
 router.post('/accumulate-stars', gamePlaySessionController.accumulateStars);

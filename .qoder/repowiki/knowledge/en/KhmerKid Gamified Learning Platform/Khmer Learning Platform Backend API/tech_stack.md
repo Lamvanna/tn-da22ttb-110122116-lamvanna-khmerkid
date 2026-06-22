@@ -1,0 +1,3 @@
+- Uses `passport` with `passport-google-oauth20` for hybrid authentication strategies (Local + Google OAuth).
+- Integrates `@google-cloud/speech` for pronunciation analysis and `cloudinary` with `multer-storage-cloudinary` for asset management.
+- Employs `socket.io` for bidirectional real-time communication alongside standard REST endpoints.

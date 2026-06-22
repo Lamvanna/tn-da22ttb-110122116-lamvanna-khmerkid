@@ -97,6 +97,29 @@ class BadgeService {
       case 'writing_level':
         return (user.learningProgress?.writingLevel || 0) >= value;
 
+      // New requirement types (activity counters)
+      case 'writing_practice':
+        return (user.learningProgress?.writingPracticeCount || 0) >= value;
+
+      case 'reading_correct':
+        return (user.learningProgress?.readingCorrectCount || 0) >= value;
+
+      case 'speaking_success':
+        return (user.learningProgress?.speakingSuccessCount || 0) >= value;
+
+      case 'listening_complete':
+        return (user.learningProgress?.listeningCompleteCount || 0) >= value;
+
+      case 'reading_lessons_complete':
+        return (user.learningProgress?.readingLessonsCompleted || 0) >= value;
+
+      case 'content_complete':
+        // Kiểm tra hoàn thành 100% nội dung: tất cả kỹ năng level >= 90
+        return (user.learningProgress?.writingLevel || 0) >= 90
+            && (user.learningProgress?.readingLevel || 0) >= 90
+            && (user.learningProgress?.speakingLevel || 0) >= 90
+            && (user.learningProgress?.listeningLevel || 0) >= 90;
+
       default:
         return false;
     }

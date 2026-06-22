@@ -1,0 +1,3 @@
+- The system employs a hybrid offline-first architecture where the Flutter client uses Isar for local persistence and a `SyncManager` to reconcile data with the Node.js/Express backend via REST APIs.
+- Real-time interaction for handwriting exercises is enabled through a shared Socket.io connection, allowing the backend to broadcast AI-driven stroke analysis results to the client.
+- Cross-module consistency is maintained through shared asset definitions (audio/images) in the root `assets/` directory and synchronized localization files used by both the Flutter UI and backend content seeding.

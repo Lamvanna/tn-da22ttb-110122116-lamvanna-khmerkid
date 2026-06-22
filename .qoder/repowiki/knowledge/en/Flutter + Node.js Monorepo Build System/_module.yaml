@@ -1,0 +1,15 @@
+schema_version: 1
+module_path: build_system
+title: Flutter + Node.js Monorepo Build System
+scope: []
+source_files:
+    - pubspec.yaml
+    - backend/package.json
+    - android/build.gradle.kts
+    - android/app/build.gradle.kts
+    - android/gradle.properties
+    - analysis_options.yaml
+    - backend/.env.example
+    - check_size.bat
+depends_on: []
+related_to: []

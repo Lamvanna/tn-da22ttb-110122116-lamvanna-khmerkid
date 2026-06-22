@@ -277,6 +277,10 @@ class StorageService {
     await _prefs?.setStringList(_uKey(_keyPurchasedItems), set.toList());
   }
 
+  Future<void> setPurchasedItems(Set<String> items) async {
+    await _prefs?.setStringList(_uKey(_keyPurchasedItems), items.toList());
+  }
+
   // ─── SETTINGS (Giữ nguyên toàn cục để giữ cấu hình thiết bị) ─────────────────────────
   static const _keySoundEnabled = 'sound_enabled';
   static const _keyLanguage = 'app_language';

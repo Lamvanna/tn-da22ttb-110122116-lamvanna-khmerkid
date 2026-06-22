@@ -8,6 +8,8 @@ import '../../services/auth_service.dart';
 import '../../services/score_service.dart';
 import '../achievements/achievements_screen.dart';
 import '../shop/shop_screen.dart';
+import '../profile/inventory_screen.dart';
+import '../main_screen.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Màn hình Nhiệm vụ — Header gradient + Điểm + Daily/Weekly + Thành tích
@@ -26,44 +28,47 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
   final List<_DailyQuest> _dailyQuests = [
     _DailyQuest(
       id: 'mock_d1',
-      icon: 'image/Ảnh nhiệm vụ/Nhà thông thái nhí.png', title: 'Nhà thông thái nhí 📚',
-      subtitle: 'Hoàn thành 2 bài học mới bất kỳ trong ngày.',
-      current: 0, total: 2, reward: 20,
+      icon: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895800/khmerkid/badges/Nh%C3%A0%20th%C3%B4ng%20th%C3%A1i%20nh%C3%AD.png', title: 'Nhà thông thái nhí 📚',
+      subtitle: 'Hoàn thành bài học mới bất kỳ',
+      current: 0, total: 2, rewardXp: 60, rewardStars: 20,
       accentColor: const Color(0xFF1E88E5),
+      action: 'complete_lesson',
     ),
     _DailyQuest(
       id: 'mock_d2',
-      icon: 'image/Ảnh nhiệm vụ/Luyện viết chữ đẹp.png', title: 'Luyện viết chữ đẹp ✍️',
-      subtitle: 'Luyện vẽ/viết chính xác 5 chữ cái (qua tính năng nhận diện viết tay).',
-      current: 0, total: 5, reward: 30,
+      icon: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895797/khmerkid/badges/Luy%E1%BB%87n%20vi%E1%BA%BFt%20ch%E1%BB%AF%20%C4%91%E1%BA%B9p.png', title: 'Luyện viết chữ đẹp ✍️',
+      subtitle: 'Luyện viết chữ cái qua nhận diện viết tay',
+      current: 0, total: 5, rewardXp: 70, rewardStars: 25,
       accentColor: const Color(0xFFE91E63),
+      action: 'write_lesson',
     ),
     _DailyQuest(
       id: 'mock_d3',
-      icon: 'image/Ảnh nhiệm vụ/Đôi tai nhạy bén.png', title: 'Đôi tai nhạy bén 🎧',
-      subtitle: 'Luyện nghe phát âm và chọn đúng đáp án 5 lần.',
-      current: 0, total: 5, reward: 25,
+      icon: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895820/khmerkid/badges/%C4%90%C3%B4i%20tai%20nh%E1%BA%A1y%20b%C3%A9n.png', title: 'Đôi tai nhạy bén 🎧',
+      subtitle: 'Luyện nghe phát âm và chọn đúng đáp án',
+      current: 0, total: 5, rewardXp: 60, rewardStars: 20,
       accentColor: const Color(0xFF7C4DFF),
+      action: 'listen_lesson',
     ),
   ];
 
   final List<_WeeklyQuest> _weeklyQuests = [
     _WeeklyQuest(
       id: 'mock_w1',
-      icon: 'image/Ảnh nhiệm vụ/Chuỗi ngày vàng.png', title: 'Chuỗi ngày vàng 🔥',
-      current: 0, total: 5, reward: 100,
+      icon: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895777/khmerkid/badges/Chu%E1%BB%97i%20ng%C3%A0y%20v%C3%A0ng.png', title: 'Chuỗi ngày vàng 🔥',
+      current: 0, total: 5, rewardXp: 500, rewardStars: 120,
       gradient: const [Color(0xFFFFB300), Color(0xFFFF8F00)],
     ),
     _WeeklyQuest(
       id: 'mock_w2',
-      icon: 'image/Ảnh nhiệm vụ/Đại sứ vựng.png', title: 'Đại sứ vựng 👑',
-      current: 0, total: 15, reward: 150,
+      icon: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895821/khmerkid/badges/%C4%90%E1%BA%A1i%20s%E1%BB%A9%20v%E1%BB%B1ng.png', title: 'Đại sứ từ vựng 👑',
+      current: 0, total: 15, rewardXp: 600, rewardStars: 180,
       gradient: const [Color(0xFF7C4DFF), Color(0xFF651FFF)],
     ),
     _WeeklyQuest(
       id: 'mock_w3',
-      icon: 'image/Ảnh nhiệm vụ/Cao thủ trò chơi.png', title: 'Cao thủ trò chơi 🕹️',
-      current: 0, total: 10, reward: 120,
+      icon: 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895775/khmerkid/badges/Cao%20th%E1%BB%A7%20tr%C3%B2%20ch%C6%A1i.png', title: 'Cao thủ trò chơi 🕹️',
+      current: 0, total: 10, rewardXp: 500, rewardStars: 150,
       gradient: const [Color(0xFFE53935), Color(0xFFD32F2F)],
     ),
   ];
@@ -117,8 +122,8 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
 
   int get _totalPoints {
     int pts = 0;
-    for (final q in _dailyQuests) { if (q.done) pts += q.reward; }
-    for (final q in _weeklyQuests) { if (q.isClaimed) pts += q.reward; }
+    for (final q in _dailyQuests) { if (q.done) pts += q.rewardStars; }
+    for (final q in _weeklyQuests) { if (q.isClaimed) pts += q.rewardStars; }
     return pts;
   }
 
@@ -136,19 +141,22 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
   }
 
   String _getEmoji(String title) {
-    if (title.contains('Nhà thông thái nhí')) return 'image/Ảnh nhiệm vụ/Nhà thông thái nhí.png';
-    if (title.contains('Luyện viết chữ đẹp')) return 'image/Ảnh nhiệm vụ/Luyện viết chữ đẹp.png';
-    if (title.contains('Đôi tai nhạy bén')) return 'image/Ảnh nhiệm vụ/Đôi tai nhạy bén.png';
-    if (title.contains('Giọng ca oanh vàng')) return 'image/Ảnh nhiệm vụ/Giọng ca oanh vàng.png';
-    if (title.contains('Vừa học vừa chơi')) return 'image/Ảnh nhiệm vụ/Vừa học vừa chơi.png';
-    if (title.contains('Điểm số hoàn hảo')) return 'image/Ảnh nhiệm vụ/Điểm số hoàn hảo.png';
-    if (title.contains('Khởi đầu ngày mới')) return 'image/Ảnh nhiệm vụ/Khởi đầu ngày mới.png';
+    if (title.contains('Nhà thông thái nhí')) return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895800/khmerkid/badges/Nh%C3%A0%20th%C3%B4ng%20th%C3%A1i%20nh%C3%AD.png';
+    if (title.contains('Luyện viết chữ đẹp')) return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895797/khmerkid/badges/Luy%E1%BB%87n%20vi%E1%BA%BFt%20ch%E1%BB%AF%20%C4%91%E1%BA%B9p.png';
+    if (title.contains('Đôi tai nhạy bén')) return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895820/khmerkid/badges/%C4%90%C3%B4i%20tai%20nh%E1%BA%A1y%20b%C3%A9n.png';
+    if (title.contains('Giọng ca oanh vàng')) return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895786/khmerkid/badges/Gi%E1%BB%8Dng%20ca%20oanh%20v%C3%A0ng.png';
+    if (title.contains('Vừa học vừa chơi')) return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895817/khmerkid/badges/V%E1%BB%ABa%20h%E1%BB%8Dc%20v%E1%BB%ABa%20ch%C6%A1i.png';
+    if (title.contains('Điểm số hoàn hảo')) return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895819/khmerkid/badges/%C4%90i%E1%BB%83m%20s%E1%BB%91%20ho%C3%A0n%20h%E1%BA%A3o.png';
+    if (title.contains('Khởi đầu ngày mới')) return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895794/khmerkid/badges/Kh%E1%BB%9Fi%20%C4%91%E1%BA%A7u%20ng%C3%A0y%20m%E1%BB%9Bi.png';
+    if (title.contains('Thợ săn sao vàng')) return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895806/khmerkid/badges/Sao%20s%C3%A1ng.png';
+    if (title.contains('Trí nhớ siêu đỉnh')) return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895804/khmerkid/badges/Quy%E1%BB%83n%20s%C3%A1ch%20tri%20th%E1%BB%A9c%20ho%C3%A0ng%20gia.png';
+    if (title.contains('Gặp gỡ bạn bè')) return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895801/khmerkid/badges/Nh%C3%A0%20v%C3%B4%20%C4%91%E1%BB%8Bch.png';
     
-    if (title.contains('Chuỗi ngày vàng')) return 'image/Ảnh nhiệm vụ/Chuỗi ngày vàng.png';
-    if (title.contains('Đại sứ vựng')) return 'image/Ảnh nhiệm vụ/Đại sứ vựng.png';
-    if (title.contains('Cao thủ trò chơi')) return 'image/Ảnh nhiệm vụ/Cao thủ trò chơi.png';
-    if (title.contains('Cơn mưa quà tặng')) return 'image/Ảnh nhiệm vụ/Cơn mưa quà tặng.png';
-    if (title.contains('Bàn tay khéo léo')) return 'image/Ảnh nhiệm vụ/Bàn tay khéo léo.png';
+    if (title.contains('Chuỗi ngày vàng')) return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895777/khmerkid/badges/Chu%E1%BB%97i%20ng%C3%A0y%20v%C3%A0ng.png';
+    if (title.contains('Đại sứ từ vựng') || title.contains('Đại sứ vựng')) return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895821/khmerkid/badges/%C4%90%E1%BA%A1i%20s%E1%BB%A9%20v%E1%BB%B1ng.png';
+    if (title.contains('Cao thủ trò chơi')) return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895775/khmerkid/badges/Cao%20th%E1%BB%A7%20tr%C3%B2%20ch%C6%A1i.png';
+    if (title.contains('Cơn mưa quà tặng')) return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895784/khmerkid/badges/C%C6%A1n%20m%C6%B0a%20qu%C3%A0%20t%E1%BA%B7ng.png';
+    if (title.contains('Bàn tay khéo léo')) return 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781895770/khmerkid/badges/B%C3%A0n%20tay%20kh%C3%A9o%20l%C3%A9o.png';
 
     // Fallbacks
     if (title.contains('☀️')) return '☀️';
@@ -189,10 +197,12 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
           final isClaimed = item['isClaimed'] as bool? ?? false;
           
           final rewardMap = item['reward'] as Map?;
-          final reward = rewardMap?['stars'] as int? ?? rewardMap?['xp'] as int? ?? 10;
+          final rewardXp = rewardMap?['xp'] as int? ?? 0;
+          final rewardStars = rewardMap?['stars'] as int? ?? 0;
           
           final iconUrl = item['iconUrl']?.toString() ?? '';
           final icon = iconUrl.isNotEmpty ? iconUrl : _getEmoji(title);
+          final action = item['action']?.toString() ?? '';
 
           if (type == 'daily') {
             Color accentColor = const Color(0xFF1E88E5);
@@ -209,8 +219,10 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
               subtitle: desc,
               current: current,
               total: total,
-              reward: reward,
+              rewardXp: rewardXp,
+              rewardStars: rewardStars,
               accentColor: accentColor,
+              action: action,
               done: isClaimed,
               isCompleted: isCompleted,
               isClaimed: isClaimed,
@@ -232,7 +244,8 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
               title: title,
               current: current,
               total: total,
-              reward: reward,
+              rewardXp: rewardXp,
+              rewardStars: rewardStars,
               gradient: gradient,
               isCompleted: isCompleted,
               isClaimed: isClaimed,
@@ -340,7 +353,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                   _buildSectionHeader(context.translate('tasks.title'), '⏱ ${_formatDuration(_dailyRemaining)}'),
                   SizedBox(height: 10.h),
                   ...List.generate(
-                    _dailyQuests.length > 3 ? 3 : _dailyQuests.length,
+                    _dailyQuests.length,
                     (i) => Padding(
                       padding: EdgeInsets.only(bottom: 12.h),
                       child: _buildDailyCard(_dailyQuests[i]),
@@ -379,11 +392,11 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
         gradient: const LinearGradient(
           begin: Alignment(-0.5, -1), end: Alignment(0.5, 1),
           colors: [Color(0xFF1565C0), Color(0xFF42A5F5), Color(0xFF29B6F6)]),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24.r), bottomRight: Radius.circular(24.r)),
         boxShadow: [BoxShadow(
-          color: const Color(0xFF1565C0).withValues(alpha: 0.30),
-          blurRadius: 16, offset: const Offset(0, 6))]),
+          color: const Color(0xFF1565C0).withValues(alpha: 0.35),
+          blurRadius: 24, offset: const Offset(0, 8))]),
       child: Stack(
         children: [
           // Decorative circles
@@ -394,62 +407,105 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
             child: Container(width: 60.w, height: 60.w,
               decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.06)))),
           
+          // ─── Center Title ───
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 28.h),
-              child: Row(
+              padding: EdgeInsets.fromLTRB(80.w, 4.h, 80.w, 40.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 36.w, height: 36.w,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.15),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.2))),
-                      child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w)),
-                  ),
-                  SizedBox(width: 12.w),
-                  Text(context.translate('tasks.quests_header'),
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 22.sp, fontWeight: FontWeight.w800, color: Colors.white)),
-                  const Spacer(),
-                  
-                  // Streak Badge
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.3))),
-                    child: Row(children: [
-                      Text('🔥', style: TextStyle(fontSize: 14.sp)),
-                      SizedBox(width: 4.w),
-                      Text('${_score?.streak ?? (AuthService().userProfile?['streak'] ?? 0)}',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14.sp, fontWeight: FontWeight.w800, color: Colors.white)),
-                    ]),
-                  ),
-                  SizedBox(width: 8.w),
-                  
-                  // Star Badge
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.3))),
-                    child: Row(children: [
-                      Icon(Icons.star_rounded, color: const Color(0xFFFFD54F), size: 16.sp),
-                      SizedBox(width: 4.w),
-                      Text('${_score?.totalStars ?? (AuthService().userProfile?['stars'] ?? 0)}',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14.sp, fontWeight: FontWeight.w800, color: Colors.white)),
-                    ]),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          context.translate('tasks.quests_header'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 22.sp,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
+            ),
+          ),
+
+          // ─── Back Button (Positioned Left) ───
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 14.h,
+            left: 16.w,
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                width: 32.w, height: 32.w,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.16),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1)),
+                child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 18.w)),
+            ),
+          ),
+
+          // ─── Stats (Positioned Right) ───
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 2.h,
+            right: 16.w,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // Star Badge (Above)
+                Container(
+                  width: 64.w,
+                  height: 28.w,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1)),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Image.asset('image/sao.png', width: 14.w, height: 14.w, fit: BoxFit.contain),
+                      SizedBox(width: 4.w),
+                      Text('${_score?.totalStars ?? (AuthService().userProfile?['stars'] ?? 0)}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.sp, fontWeight: FontWeight.w800, color: Colors.white, height: 1.0)),
+                    ]),
+                ),
+                SizedBox(height: 5.h),
+                
+                // Streak Badge (Below)
+                Container(
+                  width: 64.w,
+                  height: 28.w,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1)),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Image.asset('image/Lửa chuổi.png', width: 14.w, height: 14.w, fit: BoxFit.contain),
+                      SizedBox(width: 4.w),
+                      Text('${_score?.streak ?? (AuthService().userProfile?['streak'] ?? 0)}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.sp, fontWeight: FontWeight.w800, color: Colors.white, height: 1.0)),
+                    ]),
+                ),
+              ],
             ),
           ),
         ],
@@ -701,7 +757,10 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
   Widget _buildDailyCard(_DailyQuest quest) {
     final progress = quest.total > 0 ? quest.current / quest.total : 0.0;
     final barColor = quest.done ? const Color(0xFF43A047) : quest.accentColor;
-    return Container(
+    return GestureDetector(
+      onTap: quest.isClaimed ? null : () => _navigateForAction(quest),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
       padding: EdgeInsets.zero,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -858,14 +917,21 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.check_circle_rounded, color: const Color(0xFF43A047), size: 24.sp),
-                        SizedBox(height: 2.h),
-                        Text(
-                          '+${quest.reward}',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF43A047),
-                          ),
+                        SizedBox(height: 4.h),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Image.asset('image/sao.png', width: 14.w, height: 14.w, fit: BoxFit.contain),
+                            SizedBox(width: 2.w),
+                            Text(
+                              '+${quest.rewardStars}',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF43A047),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -912,7 +978,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                         ),
                       )
                     : Container(
-                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 18.h),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             begin: Alignment.topLeft,
@@ -931,13 +997,13 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                             ),
                           ],
                         ),
-                        child: Column(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: 24.sp),
-                            SizedBox(height: 2.h),
+                            Image.asset('image/sao.png', width: 16.w, height: 16.w, fit: BoxFit.contain),
+                            SizedBox(width: 3.w),
                             Text(
-                              '+${quest.reward}',
+                              '+${quest.rewardStars}',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12.sp,
                                 fontWeight: FontWeight.w800,
@@ -950,7 +1016,57 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
           ],
         ),
       ),
+    ),
     );
+  }
+
+  /// Điều hướng đến màn hình tương ứng dựa trên loại nhiệm vụ
+  void _navigateForAction(_DailyQuest quest) {
+    HapticFeedback.lightImpact();
+    final action = quest.action;
+
+    // Nếu không có action, dựa vào title để xác định
+    String resolvedAction = action;
+    if (resolvedAction.isEmpty) {
+      final t = quest.title.toLowerCase();
+      if (t.contains('viết') || t.contains('vẽ') || t.contains('chữ')) {
+        resolvedAction = 'write_lesson';
+      } else if (t.contains('nghe') || t.contains('tai')) {
+        resolvedAction = 'listen_lesson';
+      } else if (t.contains('nói') || t.contains('phát âm') || t.contains('giọng')) {
+        resolvedAction = 'speak_lesson';
+      } else if (t.contains('đọc') || t.contains('sách')) {
+        resolvedAction = 'read_lesson';
+      } else if (t.contains('chơi') || t.contains('game') || t.contains('trò chơi')) {
+        resolvedAction = 'play_game';
+      } else {
+        resolvedAction = 'complete_lesson';
+      }
+    }
+
+    // Pop trang nhiệm vụ trước khi điều hướng
+    Navigator.pop(context);
+
+    switch (resolvedAction) {
+      case 'complete_lesson':
+      case 'write_lesson':
+      case 'listen_lesson':
+      case 'read_lesson':
+      case 'speak_lesson':
+        // Tất cả bài học → chuyển sang tab Học (index 1)
+        MainScreenState.of(context)?.switchTab(1);
+        break;
+      case 'play_game':
+        // Trò chơi → chuyển sang tab Chơi (index 2)
+        MainScreenState.of(context)?.switchTab(2);
+        break;
+      case 'daily_login':
+        // Không cần điều hướng - đã hoàn thành khi đăng nhập
+        break;
+      default:
+        // Mặc định: chuyển sang tab Học
+        MainScreenState.of(context)?.switchTab(1);
+    }
   }
 
   // ═══════════════════ WEEKLY QUEST ROW ═══════════════════
@@ -1190,11 +1306,11 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                             height: 14.w,
                             fit: BoxFit.contain,
                           ),
-                          SizedBox(width: 4.w),
+                          SizedBox(width: 3.w),
                           Text(
-                            '+${quest.reward}',
+                            '+${quest.rewardStars}',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10.5.sp,
+                              fontSize: 10.sp,
                               fontWeight: FontWeight.w800,
                               color: const Color(0xFFFF8F00),
                             ),
@@ -1571,8 +1687,9 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
 class _DailyQuest {
   final String id;
   final String icon, title, subtitle;
-  final int current, total, reward;
+  final int current, total, rewardXp, rewardStars;
   final Color accentColor;
+  final String action;
   final bool done;
   final bool isCompleted;
   final bool isClaimed;
@@ -1584,8 +1701,10 @@ class _DailyQuest {
     required this.subtitle,
     required this.current,
     required this.total,
-    required this.reward,
+    required this.rewardXp,
+    required this.rewardStars,
     required this.accentColor,
+    this.action = '',
     this.done = false,
     this.isCompleted = false,
     this.isClaimed = false,
@@ -1595,7 +1714,7 @@ class _DailyQuest {
 class _WeeklyQuest {
   final String id;
   final String icon, title;
-  final int current, total, reward;
+  final int current, total, rewardXp, rewardStars;
   final List<Color> gradient;
   final bool isCompleted;
   final bool isClaimed;
@@ -1606,7 +1725,8 @@ class _WeeklyQuest {
     required this.title,
     required this.current,
     required this.total,
-    required this.reward,
+    required this.rewardXp,
+    required this.rewardStars,
     required this.gradient,
     this.isCompleted = false,
     this.isClaimed = false,

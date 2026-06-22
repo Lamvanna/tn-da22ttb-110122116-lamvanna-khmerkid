@@ -48,6 +48,22 @@ class UserController {
       next(error);
     }
   }
+
+  /** POST /api/users/purchase-item */
+  async purchaseItem(req, res, next) {
+    try {
+      const { itemId, itemType, price, powerUpType } = req.body;
+
+      if (!itemId || !itemType || price === undefined) {
+        return res.status(400).json({ success: false, message: 'Thiếu thông tin vật phẩm!' });
+      }
+
+      const result = await userService.purchaseItem(req.user._id, { itemId, itemType, price, powerUpType });
+      sendSuccess(res, 'Mua vật phẩm thành công!', result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new UserController();

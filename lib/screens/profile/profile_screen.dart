@@ -9,7 +9,9 @@ import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
 import '../../services/storage_service.dart';
 import '../../services/auth_service.dart';
+import '../../repositories/progress_repository.dart';
 import '../settings/settings_screen.dart';
+import 'inventory_screen.dart';
 import '../report/report_screen.dart';
 import '../achievements/achievements_screen.dart';
 import '../../widgets/app_page_route.dart';
@@ -51,6 +53,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadData() async {
+    // Đồng bộ tiến độ từ CSDL trước khi hiển thị
+    await ProgressRepository.instance.loadRemoteProgress();
+    AuthService().fetchProfile();
+
     final s = await ScoreService.getInstance();
     final storage = await StorageService.getInstance();
     if (mounted) {
@@ -508,6 +514,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int get _lettersLearned => _score != null ? _score!.lettersLearned : 0;
   int get _vowelsLearned => _score != null ? _score!.vowelsLearned : 0;
   int get _readingLearned => _score != null ? _score!.readingLearned : 0;
+  int get _numbersLearned => _score != null ? _score!.numbersLearned : 0;
+  int get _diacriticalsLearned => _score != null ? _score!.diacriticalsLearned : 0;
+  int get _spellingLearned => _score != null ? _score!.spellingLearned : 0;
+  int get _writingLearned => _score != null ? _score!.writingLearned : 0;
 
   String _levelTitle(BuildContext context, int lv) {
     if (lv >= 20) return context.translate('profile.title_master');
@@ -570,7 +580,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   SizedBox(height: 16.h),
                   _buildAchievements(),
                   SizedBox(height: 16.h),
-                  _buildSettingsRow(),
+                  Row(
+                    children: [
+                      Expanded(child: _buildInventoryCard()),
+                      SizedBox(width: 10.w),
+                      Expanded(child: _buildSettingsCard()),
+                    ],
+                  ),
                   SizedBox(height: 120.h),
                 ],
               ),
@@ -1094,11 +1110,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ══════════════════════════════════════════════════════════════
   Widget _buildProgressSection() {
     final letters = _lettersLearned;
-    final spelling = _vowelsLearned;
-    final writing = _lettersLearned;
+    final spelling = _spellingLearned;
+    final writing = _writingLearned;
     final reading = _readingLearned;
 
-    final totalProg = (((letters / 33) + (spelling / 24) + (reading / 15)) / 3 * 100)
+    // Tổng tiến độ = trung bình 4 loại bài chính
+    final totalProg = (((letters / 33) + (spelling / 24) + (writing / 33) + (reading / 15)) / 4 * 100)
         .clamp(0, 100)
         .toInt();
 
@@ -1306,7 +1323,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       context.translate('profile.spelling'),
                       spelling,
                       24,
-                      const Color(0xFF2196F3),
+                      const Color(0xFF00BCD4),
                       'image/Đánh vần.png',
                     ),
                     SizedBox(height: 12.h),
@@ -1930,110 +1947,102 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // ══════════════════════════════════════════════════════════════
-  // SYSTEM SETTINGS ROW
+  // BOTTOM CARDS: Inventory + Settings
   // ══════════════════════════════════════════════════════════════
-  Widget _buildSettingsRow() {
+  Widget _buildBottomCard({
+    required List<Color> gradientColors,
+    required Color shadowColor,
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
           HapticFeedback.lightImpact();
-          Navigator.push(
-            context,
-            AppPageRoute(page: const SettingsScreen()),
-          );
+          onTap();
         },
-        borderRadius: BorderRadius.circular(24.r),
+        borderRadius: BorderRadius.circular(20.r),
         child: Ink(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(24.r),
+            borderRadius: BorderRadius.circular(20.r),
             border: Border.all(color: const Color(0xFFEEF2F6), width: 1.w),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF1A237E).withValues(alpha: 0.02),
-                blurRadius: 8.r,
-                offset: Offset(0, 2.h),
+                color: shadowColor.withValues(alpha: 0.06),
+                blurRadius: 12.r,
+                offset: Offset(0, 4.h),
               ),
             ],
           ),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
             child: Row(
               children: [
                 Container(
-                  width: 40.w,
-                  height: 40.w,
+                  width: 38.w,
+                  height: 38.w,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
+                    gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF94A3B8),
-                        Color(0xFF64748B),
-                      ],
+                      colors: gradientColors,
                     ),
                     borderRadius: BorderRadius.circular(12.r),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF64748B).withValues(alpha: 0.20),
-                        blurRadius: 8.r,
-                        offset: const Offset(0, 3),
+                        color: shadowColor.withValues(alpha: 0.25),
+                        blurRadius: 6.r,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
                   alignment: Alignment.center,
-                  child: Icon(
-                    Icons.settings_rounded,
-                    size: 22.sp,
-                    color: Colors.white,
-                  ),
+                  child: Icon(icon, size: 20.sp, color: Colors.white),
                 ),
-                SizedBox(width: 14.w),
+                SizedBox(width: 12.w),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.translate('profile.system_settings'),
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14.5.sp,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                          letterSpacing: -0.1,
-                        ),
-                      ),
-                      SizedBox(height: 3.h),
-                      Text(
-                        context.translate('profile.system_settings_desc'),
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    title,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
-                Container(
-                  width: 30.w,
-                  height: 30.w,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.chevron_right_rounded,
-                    color: const Color(0xFF64748B),
-                    size: 18.sp,
-                  ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: const Color(0xFFCBD5E1),
+                  size: 20.sp,
                 ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInventoryCard() {
+    return _buildBottomCard(
+      gradientColors: [const Color(0xFF60A5FA), const Color(0xFF3B82F6)],
+      shadowColor: const Color(0xFF3B82F6),
+      icon: Icons.inventory_2_rounded,
+      title: 'Vật phẩm',
+      onTap: () => Navigator.push(context, AppPageRoute(page: const InventoryScreen())),
+    );
+  }
+
+  Widget _buildSettingsCard() {
+    return _buildBottomCard(
+      gradientColors: [const Color(0xFF94A3B8), const Color(0xFF64748B)],
+      shadowColor: const Color(0xFF64748B),
+      icon: Icons.settings_rounded,
+      title: 'Cài đặt',
+      onTap: () => Navigator.push(context, AppPageRoute(page: const SettingsScreen())),
     );
   }
 }

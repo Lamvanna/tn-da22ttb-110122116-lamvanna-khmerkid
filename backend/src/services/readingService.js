@@ -7,6 +7,7 @@
 const ReadingResult = require('../models/ReadingResult');
 const Lesson = require('../models/Lesson');
 const userService = require('./userService');
+const missionService = require('./missionService');
 const { calculateStars, isPassed } = require('../utils/helpers');
 const { XP_CONFIG } = require('../constants');
 
@@ -32,7 +33,10 @@ class ReadingService {
    * Save reading result
    */
   async saveResult(userId, data, io = null) {
-    const { lessonId, wordsRead, totalWords, timeSpent, linesCompleted } = data;
+    const { lessonId, timeSpent, linesCompleted } = data;
+    // Hỗ trợ cả 2 format: wordsRead/totalWords (mới) và correctAnswers/totalQuestions (cũ)
+    const wordsRead = data.wordsRead || data.correctAnswers || 0;
+    const totalWords = data.totalWords || data.totalQuestions || 100;
 
     const accuracy = totalWords > 0
       ? Math.round((wordsRead / totalWords) * 100)
@@ -63,6 +67,13 @@ class ReadingService {
 
     if (passed && lessonId) {
       await userService.markLessonCompleted(userId, lessonId);
+    }
+
+    // Update mission progress for reading
+    try {
+      await missionService.updateProgress(userId, 'read_lesson');
+    } catch (missionErr) {
+      console.error('Error updating mission progress:', missionErr.message);
     }
 
     return {

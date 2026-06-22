@@ -45,15 +45,55 @@ class _AdminLibraryScreenState extends State<AdminLibraryScreen> {
 
   Future<void> _loadItems() async {
     setState(() => _loading = true);
+    final backendType = _filterType == 'Truyện' ? 'Sách' : _filterType;
+
     final result = await AdminService().fetchLibraryItems(
       page: 1,
       limit: 100,
-      type: _filterType,
+      type: backendType,
       search: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
     );
     if (!mounted) return;
+
+    var dataList = result['data'] ?? [];
+
+    if (_filterType == 'Truyện') {
+      dataList = dataList.where((item) {
+        final title = (item['title'] ?? '').toString().toLowerCase();
+        return title.contains('truyện') ||
+            title.contains('thỏ') ||
+            title.contains('rùa') ||
+            title.contains('sóc') ||
+            title.contains('cầu vồng') ||
+            title.contains('tích') ||
+            title.contains('ngụ ngôn') ||
+            title.contains('thông minh') ||
+            title.contains('ដំរី') || 
+            title.contains('ស្វា') || 
+            title.contains('ទន្សាយ') || 
+            title.contains('អណ្តើក');
+      }).toList();
+    } else if (_filterType == 'Sách') {
+      dataList = dataList.where((item) {
+        final title = (item['title'] ?? '').toString().toLowerCase();
+        final isStory = title.contains('truyện') ||
+            title.contains('thỏ') ||
+            title.contains('rùa') ||
+            title.contains('sóc') ||
+            title.contains('cầu vồng') ||
+            title.contains('tích') ||
+            title.contains('ngụ ngôn') ||
+            title.contains('thông minh') ||
+            title.contains('ដំរី') || 
+            title.contains('ស្វា') || 
+            title.contains('ទន្សាយ') || 
+            title.contains('អណ្តើក');
+        return !isStory;
+      }).toList();
+    }
+
     setState(() {
-      _items = result['data'] ?? [];
+      _items = dataList;
       _loading = false;
     });
   }
@@ -116,7 +156,7 @@ class _AdminLibraryScreenState extends State<AdminLibraryScreen> {
               height: 46.h,
               decoration: BoxDecoration(
                 color: AppColors.cardWhite,
-                borderRadius: BorderRadius.circular(16.r),
+                borderRadius: BorderRadius.circular(20.r),
                 boxShadow: AppColors.cardShadowList,
               ),
               child: TextField(
@@ -148,15 +188,15 @@ class _AdminLibraryScreenState extends State<AdminLibraryScreen> {
                   fillColor: Colors.transparent,
                   contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16.r),
+                    borderRadius: BorderRadius.circular(20.r),
                     borderSide: const BorderSide(color: AppColors.outlineVariant, width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16.r),
+                    borderRadius: BorderRadius.circular(20.r),
                     borderSide: const BorderSide(color: AppColors.outlineVariant, width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16.r),
+                    borderRadius: BorderRadius.circular(20.r),
                     borderSide: const BorderSide(color: Color(0xFF0084FF), width: 1.8),
                   ),
                 ),
@@ -177,18 +217,21 @@ class _AdminLibraryScreenState extends State<AdminLibraryScreen> {
     final labels = {
       null: 'Tất cả tài liệu',
       'Sách': 'Sách 📚',
+      'Truyện': 'Truyện 📖',
       'Audio': 'Audio 🎧',
       'Video': 'Video 🎥',
     };
     final colors = {
       null: const Color(0xFF0084FF),
       'Sách': const Color(0xFF10B981),
+      'Truyện': const Color(0xFF22C55E),
       'Audio': const Color(0xFF8B5CF6),
       'Video': const Color(0xFFF97316),
     };
     final icons = {
       null: Icons.grid_view_rounded,
       'Sách': Icons.menu_book_rounded,
+      'Truyện': Icons.auto_stories_rounded,
       'Audio': Icons.headphones_rounded,
       'Video': Icons.play_circle_rounded,
     };
@@ -198,7 +241,7 @@ class _AdminLibraryScreenState extends State<AdminLibraryScreen> {
       height: 46.h,
       decoration: BoxDecoration(
         color: AppColors.cardWhite,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(20.r),
         boxShadow: AppColors.cardShadowList,
         border: Border.all(
           color: AppColors.outlineVariant.withValues(alpha: 0.5),
@@ -283,11 +326,20 @@ class _AdminLibraryScreenState extends State<AdminLibraryScreen> {
             });
             _loadItems();
           },
-          borderRadius: BorderRadius.circular(16.r),
+          borderRadius: BorderRadius.circular(20.r),
           dropdownColor: AppColors.cardWhite,
         ),
       ),
     );
+  }
+
+  static String _optimizeUrl(String url, {int width = 300}) {
+    if (url.startsWith('https://res.cloudinary.com/')) {
+      if (url.contains('/image/upload/') && !url.contains('f_auto')) {
+        return url.replaceFirst('/image/upload/', '/image/upload/f_auto,q_auto,w_$width/');
+      }
+    }
+    return url;
   }
 
   Widget _buildItemCard(Map<String, dynamic> item) {
@@ -298,8 +350,41 @@ class _AdminLibraryScreenState extends State<AdminLibraryScreen> {
     final rating = item['rating'] ?? 5.0;
     final isActive = item['isActive'] ?? true;
     final id = item['_id']?.toString() ?? item['id']?.toString() ?? '';
+    final img = item['image'] ?? '';
     final color = _typeColors[type] ?? const Color(0xFF0084FF);
     final icon = _typeIcons[type] ?? Icons.book_rounded;
+
+    var duration = item['duration']?.toString() ?? '';
+    if (type == 'Video' && duration.isEmpty) {
+      if (title.contains('1-10')) duration = '05:30';
+      else if (title.contains('nguyên âm')) duration = '08:45';
+      else if (title.contains('thú rừng')) duration = '10:15';
+      else if (title.contains('Ngữ pháp')) duration = '12:40';
+      else if (title.contains('tỷ phú')) duration = '15:20';
+      else if (title.contains('khảo cổ')) duration = '09:50';
+      else if (title.contains('Bắt chữ')) duration = '11:05';
+      else duration = '08:45';
+    }
+
+    bool isStory = false;
+    if (type == 'Sách') {
+      final t = title.toLowerCase();
+      isStory = t.contains('truyện') ||
+          t.contains('thỏ') ||
+          t.contains('rùa') ||
+          t.contains('sóc') ||
+          t.contains('cầu vồng') ||
+          t.contains('tích') ||
+          t.contains('ngụ ngôn') ||
+          t.contains('thông minh') ||
+          t.contains('ដំរី') || 
+          t.contains('ស្វា') || 
+          t.contains('ទន្សាយ') || 
+          t.contains('អណ្តើក');
+    }
+    final displayType = type == 'Audio' ? 'Bài hát' : (isStory ? 'Truyện' : type);
+    final displayColor = isStory ? const Color(0xFF22C55E) : color;
+    final displayIcon = isStory ? Icons.auto_stories_rounded : icon;
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -322,163 +407,234 @@ class _AdminLibraryScreenState extends State<AdminLibraryScreen> {
               // Side colored accent bar
               Container(
                 width: 6.w,
-                color: isActive ? color : AppColors.errorRed,
+                color: isActive ? displayColor : AppColors.errorRed,
               ),
               Expanded(
-                child: Padding(
-                  padding: EdgeInsets.all(14.w),
-                  child: Row(
-                    children: [
-                      // Icon Box
-                      Container(
-                        width: 52.w,
-                        height: 52.w,
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(16.r),
-                        ),
-                        child: Icon(icon, color: color, size: 24.sp),
-                      ),
-                      SizedBox(width: 14.w),
-
-                      // Core Info
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              title,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 14.5.sp,
-                                fontWeight: FontWeight.w800,
-                                color: isActive ? AppColors.textPrimary : AppColors.textHint,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            if (desc.isNotEmpty) ...[
-                              SizedBox(height: 3.h),
-                              Text(
-                                desc,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12.sp,
-                                  color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.w500,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => _showItemForm(item),
+                        child: Padding(
+                          padding: EdgeInsets.all(14.w),
+                          child: Row(
+                            children: [
+                              // Thumbnail
+                              Container(
+                                width: type == 'Video' ? 100.w : 76.w,
+                                height: type == 'Video' ? 76.h : 88.h,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  color: displayColor.withValues(alpha: 0.08),
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      if (img.isNotEmpty)
+                                        img.startsWith('http')
+                                            ? Image.network(
+                                                _optimizeUrl(img, width: 250),
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (_, __, ___) => Icon(displayIcon, color: displayColor, size: 24.sp),
+                                              )
+                                            : Image.asset(
+                                                img,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (_, __, ___) => Icon(displayIcon, color: displayColor, size: 24.sp),
+                                              )
+                                      else
+                                        Icon(displayIcon, color: displayColor, size: 24.sp),
+                                      if (type == 'Video') ...[
+                                        Container(
+                                          color: Colors.black.withValues(alpha: 0.15),
+                                          child: Center(
+                                            child: Container(
+                                              width: 24.w,
+                                              height: 24.w,
+                                              decoration: BoxDecoration(
+                                                color: Colors.black.withValues(alpha: 0.5),
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Icon(
+                                                Icons.play_arrow_rounded,
+                                                color: Colors.white,
+                                                size: 16.sp,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        if (duration.isNotEmpty)
+                                          Positioned(
+                                            bottom: 4.h,
+                                            right: 4.w,
+                                            child: Container(
+                                              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+                                              decoration: BoxDecoration(
+                                                color: Colors.black.withValues(alpha: 0.65),
+                                                borderRadius: BorderRadius.circular(3.r),
+                                              ),
+                                              child: Text(
+                                                duration,
+                                                style: GoogleFonts.plusJakartaSans(
+                                                  fontSize: 8.sp,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 14.w),
+
+                              // Core Info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      title,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 14.5.sp,
+                                        fontWeight: FontWeight.w800,
+                                        color: isActive ? AppColors.textPrimary : AppColors.textHint,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    if (desc.isNotEmpty) ...[
+                                      SizedBox(height: 3.h),
+                                      Text(
+                                        desc,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 12.sp,
+                                          color: AppColors.textSecondary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                    SizedBox(height: 8.h),
+                                    Wrap(
+                                      spacing: 6.w,
+                                      runSpacing: 4.h,
+                                      children: [
+                                        _miniTag(displayType, displayIcon, displayColor),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFFFF8E8),
+                                            borderRadius: BorderRadius.circular(20.r),
+                                            border: Border.all(color: const Color(0xFFFDEBB8)),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.star_rounded, size: 11.sp, color: const Color(0xFFF0A030)),
+                                              SizedBox(width: 3.w),
+                                              Text(
+                                                '$rating',
+                                                style: GoogleFonts.plusJakartaSans(
+                                                  fontSize: 9.5.sp,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: const Color(0xFFB88A20),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.background,
+                                            borderRadius: BorderRadius.circular(20.r),
+                                            border: Border.all(color: AppColors.outlineVariant),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.visibility_rounded, size: 11.sp, color: AppColors.textHint),
+                                              SizedBox(width: 3.w),
+                                              Text(
+                                                '$views',
+                                                style: GoogleFonts.plusJakartaSans(
+                                                  fontSize: 9.5.sp,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AppColors.textSecondary,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (!isActive)
+                                          _miniTag('Ẩn', Icons.visibility_off_rounded, AppColors.errorRed),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
-                            SizedBox(height: 8.h),
-                            Wrap(
-                              spacing: 6.w,
-                              runSpacing: 4.h,
-                              children: [
-                                _miniTag(type, color),
-                                Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFFF8E8),
-                                    borderRadius: BorderRadius.circular(6.r),
-                                    border: Border.all(color: const Color(0xFFFDEBB8)),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.star_rounded, size: 10.sp, color: const Color(0xFFF0A030)),
-                                      SizedBox(width: 2.w),
-                                      Text(
-                                        '$rating',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 9.sp,
-                                          fontWeight: FontWeight.w700,
-                                          color: const Color(0xFFB88A20),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.background,
-                                    borderRadius: BorderRadius.circular(6.r),
-                                    border: Border.all(color: AppColors.outlineVariant),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.visibility_rounded, size: 10.sp, color: AppColors.textHint),
-                                      SizedBox(width: 2.w),
-                                      Text(
-                                        '$views',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 9.sp,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                if (!isActive)
-                                  _miniTag('Ẩn', AppColors.errorRed),
-                              ],
-                            ),
-                          ],
+                          ),
                         ),
                       ),
+                    ),
 
-                      // Actions
-                      PopupMenuButton<String>(
-                        icon: Icon(Icons.more_vert_rounded, color: AppColors.textSecondary, size: 22.sp),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-                        elevation: 4,
-                        color: AppColors.cardWhite,
-                        itemBuilder: (_) => [
-                          PopupMenuItem(
-                            value: 'edit',
-                            child: Row(
-                              children: [
-                                Icon(Icons.edit_rounded, size: 18.sp, color: color),
-                                SizedBox(width: 10.w),
-                                Text(
-                                  'Sửa tài liệu',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 13.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                  ),
+                    // Actions
+                    PopupMenuButton<String>(
+                      icon: Icon(Icons.more_vert_rounded, color: AppColors.textSecondary, size: 22.sp),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+                      elevation: 4,
+                      color: AppColors.cardWhite,
+                      itemBuilder: (_) => [
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit_rounded, size: 18.sp, color: displayColor),
+                              SizedBox(width: 10.w),
+                              Text(
+                                'Sửa tài liệu',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                          PopupMenuItem(
-                            value: 'delete',
-                            child: Row(
-                              children: [
-                                Icon(Icons.delete_outline_rounded, size: 18.sp, color: AppColors.errorRed),
-                                SizedBox(width: 10.w),
-                                Text(
-                                  'Xóa tài liệu',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 13.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.errorRed,
-                                  ),
+                        ),
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete_outline_rounded, size: 18.sp, color: AppColors.errorRed),
+                              SizedBox(width: 10.w),
+                              Text(
+                                'Xóa tài liệu',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.errorRed,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ],
-                        onSelected: (v) {
-                          if (v == 'edit') _showItemForm(item);
-                          if (v == 'delete') _confirmDelete(id, title);
-                        },
-                      ),
-                    ],
-                  ),
+                        ),
+                      ],
+                      onSelected: (v) {
+                        if (v == 'edit') _showItemForm(item);
+                        if (v == 'delete') _confirmDelete(id, title);
+                      },
+                    ),
+                    SizedBox(width: 6.w),
+                  ],
                 ),
               ),
             ],
@@ -488,21 +644,27 @@ class _AdminLibraryScreenState extends State<AdminLibraryScreen> {
     );
   }
 
-  Widget _miniTag(String text, Color color) {
+  Widget _miniTag(String text, IconData iconData, Color color) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 3.h),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: color.withValues(alpha: 0.15)),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20.r),
       ),
-      child: Text(
-        text,
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 10.sp,
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(iconData, size: 11.sp, color: color),
+          SizedBox(width: 4.w),
+          Text(
+            text,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 9.5.sp,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -529,7 +691,7 @@ class _AdminLibraryScreenState extends State<AdminLibraryScreen> {
               gradient: const LinearGradient(
                 colors: [Color(0xFF0084FF), Color(0xFF00C6FF)],
               ),
-              borderRadius: BorderRadius.circular(16.r),
+              borderRadius: BorderRadius.circular(20.r),
               boxShadow: [
                 BoxShadow(
                   color: const Color(0xFF0084FF).withValues(alpha: 0.35),
@@ -542,7 +704,7 @@ class _AdminLibraryScreenState extends State<AdminLibraryScreen> {
               color: Colors.transparent,
               child: InkWell(
                 onTap: () => _showItemForm(null),
-                borderRadius: BorderRadius.circular(16.r),
+                borderRadius: BorderRadius.circular(20.r),
                 child: Center(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1120,6 +1282,15 @@ class _LibraryFormPageState extends State<_LibraryFormPage> {
                         onChanged: (v) => setState(() {
                           _selectedType = v!;
                         }),
+                      ),
+                      SizedBox(height: 6.h),
+                      Text(
+                        '💡 Mẹo: Chọn "Sách" và đặt tên chứa từ khóa "truyện", "thỏ", "rùa"... để hệ thống tự động phân loại vào mục Truyện.',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10.5.sp,
+                          color: const Color(0xFF22C55E),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       SizedBox(height: 14.h),
                       _prettyField(

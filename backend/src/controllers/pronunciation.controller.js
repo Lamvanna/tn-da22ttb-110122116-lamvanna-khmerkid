@@ -13,6 +13,8 @@ const { transcribeKhmerAudio } = require('../services/speech.service');
 const { calculatePronunciationScore } = require('../services/scoring.service');
 const { normalizeKhmerText } = require('../utils/khmer.normalizer');
 const { generateFeedback } = require('../utils/feedback.util');
+const User = require('../models/User');
+const missionService = require('../services/missionService');
 
 /**
  * Đánh giá âm thanh phát âm của trẻ
@@ -100,6 +102,19 @@ const checkPronunciation = async (req, res, next) => {
     }
 
     // ─── SUCCESS RESPONSE ─────────────────────────────────────
+    // Tăng counter phát âm thành công (cho badge) nếu user đăng nhập
+    if (req.user && scoringResult.isCorrect) {
+      try {
+        await User.findByIdAndUpdate(req.user._id, {
+          $inc: { 'learningProgress.speakingSuccessCount': 1 }
+        });
+        // Update mission progress for speaking
+        await missionService.updateProgress(req.user._id, 'speak_lesson');
+      } catch (e) {
+        console.warn(`⚠️ [PRONUNCIATION] Failed to increment speaking counter: ${e.message}`);
+      }
+    }
+
     return res.status(200).json({
       success: true,
       attemptId,

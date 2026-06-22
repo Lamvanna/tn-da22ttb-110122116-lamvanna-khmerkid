@@ -9,6 +9,7 @@
 
 const Progress = require('../models/Progress');
 const User = require('../models/User');
+const missionService = require('./missionService');
 const { AppError } = require('../middlewares/errorHandler');
 
 class ProgressService {
@@ -259,6 +260,15 @@ class ProgressService {
       const completedCount = progress.completedLessons.filter(l => l.isCompleted).length;
       user.learningProgress.totalLessonsCompleted = completedCount;
 
+      // Tăng counter theo loại bài học (cho badge yêu cầu)
+      if (!isAlreadyCompleted) {
+        if (resolvedType === 'reading') {
+          user.learningProgress.readingLessonsCompleted = (user.learningProgress.readingLessonsCompleted || 0) + 1;
+        } else if (resolvedType === 'listening') {
+          user.learningProgress.listeningCompleteCount = (user.learningProgress.listeningCompleteCount || 0) + 1;
+        }
+      }
+
       // Add to user's completedLessons if it's a real MongoDB ObjectId
       if (lessonId.match(/^[0-9a-fA-F]{24}$/)) {
         const mongoose = require('mongoose');
@@ -269,6 +279,20 @@ class ProgressService {
       }
 
       await user.save();
+
+      // Update mission progress based on lesson type
+      try {
+        await missionService.updateProgress(userId, 'complete_lesson');
+        // Also update skill-specific mission actions
+        if (resolvedType === 'reading' || resolvedType === 'sentence') {
+          await missionService.updateProgress(userId, 'read_lesson');
+        }
+        if (resolvedType === 'listening') {
+          await missionService.updateProgress(userId, 'listen_lesson');
+        }
+      } catch (missionErr) {
+        console.error('Error updating mission progress:', missionErr.message);
+      }
 
       return {
         lessonId,

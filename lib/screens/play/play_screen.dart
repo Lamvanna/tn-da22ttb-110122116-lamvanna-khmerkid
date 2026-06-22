@@ -23,19 +23,36 @@ class PlayScreen extends StatefulWidget {
   State<PlayScreen> createState() => _PlayScreenState();
 }
 
-class _PlayScreenState extends State<PlayScreen> {
+class _PlayScreenState extends State<PlayScreen> with WidgetsBindingObserver {
   ScoreService? _score;
   StorageService? _storage;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadScore();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Đồng bộ vật phẩm hồi phục lên CSDL khi app quay lại foreground
+      _score?.syncRegeneratedInventory();
+    }
   }
 
   Future<void> _loadScore() async {
     _score = await ScoreService.getInstance();
     _storage = await StorageService.getInstance();
+    // Đồng bộ vật phẩm đã hồi phục lên CSDL khi mở trang trò chơi
+    await _score?.syncRegeneratedInventory();
     if (mounted) setState(() {});
   }
 

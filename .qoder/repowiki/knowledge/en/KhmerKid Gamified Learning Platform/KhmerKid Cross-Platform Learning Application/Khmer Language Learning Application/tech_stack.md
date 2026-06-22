@@ -1,0 +1,3 @@
+- Local Database: Isar (`package:isar/isar.dart`) for high-performance offline storage and migration from SharedPreferences.
+- Handwriting Recognition: Custom WebSocket client (`HandwritingWebSocketClient`) for real-time interaction with a backend recognition service.
+- Localization: `flutter_localizations` with custom `AppLocalizations` and dynamic font switching via `LanguageManager`.

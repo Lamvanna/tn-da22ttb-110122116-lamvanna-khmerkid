@@ -62,13 +62,26 @@ class ScoreService {
     return (totalXp % 100) / 100.0;
   }
   
-  Set<String> get purchasedItems => _storage.getPurchasedItems();
+  Set<String> get purchasedItems {
+    // Ưu tiên dữ liệu từ server (source of truth)
+    final serverItems = AuthService().userProfile?['purchasedItems'];
+    if (serverItems != null && serverItems is List) {
+      return serverItems.map((e) => e.toString()).toSet();
+    }
+    return _storage.getPurchasedItems();
+  }
 
   // --- POWER-UPS & COOLDOWNS ---
   int get hintsLeft => _storage.getHintsCount();
   int get timePowerupsLeft => _storage.getTimePowerupsCount();
   int get livesPowerupsLeft => _storage.getLivesPowerupsCount();
   int get doubleScorePowerupsLeft => _storage.getDoubleScorePowerupsCount();
+
+  // Biến theo dõi giá trị inventory đã đồng bộ gần nhất (tránh gọi server trùng lặp)
+  int _lastSyncedHints = -1;
+  int _lastSyncedTime = -1;
+  int _lastSyncedLives = -1;
+  int _lastSyncedDouble = -1;
 
   Future<void> useHint() async {
     await _storage.useHint();
@@ -130,6 +143,11 @@ class ScoreService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (kDebugMode) print('[ScoreService] Đồng bộ inventory lên CSDL thành công!');
+        // Cập nhật giá trị đã đồng bộ gần nhất
+        _lastSyncedHints = hintsLeft;
+        _lastSyncedTime = timePowerupsLeft;
+        _lastSyncedLives = livesPowerupsLeft;
+        _lastSyncedDouble = doubleScorePowerupsLeft;
         // Cập nhật profile mới để đảm bảo tính nhất quán
         await authService.fetchProfile();
       } else {
@@ -140,6 +158,36 @@ class ScoreService {
     } catch (e) {
       if (kDebugMode) print('[ScoreService] Lỗi đồng bộ inventory: $e');
     }
+  }
+
+  /// Kiểm tra và đồng bộ vật phẩm đã hồi phục lên CSDL
+  /// Gọi khi mở màn hình game, khi app quay lại foreground, v.v.
+  /// Chỉ gửi request khi phát hiện số lượng thay đổi (hồi phục xảy ra)
+  Future<void> syncRegeneratedInventory() async {
+    final authService = AuthService();
+    if (!authService.isAuthenticated) return;
+
+    // Đọc số lượng hiện tại — _getRegeneratedCount() tự động tính hồi phục
+    final hints = hintsLeft;
+    final time = timePowerupsLeft;
+    final lives = livesPowerupsLeft;
+    final dbl = doubleScorePowerupsLeft;
+
+    // So sánh với giá trị đã đồng bộ gần nhất — nếu giống nhau thì bỏ qua
+    if (_lastSyncedHints == hints &&
+        _lastSyncedTime == time &&
+        _lastSyncedLives == lives &&
+        _lastSyncedDouble == dbl) {
+      return;
+    }
+
+    if (kDebugMode) {
+      print('[ScoreService] Phát hiện thay đổi inventory do hồi phục! '
+          'Gợi ý: $_lastSyncedHints→$hints, Thời gian: $_lastSyncedTime→$time, '
+          'Mạng: $_lastSyncedLives→$lives, Nhân đôi: $_lastSyncedDouble→$dbl');
+    }
+
+    await _syncInventoryToBackend();
   }
 
   int get hintsCooldownRemaining => _storage.getHintsCooldownRemaining();
@@ -159,6 +207,34 @@ class ScoreService {
 
   Future<void> addPurchasedItem(String itemKey) async {
     await _storage.addPurchasedItem(itemKey);
+  }
+
+  /// Đồng bộ dữ liệu local (storage) từ server profile
+  /// Gọi sau khi AuthService.fetchProfile() đã tải profile mới
+  Future<void> syncFromProfile() async {
+    final profile = AuthService().userProfile;
+    if (profile == null) return;
+
+    // Sync stars & xp
+    final stars = (profile['stars'] as num?)?.toInt() ?? 0;
+    final xp = (profile['xp'] as num?)?.toInt() ?? 0;
+    await _storage.setStars(stars);
+    await _storage.setXp(xp);
+
+    // Sync inventory
+    final inv = profile['inventory'];
+    if (inv != null) {
+      if (inv['hints'] != null) await _storage.setHintsCount((inv['hints'] as num).toInt());
+      if (inv['timePowerups'] != null) await _storage.setTimeCount((inv['timePowerups'] as num).toInt());
+      if (inv['livesPowerups'] != null) await _storage.setLivesCount((inv['livesPowerups'] as num).toInt());
+      if (inv['doubleScorePowerups'] != null) await _storage.setDoubleCount((inv['doubleScorePowerups'] as num).toInt());
+    }
+
+    // Sync purchased items
+    final purchasedItems = profile['purchasedItems'];
+    if (purchasedItems != null && purchasedItems is List) {
+      await _storage.setPurchasedItems(purchasedItems.map((e) => e.toString()).toSet());
+    }
   }
 
   /// Nhận thưởng cho từng hoạt động nhỏ trong bài học
@@ -231,9 +307,6 @@ class ScoreService {
       debugPrint('⚠️ Error completing letter lesson: $e');
     }
 
-    // Đồng bộ lên backend MongoDB Atlas các kết quả phụ nếu cần
-    await _syncListeningResult(100, lessonId: resolvedId);
-
     return {'stars': earnedStars, 'xp': earnedXp};
   }
 
@@ -267,8 +340,6 @@ class ScoreService {
       debugPrint('⚠️ Error completing vowel lesson: $e');
     }
 
-    await _syncListeningResult(100, lessonId: resolvedId);
-
     return {'stars': earnedStars, 'xp': earnedXp};
   }
 
@@ -299,8 +370,6 @@ class ScoreService {
     } catch (e) {
       debugPrint('⚠️ Error completing reading lesson: $e');
     }
-
-    await _syncReadingResult(100, lessonId: resolvedId);
 
     return {'stars': earnedStars, 'xp': earnedXp};
   }
@@ -335,8 +404,6 @@ class ScoreService {
       debugPrint('⚠️ Error completing number lesson: $e');
     }
 
-    await _syncListeningResult(100, lessonId: resolvedId);
-
     return {'stars': earnedStars, 'xp': earnedXp};
   }
 
@@ -370,8 +437,6 @@ class ScoreService {
       debugPrint('⚠️ Error completing diacritical lesson: $e');
     }
 
-    await _syncListeningResult(100, lessonId: resolvedId);
-
     return {'stars': earnedStars, 'xp': earnedXp};
   }
 
@@ -404,8 +469,6 @@ class ScoreService {
     } catch (e) {
       debugPrint('⚠️ Error completing spelling lesson: $e');
     }
-
-    await _syncListeningResult(100, lessonId: resolvedId);
 
     return {'stars': earnedStars, 'xp': earnedXp};
   }
@@ -628,6 +691,31 @@ class ScoreService {
     return (lp?['writingLevel'] as num?)?.toInt() ?? 0;
   }
 
+  // Activity counters (for new badge requirements)
+  int get writingPracticeCount {
+    final lp = AuthService().userProfile?['learningProgress'];
+    return (lp?['writingPracticeCount'] as num?)?.toInt() ?? 0;
+  }
+  int get readingCorrectCount {
+    final lp = AuthService().userProfile?['learningProgress'];
+    return (lp?['readingCorrectCount'] as num?)?.toInt() ?? 0;
+  }
+  int get speakingSuccessCount {
+    final lp = AuthService().userProfile?['learningProgress'];
+    return (lp?['speakingSuccessCount'] as num?)?.toInt() ?? 0;
+  }
+  int get listeningCompleteCount {
+    final lp = AuthService().userProfile?['learningProgress'];
+    return (lp?['listeningCompleteCount'] as num?)?.toInt() ?? 0;
+  }
+  int get readingLessonsCompleted {
+    final lp = AuthService().userProfile?['learningProgress'];
+    return (lp?['readingLessonsCompleted'] as num?)?.toInt() ?? 0;
+  }
+  bool get isAllContentComplete {
+    return writingLevel >= 90 && readingLevel >= 90 && speakingLevel >= 90 && listeningLevel >= 90;
+  }
+
   int _countLearned(String type, int Function() storageCountGetter) {
     // 1. Hãy thử lấy từ RAM cache của ProgressRepository trước (chứa đủ cả ID dạng Object và ID dự phòng)
     final cacheCount = ProgressRepository.instance.getCompletedCountSync(type);
@@ -635,13 +723,13 @@ class ScoreService {
       return cacheCount;
     }
 
-    // 2. Fallback sang userProfile completedLessons
+    // 2. Fallback sang userProfile completedLessons (hỗ trợ cả field 'type' và 'lessonType')
     final lp = AuthService().userProfile?['learningProgress'];
     final completed = lp?['completedLessons'] as List?;
     if (completed != null && completed.isNotEmpty) {
       return completed.where((item) {
         if (item is Map) {
-          return item['type'] == type;
+          return item['type'] == type || item['lessonType'] == type;
         }
         return false;
       }).length;
@@ -791,40 +879,6 @@ class ScoreService {
     }
   }
 
-  /// Đồng bộ kết quả Nghe lên backend
-  Future<void> _syncListeningResult(int score, {String? lessonId}) async {
-    try {
-      final authService = AuthService();
-      if (!authService.isAuthenticated) return;
-
-      final url = Uri.parse('${authService.baseUrl}/listening/result');
-      if (kDebugMode) print('[ScoreService] Đồng bộ Listening: $url');
-
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${authService.accessToken}',
-        },
-        body: jsonEncode({
-          'lessonId': lessonId,
-          'answers': [],
-          'correctAnswers': score,
-          'totalQuestions': 100,
-          'skipGamification': true,
-        }),
-      );
-      if (kDebugMode) print('[ScoreService] Listening Sync Status: ${response.statusCode}');
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        await authService.fetchProfile();
-      }
-    } catch (e) {
-      if (kDebugMode) print('[ScoreService] Error syncing listening: $e');
-    }
-  }
-
-
-
   /// Đồng bộ kết quả Viết lên backend (hỗ trợ đánh giá 2 lớp bằng AI)
   Future<Map<String, dynamic>?> _syncWritingResult(
     int score, {
@@ -834,37 +888,5 @@ class ScoreService {
   }) async {
     // Completely disabled backend writing sync - client-only canvas drawing is retained
     return null;
-  }
-
-  /// Đồng bộ kết quả Đọc lên backend
-  Future<void> _syncReadingResult(int score, {String? lessonId}) async {
-    try {
-      final authService = AuthService();
-      if (!authService.isAuthenticated) return;
-
-      final url = Uri.parse('${authService.baseUrl}/reading/result');
-      if (kDebugMode) print('[ScoreService] Đồng bộ Reading: $url');
-
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${authService.accessToken}',
-        },
-        body: jsonEncode({
-          'lessonId': lessonId,
-          'answers': score,
-          'correctAnswers': score,
-          'totalQuestions': 100,
-          'skipGamification': true,
-        }),
-      );
-      if (kDebugMode) print('[ScoreService] Reading Sync Status: ${response.statusCode}');
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        await authService.fetchProfile();
-      }
-    } catch (e) {
-      if (kDebugMode) print('[ScoreService] Error syncing reading: $e');
-    }
   }
 }

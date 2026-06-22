@@ -1,0 +1,1 @@
+JSON-based localization format with ICU pluralization syntax (e.g., `{count} stars`).

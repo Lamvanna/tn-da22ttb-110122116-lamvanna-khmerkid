@@ -152,6 +152,54 @@ class UserService {
   }
 
   /**
+   * Purchase a shop item - atomic operation
+   * Deducts stars, adds item/powerup to user's inventory
+   */
+  async purchaseItem(userId, { itemId, itemType, price, powerUpType }) {
+    const user = await User.findById(userId);
+    if (!user) throw new AppError(MESSAGES.USER_NOT_FOUND, 404);
+
+    // Check enough stars
+    if ((user.stars || 0) < price) {
+      throw new AppError('Không đủ sao để mua vật phẩm!', 400);
+    }
+
+    // Deduct stars atomically
+    const updateOps = {
+      $inc: { stars: -price },
+    };
+
+    if (itemType === 'consumable') {
+      // Consumable: increment the corresponding powerup in inventory
+      const powerUpMap = {
+        'pu_hint': 'inventory.hints',
+        'pu_time': 'inventory.timePowerups',
+        'pu_live': 'inventory.livesPowerups',
+        'pu_double': 'inventory.doubleScorePowerups',
+      };
+      const field = powerUpMap[powerUpType];
+      if (field) {
+        updateOps.$inc[field] = 1;
+      }
+    } else {
+      // Permanent item: add to purchasedItems if not already owned
+      if (user.purchasedItems && user.purchasedItems.includes(itemId)) {
+        throw new AppError('Bạn đã sở hữu vật phẩm này rồi!', 400);
+      }
+      updateOps.$addToSet = { purchasedItems: itemId };
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updateOps, { new: true });
+    if (!updatedUser) throw new AppError(MESSAGES.USER_NOT_FOUND, 404);
+
+    return {
+      stars: updatedUser.stars,
+      purchasedItems: updatedUser.purchasedItems || [],
+      inventory: updatedUser.inventory,
+    };
+  }
+
+  /**
    * Update learning progress for a skill
    */
   async updateSkillProgress(userId, skill, score) {

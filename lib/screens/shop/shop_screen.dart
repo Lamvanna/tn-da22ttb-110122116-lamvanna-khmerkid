@@ -309,30 +309,36 @@ class _ShopScreenState extends State<ShopScreen> {
     );
 
     if (confirm == true) {
-      final success = await _scoreService.spendStars(item.price);
-      if (success) {
-        // Tăng chỉ số tương ứng nếu là consumable
-        if (item.isConsumable) {
-          if (item.id == 'pu_hint') {
-            await _scoreService.addHints(1);
-          } else if (item.id == 'pu_time') {
-            await _scoreService.addTimePowerups(1);
-          } else if (item.id == 'pu_live') {
-            await _scoreService.addLivesPowerups(5);
-          } else if (item.id == 'pu_double') {
-            await _scoreService.addDoubleScorePowerups(1);
-          }
-        } else {
-          await _scoreService.addPurchasedItem(item.id);
-          _purchasedItems.add(item.id);
-        }
+      // Gọi API backend để mua vật phẩm (trừ sao + lưu CSDL)
+      final result = await AuthService().purchaseItem(
+        itemId: item.id,
+        itemType: item.isConsumable ? 'consumable' : 'permanent',
+        price: item.price,
+        powerUpType: item.isConsumable ? item.id : null,
+      );
 
+      if (result['success'] == true) {
+        final data = result['data'];
+        // Cập nhật trạng thái local từ phản hồi server
         setState(() {
-          _starBalance -= item.price;
+          // Cập nhật số sao từ server
+          if (data != null && data['stars'] != null) {
+            _starBalance = (data['stars'] as num).toInt();
+          } else {
+            _starBalance -= item.price;
+          }
+          // Cập nhật danh sách vật phẩm đã mua
+          if (!item.isConsumable) {
+            _purchasedItems.add(item.id);
+          }
         });
+
+        // Đồng bộ storage local từ server profile
+        await _scoreService.syncFromProfile();
+
         if (mounted) _showPurchaseSuccess(item);
       } else {
-        _showSnack(context.translate('shop.error_buy'));
+        if (mounted) _showSnack(result['message'] ?? context.translate('shop.error_buy'));
       }
     }
   }
@@ -421,10 +427,10 @@ class _ShopScreenState extends State<ShopScreen> {
 
   Widget _buildHeader(BuildContext context) {
     return Container(
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          begin: Alignment(-0.5, -1),
-          end: Alignment(0.5, 1),
+          begin: Alignment(-0.5, -1), end: Alignment(0.5, 1),
           colors: [
             Color(0xFF1565C0),
             Color(0xFF42A5F5),
@@ -471,83 +477,127 @@ class _ShopScreenState extends State<ShopScreen> {
             ),
           ),
 
-          // Content Row
+          // ─── Center Title ───
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 20.h),
-              child: Row(
+              padding: EdgeInsets.fromLTRB(80.w, 4.h, 80.w, 40.h),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Back button
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      padding: EdgeInsets.all(8.w),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 24.sp),
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  // Title & Subtitle
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(
                           context.translate('shop.title'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 21.sp,
+                            fontSize: 22.sp,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
                           ),
                         ),
-                        SizedBox(height: 2.h),
-                        Text(
-                          context.translate('shop.subtitle'),
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  // Star balance pill on the right
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.08),
-                        width: 1,
                       ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Image.asset('image/sao.png', width: 14.w, height: 14.w),
-                        SizedBox(width: 4.w),
-                        Text(
-                          '$_starBalance',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
                 ],
               ),
+            ),
+          ),
+
+          // ─── Back Button (Positioned Left) ───
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 14.h,
+            left: 16.w,
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                width: 32.w, height: 32.w,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.16),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1)),
+                child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 18.w)),
+            ),
+          ),
+
+          // ─── Stats (Positioned Right) ───
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 2.h,
+            right: 16.w,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // Star Badge (Above)
+                Container(
+                  width: 64.w,
+                  height: 28.w,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Image.asset('image/sao.png', width: 14.w, height: 14.w, fit: BoxFit.contain),
+                      SizedBox(width: 4.w),
+                      Text(
+                        '$_starBalance',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          height: 1.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 5.h),
+                
+                // Streak Badge (Below)
+                Container(
+                  width: 64.w,
+                  height: 28.w,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Image.asset('image/Lửa chuổi.png', width: 14.w, height: 14.w, fit: BoxFit.contain),
+                      SizedBox(width: 4.w),
+                      Text(
+                        '${_scoreService.streak}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          height: 1.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -979,10 +1029,7 @@ class _ShopScreenState extends State<ShopScreen> {
           SizedBox(width: 8.w),
           ElevatedButton(
             onPressed: () {
-              Navigator.push(
-                context,
-                AppPageRoute(page: const DailyQuestScreen()),
-              );
+              Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1E88E5),

@@ -1,0 +1,3 @@
+- Translation keys use snake_case naming convention nested within semantic domain objects (e.g., `game_catch_letter`, `learning_path`).
+- Locale metadata includes explicit font-family assignments per language to ensure correct typographic rendering (e.g., 'Noto Sans SC' for Chinese, 'Sarabun' for Thai).
+- Audio asset directories use descriptive English category names (`consonants`, `vowels`) while relying on external documentation (`README.md`) for specific Khmer linguistic requirements.

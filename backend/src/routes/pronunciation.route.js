@@ -10,6 +10,7 @@
 const router = require('express').Router();
 const rateLimit = require('express-rate-limit');
 const upload = require('../middlewares/upload.middleware');
+const { optionalAuth } = require('../middlewares/auth');
 const { checkPronunciation } = require('../controllers/pronunciation.controller');
 const errorHandler = require('../middlewares/errorHandler.middleware');
 
@@ -34,6 +35,7 @@ const pronunciationLimiter = rateLimit({
 router.post(
   '/check',
   pronunciationLimiter,
+  optionalAuth,
   upload.single('audioFile'),
   checkPronunciation
 );

@@ -53,8 +53,8 @@ class LocalNotificationService {
       _isInitialized = true;
       debugPrint('✅ [LocalNotificationService] Initialized successfully');
       
-      // Yêu cầu quyền thông báo (đặc biệt cho Android 13+)
-      await requestPermissions();
+      // Yêu cầu quyền thông báo (đặc biệt cho Android 13+) - Không dùng await để tránh gây nghẽn luồng khởi động chính
+      requestPermissions();
     } catch (e) {
       debugPrint('❌ [LocalNotificationService] Initialization error: $e');
     }

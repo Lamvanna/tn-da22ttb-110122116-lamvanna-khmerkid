@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: frontend/flutter_app
+title: Khmer Language Learning Application
+scope:
+    - lib/
+source_files: []
+depends_on: []
+related_to:
+    - path: backend

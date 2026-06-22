@@ -23,15 +23,24 @@ class _LibraryScreenState extends State<LibraryScreen> {
   int _selectedTab = 0;
 
   // ── Data ──
-  static const _tabs = [
-    _TabData(icon: Icons.grid_view_rounded, label: 'Tất cả', count: 128, color: Color(0xFF1E6DEB)),
-    _TabData(icon: Icons.menu_book_rounded, label: 'Sách', count: 45, color: Color(0xFF27AE60)),
-    _TabData(icon: Icons.auto_stories_rounded, label: 'Truyện', count: 15, color: Color(0xFF00A896)),
-    _TabData(icon: Icons.music_note_rounded, label: 'Bài hát', count: 18, color: Color(0xFFFD79A8)),
-    _TabData(icon: Icons.play_circle_filled_rounded, label: 'Video', count: 28, color: Color(0xFFE67E22)),
-    _TabData(icon: Icons.emoji_objects_rounded, label: 'Kiến thức', count: 25, color: Color(0xFFF1C40F)),
-    _TabData(icon: Icons.favorite_rounded, label: 'Yêu thích', count: 12, color: Color(0xFFE74C3C)),
+  static const _tabIcons = [
+    _TabMeta(icon: Icons.grid_view_rounded, label: 'Tất cả', color: Color(0xFF1E6DEB)),
+    _TabMeta(icon: Icons.menu_book_rounded, label: 'Sách', color: Color(0xFF27AE60)),
+    _TabMeta(icon: Icons.auto_stories_rounded, label: 'Truyện', color: Color(0xFF00A896)),
+    _TabMeta(icon: Icons.music_note_rounded, label: 'Bài hát', color: Color(0xFFFD79A8)),
+    _TabMeta(icon: Icons.play_circle_filled_rounded, label: 'Video', color: Color(0xFFE67E22)),
+    _TabMeta(icon: Icons.emoji_objects_rounded, label: 'Kiến thức', color: Color(0xFFF1C40F)),
+    _TabMeta(icon: Icons.favorite_rounded, label: 'Yêu thích', color: Color(0xFFE74C3C)),
   ];
+
+  List<_TabData> _tabs = _tabIcons
+      .map((meta) => _TabData(
+            icon: meta.icon,
+            label: meta.label,
+            count: 0,
+            color: meta.color,
+          ))
+      .toList();
 
   static final _featuredCategories = [
     _FeaturedCat(
@@ -107,73 +116,113 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   Future<void> _loadLatestDocs() async {
     setState(() => _loading = true);
-    final result = await AdminService().fetchLibraryItemsForUser();
+    // Load tất cả items (limit 100) để tính count chính xác
+    final result = await AdminService().fetchLibraryItemsForUser(limit: 100);
     if (!mounted) return;
     if (result['success'] == true && result['data'] != null && (result['data'] as List).isNotEmpty) {
       final list = result['data'] as List;
+      final docs = list.map((item) {
+        final type = item['type'] ?? 'Sách';
+        final title = item['title'] ?? '';
+        final desc = item['description'] ?? '';
+        final rating = (item['rating'] as num?)?.toDouble() ?? 5.0;
+        final viewsCount = item['views'] ?? 0;
+        final views = "$viewsCount lượt xem";
+        final image = (item['image'] != null && item['image'].toString().isNotEmpty)
+            ? item['image'].toString()
+            : 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781810872/khmerkid/library/l1lba7h2swazdzwlnp4m.png';
+
+        IconData typeIcon = Icons.menu_book_rounded;
+        Color typeColor = const Color(0xFF27AE60);
+        String btnLabel = 'Đọc ngay';
+
+        if (type == 'Audio') {
+          typeIcon = Icons.music_note_rounded;
+          typeColor = const Color(0xFFFD79A8);
+          btnLabel = 'Nghe ngay';
+        } else if (type == 'Video') {
+          typeIcon = Icons.play_circle_rounded;
+          typeColor = const Color(0xFFF2994A);
+          btnLabel = 'Xem ngay';
+        }
+
+        var duration = item['duration']?.toString() ?? '';
+        if (type == 'Video' && duration.isEmpty) {
+          if (title.contains('1-10')) duration = '05:30';
+          else if (title.contains('nguyên âm')) duration = '08:45';
+          else if (title.contains('thú rừng')) duration = '10:15';
+          else if (title.contains('Ngữ pháp')) duration = '12:40';
+          else if (title.contains('tỷ phú')) duration = '15:20';
+          else if (title.contains('khảo cổ')) duration = '09:50';
+          else if (title.contains('Bắt chữ')) duration = '11:05';
+          else duration = '08:45';
+        }
+        return DocItem(
+          title: title,
+          type: type,
+          typeIcon: typeIcon,
+          typeColor: typeColor,
+          desc: desc,
+          rating: rating,
+          views: views,
+          btnLabel: btnLabel,
+          btnIcon: typeIcon,
+          btnColor: typeColor,
+          image: image,
+          duration: duration.isNotEmpty ? duration : null,
+        );
+      }).toList();
+
+      // Tính count cho từng tab từ dữ liệu CSDL
+      _tabs = _tabIcons.map((meta) {
+        int count;
+        if (meta.label == 'Tất cả') {
+          count = docs.where((d) => d.type != 'Video').length;
+        } else {
+          count = docs.where((d) => d.matchesCategory(meta.label)).length;
+        }
+        return _TabData(
+          icon: meta.icon,
+          label: meta.label,
+          count: count,
+          color: meta.color,
+        );
+      }).toList();
+
       setState(() {
-        _latestDocs = list.map((item) {
-          final type = item['type'] ?? 'Sách';
-          final title = item['title'] ?? '';
-          final desc = item['description'] ?? '';
-          final rating = (item['rating'] as num?)?.toDouble() ?? 5.0;
-          final viewsCount = item['views'] ?? 0;
-          final views = "$viewsCount lượt xem";
-          final image = (item['image'] != null && item['image'].toString().isNotEmpty)
-              ? item['image'].toString()
-              : 'https://res.cloudinary.com/dvnrhbazd/image/upload/v1781810872/khmerkid/library/l1lba7h2swazdzwlnp4m.png';
-
-          IconData typeIcon = Icons.menu_book_rounded;
-          Color typeColor = const Color(0xFF27AE60);
-          String btnLabel = 'Đọc ngay';
-
-          if (type == 'Audio') {
-            typeIcon = Icons.music_note_rounded;
-            typeColor = const Color(0xFFFD79A8);
-            btnLabel = 'Nghe ngay';
-          } else if (type == 'Video') {
-            typeIcon = Icons.play_circle_rounded;
-            typeColor = const Color(0xFFF2994A);
-            btnLabel = 'Xem ngay';
-          }
-
-           var duration = item['duration']?.toString() ?? '';
-          if (type == 'Video' && duration.isEmpty) {
-            if (title.contains('1-10')) duration = '05:30';
-            else if (title.contains('nguyên âm')) duration = '08:45';
-            else if (title.contains('thú rừng')) duration = '10:15';
-            else if (title.contains('Ngữ pháp')) duration = '12:40';
-            else if (title.contains('tỷ phú')) duration = '15:20';
-            else if (title.contains('khảo cổ')) duration = '09:50';
-            else if (title.contains('Bắt chữ')) duration = '11:05';
-            else duration = '08:45';
-          }
-          return DocItem(
-            title: title,
-            type: type,
-            typeIcon: typeIcon,
-            typeColor: typeColor,
-            desc: desc,
-            rating: rating,
-            views: views,
-            btnLabel: btnLabel,
-            btnIcon: typeIcon,
-            btnColor: typeColor,
-            image: image,
-            duration: duration.isNotEmpty ? duration : null,
-          );
-        }).toList();
+        _latestDocs = docs;
         _loading = false;
       });
     } else {
+      // Fallback: dùng dữ liệu mặc định
+      final fallback = _fallbackDocs;
+      _tabs = _tabIcons.map((meta) {
+        int count;
+        if (meta.label == 'Tất cả') {
+          count = fallback.where((d) => d.type != 'Video').length;
+        } else {
+          count = fallback.where((d) => d.matchesCategory(meta.label)).length;
+        }
+        return _TabData(
+          icon: meta.icon,
+          label: meta.label,
+          count: count,
+          color: meta.color,
+        );
+      }).toList();
+
       setState(() {
-        _latestDocs = _fallbackDocs;
+        _latestDocs = fallback;
         _loading = false;
       });
     }
   }
 
   int _getDocCountForLabel(String label) {
+    // Tìm count từ _tabs (đã tính từ CSDL)
+    final tabIndex = _tabs.indexWhere((t) => t.label == label);
+    if (tabIndex >= 0) return _tabs[tabIndex].count;
+    // Fallback: tính trực tiếp
     final list = _latestDocs.isNotEmpty ? _latestDocs : _fallbackDocs;
     if (label == 'Tất cả') {
       return list.where((doc) => doc.type != 'Video').length;
@@ -508,6 +557,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   // FEATURED CATEGORIES — Horizontal Scroll Cards
   // ═══════════════════════════════════════════════════
   Widget _buildFeaturedSection() {
+    if (_tabs.isEmpty) return const SizedBox.shrink();
     final selectedLabel = _tabs[_selectedTab].label;
 
     if (selectedLabel == 'Tất cả') {
@@ -856,6 +906,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   // LATEST DOCUMENTS — List Cards
   // ═══════════════════════════════════════════════════
   Widget _buildLatestSection() {
+    if (_tabs.isEmpty) return const SizedBox.shrink();
     final selectedLabel = _tabs[_selectedTab].label;
     final list = _latestDocs.isNotEmpty ? _latestDocs : _fallbackDocs;
     var filteredDocs = list.where((doc) => doc.matchesCategory(selectedLabel)).toList();
@@ -1244,10 +1295,21 @@ class _TabData {
   final String label;
   final int count;
   final Color color;
-  const _TabData({
+  _TabData({
     required this.icon,
     required this.label,
     required this.count,
+    required this.color,
+  });
+}
+
+class _TabMeta {
+  final IconData icon;
+  final String label;
+  final Color color;
+  const _TabMeta({
+    required this.icon,
+    required this.label,
     required this.color,
   });
 }

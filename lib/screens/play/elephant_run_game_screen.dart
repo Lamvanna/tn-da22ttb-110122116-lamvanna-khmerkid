@@ -74,6 +74,8 @@ class _ElephantRunGameScreenState extends State<ElephantRunGameScreen>
 
   Future<void> _loadScoreService() async {
     _scoreService = await ScoreService.getInstance();
+    // Đồng bộ vật phẩm hồi phục lên CSDL khi vào game
+    await _scoreService?.syncRegeneratedInventory();
     if (mounted) setState(() {});
   }
 

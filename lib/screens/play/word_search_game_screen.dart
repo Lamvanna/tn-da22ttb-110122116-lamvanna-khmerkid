@@ -65,6 +65,8 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
 
   Future<void> _loadScoreService() async {
     _scoreService = await ScoreService.getInstance();
+    // Đồng bộ vật phẩm hồi phục lên CSDL khi vào game
+    await _scoreService?.syncRegeneratedInventory();
     if (mounted) {
       setState(() {
         _hintsLeft = _scoreService?.hintsLeft ?? 2;

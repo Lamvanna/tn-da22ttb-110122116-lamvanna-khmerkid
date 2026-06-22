@@ -1,0 +1,14 @@
+schema_version: 1
+module_path: dependency_management
+title: Multi-Ecosystem Dependency Management System
+scope: []
+source_files:
+    - pubspec.yaml
+    - pubspec.lock
+    - backend/package.json
+    - backend/package-lock.json
+    - android/build.gradle.kts
+    - android/app/build.gradle.kts
+    - android/gradle/wrapper/gradle-wrapper.properties
+depends_on: []
+related_to: []

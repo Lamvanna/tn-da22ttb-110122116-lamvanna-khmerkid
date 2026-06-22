@@ -13,32 +13,107 @@ const { getTodayRange, getStartOfWeek } = require('../utils/helpers');
 
 class MissionService {
   /**
-   * Get all active missions with user progress
+   * Get all active missions with user progress.
+   * Daily: exactly 3 random missions assigned per day (persistent).
+   * Weekly: all weekly missions.
    */
   async getMissions(userId) {
-    const missions = await Mission.find({ isActive: true }).sort({ order: 1 }).lean();
+    const allMissions = await Mission.find({ isActive: true }).sort({ order: 1 }).lean();
     const { endOfDay } = getTodayRange();
+    const now = new Date();
 
-    // Get or create progress for each mission
-    const missionsWithProgress = await Promise.all(
-      missions.map(async (mission) => {
+    const dailyMissions = allMissions.filter(m => m.type === MISSION_TYPES.DAILY);
+    const weeklyMissions = allMissions.filter(m => m.type === MISSION_TYPES.WEEKLY);
+
+    // ── Daily: assign exactly 3 random missions per day ──
+    // Check if user already has daily assignments for today
+    const existingDailyProgress = await MissionProgress.find({
+      userId,
+      missionId: { $in: dailyMissions.map(m => m._id) },
+      expiresAt: { $gte: now },
+    }).lean();
+
+    let assignedDailyIds;
+
+    if (existingDailyProgress.length > 3) {
+      // Old data has too many entries — keep 3, prioritize ones with progress
+      const sorted = [...existingDailyProgress].sort((a, b) => {
+        // Prioritize: claimed > completed > has progress > no progress
+        if (a.isClaimed !== b.isClaimed) return b.isClaimed ? 1 : -1;
+        if (a.isCompleted !== b.isCompleted) return b.isCompleted ? 1 : -1;
+        return (b.progress || 0) - (a.progress || 0);
+      });
+      const keep = sorted.slice(0, 3);
+      const remove = sorted.slice(3);
+      assignedDailyIds = keep.map(p => p.missionId.toString());
+
+      // Clean up extra entries
+      if (remove.length > 0) {
+        await MissionProgress.deleteMany({
+          _id: { $in: remove.map(p => p._id) },
+        });
+      }
+    } else if (existingDailyProgress.length < 3) {
+      assignedDailyIds = existingDailyProgress.map(p => p.missionId.toString());
+      // Pick random missions that haven't been assigned yet
+      const unassigned = dailyMissions.filter(
+        m => !assignedDailyIds.includes(m._id.toString())
+      );
+      const needed = 3 - assignedDailyIds.length;
+      const shuffled = unassigned.sort(() => Math.random() - 0.5);
+      const newPicks = shuffled.slice(0, needed);
+
+      for (const mission of newPicks) {
+        await MissionProgress.create({
+          userId,
+          missionId: mission._id,
+          progress: 0,
+          expiresAt: endOfDay,
+        });
+        assignedDailyIds.push(mission._id.toString());
+      }
+    } else {
+      // Exactly 3
+      assignedDailyIds = existingDailyProgress.map(p => p.missionId.toString());
+    }
+
+    // Build the assigned daily missions list with progress
+    const assignedDailyMissions = dailyMissions.filter(
+      m => assignedDailyIds.includes(m._id.toString())
+    );
+
+    const dailyWithProgress = await Promise.all(
+      assignedDailyMissions.map(async (mission) => {
+        const progress = await MissionProgress.findOne({
+          userId,
+          missionId: mission._id,
+          expiresAt: { $gte: now },
+        });
+
+        return {
+          ...mission,
+          progress: progress ? progress.progress : 0,
+          isCompleted: progress ? progress.isCompleted : false,
+          isClaimed: progress ? progress.isClaimed : false,
+        };
+      })
+    );
+
+    // ── Weekly: return all with progress ──
+    const weeklyWithProgress = await Promise.all(
+      weeklyMissions.map(async (mission) => {
         let progress = await MissionProgress.findOne({
           userId,
           missionId: mission._id,
-          expiresAt: { $gte: new Date() },
+          expiresAt: { $gte: now },
         });
 
         if (!progress) {
-          // Create new progress entry
-          const expiresAt = mission.type === MISSION_TYPES.DAILY
-            ? endOfDay
-            : this._getEndOfWeek();
-
           progress = await MissionProgress.create({
             userId,
             missionId: mission._id,
             progress: 0,
-            expiresAt,
+            expiresAt: this._getEndOfWeek(),
           });
         }
 
@@ -51,7 +126,7 @@ class MissionService {
       })
     );
 
-    return missionsWithProgress;
+    return [...dailyWithProgress, ...weeklyWithProgress];
   }
 
   /**
@@ -69,6 +144,12 @@ class MissionService {
       });
 
       if (!progress) {
+        // Only create progress if user hasn't been assigned this daily mission
+        // For weekly missions, always create
+        if (mission.type === MISSION_TYPES.DAILY) {
+          // Skip — daily missions not assigned to this user today
+          continue;
+        }
         const { endOfDay } = getTodayRange();
         progress = await MissionProgress.create({
           userId,

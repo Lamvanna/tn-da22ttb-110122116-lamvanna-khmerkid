@@ -1,0 +1,3 @@
+- Singleton pattern is consistently used for core services and repositories (e.g., `AuthService._instance`, `SyncManager.instance`, `ProgressRepository.instance`).
+- Repositories follow an Offline-First strategy where local Isar operations are performed immediately for UI responsiveness, while remote syncs are queued and processed in the background by `SyncManager`.
+- Services expose reactive streams (e.g., `onSyncStatusChanged`, `onProgressChanged`) to allow UI components to listen for state changes without direct coupling.

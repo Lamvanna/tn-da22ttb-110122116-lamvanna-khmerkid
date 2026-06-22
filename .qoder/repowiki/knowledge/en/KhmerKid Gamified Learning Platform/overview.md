@@ -1,0 +1,1 @@
+Orchestrates a Flutter mobile client and Node.js backend to deliver an offline-first, gamified Khmer language learning experience with real-time synchronization.

@@ -28,7 +28,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFF4CAF50),
       bgColor: const Color(0xFFE8F5E9),
-      description: 'Hoàn thành bài học đầu tiên của bé!',
+      description: 'Hoàn thành 5 bài học đầu tiên!',
     ),
     _Achievement(
       title: 'Nhà ngôn ngữ nhí',
@@ -37,7 +37,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFF9C27B0),
       bgColor: const Color(0xFFF3E5F5),
-      description: 'Học tập tích lũy đạt 50 điểm XP!',
+      description: 'Học tập tích lũy đạt 500 điểm XP!',
     ),
     _Achievement(
       title: 'Bậc thầy phụ âm',
@@ -46,7 +46,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFFFFB300),
       bgColor: const Color(0xFFFFF8E1),
-      description: 'Đạt trình độ viết phụ âm cấp độ 1.',
+      description: 'Luyện viết phụ âm 200 lần.',
     ),
     _Achievement(
       title: 'Khám phá nguyên âm',
@@ -55,7 +55,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFF2196F3),
       bgColor: const Color(0xFFE3F2FD),
-      description: 'Đạt trình độ đọc nguyên âm cấp độ 1.',
+      description: 'Hoàn thành 24 bài học nguyên âm.',
     ),
     _Achievement(
       title: 'Vua nguyên âm',
@@ -64,7 +64,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFF009688),
       bgColor: const Color(0xFFE0F2F1),
-      description: 'Xuất sắc đạt trình độ đọc nguyên âm cấp độ 2.',
+      description: 'Đọc đúng 500 từ vựng Khmer.',
     ),
     _Achievement(
       title: 'Chính tả giỏi',
@@ -73,7 +73,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFF3F51B5),
       bgColor: const Color(0xFFE8EAF6),
-      description: 'Đạt trình độ viết phụ âm cấp độ 2.',
+      description: 'Luyện viết từ vựng 400 lần.',
     ),
     _Achievement(
       title: 'Phát âm chuẩn',
@@ -82,7 +82,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFFE91E63),
       bgColor: const Color(0xFFFCE4EC),
-      description: 'Đạt trình độ nói phát âm cấp độ 1.',
+      description: 'Luyện phát âm thành công 250 lần.',
     ),
     _Achievement(
       title: 'Tai thính',
@@ -91,7 +91,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFF1E88E5),
       bgColor: const Color(0xFFEBF4FF),
-      description: 'Đạt trình độ nghe tiếng Khmer cấp độ 1.',
+      description: 'Hoàn thành 250 bài luyện nghe.',
     ),
     _Achievement(
       title: 'Viết chữ đẹp',
@@ -100,7 +100,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFF00BCD4),
       bgColor: const Color(0xFFE0F7FA),
-      description: 'Đạt trình độ viết Khmer cấp độ 3.',
+      description: 'Luyện viết hoàn hảo 500 lần.',
     ),
     _Achievement(
       title: 'Ngôi sao đầu tiên',
@@ -109,7 +109,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFFFFC107),
       bgColor: const Color(0xFFFFF8E1),
-      description: 'Tích lũy được 15 ngôi sao danh giá đầu tiên.',
+      description: 'Tích lũy được 300 ngôi sao.',
     ),
     _Achievement(
       title: 'Sao sáng',
@@ -118,7 +118,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFF03A9F4),
       bgColor: const Color(0xFFE1F5FE),
-      description: 'Tích lũy được tổng cộng 50 ngôi sao lấp lánh.',
+      description: 'Tích lũy được 1.500 ngôi sao.',
     ),
     _Achievement(
       title: 'Siêu sao',
@@ -127,7 +127,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFF7C4DFF),
       bgColor: const Color(0xFFEDE7F6),
-      description: 'Sở hữu 150 ngôi sao rực rỡ lấp lánh bầu trời.',
+      description: 'Sở hữu 5.000 ngôi sao lấp lánh bầu trời.',
     ),
     _Achievement(
       title: 'Chăm chỉ',
@@ -136,7 +136,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFFFF9800),
       bgColor: const Color(0xFFFFF3E0),
-      description: 'Đạt chuỗi học tập liên tục 2 ngày.',
+      description: 'Đạt chuỗi học tập liên tục 7 ngày.',
     ),
     _Achievement(
       title: 'Kiên trì',
@@ -145,7 +145,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFFFF8F00),
       bgColor: const Color(0xFFFFF3CD),
-      description: 'Duy trì chuỗi học tập bền bỉ liên tục 7 ngày.',
+      description: 'Duy trì chuỗi học tập liên tục 50 ngày.',
     ),
     _Achievement(
       title: 'Game thủ nhí',
@@ -154,7 +154,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFF00E5FF),
       bgColor: const Color(0xFFE0F7FA),
-      description: 'Chơi hoàn thành 5 trò chơi học tập bổ ích.',
+      description: 'Hoàn thành 40 trò chơi học tập.',
     ),
     _Achievement(
       title: 'Vô địch mini game',
@@ -163,7 +163,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFFD32F2F),
       bgColor: const Color(0xFFFFEBEE),
-      description: 'Xuất sắc hoàn thành 20 trò chơi bổ ích.',
+      description: 'Hoàn thành 200 trò chơi bổ ích.',
     ),
     _Achievement(
       title: 'Tốc độ ánh sáng',
@@ -172,7 +172,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFF7C4DFF),
       bgColor: const Color(0xFFEDE7F6),
-      description: 'Duy trì chuỗi học tập liên tục 15 ngày.',
+      description: 'Duy trì chuỗi học tập liên tục 100 ngày.',
     ),
     _Achievement(
       title: 'Hoàn hảo',
@@ -181,7 +181,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFF2E7D32),
       bgColor: const Color(0xFFE8F5E9),
-      description: 'Hoàn thành xuất sắc 15 bài học.',
+      description: 'Hoàn thành xuất sắc 200 bài học.',
     ),
     _Achievement(
       title: 'Nhà vô địch',
@@ -190,7 +190,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFFFF5722),
       bgColor: const Color(0xFFFBE9E7),
-      description: 'Hoàn thành xuất sắc 30 bài học.',
+      description: 'Hoàn thành xuất sắc 500 bài học.',
     ),
     _Achievement(
       title: 'Bậc thầy Khmer',
@@ -199,7 +199,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       done: false,
       color: const Color(0xFF651FFF),
       bgColor: const Color(0xFFEDE7F6),
-      description: 'Đạt cấp độ 20, vươn tới danh hiệu Bậc thầy Khmer!',
+      description: 'Hoàn thành tất cả nội dung học — Bậc thầy Khmer!',
     ),
   ];
 
@@ -392,6 +392,18 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         return _score!.totalGamesPlayed;
       case 'level_reach':
         return _score!.level;
+      case 'writing_practice':
+        return _score!.writingPracticeCount;
+      case 'reading_correct':
+        return _score!.readingCorrectCount;
+      case 'speaking_success':
+        return _score!.speakingSuccessCount;
+      case 'listening_complete':
+        return _score!.listeningCompleteCount;
+      case 'reading_lessons_complete':
+        return _score!.readingLessonsCompleted;
+      case 'content_complete':
+        return _score!.isAllContentComplete ? 100 : 0;
       default:
         return 0;
     }
@@ -401,45 +413,45 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   Map<String, dynamic> _getFallbackReqInfo(String title) {
     switch (title) {
       case 'Bước đầu tiên':
-        return {'type': 'lessons_complete', 'value': 1};
+        return {'type': 'lessons_complete', 'value': 5};
       case 'Nhà ngôn ngữ nhí':
-        return {'type': 'xp_total', 'value': 50};
+        return {'type': 'xp_total', 'value': 500};
       case 'Bậc thầy phụ âm':
-        return {'type': 'writing_level', 'value': 1};
+        return {'type': 'writing_practice', 'value': 200};
       case 'Khám phá nguyên âm':
-        return {'type': 'reading_level', 'value': 1};
+        return {'type': 'reading_lessons_complete', 'value': 24};
       case 'Vua nguyên âm':
-        return {'type': 'reading_level', 'value': 2};
+        return {'type': 'reading_correct', 'value': 500};
       case 'Chính tả giỏi':
-        return {'type': 'writing_level', 'value': 2};
+        return {'type': 'writing_practice', 'value': 400};
       case 'Phát âm chuẩn':
-        return {'type': 'speaking_level', 'value': 1};
+        return {'type': 'speaking_success', 'value': 250};
       case 'Tai thính':
-        return {'type': 'listening_level', 'value': 1};
+        return {'type': 'listening_complete', 'value': 250};
       case 'Viết chữ đẹp':
-        return {'type': 'writing_level', 'value': 3};
+        return {'type': 'writing_practice', 'value': 500};
       case 'Ngôi sao đầu tiên':
-        return {'type': 'stars_total', 'value': 15};
+        return {'type': 'stars_total', 'value': 300};
       case 'Sao sáng':
-        return {'type': 'stars_total', 'value': 50};
+        return {'type': 'stars_total', 'value': 1500};
       case 'Siêu sao':
-        return {'type': 'stars_total', 'value': 150};
+        return {'type': 'stars_total', 'value': 5000};
       case 'Chăm chỉ':
-        return {'type': 'streak_days', 'value': 2};
-      case 'Kiên trì':
         return {'type': 'streak_days', 'value': 7};
+      case 'Kiên trì':
+        return {'type': 'streak_days', 'value': 50};
       case 'Game thủ nhí':
-        return {'type': 'games_played', 'value': 5};
+        return {'type': 'games_played', 'value': 40};
       case 'Vô địch mini game':
-        return {'type': 'games_played', 'value': 20};
+        return {'type': 'games_played', 'value': 200};
       case 'Tốc độ ánh sáng':
-        return {'type': 'streak_days', 'value': 15};
+        return {'type': 'streak_days', 'value': 100};
       case 'Hoàn hảo':
-        return {'type': 'lessons_complete', 'value': 15};
+        return {'type': 'lessons_complete', 'value': 200};
       case 'Nhà vô địch':
-        return {'type': 'lessons_complete', 'value': 30};
+        return {'type': 'lessons_complete', 'value': 500};
       case 'Bậc thầy Khmer':
-        return {'type': 'level_reach', 'value': 20};
+        return {'type': 'content_complete', 'value': 100};
       default:
         return {'type': 'unknown', 'value': 1};
     }

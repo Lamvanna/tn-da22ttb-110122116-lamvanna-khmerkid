@@ -12,6 +12,7 @@ const { generateTokenPair, verifyRefreshToken } = require('../utils/token');
 const { calculateStreak } = require('../utils/helpers');
 const { AppError } = require('../middlewares/errorHandler');
 const { MESSAGES, AUTH_PROVIDERS, XP_CONFIG } = require('../constants');
+const missionService = require('./missionService');
 
 class AuthService {
   /**
@@ -77,6 +78,12 @@ class AuthService {
     // Award daily login XP
     if (isNewDay) {
       user.xp += XP_CONFIG.DAILY_LOGIN + (XP_CONFIG.STREAK_BONUS * streak);
+      // Update daily login mission
+      try {
+        await missionService.updateProgress(user._id, 'daily_login');
+      } catch (missionErr) {
+        console.error('Error updating daily_login mission:', missionErr.message);
+      }
     }
 
     user.lastLoginDate = new Date();
@@ -144,6 +151,12 @@ class AuthService {
 
     if (isNewDay) {
       user.xp += XP_CONFIG.DAILY_LOGIN + (XP_CONFIG.STREAK_BONUS * streak);
+      // Update daily login mission
+      try {
+        await missionService.updateProgress(user._id, 'daily_login');
+      } catch (missionErr) {
+        console.error('Error updating daily_login mission:', missionErr.message);
+      }
     }
 
     user.lastLoginDate = new Date();
@@ -229,6 +242,12 @@ class AuthService {
 
     if (isNewDay) {
       user.xp += XP_CONFIG.DAILY_LOGIN + (XP_CONFIG.STREAK_BONUS * streak);
+      // Update daily login mission
+      try {
+        await missionService.updateProgress(user._id, 'daily_login');
+      } catch (missionErr) {
+        console.error('Error updating daily_login mission:', missionErr.message);
+      }
     }
 
     user.lastLoginDate = new Date();

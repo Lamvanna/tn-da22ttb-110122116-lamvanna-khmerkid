@@ -7,6 +7,7 @@
 const ListeningResult = require('../models/ListeningResult');
 const Lesson = require('../models/Lesson');
 const userService = require('./userService');
+const missionService = require('./missionService');
 const { calculateStars, isPassed } = require('../utils/helpers');
 const { XP_CONFIG, MESSAGES } = require('../constants');
 const { AppError } = require('../middlewares/errorHandler');
@@ -62,6 +63,13 @@ class ListeningService {
 
     if (passed && lessonId) {
       await userService.markLessonCompleted(userId, lessonId);
+    }
+
+    // Update mission progress for listening
+    try {
+      await missionService.updateProgress(userId, 'listen_lesson');
+    } catch (missionErr) {
+      console.error('Error updating mission progress:', missionErr.message);
     }
 
     return {

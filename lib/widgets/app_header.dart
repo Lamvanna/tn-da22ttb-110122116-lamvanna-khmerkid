@@ -61,17 +61,23 @@ class AppHeader extends StatelessWidget {
             child: Row(children: [
               // Back button
               GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: onBack,
                 child: Container(
-                  width: 36.w, height: 36.w,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.10))),
-                  child: Icon(Icons.arrow_back_rounded,
-                    color: Colors.white, size: 18.sp)),
-              ),
+                  width: 44.w,
+                  height: 44.w,
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    width: 36.w, height: 36.w,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.10))),
+                    child: Icon(Icons.arrow_back_rounded,
+                      color: Colors.white, size: 18.sp)),
+                  ),
+                ),
               SizedBox(width: 14.w),
               // Title + subtitle
               Expanded(child: subtitle != null

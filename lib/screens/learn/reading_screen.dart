@@ -1123,12 +1123,22 @@ class _ReadingScreenState extends State<ReadingScreen>
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   GestureDetector(
+                    behavior: HitTestBehavior.opaque,
                     onTap: () => Navigator.pop(context),
-                    child: Container(width: 36.w, height: 36.w,
-                      decoration: const BoxDecoration(shape: BoxShape.circle,
-                        color: Colors.white,
+                    child: Container(
+                      width: 44.w,
+                      height: 44.w,
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        width: 36.w,
+                        height: 36.w,
+                        decoration: const BoxDecoration(shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
+                        child: Icon(Icons.arrow_back_rounded, color: Colors.grey[700], size: 20.w),
                       ),
-                      child: Icon(Icons.arrow_back_rounded, color: Colors.grey[700], size: 20.w))),
+                    ),
+                  ),
                   SizedBox(width: 12.w),
                   Flexible(child: Text(context.translate('learn.reading_title'),
                     maxLines: 1, overflow: TextOverflow.ellipsis,
@@ -1160,7 +1170,7 @@ class _ReadingScreenState extends State<ReadingScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('⭐', style: TextStyle(fontSize: 12.sp)),
+              Image.asset('image/sao.png', width: 14.w, height: 14.h, fit: BoxFit.contain),
               SizedBox(width: 4.w),
               Text('${_score?.totalStars ?? 0}',
                 style: GoogleFonts.plusJakartaSans(
@@ -1181,7 +1191,7 @@ class _ReadingScreenState extends State<ReadingScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('🔥', style: TextStyle(fontSize: 12.sp)),
+              Image.asset('image/Lửa chuổi.png', width: 14.w, height: 14.h, fit: BoxFit.contain),
               SizedBox(width: 4.w),
               Text('${_score?.streak ?? 0}',
                 style: GoogleFonts.plusJakartaSans(

@@ -441,17 +441,23 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
 
           // ─── Back Button (Positioned Left) ───
           Positioned(
-            top: MediaQuery.of(context).padding.top + 14.h,
-            left: 16.w,
+            top: MediaQuery.of(context).padding.top + 8.h,
+            left: 10.w,
             child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: () => Navigator.pop(context),
               child: Container(
-                width: 32.w, height: 32.w,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1)),
-                child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 18.w)),
+                width: 44.w,
+                height: 44.w,
+                alignment: Alignment.center,
+                child: Container(
+                  width: 32.w, height: 32.w,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.16),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1)),
+                  child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 18.w)),
+              ),
             ),
           ),
 

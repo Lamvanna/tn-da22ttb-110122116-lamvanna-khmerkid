@@ -373,12 +373,23 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   GestureDetector(
+                    behavior: HitTestBehavior.opaque,
                     onTap: widget.onBack,
-                    child: Container(width: 36.w, height: 36.w,
-                      decoration: BoxDecoration(shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.15),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.12))),
-                      child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w))),
+                    child: Container(
+                      width: 44.w,
+                      height: 44.w,
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        width: 36.w,
+                        height: 36.w,
+                        decoration: BoxDecoration(shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.15),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                        ),
+                        child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w),
+                      ),
+                    ),
+                  ),
                   SizedBox(width: 12.w),
                   Flexible(child: Text(context.translate('learn.alphabet_board'),
                     maxLines: 1, overflow: TextOverflow.ellipsis,
@@ -417,7 +428,7 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('⭐', style: TextStyle(fontSize: 12.sp)),
+              Image.asset('image/sao.png', width: 14.w, height: 14.h, fit: BoxFit.contain),
               SizedBox(width: 4.w),
               Text(
                 '${_score?.totalStars ?? 0}',
@@ -447,7 +458,7 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('🔥', style: TextStyle(fontSize: 12.sp)),
+              Image.asset('image/Lửa chuổi.png', width: 14.w, height: 14.h, fit: BoxFit.contain),
               SizedBox(width: 4.w),
               Text(
                 '${_score?.streak ?? 0}',

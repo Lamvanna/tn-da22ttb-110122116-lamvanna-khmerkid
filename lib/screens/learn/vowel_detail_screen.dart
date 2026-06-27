@@ -536,87 +536,104 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
               color: Colors.white.withValues(alpha: 0.04)))),
         SafeArea(
           bottom: false,
-          child: Transform.translate(
-            offset: Offset(0, -5.h),
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(8.w, 0, 0, 2.h),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(children: [
-                          IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            icon: Container(
-                              padding: EdgeInsets.all(8.w),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(8.w, 6.h, 105.w, 32.h),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(children: [
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            width: 44.w,
+                            height: 44.w,
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              width: 36.w,
+                              height: 36.w,
                               decoration: BoxDecoration(
+                                shape: BoxShape.circle,
                                 color: Colors.white.withValues(alpha: 0.15),
-                                shape: BoxShape.circle),
-                              child: Icon(Icons.arrow_back_rounded, size: 20.w)),
-                            color: Colors.white, padding: EdgeInsets.zero,
-                            constraints: BoxConstraints(minWidth: 44.w, minHeight: 44.w)),
-                          SizedBox(width: 6.w),
-                          Expanded(child: Text(context.translate('learn.vowel_count', args: {'done': _idx + 1, 'total': _vowels.length}),
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 24.sp, fontWeight: FontWeight.w800, color: Colors.white))),
-                        ]),
-                        Padding(
-                          padding: EdgeInsets.only(left: 54.w, top: 8.h),
-                          child: Row(children: [
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.18),
-                                borderRadius: BorderRadius.circular(12.r)),
-                              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                Text('⭐', style: TextStyle(fontSize: 13.sp)),
-                                SizedBox(width: 4.w),
-                                Text('${_score?.totalStars ?? 0}',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 13.sp, fontWeight: FontWeight.w700, color: Colors.white)),
-                              ]),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                              ),
+                              child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w),
                             ),
-                            SizedBox(width: 6.w),
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.18),
-                                borderRadius: BorderRadius.circular(12.r)),
-                              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                Text('🔥', style: TextStyle(fontSize: 13.sp)),
-                                SizedBox(width: 4.w),
-                                Text('${_score?.streak ?? 0} ngày',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 13.sp, fontWeight: FontWeight.w700, color: Colors.white)),
-                              ]),
-                            ),
-                          ]),
+                          ),
                         ),
-                      ],
-                    ),
-                  ),
-                  // Mascot
-                  Transform.translate(
-                    offset: Offset(-5.w, -5.h),
-                    child: SizedBox(
-                      width: 130.w, height: 75.h,
-                      child: OverflowBox(
-                        maxHeight: 200.w, maxWidth: 200.w,
-                        child: Image.asset('assets/images/elephant_mascot.png',
-                          width: 200.w, height: 200.w, fit: BoxFit.contain),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                        SizedBox(width: 12.w),
+                        Expanded(child: Text(context.translate('learn.vowel_count', args: {'done': _idx + 1, 'total': _vowels.length}),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 20.sp, fontWeight: FontWeight.w800, color: Colors.white))),
+                      ]),
+                     ],
+                   ),
+                 ),
+               ],
+             ),
           ),
         ),
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 4.h,
+          right: 16.w,
+          child: _buildHeaderStats(),
+        ),
       ]),
+    );
+  }
+
+  Widget _buildHeaderStats() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Container(
+          width: 60.w,
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset('image/sao.png', width: 14.w, height: 14.h, fit: BoxFit.contain),
+              SizedBox(width: 4.w),
+              Text('${_score?.totalStars ?? 0}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp, fontWeight: FontWeight.w800,
+                  color: Colors.white, height: 1.0)),
+            ],
+          ),
+        ),
+        SizedBox(height: 5.h),
+        Container(
+          width: 60.w,
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset('image/Lửa chuổi.png', width: 14.w, height: 14.h, fit: BoxFit.contain),
+              SizedBox(width: 4.w),
+              Text('${_score?.streak ?? 0}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp, fontWeight: FontWeight.w800,
+                  color: Colors.white, height: 1.0)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

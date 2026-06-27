@@ -375,7 +375,7 @@ class _PlayScreenState extends State<PlayScreen> with WidgetsBindingObserver {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('⭐', style: TextStyle(fontSize: 12.sp)),
+              Image.asset('image/sao.png', width: 14.w, height: 14.h, fit: BoxFit.contain),
               SizedBox(width: 4.w),
               Text(
                 '${_score?.totalStars ?? 0}', // Dynamically loaded from ScoreService
@@ -405,7 +405,7 @@ class _PlayScreenState extends State<PlayScreen> with WidgetsBindingObserver {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('🔥', style: TextStyle(fontSize: 12.sp)),
+              Image.asset('image/Lửa chuổi.png', width: 14.w, height: 14.h, fit: BoxFit.contain),
               SizedBox(width: 4.w),
               Text(
                 '${_score?.streak ?? 0}',

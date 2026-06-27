@@ -8,6 +8,7 @@ import '../../models/khmer_letter.dart';
 import 'letter_detail_screen.dart';
 import '../test/test_screen.dart';
 import '../../services/auth_service.dart';
+import '../../services/score_service.dart';
 import '../../services/lesson_service.dart';
 import '../../services/storage_service.dart';
 import '../../repositories/progress_repository.dart';
@@ -26,6 +27,7 @@ class _LetterMapViewState extends State<LetterMapView>
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
   late ScrollController _scrollCtrl;
+  ScoreService? _score;
 
   final List<KhmerLetter> _letters = KhmerLetterData.consonants;
 
@@ -59,6 +61,7 @@ class _LetterMapViewState extends State<LetterMapView>
   }
 
   Future<void> _loadScore() async {
+    _score = await ScoreService.getInstance();
     // ─── CHẨN ĐOÁN TIẾN ĐỘ ĐỒNG BỘ ───
     final auth = AuthService();
     debugPrint('🔍 [LetterMap Diagnostic] isAuthenticated: ${auth.isAuthenticated}');
@@ -260,18 +263,14 @@ class _LetterMapViewState extends State<LetterMapView>
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment(-0.5, -1),
-          end: Alignment(0.5, 1),
-          colors: [Color(0xFF1565C0), Color(0xFF42A5F5), Color(0xFF29B6F6)],
-        ),
+        gradient: AppColors.learnHeaderGradient,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(24),
           bottomRight: Radius.circular(24),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1565C0).withValues(alpha: 0.35),
+            color: AppColors.headerDark.withValues(alpha: 0.35),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -304,21 +303,10 @@ class _LetterMapViewState extends State<LetterMapView>
               ),
             ),
           ),
-          // Mascot elephant
-          Positioned(
-            right: 0,
-            bottom: -2.h,
-            child: Image.asset(
-              'image/Voi nguyên âm.png',
-              width: 100.w,
-              height: 100.w,
-              fit: BoxFit.contain,
-            ),
-          ),
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16.w, 4.h, 105.w, 5.h),
+              padding: EdgeInsets.fromLTRB(16.w, 6.h, 105.w, 32.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -327,21 +315,27 @@ class _LetterMapViewState extends State<LetterMapView>
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       GestureDetector(
+                        behavior: HitTestBehavior.opaque,
                         onTap: widget.onBack,
                         child: Container(
-                          width: 36.w,
-                          height: 36.w,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.15),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.12),
+                          width: 44.w,
+                          height: 44.w,
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            width: 36.w,
+                            height: 36.w,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.15),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.12),
+                              ),
                             ),
-                          ),
-                          child: Icon(
-                            Icons.arrow_back_rounded,
-                            color: Colors.white,
-                            size: 20.w,
+                            child: Icon(
+                              Icons.arrow_back_rounded,
+                              color: Colors.white,
+                              size: 20.w,
+                            ),
                           ),
                         ),
                       ),
@@ -360,78 +354,67 @@ class _LetterMapViewState extends State<LetterMapView>
                       ),
                     ],
                   ),
-                  SizedBox(height: 0.h),
-                  Padding(
-                    padding: EdgeInsets.only(left: 48.w),
-                    child: Text(
-                      context.translate('learn.lessons_completed', args: {'done': _doneCount, 'total': _totalLessons}),
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.85),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  // Progress bar
-                  Padding(
-                    padding: EdgeInsets.only(left: 48.w),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            height: 6.h,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.18),
-                              borderRadius: BorderRadius.circular(4.r),
-                            ),
-                            child: Stack(
-                              children: [
-                                FractionallySizedBox(
-                                  alignment: Alignment.centerLeft,
-                                  widthFactor: progress.clamp(0.0, 1.0),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [
-                                          Color(0xFF66BB6A),
-                                          Color(0xFF43A047),
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(4.r),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(
-                                            0xFF43A047,
-                                          ).withValues(alpha: 0.5),
-                                          blurRadius: 6,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 8.w),
-                        Text(
-                          '$pct%',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
           ),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 4.h,
+            right: 16.w,
+            child: _buildHeaderStats(),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildHeaderStats() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Container(
+          width: 60.w,
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset('image/sao.png', width: 14.w, height: 14.h, fit: BoxFit.contain),
+              SizedBox(width: 4.w),
+              Text('${_score?.totalStars ?? 0}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp, fontWeight: FontWeight.w800,
+                  color: Colors.white, height: 1.0)),
+            ],
+          ),
+        ),
+        SizedBox(height: 5.h),
+        Container(
+          width: 60.w,
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset('image/Lửa chuổi.png', width: 14.w, height: 14.h, fit: BoxFit.contain),
+              SizedBox(width: 4.w),
+              Text('${_score?.streak ?? 0}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp, fontWeight: FontWeight.w800,
+                  color: Colors.white, height: 1.0)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

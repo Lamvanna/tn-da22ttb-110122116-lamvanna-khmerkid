@@ -173,14 +173,23 @@ class _ClosedSyllableMapScreenState extends State<ClosedSyllableMapScreen>
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     GestureDetector(
+                      behavior: HitTestBehavior.opaque,
                       onTap: () => Navigator.pop(context),
                       child: Container(
-                        width: 36.w, height: 36.w,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.15),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.12))),
-                        child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w)),
+                        width: 44.w,
+                        height: 44.w,
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          width: 36.w,
+                          height: 36.w,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.15),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                          ),
+                          child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20.w),
+                        ),
+                      ),
                     ),
                     SizedBox(width: 12.w),
                     Flexible(
@@ -221,7 +230,7 @@ class _ClosedSyllableMapScreenState extends State<ClosedSyllableMapScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('⭐', style: TextStyle(fontSize: 12.sp)),
+              Image.asset('image/sao.png', width: 14.w, height: 14.h, fit: BoxFit.contain),
               SizedBox(width: 4.w),
               Text('${_score?.totalStars ?? 0}',
                 style: GoogleFonts.plusJakartaSans(
@@ -242,7 +251,7 @@ class _ClosedSyllableMapScreenState extends State<ClosedSyllableMapScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('🔥', style: TextStyle(fontSize: 12.sp)),
+              Image.asset('image/Lửa chuổi.png', width: 14.w, height: 14.h, fit: BoxFit.contain),
               SizedBox(width: 4.w),
               Text('${_score?.streak ?? 0}',
                 style: GoogleFonts.plusJakartaSans(

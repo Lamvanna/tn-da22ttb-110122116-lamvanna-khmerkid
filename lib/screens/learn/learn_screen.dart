@@ -51,6 +51,119 @@ class _LearnScreenState extends State<LearnScreen> {
     });
   }
 
+  String _getZoneBtnText(int zoneId, double prog, bool isComingSoon) {
+    if (isComingSoon) return context.translate('learning_path.coming_soon');
+    if (prog >= 1.0) {
+      final claimed = _score?.isRewardClaimed(zoneId) ?? false;
+      return claimed ? "Đã nhận" : "Nhận phần thưởng";
+    }
+    return prog > 0.0 ? context.translate('learning_path.continue') : context.translate('learning_path.start');
+  }
+
+  void _showRewardDialog(_Zone zone) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28.r)),
+          elevation: 10,
+          backgroundColor: Colors.white,
+          child: Container(
+            padding: EdgeInsets.all(24.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Top header icon (trophy/gift)
+                Container(
+                  width: 90.w,
+                  height: 90.w,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFF8E1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Image.asset('image/sao.png', width: 50.w, height: 50.h),
+                  ),
+                ),
+                SizedBox(height: 18.h),
+                Text(
+                  'Chúc mừng bé! 🎉',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 24.sp,
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFFFFA000),
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                Text(
+                  'Bé đã hoàn thành xuất sắc lộ trình:',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                SizedBox(height: 6.h),
+                Text(
+                  zone.title,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w800,
+                    color: zone.color,
+                  ),
+                ),
+                SizedBox(height: 20.h),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (_score != null) {
+                      await _score!.addStars(zone.stars);
+                      await _score!.claimReward(zone.n);
+                      await _loadScore(); // Reload score & update UI
+                    }
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Bé đã nhận thành công +${zone.stars} sao! ⭐',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          backgroundColor: const Color(0xFF4CAF50),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4CAF50),
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 14.h),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+                    elevation: 3,
+                  ),
+                  child: Text(
+                    'Nhận +${zone.stars} Sao 🌟',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return _buildOverview(context);
@@ -85,51 +198,52 @@ class _LearnScreenState extends State<LearnScreen> {
     final doneVocab = _score?.vocabLearned ?? 0;
     final vocabProg = totalVocab > 0 ? doneVocab / totalVocab : 0.0;
 
+    final readingProg = (_score?.readingLearned ?? 0) / 5;
+
     return [
       _Zone(n: 1, title: context.translate('learning_path.consonants'), sub: context.translate('learning_path.consonants_sub'),
         icon: Icons.abc_rounded, img: 'image/Phụ âm.png', prog: lp, total: 33, done: _score?.lettersLearned ?? 0,
-        color: const Color(0xFF2979FF), stars: 10, btn: context.translate('learning_path.start'),
+        color: const Color(0xFF2979FF), stars: 100, btn: _getZoneBtnText(1, lp, false),
         onTap: () => _navigateTo(LetterMapView(onBack: () => Navigator.pop(context)))),
       _Zone(n: 2, title: context.translate('learning_path.vowels'), sub: context.translate('learning_path.vowels_sub'),
         icon: Icons.record_voice_over_rounded, img: 'image/Nguyên âm.png', prog: vp, total: 24, done: _score?.vowelsLearned ?? 0,
-        color: const Color(0xFFFF1744), stars: 10, btn: context.translate('learning_path.start'),
+        color: const Color(0xFFFF1744), stars: 100, btn: _getZoneBtnText(2, vp, false),
         onTap: () => _navigateTo(VowelScreen(onBack: () => Navigator.pop(context)))),
       _Zone(n: 3, title: context.translate('learning_path.o_o'), sub: context.translate('learning_path.o_o_sub'),
         icon: Icons.text_fields_rounded, img: 'image/Học phụ âm o và ô.png', prog: o_oProg, total: totalO_O, done: doneO_O,
-        color: const Color(0xFF43A047), stars: 10, btn: context.translate('learning_path.start'),
+        color: const Color(0xFF43A047), stars: 100, btn: _getZoneBtnText(3, o_oProg, false),
         onTap: () => _navigateTo(ConsonantSeriesScreen(onBack: () => Navigator.pop(context)))),
       _Zone(n: 4, title: context.translate('learning_path.numbers'), sub: context.translate('learning_path.numbers_sub'),
         icon: Icons.calculate_rounded, img: 'image/Học số.png', prog: numProg, total: totalNumbers, done: doneNumbers,
-        color: const Color(0xFF00ACC1), stars: 10, btn: context.translate('learning_path.start'),
+        color: const Color(0xFF00ACC1), stars: 100, btn: _getZoneBtnText(4, numProg, false),
         onTap: () => _navigateTo(NumberMapScreen(onBack: () => Navigator.pop(context)))),
       _Zone(n: 5, title: context.translate('learning_path.spelling'), sub: context.translate('learning_path.spelling_sub'),
         icon: Icons.spellcheck_rounded, img: 'image/Đánh vần.png', prog: spellProg, total: totalSpelling, done: doneSpelling,
-        color: const Color(0xFFF57C00), stars: 15, btn: context.translate('learning_path.start'),
+        color: const Color(0xFFF57C00), stars: 150, btn: _getZoneBtnText(5, spellProg, false),
         onTap: () => _navigateTo(const SpellingHubScreen())),
       _Zone(n: 6, title: context.translate('learning_path.diacritics'), sub: context.translate('learning_path.diacritics_sub'),
         icon: Icons.format_shapes_rounded, img: 'image/Học dấu.png', prog: diacritProg, total: totalDiacritical, done: doneDiacritical,
-        color: const Color(0xFFFFD600), stars: 10, btn: context.translate('learning_path.start'),
+        color: const Color(0xFFFFD600), stars: 100, btn: _getZoneBtnText(6, diacritProg, false),
         onTap: () => _navigateTo(DiacriticalMapScreen(onBack: () => Navigator.pop(context)))),
       _Zone(n: 7, title: context.translate('learning_path.reading'), sub: context.translate('learning_path.reading_sub'),
-        icon: Icons.auto_stories_rounded, img: 'image/Tập đọc.png',
-        prog: (_score?.readingLearned ?? 0) / 5, total: 5, done: _score?.readingLearned ?? 0,
-        color: const Color(0xFF00B0FF), stars: 15, btn: context.translate('learning_path.start'),
+        icon: Icons.auto_stories_rounded, img: 'image/Tập đọc.png', prog: readingProg, total: 5, done: _score?.readingLearned ?? 0,
+        color: const Color(0xFF00B0FF), stars: 150, btn: _getZoneBtnText(7, readingProg, false),
         onTap: () => _navigateTo(ReadingMapScreen(onBack: () => Navigator.pop(context)))),
       _Zone(n: 8, title: context.translate('learning_path.writing'), sub: context.translate('learning_path.writing_sub'),
         icon: Icons.draw_rounded, img: 'image/Tập viết.png', prog: writeProg, total: totalWriting, done: doneWriting,
-        color: const Color(0xFFFF9100), stars: 15, btn: context.translate('learning_path.start'),
+        color: const Color(0xFFFF9100), stars: 150, btn: _getZoneBtnText(8, writeProg, false),
         onTap: () => _navigateTo(const WritingMapScreen())),
       _Zone(n: 9, title: context.translate('learning_path.vocabulary'), sub: context.translate('learning_path.vocabulary_sub'),
         icon: Icons.book_rounded, img: 'image/Sách.png', prog: vocabProg, total: totalVocab, done: doneVocab,
-        color: const Color(0xFF7E57C2), stars: 10, btn: context.translate('learning_path.start'),
+        color: const Color(0xFF7E57C2), stars: 100, btn: _getZoneBtnText(9, vocabProg, false),
         onTap: () => _navigateTo(const VocabularyScreen())),
       _Zone(n: 10, title: context.translate('learning_path.reading_comp'), sub: context.translate('learning_path.reading_comp_sub'),
         icon: Icons.menu_book_rounded, img: 'image/Đọc hiểu.png', prog: 0, total: 25, done: 0,
-        color: const Color(0xFFFF4081), stars: 20, btn: context.translate('learning_path.coming_soon'), isComingSoon: true,
+        color: const Color(0xFFFF4081), stars: 200, btn: _getZoneBtnText(10, 0, true), isComingSoon: true,
         onTap: () => _showComingSoon(context)),
       _Zone(n: 11, title: context.translate('learning_path.culture'), sub: context.translate('learning_path.culture_sub'),
         icon: Icons.temple_buddhist_rounded, img: 'image/Khám phá văn hóa.png', prog: 0, total: 20, done: 0,
-        color: const Color(0xFF536DFE), stars: 20, btn: context.translate('learning_path.coming_soon'), isComingSoon: true,
+        color: const Color(0xFF536DFE), stars: 200, btn: _getZoneBtnText(11, 0, true), isComingSoon: true,
         onTap: () => _showComingSoon(context)),
     ];
   }
@@ -287,7 +401,7 @@ class _LearnScreenState extends State<LearnScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('⭐', style: TextStyle(fontSize: 12.sp)),
+              Image.asset('image/sao.png', width: 14.w, height: 14.h, fit: BoxFit.contain),
               SizedBox(width: 4.w),
               Text(
                 '${_score?.totalStars ?? 0}',
@@ -317,7 +431,7 @@ class _LearnScreenState extends State<LearnScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('🔥', style: TextStyle(fontSize: 12.sp)),
+              Image.asset('image/Lửa chuổi.png', width: 14.w, height: 14.h, fit: BoxFit.contain),
               SizedBox(width: 4.w),
               Text(
                 '${_score?.streak ?? 0}',
@@ -337,73 +451,74 @@ class _LearnScreenState extends State<LearnScreen> {
 
   // ── Continue Learning Card ──
   Widget _buildContinueCard(_Zone zone) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
-      padding: EdgeInsets.all(14.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        boxShadow: [BoxShadow(
-          color: Colors.black.withValues(alpha: 0.06),
-          blurRadius: 20.r, offset: Offset(0, 6.h))]),
-      child: Column(children: [
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Padding(
-            padding: EdgeInsets.only(top: 10.h),
-            child: SizedBox(width: 150.w, height: 150.h,
-              child: Image.asset('image/Sách.png', fit: BoxFit.contain)),
-          ),
-          SizedBox(width: 12.w),
-          // RIGHT: title + progress + reward
-          Expanded(child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(context.translate('learning_path.continue'), style: GoogleFonts.plusJakartaSans(
-                fontSize: 18.sp, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
-              SizedBox(height: 8.h),
-              Row(children: [
-                SizedBox(width: 65.w, height: 65.w,
-                  child: TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0, end: zone.prog.clamp(0, 1).toDouble()),
-                    duration: const Duration(milliseconds: 800),
-                    curve: Curves.easeOutCubic,
-                    builder: (context, value, _) => Stack(alignment: Alignment.center, children: [
-                      SizedBox(width: 65.w, height: 65.w, child: CircularProgressIndicator(
-                        value: 1.0, strokeWidth: 5.w,
-                        color: const Color(0xFFFFA726).withValues(alpha: 0.15))),
-                      SizedBox(width: 65.w, height: 65.w, child: CircularProgressIndicator(
-                        value: value, strokeWidth: 5.w,
-                        color: const Color(0xFFFFA726), strokeCap: StrokeCap.round)),
-                      Column(mainAxisSize: MainAxisSize.min, children: [
-                        Text('${(value * 100).toInt()}%',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 17.sp, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
-                        Text(context.translate('learning_path.lessons_count', args: {'done': zone.done, 'total': zone.total}), style: GoogleFonts.plusJakartaSans(
-                          fontSize: 8.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: zone.onTap,
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 16.w),
+        padding: EdgeInsets.all(14.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24.r),
+          boxShadow: [BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 20.r, offset: Offset(0, 6.h))]),
+        child: Column(children: [
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Padding(
+              padding: EdgeInsets.only(top: 10.h),
+              child: SizedBox(width: 150.w, height: 150.h,
+                child: Image.asset('image/Sách.png', fit: BoxFit.contain)),
+            ),
+            SizedBox(width: 12.w),
+            // RIGHT: title + progress + reward
+            Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(context.translate('learning_path.continue'), style: GoogleFonts.plusJakartaSans(
+                  fontSize: 18.sp, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+                SizedBox(height: 8.h),
+                Row(children: [
+                  SizedBox(width: 65.w, height: 65.w,
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: zone.prog.clamp(0, 1).toDouble()),
+                      duration: const Duration(milliseconds: 800),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, _) => Stack(alignment: Alignment.center, children: [
+                        SizedBox(width: 65.w, height: 65.w, child: CircularProgressIndicator(
+                          value: 1.0, strokeWidth: 5.w,
+                          color: const Color(0xFFFFA726).withValues(alpha: 0.15))),
+                        SizedBox(width: 65.w, height: 65.w, child: CircularProgressIndicator(
+                          value: value, strokeWidth: 5.w,
+                          color: const Color(0xFFFFA726), strokeCap: StrokeCap.round)),
+                        Column(mainAxisSize: MainAxisSize.min, children: [
+                          Text('${(value * 100).toInt()}%',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 17.sp, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+                          Text(context.translate('learning_path.lessons_count', args: {'done': zone.done, 'total': zone.total}), style: GoogleFonts.plusJakartaSans(
+                            fontSize: 8.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                        ]),
                       ]),
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    width: 65.w, height: 65.w,
+                    padding: EdgeInsets.all(6.w),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF8E1), borderRadius: BorderRadius.circular(14.r)),
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Image.asset('image/sao.png', width: 18.w, height: 18.h),
+                      SizedBox(height: 2.h),
+                      Text('+${zone.stars}', style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.sp, fontWeight: FontWeight.w800, color: const Color(0xFFF0A030))),
+                      Text(context.translate('learning_path.points'), style: GoogleFonts.plusJakartaSans(
+                        fontSize: 9.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
                     ]),
                   ),
-                ),
-                const Spacer(),
+                ]),
+                SizedBox(height: 8.h),
                 Container(
-                  width: 65.w, height: 65.w,
-                  padding: EdgeInsets.all(6.w),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF8E1), borderRadius: BorderRadius.circular(14.r)),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Image.asset('image/sao.png', width: 18.w, height: 18.h),
-                    SizedBox(height: 2.h),
-                    Text('+${zone.stars}', style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12.sp, fontWeight: FontWeight.w800, color: const Color(0xFFF0A030))),
-                    Text(context.translate('learning_path.points'), style: GoogleFonts.plusJakartaSans(
-                      fontSize: 9.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-                  ]),
-                ),
-              ]),
-              SizedBox(height: 8.h),
-              GestureDetector(
-                onTap: zone.onTap,
-                child: Container(
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(vertical: 10.h),
                   decoration: BoxDecoration(
@@ -420,11 +535,11 @@ class _LearnScreenState extends State<LearnScreen> {
                     Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18.sp),
                   ]),
                 ),
-              ),
-            ],
-          )),
+              ],
+            )),
+          ]),
         ]),
-      ]),
+      ),
     );
   }
 
@@ -452,104 +567,119 @@ class _LearnScreenState extends State<LearnScreen> {
           ])),
           SizedBox(width: 10.w),
           // Card
-          Expanded(child: Container(
-            margin: EdgeInsets.only(bottom: 14.h),
-            padding: EdgeInsets.all(14.w),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20.r),
-              boxShadow: [BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 12.r, offset: Offset(0, 4.h))]),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-              // Left: Image or Icon
-              Container(
-                width: 85.w, height: 90.h,
-                decoration: BoxDecoration(
-                  color: zone.color.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(18.r)),
-                child: zone.img != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(18.r),
-                      child: Padding(
-                        padding: EdgeInsets.all(8.w),
-                        child: Image.asset(zone.img!, fit: BoxFit.contain)))
-                  : Icon(zone.icon, color: zone.color, size: 36.sp),
-              ),
-              SizedBox(width: 12.w),
-              // Right: content
-              Expanded(child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Row 1: Title + Stars badge
-                  Row(children: [
-                    Expanded(child: Text(zone.title, 
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 16.sp, 
-                        fontWeight: FontWeight.w800, 
-                        color: AppColors.textPrimary))),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF8E1), 
-                        borderRadius: BorderRadius.circular(10.r)),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Image.asset('image/sao.png', width: 14.w, height: 14.h),
-                        SizedBox(width: 3.w),
-                        Text('+${zone.stars}', style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12.sp, 
-                          fontWeight: FontWeight.w700, 
-                          color: const Color(0xFFF0A030))),
-                      ]),
-                    ),
-                  ]),
-                  SizedBox(height: 3.h),
-                  // Row 2: Subtitle
-                  Text(zone.sub, style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11.sp, 
-                    fontWeight: FontWeight.w500, 
-                    color: AppColors.textSecondary)),
-                  SizedBox(height: 6.h),
-                  // Row 3: Progress % & Button on the same row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Left: Progress % and count
-                      Flexible(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('${(zone.prog * 100).toInt()}%', 
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11.sp, 
-                                fontWeight: FontWeight.w800, 
-                                color: zone.color)),
-                            SizedBox(width: 4.w),
-                            Flexible(
-                              child: Text(
-                                context.translate('learning_path.lessons_count', args: {'done': zone.done, 'total': zone.total}), 
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 10.sp, 
-                                  fontWeight: FontWeight.w600, 
-                                  color: AppColors.textSecondary)),
-                            ),
-                          ],
-                        ),
+          Expanded(child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              if (zone.btn == "Nhận phần thưởng") {
+                _showRewardDialog(zone);
+              } else {
+                zone.onTap?.call();
+              }
+            },
+            child: Container(
+              margin: EdgeInsets.only(bottom: 14.h),
+              padding: EdgeInsets.all(14.w),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20.r),
+                boxShadow: [BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 12.r, offset: Offset(0, 4.h))]),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                // Left: Image or Icon
+                Container(
+                  width: 85.w, height: 90.h,
+                  decoration: BoxDecoration(
+                    color: zone.color.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(18.r)),
+                  child: zone.img != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(18.r),
+                        child: Padding(
+                          padding: EdgeInsets.all(8.w),
+                          child: Image.asset(zone.img!, fit: BoxFit.contain)))
+                    : Icon(zone.icon, color: zone.color, size: 36.sp),
+                ),
+                SizedBox(width: 12.w),
+                // Right: content
+                Expanded(child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Row 1: Title + Stars badge
+                    Row(children: [
+                      Expanded(child: Text(zone.title, 
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 16.sp, 
+                          fontWeight: FontWeight.w800, 
+                          color: AppColors.textPrimary))),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF8E1), 
+                          borderRadius: BorderRadius.circular(10.r)),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Image.asset('image/sao.png', width: 14.w, height: 14.h),
+                          SizedBox(width: 3.w),
+                          Text('+${zone.stars}', style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12.sp, 
+                            fontWeight: FontWeight.w700, 
+                            color: const Color(0xFFF0A030))),
+                        ]),
                       ),
-                      SizedBox(width: 4.w),
-                      // Right: Button
-                      GestureDetector(
-                        onTap: zone.onTap,
-                        child: Container(
+                    ]),
+                    SizedBox(height: 3.h),
+                    // Row 2: Subtitle
+                    Text(zone.sub, style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.sp, 
+                      fontWeight: FontWeight.w500, 
+                      color: AppColors.textSecondary)),
+                    SizedBox(height: 6.h),
+                    // Row 3: Progress % & Button on the same row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Left: Progress % and count
+                        Flexible(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('${(zone.prog * 100).toInt()}%', 
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11.sp, 
+                                  fontWeight: FontWeight.w800, 
+                                  color: zone.color)),
+                              SizedBox(width: 4.w),
+                              Flexible(
+                                child: Text(
+                                  context.translate('learning_path.lessons_count', args: {'done': zone.done, 'total': zone.total}), 
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 10.sp, 
+                                    fontWeight: FontWeight.w600, 
+                                    color: AppColors.textSecondary)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: 4.w),
+                        // Right: Button
+                        Container(
                           padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
                           decoration: BoxDecoration(
-                            color: zone.isComingSoon ? zone.color.withValues(alpha: 0.4) : zone.color,
+                            color: zone.btn == "Nhận phần thưởng"
+                              ? const Color(0xFF4CAF50)
+                              : zone.btn == "Đã nhận"
+                                ? const Color(0xFF90A4AE)
+                                : (zone.isComingSoon ? zone.color.withValues(alpha: 0.4) : zone.color),
                             borderRadius: BorderRadius.circular(10.r),
                             boxShadow: [
                               BoxShadow(
-                                color: zone.color.withValues(alpha: 0.15),
+                                color: zone.btn == "Nhận phần thưởng"
+                                  ? const Color(0xFF4CAF50).withValues(alpha: 0.3)
+                                  : zone.btn == "Đã nhận"
+                                    ? Colors.black12
+                                    : zone.color.withValues(alpha: 0.15),
                                 blurRadius: 6.r,
                                 offset: Offset(0, 2.h),
                               ),
@@ -562,6 +692,10 @@ class _LearnScreenState extends State<LearnScreen> {
                                 Padding(
                                   padding: EdgeInsets.only(right: 4.w),
                                   child: Icon(Icons.lock_rounded, size: 11.sp, color: Colors.white)),
+                              if (zone.btn == "Nhận phần thưởng")
+                                Padding(
+                                  padding: EdgeInsets.only(right: 4.w),
+                                  child: Icon(Icons.card_giftcard_rounded, size: 11.sp, color: Colors.white)),
                               Text(zone.btn, 
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 10.sp, 
@@ -570,12 +704,12 @@ class _LearnScreenState extends State<LearnScreen> {
                             ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
-              )),
-            ]),
+                      ],
+                    ),
+                  ],
+                )),
+              ]),
+            ),
           )),
         ])),
     );

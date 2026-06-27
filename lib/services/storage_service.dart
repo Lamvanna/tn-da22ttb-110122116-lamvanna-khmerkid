@@ -41,6 +41,14 @@ class StorageService {
     await setStars(current + amount);
   }
 
+  bool isRewardClaimed(int zoneId) {
+    return _prefs?.getBool(_uKey('reward_claimed_zone_$zoneId')) ?? false;
+  }
+
+  Future<void> claimReward(int zoneId) async {
+    await _prefs?.setBool(_uKey('reward_claimed_zone_$zoneId'), true);
+  }
+
   Future<bool> spendStars(int amount) async {
     final current = getStars();
     if (current >= amount) {

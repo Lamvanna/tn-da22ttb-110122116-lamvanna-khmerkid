@@ -203,6 +203,14 @@ class ScoreService {
 
   Future<void> addStars(int amount) async => await _storage.addStars(amount);
   Future<void> addXp(int amount) async => await _storage.addXp(amount);
+
+  bool isRewardClaimed(int zoneId) {
+    return _storage.isRewardClaimed(zoneId);
+  }
+
+  Future<void> claimReward(int zoneId) async {
+    await _storage.claimReward(zoneId);
+  }
   Future<void> updateStreak() async => await _storage.updateStreak();
 
   Future<void> addPurchasedItem(String itemKey) async {

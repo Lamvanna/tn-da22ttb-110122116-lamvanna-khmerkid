@@ -1,4 +1,0 @@
-- Organized into three distinct sub-directories: `translations/` for JSON-based i18n resources, `images/` for static UI graphics (e.g., mascots, splash screens), and `audio/khmer/` for structured Khmer pronunciation assets.
-- `translations/languages.json` serves as the central registry for supported locales, defining metadata such as `fontFamily` (e.g., 'Kantumruy Pro' for Khmer) and RTL status.
-- Individual locale files (e.g., `en.json`, `km.json`) share a consistent hierarchical key structure (e.g., `common`, `nav`, `games`) to ensure type-safe or consistent lookups in the consuming frontend code.
-- Audio assets are categorized by linguistic components (`consonants`, `vowels`, `numbers`) with `.gitkeep` files indicating a placeholder strategy for future native-speaker recordings, falling back to TTS as noted in `README.md`.

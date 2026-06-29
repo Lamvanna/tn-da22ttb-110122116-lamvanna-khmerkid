@@ -1,1 +1,0 @@
-Flutter (Dart) for shared UI/logic; Kotlin (Android) and Swift (iOS) for native host entry points; MethodChannel for native-Dart communication.

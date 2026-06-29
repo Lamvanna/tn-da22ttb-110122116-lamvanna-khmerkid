@@ -1,2 +1,0 @@
-- Singleton pattern for core services (AuthService, SyncManager, LanguageManager) to ensure global state consistency.
-- Offline-first architecture using local database (Isar) and sync queues, with background synchronization triggered by connectivity changes.

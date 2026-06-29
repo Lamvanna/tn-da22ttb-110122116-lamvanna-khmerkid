@@ -1,2 +1,0 @@
-- Backend database initialization is handled via unified seeding scripts (`npm run seed`) that populate lessons, missions, and game questions required for the client's learning paths.
-- The Flutter client performs an automatic server detection and auto-login sequence at startup (`AuthService.detectActiveServer`) to ensure seamless connectivity before rendering the main interface.

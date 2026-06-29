@@ -1,1 +1,0 @@
-Socket.io for real-time handwriting feedback synchronization; Isar for high-performance local offline storage on the client.

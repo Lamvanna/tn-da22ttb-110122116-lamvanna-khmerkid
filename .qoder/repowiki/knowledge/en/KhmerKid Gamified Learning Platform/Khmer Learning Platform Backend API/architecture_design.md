@@ -1,5 +1,0 @@
-- Adopts a standard MVC architecture with an additional Service layer for business logic, orchestrated by `server.js` which initializes Express, MongoDB (Mongoose), and Socket.io.
-- Routes are aggregated in `src/routes/index.js` and mounted under the `/api` prefix, delegating to domain-specific controllers (e.g., `authController`, `lessonController`).
-- Controllers delegate complex operations to services (e.g., `authService`, `progressService`) while models in `src/models` handle data schema and Mongoose hooks.
-- Real-time features (XP updates, writing exercises) are managed via a dedicated Socket.io module (`src/sockets`) that shares JWT authentication logic with HTTP routes.
-- Cross-cutting concerns like authentication (`src/middlewares/auth.js`), error handling (`src/middlewares/errorHandler.js`), and validation are implemented as Express middleware.

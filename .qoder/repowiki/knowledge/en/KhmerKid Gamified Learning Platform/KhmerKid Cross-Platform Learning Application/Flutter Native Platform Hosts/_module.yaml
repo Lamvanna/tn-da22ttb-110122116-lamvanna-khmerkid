@@ -1,9 +1,0 @@
-schema_version: 1
-module_path: frontend/native_platforms
-title: Flutter Native Platform Hosts
-scope:
-    - android/
-    - ios/
-source_files: []
-depends_on: []
-related_to: []

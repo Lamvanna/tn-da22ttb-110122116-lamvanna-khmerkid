@@ -1,1 +1,0 @@
-Provides Android and iOS host entry points with custom native method channels for audio recording and platform-specific configuration.

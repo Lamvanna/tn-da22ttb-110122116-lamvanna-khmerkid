@@ -1,5 +1,0 @@
-- Entry point: `lib/main.dart` initializes local database (Isar), connectivity, and auth services before running the root widget.
-- Data Layer: Implements an Offline-First pattern using `lib/repositories/` (e.g., `ProgressRepository`) to coordinate between `lib/data/local/` (Isar DB via `LocalDatabase`) and remote APIs.
-- Service Layer: `lib/services/` handles core business logic including `AuthService` (with auto-discovery of backend IPs), `SyncManager` (background queue processing), and specialized services for audio, handwriting, and notifications.
-- UI Layer: Organized into `lib/screens/` for full-page views (Auth, Learn, Play, Admin) and `lib/widgets/` for reusable components (grids, headers, feedback dialogs).
-- State Management: Relies on `ChangeNotifier` (e.g., `AuthService`) and `StreamController` (e.g., `SyncManager`, `ProgressRepository`) for reactive updates.

@@ -1,4 +1,0 @@
-- **Unified Entry Point**: `lib/main.dart` initializes core services (Database, Connectivity, Localization, Notifications) in parallel before launching the UI, ensuring a consistent startup state across platforms.
-- **Shared Business Logic**: The `lib/` directory contains all platform-agnostic logic (Auth, Sync, Handwriting Analysis, Repositories), which is consumed by both Android and iOS hosts via Flutter's engine binding.
-- **Native Interop Boundary**: Platform-specific capabilities (e.g., Audio Recording on Android via `MethodChannel`) are exposed through a standardized interface, allowing the shared Dart code to invoke native features without coupling to specific OS implementations.
-- **Asset & Localization Integration**: Static assets (audio, images, translations) in `assets/` are referenced by the shared `LanguageManager` and UI widgets, ensuring consistent branding and multilingual support across all target platforms.

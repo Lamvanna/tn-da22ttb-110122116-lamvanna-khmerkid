@@ -1,1 +1,0 @@
-Provides localized UI strings, language metadata, and Khmer audio asset placeholders for the KhmerKid educational application.

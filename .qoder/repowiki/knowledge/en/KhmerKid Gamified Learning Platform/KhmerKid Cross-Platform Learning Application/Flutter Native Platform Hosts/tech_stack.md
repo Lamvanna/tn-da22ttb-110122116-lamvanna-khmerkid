@@ -1,1 +1,0 @@
-Kotlin for Android native logic, Swift for iOS entry points, Gradle Kotlin DSL for Android build automation.

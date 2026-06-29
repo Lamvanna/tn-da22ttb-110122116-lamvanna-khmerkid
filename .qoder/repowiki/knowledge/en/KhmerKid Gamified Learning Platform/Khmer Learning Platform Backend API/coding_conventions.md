@@ -1,3 +1,0 @@
-- Controllers act as thin layers that delegate all business logic to service classes and use centralized response helpers (`sendSuccess`, `sendError`) from `src/utils/response.js`.
-- Services are implemented as singleton classes exported as instantiated objects (e.g., `module.exports = new AuthService()`) to maintain stateless utility across the application.
-- API responses consistently follow a standardized JSON structure containing `success` (boolean), `message` (string), and optional `data` or `pagination` fields.

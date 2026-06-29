@@ -1,14 +1,13 @@
-# PHÁT TRIỂN ỨNG DỤNG "KHMERKID" HỖ TRỢ HỌC CHỮ KHMER CHO HỌC SINH TIỂU HỌC
+# PHÁT TRIỂN ỨNG DỤNG HỌC CHỮ KHMER CHO HỌC SINH TIỂU HỌC
 
 ## 📋 Thông tin chung
 
 | Thông tin | Chi tiết |
 |---|---|
-| **Tên đề tài** | Phát triển ứng dụng "KhmerKid" hỗ trợ học chữ Khmer cho học sinh tiểu học |
-| **Sinh viên thực hiện** | *(Cập nhật tên sinh viên)* |
-| **MSSV** | *(Cập nhật MSSV)* |
-| **Lớp** | *(Cập nhật mã lớp)* |
-| **Giảng viên hướng dẫn** | *(Cập nhật tên GVHD)* |
+| **Tên đề tài** | Phát triển ứng dụng học chữ Khmer cho học sinh tiểu học |
+| **Sinh viên thực hiện** | *Lâm Văn Na* |
+| **MSSV** | *110122116* |
+| **Lớp** | *DA22TTB* |
 | **Năm học** | 2025 – 2026 |
 
 ---
@@ -253,7 +252,7 @@ flutter build apk --release
 
 ## 📞 Liên hệ
 
-- **Email**: *(Cập nhật email sinh viên)*
+- **Email**: *(lamvanna@gmail.com*
 - **GitHub**: [github.com/Lamvanna](https://github.com/Lamvanna)
 
 ---

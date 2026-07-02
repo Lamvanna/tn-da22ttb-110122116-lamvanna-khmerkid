@@ -29,9 +29,11 @@ class _AdminLessonsScreenState extends State<AdminLessonsScreen> {
     null: 'Tất cả',
     'consonant': 'Phụ âm',
     'vowel': 'Nguyên âm',
-    'spelling': 'Ghép vần',
-    'closed_syllable': 'Vần đóng',
-    'coeng': 'Chữ ghép',
+    'consonant_series': 'Âm O và Ô',
+    'spelling': 'Ghép phụ âm + nguyên âm',
+    'diacritical': 'Ghép vần có dấu',
+    'closed_syllable': 'Ghép phụ âm + phụ âm',
+    'coeng': 'Ghép với phụ âm có chân',
     'vocabulary': 'Từ vựng',
     'sentence': 'Câu',
     'number': 'Số',
@@ -40,9 +42,11 @@ class _AdminLessonsScreenState extends State<AdminLessonsScreen> {
   static const _typeColors = {
     'consonant': AppColors.violet,
     'vowel': Color(0xFF0084FF),
+    'consonant_series': Color(0xFF43A047),
     'spelling': Color(0xFF7F39FB),
     'closed_syllable': Color(0xFF0084FF),
     'coeng': Color(0xFF06B6D4),
+    'diacritical': Color(0xFFFFD600),
     'vocabulary': AppColors.tertiary,
     'sentence': AppColors.coral,
     'number': AppColors.secondary,
@@ -51,9 +55,11 @@ class _AdminLessonsScreenState extends State<AdminLessonsScreen> {
   static const _typeIcons = {
     'consonant': Icons.sort_by_alpha_rounded,
     'vowel': Icons.font_download_rounded,
+    'consonant_series': Icons.text_fields_rounded,
     'spelling': Icons.spellcheck_rounded,
     'closed_syllable': Icons.space_bar_rounded,
     'coeng': Icons.layers_rounded,
+    'diacritical': Icons.format_shapes_rounded,
     'vocabulary': Icons.menu_book_rounded,
     'sentence': Icons.text_fields_rounded,
     'number': Icons.calculate_rounded,
@@ -317,12 +323,16 @@ class _AdminLessonsScreenState extends State<AdminLessonsScreen> {
                     size: 16.sp,
                   ),
                   SizedBox(width: 8.w),
-                  Text(
-                    label,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -731,12 +741,50 @@ class _LessonFormPageState extends State<_LessonFormPage> {
     'Ghép vần có dấu',
   ];
 
+  static const Map<String, Map<String, String>> _consonantDefaults = {
+    'ក': {'khmer': 'កុក', 'romanized': 'kok', 'meaning': 'con cò'},
+    'ខ': {'khmer': 'ខ្លា', 'romanized': 'khla', 'meaning': 'con hổ'},
+    'គ': {'khmer': 'គោ', 'romanized': 'ko', 'meaning': 'con bò'},
+    'ឃ': {'khmer': 'ឃ្មុំ', 'romanized': 'khmum', 'meaning': 'con ong'},
+    'ង': {'khmer': 'ង៉ាន', 'romanized': 'ngan', 'meaning': 'con ngỗng'},
+    'ច': {'khmer': 'ចាន', 'romanized': 'chan', 'meaning': 'cái đĩa/chén'},
+    'ឆ': {'khmer': 'ឆ្មា', 'romanized': 'chhma', 'meaning': 'con mèo'},
+    'ជ': {'khmer': 'ជ្រូក', 'romanized': 'chrouk', 'meaning': 'con heo'},
+    'ឈ': {'khmer': 'ឈូស', 'romanized': 'chhous', 'meaning': 'bào gỗ'},
+    'ញ': {'khmer': 'ញញួរ', 'romanized': 'nho-nhoar', 'meaning': 'cái búa'},
+    'ដ': {'khmer': 'ដំរី', 'romanized': 'dom-rey', 'meaning': 'con voi'},
+    'ឋ': {'khmer': 'ឋានសួគ៌', 'romanized': 'than-suor', 'meaning': 'thiên đàng'},
+    'ឌ': {'khmer': 'ឌីណូស័រ', 'romanized': 'di-no-sor', 'meaning': 'khủng long'},
+    'ឍ': {'khmer': 'ឍាទរ', 'romanized': 'thoa-dor', 'meaning': 'người già'},
+    'ណ': {'khmer': 'ណែនាំ', 'romanized': 'nae-nam', 'meaning': 'hướng dẫn'},
+    'ត': {'khmer': 'តា', 'romanized': 'ta', 'meaning': 'ông ngoại'},
+    'ថ': {'khmer': 'ថូ', 'romanized': 'tho', 'meaning': 'bình hoa'},
+    'ទ': {'khmer': 'ទា', 'romanized': 'tea', 'meaning': 'con vịt'},
+    'ធ': {'khmer': 'ធ្មេញ', 'romanized': 'thmenh', 'meaning': 'răng'},
+    'ន': {'khmer': 'នាឡិកា', 'romanized': 'nea-li-ka', 'meaning': 'đồng hồ'},
+    'ប': {'khmer': 'បាល់', 'romanized': 'bal', 'meaning': 'quả bóng'},
+    'ផ': {'khmer': 'ផ្កា', 'romanized': 'phka', 'meaning': 'bông hoa'},
+    'ព': {'khmer': 'ពពែ', 'romanized': 'po-pe', 'meaning': 'con dê'},
+    'ភ': {'khmer': 'ភ្នំ', 'romanized': 'phnom', 'meaning': 'ngọn núi'},
+    'ម': {'khmer': 'មាន់', 'romanized': 'moan', 'meaning': 'con gà'},
+    'យ': {'khmer': 'យក្ស', 'romanized': 'yeak', 'meaning': 'người khổng lồ'},
+    'ร': {'khmer': 'រថយន្ត', 'romanized': 'rot-yon', 'meaning': 'xe hơi'},
+    'ល': {'khmer': 'លីង', 'romanized': 'ling', 'meaning': 'con khỉ'},
+    'វ': {'khmer': 'វែនតា', 'romanized': 'vaen-ta', 'meaning': 'mắt kính'},
+    'ស': {'khmer': 'សៀវភៅ', 'romanized': 'siev-phou', 'meaning': 'quyển sách'},
+    'ហ': {'khmer': 'ហង្ស', 'romanized': 'hong', 'meaning': 'chim phượng hoàng'},
+    'ឡ': {'khmer': 'ឡាន', 'romanized': 'lan', 'meaning': 'xe hơi'},
+    'អ': {'khmer': 'អណ្តើក', 'romanized': 'on-deuk', 'meaning': 'con rùa'},
+  };
+
   static const _typeLabels = {
     'consonant': 'Phụ âm',
     'vowel': 'Nguyên âm',
+    'consonant_series': 'Phụ âm o-ô',
     'spelling': 'Ghép vần',
     'closed_syllable': 'Vần đóng',
     'coeng': 'Chữ ghép',
+    'diacritical': 'Học dấu',
     'vocabulary': 'Từ vựng',
     'sentence': 'Câu',
     'number': 'Số',
@@ -745,9 +793,11 @@ class _LessonFormPageState extends State<_LessonFormPage> {
   static const _typeColors = {
     'consonant': AppColors.violet,
     'vowel': Color(0xFF0084FF),
+    'consonant_series': Color(0xFF43A047),
     'spelling': Color(0xFF7F39FB),
     'closed_syllable': Color(0xFF0084FF),
     'coeng': Color(0xFF06B6D4),
+    'diacritical': Color(0xFFFFD600),
     'vocabulary': AppColors.tertiary,
     'sentence': AppColors.coral,
     'number': AppColors.secondary,
@@ -756,9 +806,11 @@ class _LessonFormPageState extends State<_LessonFormPage> {
   static const _typeIcons = {
     'consonant': Icons.sort_by_alpha_rounded,
     'vowel': Icons.font_download_rounded,
+    'consonant_series': Icons.text_fields_rounded,
     'spelling': Icons.spellcheck_rounded,
     'closed_syllable': Icons.space_bar_rounded,
     'coeng': Icons.layers_rounded,
+    'diacritical': Icons.format_shapes_rounded,
     'vocabulary': Icons.menu_book_rounded,
     'sentence': Icons.text_fields_rounded,
     'number': Icons.calculate_rounded,
@@ -785,9 +837,22 @@ class _LessonFormPageState extends State<_LessonFormPage> {
     if (initExamples.isNotEmpty && initExamples[0] is Map) {
       firstEx = Map<String, dynamic>.from(initExamples[0]);
     }
-    _exampleKhmerCtrl = TextEditingController(text: firstEx['khmer']?.toString() ?? '');
-    _exampleRomanizedCtrl = TextEditingController(text: firstEx['romanized']?.toString() ?? '');
-    _exampleMeaningCtrl = TextEditingController(text: firstEx['meaning']?.toString() ?? '');
+
+    final charKey = lesson?['khmerText']?.toString() ?? '';
+    final defaults = _consonantDefaults[charKey] ?? {};
+
+    String exKhmer = firstEx['khmer']?.toString() ?? '';
+    if (exKhmer.isEmpty) exKhmer = defaults['khmer'] ?? '';
+
+    String exRomanized = firstEx['romanized']?.toString() ?? '';
+    if (exRomanized.isEmpty) exRomanized = defaults['romanized'] ?? '';
+
+    String exMeaning = firstEx['meaning']?.toString() ?? '';
+    if (exMeaning.isEmpty) exMeaning = defaults['meaning'] ?? lesson?['meaning']?.toString() ?? '';
+
+    _exampleKhmerCtrl = TextEditingController(text: exKhmer);
+    _exampleRomanizedCtrl = TextEditingController(text: exRomanized);
+    _exampleMeaningCtrl = TextEditingController(text: exMeaning);
     _imageUrlCtrl = TextEditingController(text: lesson?['imageUrl']?.toString() ?? lesson?['image']?.toString() ?? '');
     _audioUrlCtrl = TextEditingController(text: lesson?['audioUrl']?.toString() ?? lesson?['audio']?.toString() ?? '');
 
@@ -1519,8 +1584,7 @@ class _LessonFormPageState extends State<_LessonFormPage> {
                           GestureDetector(
                             onTap: _uploadingAudio ? null : () async {
                               final result = await FilePicker.pickFiles(
-                                type: FileType.custom,
-                                allowedExtensions: ['mp3', 'wav', 'm4a', 'aac'],
+                                type: FileType.audio,
                               );
                               if (result == null || result.files.single.path == null) return;
                               setState(() => _uploadingAudio = true);
@@ -1605,16 +1669,22 @@ class _LessonFormPageState extends State<_LessonFormPage> {
                               items: [
                                 'consonant',
                                 'vowel',
+                                'consonant_series',
                                 'spelling',
                                 'closed_syllable',
                                 'coeng',
+                                'diacritical',
                                 'vocabulary',
                                 'sentence',
                                 'number'
                               ]
                                   .map((t) => DropdownMenuItem(
                                       value: t,
-                                      child: Text(_typeLabels[t] ?? t)))
+                                      child: Text(
+                                        _typeLabels[t] ?? t,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      )))
                                   .toList(),
                               onChanged: (v) => setState(() {
                                 _selectedType = v!;
@@ -1666,7 +1736,12 @@ class _LessonFormPageState extends State<_LessonFormPage> {
                                     color: formColor,
                                     items: spellingCategories
                                         .map((c) => DropdownMenuItem(
-                                            value: c, child: Text(c)))
+                                            value: c,
+                                            child: Text(
+                                              c,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            )))
                                         .toList(),
                                     onChanged: (v) => setState(() {
                                       _selectedSpellingCategory = v!;

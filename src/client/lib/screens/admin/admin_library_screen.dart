@@ -739,6 +739,7 @@ class _AdminLibraryScreenState extends State<AdminLibraryScreen> {
         builder: (_) => _LibraryFormPage(
           item: item,
           onSaved: _loadItems,
+          defaultType: _filterType,
         ),
       ),
     );
@@ -782,10 +783,12 @@ class _AdminLibraryScreenState extends State<AdminLibraryScreen> {
 class _LibraryFormPage extends StatefulWidget {
   final Map<String, dynamic>? item;
   final VoidCallback onSaved;
+  final String? defaultType;
 
   const _LibraryFormPage({
     required this.item,
     required this.onSaved,
+    this.defaultType,
   });
 
   @override
@@ -798,23 +801,30 @@ class _LibraryFormPageState extends State<_LibraryFormPage> {
   bool _isActive = true;
   bool _uploadingImg = false;
   bool _uploadingPdf = false;
+  bool _uploadingStoryImg = false;
 
   late final TextEditingController _titleCtrl;
   late final TextEditingController _descCtrl;
   late final TextEditingController _imgCtrl;
   late final TextEditingController _contentUrlCtrl;
   late final TextEditingController _ratingCtrl;
+  late final TextEditingController _lyricsCtrl;
+  late final TextEditingController _durationCtrl;
   late String _selectedType;
 
+  // Story pages state
+  List<Map<String, dynamic>> _storyPages = [];
 
   static const _typeColors = {
     'Sách': Color(0xFF10B981),
+    'Truyện': Color(0xFF22C55E),
     'Audio': Color(0xFF8B5CF6),
     'Video': Color(0xFFF97316),
   };
 
   static const _typeIcons = {
     'Sách': Icons.menu_book_rounded,
+    'Truyện': Icons.auto_stories_rounded,
     'Audio': Icons.headphones_rounded,
     'Video': Icons.play_circle_rounded,
   };
@@ -830,8 +840,44 @@ class _LibraryFormPageState extends State<_LibraryFormPage> {
     _imgCtrl = TextEditingController(text: item?['image'] ?? '');
     _contentUrlCtrl = TextEditingController(text: item?['contentUrl'] ?? '');
     _ratingCtrl = TextEditingController(text: '${item?['rating'] ?? 5.0}');
-    _selectedType = item?['type'] ?? 'Sách';
+    _lyricsCtrl = TextEditingController(text: item?['lyrics'] ?? '');
+    _durationCtrl = TextEditingController(text: item?['duration'] ?? '');
+    final dbType = item?['type'] ?? widget.defaultType ?? 'Sách';
+    if (dbType == 'Sách') {
+      final t = (item?['title'] ?? '').toString().toLowerCase();
+      final isStoryKeyword = t.contains('truyện') ||
+          t.contains('thỏ') ||
+          t.contains('rùa') ||
+          t.contains('sóc') ||
+          t.contains('cầu vồng') ||
+          t.contains('tích') ||
+          t.contains('ngụ ngôn') ||
+          t.contains('thông minh') ||
+          t.contains('ដំរី') || 
+          t.contains('ស្វា') || 
+          t.contains('ទន្សាយ') || 
+          t.contains('អណ្តើក');
+      if (isStoryKeyword) {
+        _selectedType = 'Truyện';
+      } else {
+        _selectedType = dbType;
+      }
+    } else {
+      _selectedType = dbType;
+    }
     _isActive = item?['isActive'] ?? true;
+
+    // Load existing story pages
+    if (item?['pages'] != null && item!['pages'] is List) {
+      for (final p in item['pages']) {
+        _storyPages.add({
+          'textKhmer': TextEditingController(text: p['textKhmer'] ?? ''),
+          'textVietnamese': TextEditingController(text: p['textVietnamese'] ?? ''),
+          'illustration': p['illustration'] ?? '',
+          'highlights': TextEditingController(text: (p['highlights'] as List?)?.join(', ') ?? ''),
+        });
+      }
+    }
 
     _titleCtrl.addListener(() => setState(() {}));
     _descCtrl.addListener(() => setState(() {}));
@@ -847,6 +893,13 @@ class _LibraryFormPageState extends State<_LibraryFormPage> {
     _imgCtrl.dispose();
     _contentUrlCtrl.dispose();
     _ratingCtrl.dispose();
+    _lyricsCtrl.dispose();
+    _durationCtrl.dispose();
+    for (final p in _storyPages) {
+      (p['textKhmer'] as TextEditingController).dispose();
+      (p['textVietnamese'] as TextEditingController).dispose();
+      (p['highlights'] as TextEditingController).dispose();
+    }
     super.dispose();
   }
 
@@ -1027,15 +1080,32 @@ class _LibraryFormPageState extends State<_LibraryFormPage> {
 
     setState(() => _saving = true);
 
-    final data = {
+    final data = <String, dynamic>{
       'title': titleText,
       'description': _descCtrl.text.trim(),
       'type': _selectedType,
       'image': _imgCtrl.text.trim(),
-      'contentUrl': _contentUrlCtrl.text.trim(),
+      'contentUrl': _selectedType == 'Truyện' ? '' : _contentUrlCtrl.text.trim(),
       'rating': double.tryParse(_ratingCtrl.text) ?? 5.0,
       'isActive': _isActive,
+      'duration': _durationCtrl.text.trim(),
+      'lyrics': _selectedType == 'Audio' ? _lyricsCtrl.text.trim() : '',
     };
+
+    // Include story pages data for Truyện type
+    if (_selectedType == 'Truyện') {
+      data['pages'] = _storyPages.map((p) {
+        final highlightsText = (p['highlights'] as TextEditingController).text.trim();
+        return {
+          'textKhmer': (p['textKhmer'] as TextEditingController).text.trim(),
+          'textVietnamese': (p['textVietnamese'] as TextEditingController).text.trim(),
+          'illustration': p['illustration'] ?? '',
+          'highlights': highlightsText.isNotEmpty
+              ? highlightsText.split(',').map((h) => h.trim()).where((h) => h.isNotEmpty).toList()
+              : <String>[],
+        };
+      }).toList();
+    }
 
     final result = _isEdit
         ? await AdminService().updateLibraryItem(
@@ -1283,21 +1353,12 @@ class _LibraryFormPageState extends State<_LibraryFormPage> {
                         value: _selectedType,
                         icon: Icons.category_rounded,
                         color: formColor,
-                        items: ['Sách', 'Audio', 'Video']
+                        items: ['Sách', 'Truyện', 'Audio', 'Video']
                             .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                             .toList(),
                         onChanged: (v) => setState(() {
                           _selectedType = v!;
                         }),
-                      ),
-                      SizedBox(height: 6.h),
-                      Text(
-                        '💡 Mẹo: Chọn "Sách" và đặt tên chứa từ khóa "truyện", "thỏ", "rùa"... để hệ thống tự động phân loại vào mục Truyện.',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 10.5.sp,
-                          color: const Color(0xFF22C55E),
-                          fontWeight: FontWeight.w600,
-                        ),
                       ),
                       // Row 1: Cover Image Picker + Field
                       Row(
@@ -1396,141 +1457,502 @@ class _LibraryFormPageState extends State<_LibraryFormPage> {
                         ],
                       ),
                       SizedBox(height: 14.h),
-                      // Row 2: File Picker + Field
-                      Builder(
-                        builder: (ctx) {
-                          IconData contentPickerIcon;
-                          String contentPickerText;
-                          String contentPickerLabel;
-                          String contentPickerHint;
-                          List<String> allowedExtensions;
-                          IconData previewIcon;
-                          Color previewColor;
+                      // Row 2: File Picker (hidden for Truyện)
+                      if (_selectedType != 'Truyện')
+                        Builder(
+                          builder: (ctx) {
+                            IconData contentPickerIcon;
+                            String contentPickerText;
+                            String contentPickerLabel;
+                            String contentPickerHint;
+                            List<String> allowedExtensions;
+                            IconData previewIcon;
+                            Color previewColor;
 
-                          if (_selectedType == 'Sách') {
-                            contentPickerIcon = Icons.file_present_rounded;
-                            contentPickerText = 'Chọn PDF';
-                            contentPickerLabel = 'Đường dẫn tệp tài liệu (PDF)';
-                            contentPickerHint = 'Dán link hoặc chọn tệp PDF để upload';
-                            allowedExtensions = ['pdf'];
-                            previewIcon = Icons.picture_as_pdf_rounded;
-                            previewColor = AppColors.errorRed;
-                          } else if (_selectedType == 'Audio') {
-                            contentPickerIcon = Icons.audiotrack_rounded;
-                            contentPickerText = 'Chọn nhạc';
-                            contentPickerLabel = 'Đường dẫn tệp âm thanh (Audio)';
-                            contentPickerHint = 'Dán link hoặc chọn tệp audio (mp3, wav) để upload';
-                            allowedExtensions = ['mp3', 'wav', 'm4a'];
-                            previewIcon = Icons.audiotrack_rounded;
-                            previewColor = const Color(0xFF8B5CF6);
-                          } else { // Video
-                            contentPickerIcon = Icons.video_file_rounded;
-                            contentPickerText = 'Chọn video';
-                            contentPickerLabel = 'Đường dẫn tệp video (Video)';
-                            contentPickerHint = 'Dán link hoặc chọn tệp video (mp4, mov) để upload';
-                            allowedExtensions = ['mp4', 'mov', 'avi'];
-                            previewIcon = Icons.video_file_rounded;
-                            previewColor = const Color(0xFFF97316);
-                          }
+                            if (_selectedType == 'Sách') {
+                              contentPickerIcon = Icons.file_present_rounded;
+                              contentPickerText = 'Chọn PDF';
+                              contentPickerLabel = 'Đường dẫn tệp tài liệu (PDF)';
+                              contentPickerHint = 'Dán link hoặc chọn tệp PDF để upload';
+                              allowedExtensions = ['pdf'];
+                              previewIcon = Icons.picture_as_pdf_rounded;
+                              previewColor = AppColors.errorRed;
+                            } else if (_selectedType == 'Audio') {
+                              contentPickerIcon = Icons.audiotrack_rounded;
+                              contentPickerText = 'Chọn nhạc';
+                              contentPickerLabel = 'Đường dẫn tệp âm thanh (Audio)';
+                              contentPickerHint = 'Dán link hoặc chọn tệp audio (mp3, wav) để upload';
+                              allowedExtensions = ['mp3', 'wav', 'm4a'];
+                              previewIcon = Icons.audiotrack_rounded;
+                              previewColor = const Color(0xFF8B5CF6);
+                            } else { // Video
+                              contentPickerIcon = Icons.video_file_rounded;
+                              contentPickerText = 'Chọn video';
+                              contentPickerLabel = 'Đường dẫn tệp video (Video)';
+                              contentPickerHint = 'Dán link hoặc chọn tệp video (mp4, mov) để upload';
+                              allowedExtensions = ['mp4', 'mov', 'avi'];
+                              previewIcon = Icons.video_file_rounded;
+                              previewColor = const Color(0xFFF97316);
+                            }
 
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              GestureDetector(
-                                onTap: _uploadingPdf ? null : () async {
-                                  final result = await FilePicker.pickFiles(
-                                    type: FileType.custom,
-                                    allowedExtensions: allowedExtensions,
-                                  );
-                                  if (result == null || result.files.single.path == null) return;
-                                  setState(() => _uploadingPdf = true);
-                                  try {
-                                    String? url;
-                                    if (_selectedType == 'Sách') {
-                                      url = await AdminService().uploadPdf(result.files.single.path!);
-                                    } else if (_selectedType == 'Audio') {
-                                      url = await AdminService().uploadAudio(result.files.single.path!);
-                                    } else {
-                                      url = await AdminService().uploadVideo(result.files.single.path!);
-                                    }
-
-                                    if (url != null) {
-                                      _contentUrlCtrl.text = url;
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text('Tải tệp $_selectedType thành công!')),
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                GestureDetector(
+                                  onTap: _uploadingPdf ? null : () async {
+                                    final FilePickerResult? result;
+                                    if (_selectedType == 'Audio') {
+                                      result = await FilePicker.pickFiles(
+                                        type: FileType.audio,
+                                      );
+                                    } else if (_selectedType == 'Video') {
+                                      result = await FilePicker.pickFiles(
+                                        type: FileType.video,
                                       );
                                     } else {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Tải tệp thất bại')),
+                                      result = await FilePicker.pickFiles(
+                                        type: FileType.custom,
+                                        allowedExtensions: allowedExtensions,
                                       );
                                     }
-                                  } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Có lỗi khi tải tệp: $e')),
-                                    );
-                                  } finally {
-                                    setState(() => _uploadingPdf = false);
-                                  }
-                                },
-                                child: Container(
-                                  width: 68.w,
-                                  height: 68.w,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.background,
-                                    borderRadius: BorderRadius.circular(16.r),
-                                    border: Border.all(color: AppColors.outlineVariant, width: 1.5),
+                                    if (result == null || result.files.single.path == null) return;
+                                    setState(() => _uploadingPdf = true);
+                                    try {
+                                      String? url;
+                                      if (_selectedType == 'Sách') {
+                                        url = await AdminService().uploadPdf(result.files.single.path!);
+                                      } else if (_selectedType == 'Audio') {
+                                        url = await AdminService().uploadAudio(result.files.single.path!);
+                                      } else {
+                                        url = await AdminService().uploadVideo(result.files.single.path!);
+                                      }
+
+                                      if (url != null) {
+                                        _contentUrlCtrl.text = url;
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Tải tệp $_selectedType thành công!')),
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Tải tệp thất bại')),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Có lỗi khi tải tệp: \$e')),
+                                      );
+                                    } finally {
+                                      setState(() => _uploadingPdf = false);
+                                    }
+                                  },
+                                  child: Container(
+                                    width: 68.w,
+                                    height: 68.w,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.background,
+                                      borderRadius: BorderRadius.circular(16.r),
+                                      border: Border.all(color: AppColors.outlineVariant, width: 1.5),
+                                    ),
+                                    child: _uploadingPdf
+                                        ? Center(
+                                            child: SizedBox(
+                                              width: 20.w,
+                                              height: 20.w,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: formColor,
+                                              ),
+                                            ),
+                                          )
+                                        : _contentUrlCtrl.text.isNotEmpty
+                                            ? Center(
+                                                child: Icon(
+                                                  previewIcon,
+                                                  color: previewColor,
+                                                  size: 32.sp,
+                                                ),
+                                              )
+                                            : Column(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(contentPickerIcon, color: formColor, size: 24.sp),
+                                                  SizedBox(height: 2.h),
+                                                  Text(
+                                                    contentPickerText,
+                                                    style: GoogleFonts.plusJakartaSans(
+                                                      fontSize: 8.sp,
+                                                      fontWeight: FontWeight.w700,
+                                                      color: formColor,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                   ),
-                                  child: _uploadingPdf
-                                      ? Center(
-                                          child: SizedBox(
-                                            width: 20.w,
-                                            height: 20.w,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: formColor,
+                                ),
+                                SizedBox(width: 14.w),
+                                Expanded(
+                                  child: _prettyField(
+                                    label: contentPickerLabel,
+                                    ctrl: _contentUrlCtrl,
+                                    hint: contentPickerHint,
+                                    icon: Icons.link_rounded,
+                                    color: formColor,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                    ],
+                  ),
+
+                  // ── SECTION 3: STORY PAGES (only for Truyện) ──
+                  if (_selectedType == 'Truyện')
+                    _sectionCard(
+                      icon: Icons.auto_stories_rounded,
+                      title: 'Nội dung trang truyện (${_storyPages.length} trang)',
+                      color: const Color(0xFF22C55E),
+                      children: [
+                        if (_storyPages.isEmpty)
+                          Container(
+                            padding: EdgeInsets.all(20.w),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(14.r),
+                              border: Border.all(color: const Color(0xFF22C55E).withValues(alpha: 0.3)),
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(Icons.menu_book_rounded, size: 36.sp, color: const Color(0xFF22C55E).withValues(alpha: 0.5)),
+                                SizedBox(height: 8.h),
+                                Text(
+                                  'Chưa có trang truyện nào',
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w600, color: const Color(0xFF22C55E)),
+                                ),
+                                SizedBox(height: 4.h),
+                                Text(
+                                  'Bấm nút bên dưới để thêm trang truyện',
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 11.sp, color: AppColors.textHint),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ...List.generate(_storyPages.length, (i) {
+                          final page = _storyPages[i];
+                          final khmerCtrl = page['textKhmer'] as TextEditingController;
+                          final vietCtrl = page['textVietnamese'] as TextEditingController;
+                          final highlightsCtrl = page['highlights'] as TextEditingController;
+                          final illustrationUrl = page['illustration'] as String;
+                          return Container(
+                            margin: EdgeInsets.only(bottom: 12.h),
+                            padding: EdgeInsets.all(12.w),
+                            decoration: BoxDecoration(
+                              color: AppColors.background,
+                              borderRadius: BorderRadius.circular(16.r),
+                              border: Border.all(color: const Color(0xFF22C55E).withValues(alpha: 0.2)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 28.w, height: 28.w,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF22C55E).withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(8.r),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          '${i + 1}',
+                                          style: GoogleFonts.plusJakartaSans(fontSize: 12.sp, fontWeight: FontWeight.w800, color: const Color(0xFF22C55E)),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Text(
+                                      'Trang ${i + 1}',
+                                      style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                                    ),
+                                    const Spacer(),
+                                    if (i > 0)
+                                      InkWell(
+                                        onTap: () => setState(() {
+                                          final temp = _storyPages[i];
+                                          _storyPages[i] = _storyPages[i - 1];
+                                          _storyPages[i - 1] = temp;
+                                        }),
+                                        child: Padding(
+                                          padding: EdgeInsets.all(4.w),
+                                          child: Icon(Icons.arrow_upward_rounded, size: 18.sp, color: AppColors.textHint),
+                                        ),
+                                      ),
+                                    if (i < _storyPages.length - 1)
+                                      InkWell(
+                                        onTap: () => setState(() {
+                                          final temp = _storyPages[i];
+                                          _storyPages[i] = _storyPages[i + 1];
+                                          _storyPages[i + 1] = temp;
+                                        }),
+                                        child: Padding(
+                                          padding: EdgeInsets.all(4.w),
+                                          child: Icon(Icons.arrow_downward_rounded, size: 18.sp, color: AppColors.textHint),
+                                        ),
+                                      ),
+                                    InkWell(
+                                      onTap: () => setState(() {
+                                        khmerCtrl.dispose();
+                                        vietCtrl.dispose();
+                                        highlightsCtrl.dispose();
+                                        _storyPages.removeAt(i);
+                                      }),
+                                      child: Padding(
+                                        padding: EdgeInsets.all(4.w),
+                                        child: Icon(Icons.delete_outline_rounded, size: 18.sp, color: AppColors.errorRed),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 10.h),
+                                // Khmer text
+                                Text(
+                                  'Nội dung tiếng Khmer',
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 11.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                                ),
+                                SizedBox(height: 4.h),
+                                TextField(
+                                  controller: khmerCtrl,
+                                  maxLines: 3,
+                                  style: GoogleFonts.battambang(fontSize: 14.sp, color: AppColors.textPrimary),
+                                  decoration: InputDecoration(
+                                    hintText: 'Nhập nội dung tiếng Khmer cho trang này...',
+                                    hintStyle: GoogleFonts.plusJakartaSans(fontSize: 12.sp, color: AppColors.textHint),
+                                    filled: true,
+                                    fillColor: AppColors.cardWhite,
+                                    contentPadding: EdgeInsets.all(10.w),
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: AppColors.outlineVariant)),
+                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: AppColors.outlineVariant)),
+                                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: Color(0xFF22C55E), width: 1.5)),
+                                  ),
+                                ),
+                                SizedBox(height: 8.h),
+                                // Vietnamese text
+                                Text(
+                                  'Nội dung tiếng Việt (bản dịch)',
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 11.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                                ),
+                                SizedBox(height: 4.h),
+                                TextField(
+                                  controller: vietCtrl,
+                                  maxLines: 3,
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 14.sp, color: AppColors.textPrimary),
+                                  decoration: InputDecoration(
+                                    hintText: 'Nhập bản dịch tiếng Việt cho trang này...',
+                                    hintStyle: GoogleFonts.plusJakartaSans(fontSize: 12.sp, color: AppColors.textHint),
+                                    filled: true,
+                                    fillColor: AppColors.cardWhite,
+                                    contentPadding: EdgeInsets.all(10.w),
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: AppColors.outlineVariant)),
+                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: AppColors.outlineVariant)),
+                                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: Color(0xFF22C55E), width: 1.5)),
+                                  ),
+                                ),
+                                SizedBox(height: 8.h),
+                                // Illustration
+                                Row(
+                                  children: [
+                                    GestureDetector(
+                                      onTap: _uploadingStoryImg ? null : () async {
+                                        final picker = ImagePicker();
+                                        final XFile? image = await picker.pickImage(
+                                          source: ImageSource.gallery,
+                                          maxWidth: 800,
+                                          maxHeight: 800,
+                                          imageQuality: 85,
+                                        );
+                                        if (image == null) return;
+                                        setState(() => _uploadingStoryImg = true);
+                                        try {
+                                          final url = await AdminService().uploadImage(image.path);
+                                          if (url != null) {
+                                            setState(() {
+                                              _storyPages[i]['illustration'] = url;
+                                            });
+                                            if (mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Tải ảnh minh họa thành công!')),
+                                              );
+                                            }
+                                          }
+                                        } catch (e) {
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text('Lỗi tải ảnh: \$e')),
+                                            );
+                                          }
+                                        } finally {
+                                          setState(() => _uploadingStoryImg = false);
+                                        }
+                                      },
+                                      child: Container(
+                                        width: 56.w,
+                                        height: 56.w,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.cardWhite,
+                                          borderRadius: BorderRadius.circular(12.r),
+                                          border: Border.all(color: AppColors.outlineVariant, width: 1.5),
+                                        ),
+                                        child: _uploadingStoryImg
+                                            ? Center(child: SizedBox(width: 18.w, height: 18.w, child: const CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF22C55E))))
+                                            : illustrationUrl.isNotEmpty && illustrationUrl.startsWith('http')
+                                                ? ClipRRect(
+                                                    borderRadius: BorderRadius.circular(10.r),
+                                                    child: Image.network(
+                                                      AuthService.getOptimizedImageUrl(illustrationUrl, width: 150),
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder: (ctx, err, stack) => Icon(Icons.broken_image_rounded, color: AppColors.textHint, size: 20.sp),
+                                                    ),
+                                                  )
+                                                : Column(
+                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    children: [
+                                                      Icon(Icons.add_photo_alternate_rounded, color: const Color(0xFF22C55E), size: 20.sp),
+                                                      Text('Ảnh', style: GoogleFonts.plusJakartaSans(fontSize: 8.sp, fontWeight: FontWeight.w700, color: const Color(0xFF22C55E))),
+                                                    ],
+                                                  ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 10.w),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Từ khóa nổi bật (cách nhau bằng dấu phẩy)',
+                                            style: GoogleFonts.plusJakartaSans(fontSize: 11.sp, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                                          ),
+                                          SizedBox(height: 4.h),
+                                          TextField(
+                                            controller: highlightsCtrl,
+                                            style: GoogleFonts.battambang(fontSize: 13.sp, color: AppColors.textPrimary),
+                                            decoration: InputDecoration(
+                                              hintText: 'ទន្សាយ, អណ្តើក, ...',
+                                              hintStyle: GoogleFonts.plusJakartaSans(fontSize: 11.sp, color: AppColors.textHint),
+                                              filled: true,
+                                              fillColor: AppColors.cardWhite,
+                                              contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: AppColors.outlineVariant)),
+                                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: AppColors.outlineVariant)),
+                                              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: Color(0xFF22C55E), width: 1.5)),
                                             ),
                                           ),
-                                        )
-                                      : _contentUrlCtrl.text.isNotEmpty
-                                          ? Center(
-                                              child: Icon(
-                                                previewIcon,
-                                                color: previewColor,
-                                                size: 32.sp,
-                                              ),
-                                            )
-                                          : Column(
-                                              mainAxisAlignment: MainAxisAlignment.center,
-                                              children: [
-                                                Icon(contentPickerIcon, color: formColor, size: 24.sp),
-                                                SizedBox(height: 2.h),
-                                                Text(
-                                                  contentPickerText,
-                                                  style: GoogleFonts.plusJakartaSans(
-                                                    fontSize: 8.sp,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: formColor,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              SizedBox(width: 14.w),
-                              Expanded(
-                                child: _prettyField(
-                                  label: contentPickerLabel,
-                                  ctrl: _contentUrlCtrl,
-                                  hint: contentPickerHint,
-                                  icon: Icons.link_rounded,
-                                  color: formColor,
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           );
-                        },
-                      ),
-                      SizedBox(height: 14.h),
+                        }),
+                        SizedBox(height: 8.h),
+                        // Add page button
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                _storyPages.add({
+                                  'textKhmer': TextEditingController(),
+                                  'textVietnamese': TextEditingController(),
+                                  'illustration': '',
+                                  'highlights': TextEditingController(),
+                                });
+                              });
+                            },
+                            icon: Icon(Icons.add_rounded, size: 20.sp, color: const Color(0xFF22C55E)),
+                            label: Text(
+                              'Thêm trang truyện',
+                              style: GoogleFonts.plusJakartaSans(fontSize: 13.sp, fontWeight: FontWeight.w700, color: const Color(0xFF22C55E)),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 12.h),
+                              side: const BorderSide(color: Color(0xFF22C55E), width: 1.5),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                  // ── SECTION: AUDIO DETAILS (only for Audio) ──
+                  if (_selectedType == 'Audio')
+                    _sectionCard(
+                      icon: Icons.music_note_rounded,
+                      title: 'Chi tiết bài hát',
+                      color: const Color(0xFF8B5CF6),
+                      children: [
+                        _prettyField(
+                          label: 'Thời lượng (mm:ss)',
+                          ctrl: _durationCtrl,
+                          hint: 'VD: 02:35',
+                          icon: Icons.timer_rounded,
+                          color: const Color(0xFF8B5CF6),
+                        ),
+                        SizedBox(height: 14.h),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.lyrics_rounded, size: 14.sp, color: const Color(0xFF8B5CF6).withValues(alpha: 0.8)),
+                                SizedBox(width: 5.w),
+                                Text(
+                                  'Lời bài hát (Lyrics)',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 6.h),
+                            TextField(
+                              controller: _lyricsCtrl,
+                              maxLines: 6,
+                              style: GoogleFonts.battambang(fontSize: 14.sp, color: AppColors.textPrimary),
+                              decoration: InputDecoration(
+                                hintText: 'Nhập lời bài hát tiếng Khmer...\nVD: ក្មេងៗ ច្រៀងលេង ច្រៀងលេង\nសប្បាយ សប្បាយ សប្បាយណាស់',
+                                hintStyle: GoogleFonts.plusJakartaSans(fontSize: 12.sp, color: AppColors.textHint),
+                                filled: true,
+                                fillColor: AppColors.background,
+                                contentPadding: EdgeInsets.all(14.w),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14.r),
+                                  borderSide: const BorderSide(color: AppColors.outlineVariant),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14.r),
+                                  borderSide: const BorderSide(color: AppColors.outlineVariant),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14.r),
+                                  borderSide: const BorderSide(color: Color(0xFF8B5CF6), width: 1.5),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                  // ── SECTION: RATING & VISIBILITY ──
+                  _sectionCard(
+                    icon: Icons.settings_rounded,
+                    title: 'Cài đặt khác',
+                    color: formColor,
+                    children: [
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [

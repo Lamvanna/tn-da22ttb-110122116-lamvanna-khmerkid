@@ -213,6 +213,36 @@ class AudioAssetService {
 
   // ─── Play Audio ─────────────────────────────────────────────────
 
+  /// Phát âm từ URL từ xa (ví dụ: Cloudinary)
+  Future<bool> playFromUrl(String url) async {
+    if (!_initialized) await init();
+    if (_isPlaying) await stop();
+
+    try {
+      debugPrint('[AudioAssetService] 🌐 Stream playing remote URL: $url');
+      
+      // Đăng ký listener để cập nhật trạng thái chơi nhạc
+      _player.onPlayerStateChanged.listen((state) {
+        if (state == PlayerState.playing) {
+          _isPlaying = true;
+          onStart?.call();
+        } else if (state == PlayerState.completed) {
+          _isPlaying = false;
+          onComplete?.call();
+        } else if (state == PlayerState.stopped || state == PlayerState.paused) {
+          _isPlaying = false;
+        }
+      });
+
+      await _player.play(UrlSource(url));
+      return true;
+    } catch (e) {
+      debugPrint('[AudioAssetService] ❌ Play URL error for $url: $e');
+      onError?.call(e.toString());
+      return false;
+    }
+  }
+
   /// Phát âm từ file asset
   Future<bool> playFromAsset(String assetPath) async {
     if (!_initialized) await init();

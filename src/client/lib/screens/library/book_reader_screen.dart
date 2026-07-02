@@ -9,11 +9,13 @@ import '../../widgets/feedback_dialog.dart';
 class BookReaderScreen extends StatefulWidget {
   final String title;
   final String imagePath;
+  final List<Map<String, dynamic>>? pages;
 
   const BookReaderScreen({
     super.key,
     required this.title,
     required this.imagePath,
+    this.pages,
   });
 
   @override

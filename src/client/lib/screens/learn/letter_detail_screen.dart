@@ -919,6 +919,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
 
   // ═══════════════════ INLINE SHEET OVERLAY ═══════════════════
   Widget _buildInlineSheet() {
+    final online = _onlineLessonsMap[_letter.character];
     return ClipRRect(
       borderRadius: BorderRadius.circular(28.r),
       child: Container(
@@ -935,6 +936,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                       character: _letter.character,
                       romanized: _letter.romanized,
                       pronunciation: _letter.pronunciation,
+                      audioUrl: online?['audioUrl']?.toString(),
                       accentColor: AppColors.tertiary,
                       accentColorDark: AppColors.tertiaryDark,
                       surfaceColor: AppColors.tertiarySurface,

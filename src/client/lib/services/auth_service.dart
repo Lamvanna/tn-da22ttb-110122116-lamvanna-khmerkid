@@ -257,44 +257,44 @@ class AuthService extends ChangeNotifier {
       bool success = false;
       final isOnline = ConnectivityService.instance.isOnline;
       if (isOnline) {
-        // Gắn timeout ngắn (1 giây) khi đăng nhập tự động để không bị kẹt màn hình chào khi mạng yếu hoặc server treo
-        success = await fetchProfile(timeout: const Duration(milliseconds: 1000));
+        // Tăng timeout lên 2.5 giây để tránh lỗi quá hạn khi đang biên dịch/hot restart
+        success = await fetchProfile(timeout: const Duration(milliseconds: 2500));
       }
 
       if (!success) {
-        // Có 2 trường hợp fetchProfile thất bại hoặc không chạy:
-        // 1. Lỗi mạng / server offline (Không kết nối được)
-        // 2. Token thực sự hết hạn (Server trả về 401)
-        // Hãy kiểm tra xem có kết nối được mạng/server không.
-        bool isServerReachable = false;
-        if (isOnline) {
-          isServerReachable = await _ping(currentServerUrl, timeout: const Duration(milliseconds: 600));
-        }
-
-        if (!isServerReachable) {
-          // Server không liên lạc được hoặc thiết bị ngoại tuyến, dùng dữ liệu cached offline
-          final cachedProfile = prefs.getString('userProfile');
-          if (cachedProfile != null) {
-            _userProfile = jsonDecode(cachedProfile);
-            // Đồng bộ lên StorageService cục bộ
-            await _syncProfileToStorage(_userProfile!);
-            _isLoading = false;
-            notifyListeners();
-            // Cho phép vào app chế độ offline
-            debugPrint('📶 [AuthService] Thiết bị ngoại tuyến hoặc máy chủ không phản hồi, cho phép Đăng nhập Offline với profile đã lưu.');
-            return true;
-          }
-        }
-
-        // Nếu server hoạt động bình thường nhưng token lỗi, thử refresh token
-        final refreshed = await refreshAccessToken();
-        if (refreshed) {
-          await fetchProfile(timeout: const Duration(milliseconds: 1000));
-        } else {
-          await logout();
+        // Ưu tiên cao nhất: nếu không kết nối được hoặc timeout, sử dụng dữ liệu cached offline
+        final cachedProfile = prefs.getString('userProfile');
+        if (cachedProfile != null) {
+          _userProfile = jsonDecode(cachedProfile);
+          // Đồng bộ lên StorageService cục bộ
+          await _syncProfileToStorage(_userProfile!);
           _isLoading = false;
           notifyListeners();
+          debugPrint('📶 [AuthService] Thiết bị ngoại tuyến hoặc máy chủ không phản hồi kịp, cho phép Đăng nhập Offline với profile đã lưu.');
+          return true;
+        }
+
+        // Nếu không có cached profile trên máy, thử refresh token để lấy access token mới
+        final refreshed = await refreshAccessToken();
+        if (refreshed) {
+          success = await fetchProfile(timeout: const Duration(milliseconds: 2500));
+        }
+
+        if (!success) {
+          // Nếu vẫn thất bại và không có cached profile để cứu vãn, trả về false để người dùng đăng nhập thủ công.
+          // TUYỆT ĐỐI không gọi logout() tự động xóa sạch DB của người dùng ở đây vì có thể do mạng chập chờn.
+          _isLoading = false;
+          notifyListeners();
+          debugPrint('⚠️ [AuthService] Tự động đăng nhập thất bại do lỗi mạng hoặc Token hết hạn.');
           return false;
+        }
+      }
+
+      // Đảm bảo luôn nạp profile lưu trữ dự phòng nếu không lấy được profile mới từ API
+      if (_userProfile == null) {
+        final cachedProfile = prefs.getString('userProfile');
+        if (cachedProfile != null) {
+          _userProfile = jsonDecode(cachedProfile);
         }
       }
 
@@ -839,8 +839,12 @@ class AuthService extends ChangeNotifier {
       // Ngắt kết nối socket
       HandwritingWebSocketClient.instance.disconnect();
 
-      // Xóa SharedPreferences local progress bằng StorageService
+      // Xóa SharedPreferences local progress và Tokens
       try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('accessToken');
+        await prefs.remove('refreshToken');
+
         final storage = await StorageService.getInstance();
         await storage.clearAll();
       } catch (e) {

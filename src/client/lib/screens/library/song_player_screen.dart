@@ -28,10 +28,12 @@ class SongItem {
 
 class SongPlayerScreen extends StatefulWidget {
   final String? initialSongTitle;
+  final List<SongItem>? playlist;
 
   const SongPlayerScreen({
     super.key,
     this.initialSongTitle,
+    this.playlist,
   });
 
   @override

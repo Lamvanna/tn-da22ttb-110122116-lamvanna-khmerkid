@@ -26,7 +26,12 @@ async function main() {
   console.log('Connected!');
 
   // Emails of target users
-  const emails = ['lamvanna2003@gmail.com', 'lamvanna@gmail.com'];
+  const emails = [
+    'lamvanna2003@gmail.com',
+    'lamvanna@gmail.com',
+    'admin@khmerkid.com',
+    'lamna2003@gmail.com'
+  ];
   
   // 1. Fetch all lessons and standard characters
   console.log('Fetching lessons and standard characters...');

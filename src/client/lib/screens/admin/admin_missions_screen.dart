@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../services/admin_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 /// Màn hình Quản lý Nhiệm vụ — Admin (Premium Redesigned UI)
 class AdminMissionsScreen extends StatefulWidget {
@@ -356,21 +357,29 @@ class _AdminMissionsScreenState extends State<AdminMissionsScreen> {
                   padding: EdgeInsets.all(14.w),
                   child: Row(
                     children: [
-                      // Icon Container
+                       // Icon Container
                       Container(
                         width: 52.w,
                         height: 52.w,
                         decoration: BoxDecoration(
                           color: color.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(16.r),
+                          image: (mission['iconUrl']?.toString() ?? '').trim().isNotEmpty
+                              ? DecorationImage(
+                                  image: NetworkImage(mission['iconUrl'].toString().trim()),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
-                        child: Center(
-                          child: Icon(
-                            isDaily ? Icons.today_rounded : Icons.date_range_rounded,
-                            color: color,
-                            size: 22.sp,
-                          ),
-                        ),
+                        child: (mission['iconUrl']?.toString() ?? '').trim().isEmpty
+                            ? Center(
+                                child: Icon(
+                                  isDaily ? Icons.today_rounded : Icons.date_range_rounded,
+                                  color: color,
+                                  size: 22.sp,
+                                ),
+                              )
+                            : null,
                       ),
                       SizedBox(width: 14.w),
 
@@ -647,6 +656,8 @@ class _MissionFormPageState extends State<_MissionFormPage> {
   late final TextEditingController _requirementCtrl;
   late final TextEditingController _rewardXpCtrl;
   late final TextEditingController _rewardStarsCtrl;
+  late final TextEditingController _iconUrlCtrl;
+  bool _uploadingImg = false;
 
   late String _selectedType;
   late String _selectedAction;
@@ -675,6 +686,7 @@ class _MissionFormPageState extends State<_MissionFormPage> {
     final reward = m?['reward'] as Map<String, dynamic>? ?? {};
     _rewardXpCtrl = TextEditingController(text: '${reward['xp'] ?? 0}');
     _rewardStarsCtrl = TextEditingController(text: '${reward['stars'] ?? 0}');
+    _iconUrlCtrl = TextEditingController(text: m?['iconUrl'] ?? '');
 
     _selectedType = m?['type'] ?? 'daily';
     _selectedAction = m?['action'] ?? 'complete_lesson';
@@ -685,6 +697,7 @@ class _MissionFormPageState extends State<_MissionFormPage> {
     _requirementCtrl.addListener(() => setState(() {}));
     _rewardXpCtrl.addListener(() => setState(() {}));
     _rewardStarsCtrl.addListener(() => setState(() {}));
+    _iconUrlCtrl.addListener(() => setState(() {}));
   }
 
   @override
@@ -694,6 +707,7 @@ class _MissionFormPageState extends State<_MissionFormPage> {
     _requirementCtrl.dispose();
     _rewardXpCtrl.dispose();
     _rewardStarsCtrl.dispose();
+    _iconUrlCtrl.dispose();
     super.dispose();
   }
 
@@ -939,14 +953,22 @@ class _MissionFormPageState extends State<_MissionFormPage> {
                         decoration: BoxDecoration(
                           color: color.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(16.r),
+                          image: _iconUrlCtrl.text.trim().isNotEmpty
+                              ? DecorationImage(
+                                  image: NetworkImage(_iconUrlCtrl.text.trim()),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
-                        child: Center(
-                          child: Icon(
-                            activeIcon,
-                            color: color,
-                            size: 22.sp,
-                          ),
-                        ),
+                        child: _iconUrlCtrl.text.trim().isEmpty
+                            ? Center(
+                                child: Icon(
+                                  activeIcon,
+                                  color: color,
+                                  size: 22.sp,
+                                ),
+                              )
+                            : null,
                       ),
                       SizedBox(width: 14.w),
 
@@ -1042,6 +1064,7 @@ class _MissionFormPageState extends State<_MissionFormPage> {
         'xp': xp,
         'stars': stars,
       },
+      'iconUrl': _iconUrlCtrl.text.trim(),
       'isActive': _isActive,
     };
 
@@ -1200,6 +1223,88 @@ class _MissionFormPageState extends State<_MissionFormPage> {
                       ),
                     ],
                   ),
+                  SizedBox(height: 16.h),
+
+                  // SECTION: HÌNH ẢNH NHIỆM VỤ
+                  _sectionCard(
+                    icon: Icons.image_outlined,
+                    title: 'Hình ảnh / Biểu tượng',
+                    color: formColor,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          GestureDetector(
+                            onTap: _uploadingImg ? null : () async {
+                              final picker = ImagePicker();
+                              final XFile? image = await picker.pickImage(
+                                source: ImageSource.gallery,
+                                maxWidth: 500,
+                                maxHeight: 500,
+                                imageQuality: 85,
+                              );
+                              if (image == null) return;
+                              setState(() => _uploadingImg = true);
+                              try {
+                                final url = await AdminService().uploadImage(image.path);
+                                if (url != null) {
+                                  _iconUrlCtrl.text = url;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Tải ảnh lên thành công!'), backgroundColor: AppColors.tertiary),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Tải ảnh thất bại!'), backgroundColor: AppColors.errorRed),
+                                  );
+                                }
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Lỗi: $e'), backgroundColor: AppColors.errorRed),
+                                );
+                              } finally {
+                                setState(() => _uploadingImg = false);
+                              }
+                            },
+                            child: Container(
+                              width: 80.w,
+                              height: 80.w,
+                              decoration: BoxDecoration(
+                                color: AppColors.outlineVariant.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(16.r),
+                                border: Border.all(color: AppColors.outlineVariant, width: 1.5),
+                              ),
+                              child: _uploadingImg
+                                  ? const Center(child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0084FF)))
+                                  : _iconUrlCtrl.text.isNotEmpty
+                                      ? ClipRRect(
+                                          borderRadius: BorderRadius.circular(14.r),
+                                          child: Image.network(_iconUrlCtrl.text, fit: BoxFit.cover),
+                                        )
+                                      : Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.add_photo_alternate_rounded, size: 24.sp, color: formColor),
+                                            SizedBox(height: 4.h),
+                                            Text('Chọn ảnh', style: GoogleFonts.plusJakartaSans(fontSize: 9.sp, fontWeight: FontWeight.w700, color: formColor)),
+                                          ],
+                                        ),
+                            ),
+                          ),
+                          SizedBox(width: 12.w),
+                          Expanded(
+                            child: _prettyField(
+                              label: 'URL hình ảnh nhiệm vụ',
+                              ctrl: _iconUrlCtrl,
+                              hint: 'Dán link hình ảnh hoặc bấm chọn ảnh',
+                              icon: Icons.link_rounded,
+                              color: formColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16.h),
 
                   // SECTION 2: CONFIGURATION
                   _sectionCard(

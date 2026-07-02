@@ -251,12 +251,38 @@ class TtsService {
     required String character,
     String pronunciation = '',
     String romanized = '',
+    String? audioUrl,
   }) async {
     if (!_soundEnabled) return false;
     if (!_initialized) await init(); // Đảm bảo TTS + AudioAsset đã sẵn sàng
 
     // ═══════════════════════════════════════════════════════════════
-    // BƯỚC 1: Ưu tiên tuyệt đối - Dùng file âm thanh chuẩn (nếu file CÓ THẬT)
+    // BƯỚC 0: Ưu tiên tuyệt đối số 1 - Phát tệp ghi âm từ backend nếu có
+    // ═══════════════════════════════════════════════════════════════
+    if (audioUrl != null && audioUrl.isNotEmpty) {
+      debugPrint('[TtsService] 🌐 Using REMOTE CUSTOM AUDIO URL: $audioUrl');
+
+      _audioAsset.onStart = () {
+        _isPlaying = true;
+        onStart?.call();
+      };
+      _audioAsset.onComplete = () {
+        _isPlaying = false;
+        onComplete?.call();
+      };
+      _audioAsset.onError = (err) {
+        _isPlaying = false;
+        onError?.call(err);
+      };
+
+      final success = await _audioAsset.playFromUrl(audioUrl);
+      if (success) {
+        return true;
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // BƯỚC 1: Ưu tiên số 2 - Dùng file âm thanh local chuẩn (nếu file CÓ THẬT)
     // ═══════════════════════════════════════════════════════════════
     if (_useAudioAssets && _audioAsset.hasAudio(character)) {
       debugPrint('[TtsService] ✅ Using AUDIO ASSET (100% accurate): $character');

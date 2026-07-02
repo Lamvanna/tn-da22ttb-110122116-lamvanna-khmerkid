@@ -20,7 +20,7 @@ const imageStorage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: UPLOAD_CONFIG.IMAGE_FOLDER,
-    allowed_formats: ['jpg', 'png', 'webp'],
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
     transformation: [{ width: 800, height: 800, crop: 'limit', quality: 'auto' }],
   },
 });
@@ -33,7 +33,7 @@ const audioStorage = new CloudinaryStorage({
   params: {
     folder: UPLOAD_CONFIG.AUDIO_FOLDER,
     resource_type: 'video', // Cloudinary treats audio as video resource type
-    allowed_formats: ['mp3', 'wav'],
+    allowed_formats: ['mp3', 'wav', 'm4a', 'aac'],
   },
 });
 
@@ -80,14 +80,23 @@ const imageFilter = (req, file, cb) => {
 // File Filter - Audio
 // ========================================
 const audioFilter = (req, file, cb) => {
-  const allowedTypes = [...UPLOAD_CONFIG.ALLOWED_AUDIO_TYPES, 'audio/wav', 'audio/mp3'];
+  const allowedTypes = [
+    ...UPLOAD_CONFIG.ALLOWED_AUDIO_TYPES,
+    'audio/wav',
+    'audio/mp3',
+    'audio/m4a',
+    'audio/x-m4a',
+    'audio/aac',
+    'audio/mp4',
+    'audio/x-aac'
+  ];
   const fileExt = file.originalname ? file.originalname.split('.').pop().toLowerCase() : '';
-  const allowedExtensions = ['mp3', 'wav', 'mpeg'];
+  const allowedExtensions = ['mp3', 'wav', 'mpeg', 'm4a', 'aac', 'mp4'];
 
   if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExt)) {
     cb(null, true);
   } else {
-    cb(new AppError('Chỉ hỗ trợ file audio MP3, WAV!', 400), false);
+    cb(new AppError('Chỉ hỗ trợ file audio MP3, WAV, M4A, AAC!', 400), false);
   }
 };
 

@@ -472,6 +472,9 @@ class DocItem {
   final Color typeColor, btnColor;
   final double rating;
   final String? duration;
+  final List<Map<String, dynamic>>? pages;
+  final String? lyrics;
+  final String? contentUrl;
 
   const DocItem({
     required this.title,
@@ -486,6 +489,9 @@ class DocItem {
     required this.btnColor,
     required this.image,
     this.duration,
+    this.pages,
+    this.lyrics,
+    this.contentUrl,
   });
 
   bool get isStory {

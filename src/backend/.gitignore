@@ -2,3 +2,4 @@ node_modules/
 google-key.json
 debug.log
 .env
+*.OLD

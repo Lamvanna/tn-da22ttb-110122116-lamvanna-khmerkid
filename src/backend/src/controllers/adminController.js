@@ -197,7 +197,7 @@ class AdminController {
         page: req.query.page,
         limit: req.query.limit,
         sort: { type: 1, order: 1 },
-        select: 'title type khmerText romanized meaning difficulty order isActive category createdAt',
+        select: 'title type khmerText romanized meaning difficulty order isActive category imageUrl audioUrl examples createdAt',
       });
       res.status(200).json({ success: true, message: MESSAGES.FETCH_SUCCESS, data, pagination });
     } catch (error) {

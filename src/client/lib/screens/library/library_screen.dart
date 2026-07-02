@@ -121,7 +121,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     if (!mounted) return;
     if (result['success'] == true && result['data'] != null && (result['data'] as List).isNotEmpty) {
       final list = result['data'] as List;
-      final docs = list.map((item) {
+      final docs = list.map<DocItem>((item) {
         final type = item['type'] ?? 'Sách';
         final title = item['title'] ?? '';
         final desc = item['description'] ?? '';
@@ -144,6 +144,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
           typeIcon = Icons.play_circle_rounded;
           typeColor = const Color(0xFFF2994A);
           btnLabel = 'Xem ngay';
+        } else if (type == 'Truyện') {
+          typeIcon = Icons.auto_stories_rounded;
+          typeColor = const Color(0xFF22C55E);
+          btnLabel = 'Đọc ngay';
         }
 
         var duration = item['duration']?.toString() ?? '';
@@ -156,6 +160,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
           else if (title.contains('khảo cổ')) duration = '09:50';
           else if (title.contains('Bắt chữ')) duration = '11:05';
           else duration = '08:45';
+        }
+        // Parse pages for stories
+        List<Map<String, dynamic>>? pages;
+        if (item['pages'] != null && item['pages'] is List && (item['pages'] as List).isNotEmpty) {
+          pages = (item['pages'] as List).map((p) => Map<String, dynamic>.from(p as Map)).toList();
         }
         return DocItem(
           title: title,
@@ -170,6 +179,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
           btnColor: typeColor,
           image: image,
           duration: duration.isNotEmpty ? duration : null,
+          pages: pages,
+          lyrics: item['lyrics']?.toString(),
+          contentUrl: item['contentUrl']?.toString(),
         );
       }).toList();
 
@@ -753,7 +765,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               final doc = selectedDocs[index];
               return GestureDetector(
                 onTap: () {
-                  if (doc.type == 'Sách') {
+                  if (doc.type == 'Sách' || doc.type == 'Truyện') {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -761,6 +773,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             ? BookReaderScreen(
                                 title: doc.title,
                                 imagePath: doc.image,
+                                pages: doc.pages,
                               )
                             : BookDetailScreen(
                                 title: doc.title,
@@ -976,7 +989,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Widget _buildDocCard(DocItem doc) {
     return GestureDetector(
       onTap: () {
-        if (doc.type == 'Sách') {
+        if (doc.type == 'Sách' || doc.type == 'Truyện') {
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -984,6 +997,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   ? BookReaderScreen(
                       title: doc.title,
                       imagePath: doc.image,
+                      pages: doc.pages,
                     )
                   : BookDetailScreen(
                       title: doc.title,

@@ -12,6 +12,26 @@
 
 require('dotenv').config();
 
+const fs = require('fs');
+const path = require('path');
+
+// Dynamically fix GOOGLE_APPLICATION_CREDENTIALS for local vs cloud deployment
+const candidateCredentialsPaths = [
+  path.join(__dirname, 'google-key.json'),
+  '/etc/secrets/google-key.json',
+  './google-key.json',
+  '/opt/render/project/src/google-key.json',
+  '/opt/render/project/src/src/backend/google-key.json'
+];
+
+for (const p of candidateCredentialsPaths) {
+  if (fs.existsSync(p)) {
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = p;
+    console.log(`🔑 [Google Credentials] Dynamically set to: ${p}`);
+    break;
+  }
+}
+
 const express = require('express');
 const http = require('http');
 const cors = require('cors');

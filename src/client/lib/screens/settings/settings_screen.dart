@@ -500,34 +500,6 @@ class _SettingsScreenState extends State<SettingsScreen>
   // ═══════════════════════════════════════════════════════════════════════
   Widget _buildDataCard() {
     return _settingsCard(children: [
-      _settingsTile(
-        icon: Icons.cloud_download_rounded,
-        iconColor: AppColors.violet,
-        title: context.translate('settings.offline_mode'),
-        subtitle: context.translate('settings.offline_mode_desc'),
-        trailing: _premiumSwitch(
-          value: _offlineEnabled,
-          activeColor: AppColors.violet,
-          onChanged: (v) async {
-            _tap();
-            setState(() => _offlineEnabled = v);
-            await _storage?.setOfflineEnabled(v);
-          },
-        ),
-      ),
-      _thinDivider(),
-      
-      // Đặt lại tiến độ học
-      _settingsTile(
-        icon: Icons.refresh_rounded,
-        iconColor: AppColors.secondary,
-        title: context.translate('settings.reset_progress'),
-        subtitle: context.translate('settings.reset_progress_desc'),
-        trailing: Icon(Icons.chevron_right_rounded,
-            color: AppColors.textHint, size: 20.sp),
-        onTap: _confirmResetProgress,
-      ),
-      _thinDivider(),
 
       _settingsTile(
         icon: Icons.logout_rounded,

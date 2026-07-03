@@ -13,6 +13,7 @@ const { calculateStreak } = require('../utils/helpers');
 const { AppError } = require('../middlewares/errorHandler');
 const { MESSAGES, AUTH_PROVIDERS, XP_CONFIG } = require('../constants');
 const missionService = require('./missionService');
+const emailService = require('./emailService');
 
 class AuthService {
   /**
@@ -262,6 +263,75 @@ class AuthService {
       user: user.toJSON(),
       ...tokens,
     };
+  }
+
+  /**
+   * Forgot Password - Send OTP
+   */
+  async forgotPassword(email) {
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new AppError('Email không tồn tại trong hệ thống', 404);
+    }
+
+    if (user.authProvider !== AUTH_PROVIDERS.LOCAL) {
+      throw new AppError(`Tài khoản này được đăng ký qua ${user.authProvider}, không thể đổi mật khẩu`, 400);
+    }
+
+    // Generate 4-digit OTP
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    
+    // Expires in 10 minutes
+    const expires = new Date(Date.now() + 10 * 60 * 1000);
+
+    user.resetPasswordOTP = otp;
+    user.resetPasswordOTPExpires = expires;
+    await user.save();
+
+    await emailService.sendPasswordResetOTP(email, otp);
+
+    return { message: 'Mã xác nhận đã được gửi đến email của bạn' };
+  }
+
+  /**
+   * Verify OTP
+   */
+  async verifyOTP(email, otp) {
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new AppError('Email không tồn tại', 404);
+    }
+
+    if (user.resetPasswordOTP !== otp) {
+      throw new AppError('Mã xác nhận không chính xác', 400);
+    }
+
+    if (user.resetPasswordOTPExpires < new Date()) {
+      throw new AppError('Mã xác nhận đã hết hạn', 400);
+    }
+
+    return { message: 'Xác minh thành công' };
+  }
+
+  /**
+   * Reset Password
+   */
+  async resetPassword(email, otp, newPassword) {
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new AppError('Email không tồn tại', 404);
+    }
+
+    if (user.resetPasswordOTP !== otp || user.resetPasswordOTPExpires < new Date()) {
+      throw new AppError('Mã xác nhận không hợp lệ hoặc đã hết hạn', 400);
+    }
+
+    user.password = newPassword; // Mongoose middleware will hash it
+    user.resetPasswordOTP = undefined;
+    user.resetPasswordOTPExpires = undefined;
+    await user.save();
+
+    return { message: 'Mật khẩu đã được thay đổi thành công' };
   }
 }
 

@@ -322,6 +322,7 @@ class StorageService {
       await _prefs?.setInt(_keyTtsSpeed, val);
 
   bool getHapticsEnabled() => _prefs?.getBool(_keyHaptics) ?? true;
+  static bool get isHapticsEnabled => _prefs?.getBool(_keyHaptics) ?? true;
   Future<void> setHapticsEnabled(bool val) async =>
       await _prefs?.setBool(_keyHaptics, val);
 

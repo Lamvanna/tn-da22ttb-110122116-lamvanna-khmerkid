@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
 import '../../services/admin_service.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// Trò chơi: 🍎 Khu vườn Toán học Khmer (Khmer Math & Number Garden)
 /// Bé học đếm và làm phép tính toán đố bằng chữ số cổ Khmer (០-៩).
@@ -390,7 +391,7 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
   }
 
   void _showCooldownMessage(String itemName, int remainingSeconds) {
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -427,7 +428,7 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
       _showCooldownMessage('Gợi ý 🔍', remaining);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     final currentLevel = _levels[_currentLevelIdx];
     setState(() {
       _hintsLeft--;
@@ -443,7 +444,7 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
       _showCooldownMessage('Thêm giờ ⏰', remaining);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     setState(() {
       _timePowerupsLeft--;
       _timeLeft += 10;
@@ -458,7 +459,7 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
       _showCooldownMessage('Thêm mạng ❤️', remaining);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     setState(() {
       _livesPowerupsLeft--;
       if (_lives < 3) _lives++;
@@ -473,7 +474,7 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
       _showCooldownMessage('Nhân đôi điểm ⭐', remaining);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     setState(() {
       _doubleScorePowerupsLeft--;
       _isDoubleScoreActive = true;
@@ -594,7 +595,7 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
   }
 
   void _onTimeOut() {
-    HapticFeedback.heavyImpact();
+    AppHaptics.heavyImpact();
     setState(() {
       _lives = 0;
       _gameOver = true;
@@ -626,7 +627,7 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
       _timer?.cancel();
       _onRoundSuccess();
     } else {
-      HapticFeedback.vibrate();
+      AppHaptics.vibrate();
       setState(() {
         if (_lives > 1) {
           _lives--;
@@ -680,7 +681,7 @@ class _MathGardenGameScreenState extends State<MathGardenGameScreen>
   }
 
   void _onRoundSuccess() {
-    HapticFeedback.heavyImpact();
+    AppHaptics.heavyImpact();
     _timer?.cancel();
     int addedScore = 15;
     if (_isDoubleScoreActive) {

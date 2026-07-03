@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/khmer_consonant_series.dart';
 import '../../services/score_service.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// Trò chơi: 🐘 Voi con vượt ải (Khmer Consonant Series Runner)
 /// Bé giúp Voi con chọn đúng cổng hàng giọng O hoặc giọng Ô tương ứng của phụ âm.
@@ -123,7 +124,7 @@ class _ElephantRunGameScreenState extends State<ElephantRunGameScreen>
 
     // Giả lập Audio-first flow: Phát âm phụ âm và ví dụ trong 1.5 giây
     // Bé sẽ thấy sóng âm phát và voi nhún nhảy ngộ nghĩnh
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (!mounted) return;
       setState(() {
@@ -144,7 +145,7 @@ class _ElephantRunGameScreenState extends State<ElephantRunGameScreen>
   }
 
   void _playPronunciation() {
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     setState(() {
       _isAudioPlaying = true;
     });
@@ -182,7 +183,7 @@ class _ElephantRunGameScreenState extends State<ElephantRunGameScreen>
   }
 
   void _onTimeOut() {
-    HapticFeedback.heavyImpact();
+    AppHaptics.heavyImpact();
     setState(() {
       _lives = 0;
       _gameOver = true;
@@ -201,7 +202,7 @@ class _ElephantRunGameScreenState extends State<ElephantRunGameScreen>
     });
 
     if (isCorrect) {
-      HapticFeedback.heavyImpact();
+      AppHaptics.heavyImpact();
       setState(() {
         _phase = GamePhase.resultShowing;
         _score += 15;
@@ -216,7 +217,7 @@ class _ElephantRunGameScreenState extends State<ElephantRunGameScreen>
         }
       });
     } else {
-      HapticFeedback.vibrate();
+      AppHaptics.vibrate();
       setState(() {
         _phase = GamePhase.comparing; // Chuyển sang so sánh nhanh
         if (_lives > 1) {

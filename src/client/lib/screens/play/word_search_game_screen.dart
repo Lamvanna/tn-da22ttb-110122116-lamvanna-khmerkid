@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
 import '../../services/admin_service.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// Trò chơi: 🌲 Giải cứu thú rừng (Khmer Word Search & Rescue)
 /// Bé tìm các chữ cái tạo nên tên con vật để giải cứu chúng.
@@ -291,7 +292,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
   }
 
   void _onTimeOut() {
-    HapticFeedback.heavyImpact();
+    AppHaptics.heavyImpact();
     setState(() {
       _lives = 0;
       _gameOver = true;
@@ -318,12 +319,12 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
         // Nếu ô đã được chọn, xóa ô đó và tất cả các ô sau nó
         final idx = _selectedPoints.indexOf(tappedPoint);
         _selectedPoints.removeRange(idx, _selectedPoints.length);
-        HapticFeedback.lightImpact();
+        AppHaptics.lightImpact();
       } else {
         // Nếu chưa được chọn và chưa chọn đủ số lượng chữ
         if (_selectedPoints.length < currentLevel.path.length) {
           _selectedPoints.add(tappedPoint);
-          HapticFeedback.lightImpact();
+          AppHaptics.lightImpact();
         }
       }
     });
@@ -352,7 +353,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
       _onRoundSuccess();
     } else {
       // Bé ấn sai nét -> Rung phản hồi báo sai, trừ 1 mạng
-      HapticFeedback.vibrate();
+      AppHaptics.vibrate();
       setState(() {
         _selectedPoints.clear();
         if (_lives > 1) {
@@ -468,7 +469,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
   }
 
   void _onRoundSuccess() {
-    HapticFeedback.heavyImpact();
+    AppHaptics.heavyImpact();
     _timer?.cancel();
     int addedScore = 15;
     if (_isDoubleScoreActive) {
@@ -1017,7 +1018,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
   }
 
   void _showCooldownMessage(String itemName, int remainingSeconds) {
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1066,7 +1067,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
     }
 
     if (correctLen < currentLevel.path.length) {
-      HapticFeedback.mediumImpact();
+      AppHaptics.mediumImpact();
       setState(() {
         _hintsLeft--;
         _selectedPoints = currentLevel.path.sublist(0, correctLen + 1);
@@ -1082,7 +1083,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
       _showCooldownMessage('Thêm giờ ⏰', remaining);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     setState(() {
       _timePowerupsLeft--;
       _timeLeft += 10;
@@ -1097,7 +1098,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
       _showCooldownMessage('Thêm mạng ❤️', remaining);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     setState(() {
       _livesPowerupsLeft--;
       if (_lives < 3) _lives++;
@@ -1112,7 +1113,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
       _showCooldownMessage('Nhân đôi điểm ⭐', remaining);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     setState(() {
       _doubleScorePowerupsLeft--;
       _isDoubleScoreActive = true;

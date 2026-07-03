@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
+import '../../services/auth_service.dart';
 import 'login_screen.dart';
-
 /// Màn hình Đặt lại mật khẩu - Premium UI/UX KhmerKid
 class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+  final String email;
+  final String otp;
+  const ResetPasswordScreen({super.key, required this.email, required this.otp});
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -496,10 +498,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     }
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2));
+    final result = await AuthService().resetPassword(widget.email, widget.otp, password);
     if (!mounted) return;
     setState(() => _isLoading = false);
-    _showSuccessDialog();
+
+    if (result['success'] == true) {
+      _showSuccessDialog();
+    } else {
+      setState(() => _passError = result['message']);
+    }
   }
 
   void _showSuccessDialog() {

@@ -16,6 +16,7 @@ import '../../models/khmer_closed_syllable.dart';
 import '../../models/khmer_coeng.dart';
 
 import '../../services/score_service.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// Màn trung gian — chọn loại Ghép vần.
 ///   1. Phụ âm + Nguyên âm     → SpellingMapScreen
@@ -367,7 +368,7 @@ class _SpellingHubScreenState extends State<SpellingHubScreen> {
   }
 
   void _showLockedMessage(BuildContext context) {
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -447,7 +448,7 @@ class _ModeCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          HapticFeedback.lightImpact();
+          AppHaptics.lightImpact();
           mode.onTap();
         },
         borderRadius: BorderRadius.circular(22.r),
@@ -824,7 +825,7 @@ class _HubBottomNav extends StatelessWidget {
           if (mainState != null) {
             mainState.switchTab(index);
           }
-          HapticFeedback.lightImpact();
+          AppHaptics.lightImpact();
         },
         child: Column(
           mainAxisSize: MainAxisSize.min,

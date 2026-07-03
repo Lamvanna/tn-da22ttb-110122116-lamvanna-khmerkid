@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_vowel.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// Sheet nghe phát âm nguyên âm — RESPONSIVE
 class VowelListenSheet extends StatefulWidget {
@@ -58,7 +59,7 @@ class _State extends State<VowelListenSheet> with SingleTickerProviderStateMixin
 
   Future<void> _play() async {
     if (_isPlaying) return;
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     setState(() { _isPlaying = true; _playCount++; });
     _waveCtrl.repeat(reverse: true);
     await _tts.setSpeechRate(_speedRate);
@@ -216,7 +217,7 @@ class _State extends State<VowelListenSheet> with SingleTickerProviderStateMixin
     final active = _speed == val;
     return GestureDetector(
       onTap: () {
-        HapticFeedback.selectionClick();
+        AppHaptics.selectionClick();
         setState(() => _speed = val);
       },
       child: AnimatedContainer(

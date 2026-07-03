@@ -30,6 +30,10 @@ router.post('/refresh-token', refreshTokenValidator, validate, authController.re
 router.get('/google', authController.googleLogin);
 router.get('/google/callback', authController.googleCallback);
 router.post('/google/mobile-signin', authController.mobileGoogleLogin);
+// Password Recovery
+router.post('/forgot-password', authController.forgotPassword);
+router.post('/verify-otp', authController.verifyOTP);
+router.post('/reset-password', authController.resetPassword);
 
 // Protected routes
 router.post('/logout', authenticate, authController.logout);

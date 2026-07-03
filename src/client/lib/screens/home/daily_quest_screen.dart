@@ -11,6 +11,7 @@ import '../shop/shop_screen.dart';
 import '../profile/inventory_screen.dart';
 import '../main_screen.dart';
 import '../../l10n/app_localizations.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// Màn hình Nhiệm vụ — Header gradient + Điểm + Daily/Weekly + Thành tích
 class DailyQuestScreen extends StatefulWidget {
@@ -612,7 +613,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
   Widget _buildRewardBtn() {
     return GestureDetector(
       onTap: () {
-        HapticFeedback.lightImpact();
+        AppHaptics.lightImpact();
         Navigator.push(context, MaterialPageRoute(
           builder: (_) => const ShopScreen()));
       },
@@ -945,7 +946,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
                 : (quest.isCompleted && !quest.isClaimed)
                     ? GestureDetector(
                         onTap: () {
-                          HapticFeedback.mediumImpact();
+                          AppHaptics.mediumImpact();
                           _claimReward(quest.id);
                         },
                         child: Container(
@@ -1028,7 +1029,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
 
   /// Điều hướng đến màn hình tương ứng dựa trên loại nhiệm vụ
   void _navigateForAction(_DailyQuest quest) {
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     final action = quest.action;
 
     // Nếu không có action, dựa vào title để xác định
@@ -1249,7 +1250,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
               : (quest.isCompleted && !quest.isClaimed)
                   ? GestureDetector(
                       onTap: () {
-                        HapticFeedback.mediumImpact();
+                        AppHaptics.mediumImpact();
                         _claimReward(quest.id);
                       },
                       child: Container(
@@ -1340,7 +1341,7 @@ class _DailyQuestScreenState extends State<DailyQuestScreen> {
           const Spacer(),
           GestureDetector(
             onTap: () {
-              HapticFeedback.lightImpact();
+              AppHaptics.lightImpact();
               Navigator.push(context, MaterialPageRoute(
                 builder: (_) => const AchievementsScreen()));
             },

@@ -13,6 +13,7 @@ import '../../models/khmer_diacritical.dart';
 import '../../widgets/khmer_write_widget.dart';
 import '../../widgets/khmer_speak_widget.dart';
 import '../../repositories/progress_repository.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 
 /// Màn hình học dấu Khmer cao cấp (đồng bộ 100% SpellingScreen)
@@ -1547,7 +1548,7 @@ class _InlineWriteContentState extends State<_InlineWriteContent> {
 
   void _check() {
     if (_strokes.isEmpty) return;
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     setState(() => _passed = true);
     widget.onComplete();
   }

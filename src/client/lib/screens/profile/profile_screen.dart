@@ -19,6 +19,7 @@ import '../../widgets/game_xp_progress_bar.dart';
 import '../notification/notification_screen.dart';
 import '../../services/notification_service.dart';
 import '../../models/app_notification.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -1960,7 +1961,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          HapticFeedback.lightImpact();
+          AppHaptics.lightImpact();
           onTap();
         },
         borderRadius: BorderRadius.circular(20.r),

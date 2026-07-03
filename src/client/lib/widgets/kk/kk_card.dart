@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../theme/design_tokens.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// ════════════════════════════════════════════════════════════════════
 ///  KkCard — Card hệ thống
@@ -90,7 +91,7 @@ class _KkCardState extends State<KkCard> {
         onTapCancel: () => setState(() => _pressed = false),
         onTapUp: (_) {
           setState(() => _pressed = false);
-          HapticFeedback.lightImpact();
+          AppHaptics.lightImpact();
           widget.onTap?.call();
         },
         child: AnimatedScale(

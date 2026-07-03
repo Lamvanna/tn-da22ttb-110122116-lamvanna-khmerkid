@@ -341,7 +341,23 @@ class AuthService extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        if (responseData['data'] != null) {
+          _accessToken = responseData['data']['accessToken'];
+          _refreshToken = responseData['data']['refreshToken'];
+          _userProfile = responseData['data']['user'];
+
+          final prefs = await SharedPreferences.getInstance();
+          if (_accessToken != null) await prefs.setString('accessToken', _accessToken!);
+          if (_refreshToken != null) await prefs.setString('refreshToken', _refreshToken!);
+          if (_userProfile != null) await prefs.setString('userProfile', jsonEncode(_userProfile));
+
+          if (_userProfile != null) {
+            await _syncProfileToStorage(_userProfile!);
+          }
+          SyncManager.instance.fullSync();
+          HandwritingWebSocketClient.instance.connect();
+        }
         return {'success': true, 'message': responseData['message']};
       } else {
         return {
@@ -987,6 +1003,74 @@ class AuthService extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('❌ Error using permanent item: $e');
+      return {'success': false, 'message': 'Không thể kết nối máy chủ: $e'};
+    }
+  }
+
+
+  // ==========================================
+  // QUÊN MẬT KHẨU (PASSWORD RECOVERY)
+  // ==========================================
+
+  /// Gửi mã xác nhận OTP đến email
+  Future<Map<String, dynamic>> forgotPassword(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/forgot-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      ).timeout(_httpTimeout);
+
+      final responseData = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': responseData['message'] ?? 'Mã xác nhận đã được gửi'};
+      } else {
+        return {'success': false, 'message': responseData['message'] ?? 'Gửi email thất bại'};
+      }
+    } catch (e) {
+      debugPrint('❌ Error forgot password: $e');
+      return {'success': false, 'message': 'Không thể kết nối máy chủ: $e'};
+    }
+  }
+
+  /// Xác minh mã OTP
+  Future<Map<String, dynamic>> verifyOTP(String email, String otp) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/verify-otp'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'otp': otp}),
+      ).timeout(_httpTimeout);
+
+      final responseData = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': responseData['message'] ?? 'Xác minh thành công'};
+      } else {
+        return {'success': false, 'message': responseData['message'] ?? 'Mã xác minh không hợp lệ'};
+      }
+    } catch (e) {
+      debugPrint('❌ Error verify OTP: $e');
+      return {'success': false, 'message': 'Không thể kết nối máy chủ: $e'};
+    }
+  }
+
+  /// Đặt lại mật khẩu mới
+  Future<Map<String, dynamic>> resetPassword(String email, String otp, String newPassword) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/reset-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'otp': otp, 'newPassword': newPassword}),
+      ).timeout(_httpTimeout);
+
+      final responseData = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': responseData['message'] ?? 'Đổi mật khẩu thành công'};
+      } else {
+        return {'success': false, 'message': responseData['message'] ?? 'Đổi mật khẩu thất bại'};
+      }
+    } catch (e) {
+      debugPrint('❌ Error reset password: $e');
       return {'success': false, 'message': 'Không thể kết nối máy chủ: $e'};
     }
   }

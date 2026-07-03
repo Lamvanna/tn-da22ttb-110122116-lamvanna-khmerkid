@@ -88,6 +88,39 @@ class AuthController {
       next(error);
     }
   }
+
+  /** POST /api/auth/forgot-password */
+  async forgotPassword(req, res, next) {
+    try {
+      const { email } = req.body;
+      const result = await authService.forgotPassword(email);
+      sendSuccess(res, 'Mã xác nhận đã được gửi', result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /** POST /api/auth/verify-otp */
+  async verifyOTP(req, res, next) {
+    try {
+      const { email, otp } = req.body;
+      const result = await authService.verifyOTP(email, otp);
+      sendSuccess(res, 'Xác minh thành công', result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /** POST /api/auth/reset-password */
+  async resetPassword(req, res, next) {
+    try {
+      const { email, otp, newPassword } = req.body;
+      const result = await authService.resetPassword(email, otp, newPassword);
+      sendSuccess(res, 'Đổi mật khẩu thành công', result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new AuthController();

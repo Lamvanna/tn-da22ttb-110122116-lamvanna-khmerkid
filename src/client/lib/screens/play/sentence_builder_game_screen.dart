@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
 import '../../services/admin_service.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// Trò chơi: 🏝️ Đảo quốc Ngữ pháp (Khmer Sentence Builder Island)
 /// Bé sắp xếp các khối từ vựng thành câu tiếng Khmer hoàn chỉnh có nghĩa.
@@ -306,7 +307,7 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
   }
 
   void _onTimeOut() {
-    HapticFeedback.heavyImpact();
+    AppHaptics.heavyImpact();
     setState(() {
       _lives = 0;
       _gameOver = true;
@@ -325,7 +326,7 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
   void _onWordTap(String word) {
     if (_isRoundCompleted) return;
 
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     setState(() {
       if (_selectedWords.contains(word)) {
         _selectedWords.remove(word);
@@ -342,7 +343,7 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
 
     final currentLevel = _levels[_currentLevelIdx];
     if (_selectedWords.length < currentLevel.correctWords.length) {
-      HapticFeedback.mediumImpact();
+      AppHaptics.mediumImpact();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -376,7 +377,7 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
       }
 
       wrongAttempts++;
-      HapticFeedback.vibrate();
+      AppHaptics.vibrate();
 
       if (wrongAttempts == 1) {
         // Lần sai thứ nhất: KHÔNG trừ tim, chỉ tô đỏ từ sai
@@ -472,7 +473,7 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
   }
 
   void _onRoundSuccess() {
-    HapticFeedback.heavyImpact();
+    AppHaptics.heavyImpact();
     _timer?.cancel();
     int addedScore = 15;
     if (_isDoubleScoreActive) {
@@ -703,7 +704,7 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
   }
 
   void _showCooldownMessage(String itemName, int remainingSeconds) {
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -753,7 +754,7 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
     }
     
     if (correctLen < currentLevel.correctWords.length) {
-      HapticFeedback.mediumImpact();
+      AppHaptics.mediumImpact();
       setState(() {
         _hintsLeft--;
         _selectedWords = currentLevel.correctWords.sublist(0, correctLen + 1);
@@ -769,7 +770,7 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
       _showCooldownMessage('Thêm giờ ⏰', remaining);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     setState(() {
       _timePowerupsLeft--;
       _timeLeft += 10;
@@ -784,7 +785,7 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
       _showCooldownMessage('Thêm mạng ❤️', remaining);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     setState(() {
       _livesPowerupsLeft--;
       if (_lives < 3) _lives++;
@@ -799,7 +800,7 @@ class _SentenceBuilderGameScreenState extends State<SentenceBuilderGameScreen>
       _showCooldownMessage('Nhân đôi điểm ⭐', remaining);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     setState(() {
       _doubleScorePowerupsLeft--;
       _isDoubleScoreActive = true;

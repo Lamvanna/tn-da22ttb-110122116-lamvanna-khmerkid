@@ -10,6 +10,7 @@ import '../../services/score_service.dart';
 import '../../services/storage_service.dart';
 import 'reading_screen.dart';
 import '../../repositories/progress_repository.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// Bản đồ học tập đọc tiếng Khmer dạng Zigzag Timeline - Đồng bộ 100% LetterMapView
 class ReadingMapScreen extends StatefulWidget {
@@ -520,7 +521,7 @@ class _ReadingMapScreenState extends State<ReadingMapScreen>
   }
 
   void _openLesson(int idx) {
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     Navigator.push(
       context,
       MaterialPageRoute(

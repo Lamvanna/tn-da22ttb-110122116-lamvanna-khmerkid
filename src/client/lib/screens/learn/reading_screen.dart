@@ -12,6 +12,7 @@ import '../../services/lesson_service.dart';
 import '../../models/khmer_reading.dart';
 import '../../services/voice_recognition_service.dart';
 import '../../widgets/feedback_dialog.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// Màn hình Tập đọc Khmer - Premium 100% Traditional Book-page Layout
 class ReadingScreen extends StatefulWidget {
@@ -394,7 +395,7 @@ class _ReadingScreenState extends State<ReadingScreen>
     await _tts.stop();
     
     final line = _lessons[_currentLesson].lines[idx];
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     
     setState(() {
       _playingLineIdx = idx;
@@ -409,7 +410,7 @@ class _ReadingScreenState extends State<ReadingScreen>
 
   Future<void> _speakAll() async {
     if (!_ttsReady) return;
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     
     setState(() {
       _isPlayingAll = true;
@@ -489,7 +490,7 @@ class _ReadingScreenState extends State<ReadingScreen>
     _isPlayingAll = false;
     await _tts.stop();
     
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     setState(() {
       _playingLineIdx = lineIdx;
       _playingWordIdx = wordIdx;

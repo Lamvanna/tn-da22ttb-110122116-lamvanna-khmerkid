@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// Thẻ danh mục — gradient + ảnh to ở trên, label dưới
 class CategoryCard extends StatefulWidget {
@@ -40,7 +41,7 @@ class _CategoryCardState extends State<CategoryCard> {
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) {
         setState(() => _pressed = false);
-        HapticFeedback.lightImpact();
+        AppHaptics.lightImpact();
         widget.onTap?.call();
       },
       onTapCancel: () => setState(() => _pressed = false),

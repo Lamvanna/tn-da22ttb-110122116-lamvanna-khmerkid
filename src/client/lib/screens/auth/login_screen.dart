@@ -332,26 +332,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         isPressed: _isGooglePressed,
                         onPressedChange: (val) => setState(() => _isGooglePressed = val),
                       ),
-                      SizedBox(height: 14.h),
 
-                      // Đăng nhập bằng Facebook
-                      _socialButton(
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Đăng nhập bằng Facebook hiện tại chưa khả dụng.'),
-                            ),
-                          );
-                        },
-                        logoWidget: Icon(
-                          Icons.facebook,
-                          color: const Color(0xFF1877F2),
-                          size: 24.sp,
-                        ),
-                        label: 'Đăng nhập với Facebook',
-                        isPressed: _isFacebookPressed,
-                        onPressedChange: (val) => setState(() => _isFacebookPressed = val),
-                      ),
                       SizedBox(height: 32.h),
 
                       // Gợi ý đăng ký tài khoản
@@ -659,6 +640,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _showErrorDialog('Lỗi kết nối tới hệ thống Google: $e');
     }
   }
+
 
   void _showMockBypassDialog() {
     _mockEmailCtrl.clear();

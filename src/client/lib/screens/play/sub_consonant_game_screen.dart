@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// Trò chơi: 🕵️‍♂️ Nhà khảo cổ nhí (Khmer Sub-consonant Detective)
 /// Bé khai quật và tìm chân chữ (Châng) tiếng Khmer bị khuyết trong các cổ vật đá.
@@ -176,7 +177,7 @@ class _SubConsonantGameScreenState extends State<SubConsonantGameScreen>
   }
 
   void _onTimeOut() {
-    HapticFeedback.heavyImpact();
+    AppHaptics.heavyImpact();
     setState(() {
       _lives = 0;
       _gameOver = true;
@@ -208,7 +209,7 @@ class _SubConsonantGameScreenState extends State<SubConsonantGameScreen>
       _timer?.cancel();
       _onRoundSuccess();
     } else {
-      HapticFeedback.vibrate();
+      AppHaptics.vibrate();
       setState(() {
         _showCorrectAnswerZoom = true;
         if (_lives > 1) {
@@ -267,7 +268,7 @@ class _SubConsonantGameScreenState extends State<SubConsonantGameScreen>
   }
 
   void _onRoundSuccess() {
-    HapticFeedback.heavyImpact();
+    AppHaptics.heavyImpact();
     _timer?.cancel();
     setState(() {
       _score += 15;

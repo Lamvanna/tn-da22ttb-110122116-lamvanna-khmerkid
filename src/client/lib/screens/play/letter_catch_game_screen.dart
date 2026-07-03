@@ -11,6 +11,7 @@ import '../../models/khmer_vowel.dart';
 import '../../services/score_service.dart';
 import '../../services/admin_service.dart';
 import '../../l10n/app_localizations.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// Trò chơi Bắt chữ Khmer — Premium High-Fidelity 3D UI giống mẫu HTML (Compile-Safe)
 class LetterCatchGameScreen extends StatefulWidget {
@@ -270,7 +271,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
 
   void _selectConsonant(String c) {
     if (_showResult) return;
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     setState(() {
       if (_selectedConsonant == c) {
         _selectedConsonant = null; 
@@ -282,7 +283,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
 
   void _selectVowel(String v) {
     if (_showResult) return;
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     setState(() {
       if (_selectedVowel == v) {
         _selectedVowel = null; 
@@ -294,7 +295,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
 
   void _selectFinalConsonant(String fc) {
     if (_showResult) return;
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     setState(() {
       if (_selectedFinalConsonant == fc) {
         _selectedFinalConsonant = null;
@@ -328,7 +329,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
   }
 
   void _onCorrect() {
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     _combo++;
     if (_combo > _maxCombo) _maxCombo = _combo;
     _correctCount++;
@@ -374,7 +375,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
   }
 
   void _onWrong() {
-    HapticFeedback.heavyImpact();
+    AppHaptics.heavyImpact();
     _combo = 0;
     _lives--;
 
@@ -489,7 +490,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
   }
 
   void _showCooldownMessage(String itemKey, int remainingSeconds) {
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     ScaffoldMessenger.of(context).clearSnackBars();
     final itemName = context.translate('game_catch_letter.$itemKey');
     ScaffoldMessenger.of(context).showSnackBar(
@@ -530,7 +531,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
       _showCooldownMessage('hint_name', remaining);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     setState(() {
       _hintsLeft--;
       if (_selectedConsonant != _currentSyllable.consonant) {
@@ -549,7 +550,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
       _showCooldownMessage('time_name', remaining);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     setState(() {
       _timePowerupsLeft--;
       _timeLeft += 10;
@@ -564,7 +565,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
       _showCooldownMessage('live_name', remaining);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     setState(() {
       _livesPowerupsLeft--;
       if (_lives < 3) _lives++;
@@ -579,7 +580,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
       _showCooldownMessage('double_name', remaining);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     setState(() {
       _doubleScorePowerupsLeft--;
       _isDoubleScoreActive = true;
@@ -1345,7 +1346,7 @@ class _LetterCatchGameScreenState extends State<LetterCatchGameScreen>
                   right: 4.w,
                   child: GestureDetector(
                     onTap: () {
-                      HapticFeedback.lightImpact();
+                      AppHaptics.lightImpact();
                       try {
                         _tts.speak(_currentSyllable.result);
                       } catch (_) {}

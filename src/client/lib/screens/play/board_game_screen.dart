@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// Trò chơi: 🎲 CỜ TỶ PHÚ KHMER KỲ THÚ (Khmer Adventure Board Game)
 /// Hỗ trợ 2 chế độ:
@@ -479,7 +480,7 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
-                      HapticFeedback.heavyImpact();
+                      AppHaptics.heavyImpact();
                       setState(() {
                         _isSinglePlayerMode = true;
                         _hasSelectedMode = true;
@@ -536,7 +537,7 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
-                      HapticFeedback.heavyImpact();
+                      AppHaptics.heavyImpact();
                       setState(() {
                         _isSinglePlayerMode = false;
                         _hasSelectedMode = true;
@@ -606,7 +607,7 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
     // Nếu đang ở chế độ 1 người và đang lượt của Máy AI
     if (_isSinglePlayerMode && _activePlayer == 2) return;
 
-    HapticFeedback.heavyImpact();
+    AppHaptics.heavyImpact();
     setState(() {
       _isRolling = true;
     });
@@ -637,7 +638,7 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
     int stepCount = 0;
     Timer.periodic(const Duration(milliseconds: 350), (timer) {
       if (stepCount < steps) {
-        HapticFeedback.lightImpact();
+        AppHaptics.lightImpact();
         setState(() {
           if (_activePlayer == 1) {
             if (_player1Pos < targetPos) _player1Pos++;
@@ -691,7 +692,7 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
               _player2Pos++;
             });
             stepCount++;
-            HapticFeedback.lightImpact();
+            AppHaptics.lightImpact();
           } else {
             timer.cancel();
 
@@ -734,19 +735,19 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
 
     // BẪY LÙI 2 Ô
     if (tile.type == 'trap_back') {
-      HapticFeedback.vibrate();
+      AppHaptics.vibrate();
       _showTrapDialog(mascotName, tile.name);
       return;
     }
 
     // GIA TỐC TIẾN 2 Ô
     if (tile.type == 'boost_forward') {
-      HapticFeedback.heavyImpact();
+      AppHaptics.heavyImpact();
       _showBoostDialog(mascotName, tile.name);
       return;
     }
 
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     setState(() {
       _activeChallengeType = tile.type;
       _isChallengeCompleted = false;
@@ -944,7 +945,7 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
     });
 
     if (_isChallengeCompleted) {
-      HapticFeedback.heavyImpact();
+      AppHaptics.heavyImpact();
       setState(() {
         if (_activePlayer == 1) {
           _player1Score += 15;
@@ -954,14 +955,14 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
       });
       _scoreService?.completeGame('board_consonant', 15);
     } else {
-      HapticFeedback.vibrate();
+      AppHaptics.vibrate();
     }
   }
 
   // ĐÁNH GIÁ CÁC BƯỚC THỬ THÁCH GHÉP VẦN 3 CÂU LIÊN TIẾP (MULTI-STEP SPELLING)
   void _submitSpellingVowel1(String vowel) {
     if (vowel == 'ា') {
-      HapticFeedback.heavyImpact();
+      AppHaptics.heavyImpact();
       setState(() {
         _spellingSelectedVowel1 = vowel;
       });
@@ -973,13 +974,13 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
         }
       });
     } else {
-      HapticFeedback.vibrate();
+      AppHaptics.vibrate();
     }
   }
 
   void _submitSpellingVowel2(String vowel) {
     if (vowel == 'ី') {
-      HapticFeedback.heavyImpact();
+      AppHaptics.heavyImpact();
       setState(() {
         _spellingSelectedVowel2 = vowel;
       });
@@ -991,13 +992,13 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
         }
       });
     } else {
-      HapticFeedback.vibrate();
+      AppHaptics.vibrate();
     }
   }
 
   void _submitSpellingSubConsonant(String sub) {
     if (sub == '្ក') {
-      HapticFeedback.heavyImpact();
+      AppHaptics.heavyImpact();
       setState(() {
         _spellingSelectedSubConsonant = sub;
         _isChallengeCompleted = true; // ĐÃ HOÀN THÀNH CẢ 3 CÂU GHÉP VẦN!
@@ -1009,7 +1010,7 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
       });
       _scoreService?.completeGame('board_vowel', 25);
     } else {
-      HapticFeedback.vibrate();
+      AppHaptics.vibrate();
     }
   }
 
@@ -1032,7 +1033,7 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
           }
         });
         _scoreService?.completeGame('board_speaking', 15);
-        HapticFeedback.heavyImpact();
+        AppHaptics.heavyImpact();
       }
     });
   }
@@ -1051,7 +1052,7 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
       }
     });
     _scoreService?.completeGame('board_writing', 15);
-    HapticFeedback.heavyImpact();
+    AppHaptics.heavyImpact();
   }
 
   // ĐỐI ĐẦU BOSS: TRẬN CHIẾN HP KỊCH TÍNH
@@ -1063,7 +1064,7 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
     final currentMascotName = (_activePlayer == 1) ? 'Voi Con 🐘' : 'Khỉ Con 🐒';
 
     if (choice == 'ខ្លា') {
-      HapticFeedback.heavyImpact();
+      AppHaptics.heavyImpact();
       setState(() {
         _isBossHit = true;
         _bossHP -= 33;
@@ -1081,7 +1082,7 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
         }
       });
     } else {
-      HapticFeedback.vibrate();
+      AppHaptics.vibrate();
       setState(() {
         _isPlayerHit = true;
         _playerHP -= 20;
@@ -1097,7 +1098,7 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
 
   void _submitBossQ2() {
     if (_bossQ2Points.length < 5) return;
-    HapticFeedback.heavyImpact();
+    AppHaptics.heavyImpact();
     final currentMascotName = (_activePlayer == 1) ? 'Voi Con 🐘' : 'Khỉ Con 🐒';
     setState(() {
       _bossQ2Success = true;
@@ -1125,7 +1126,7 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
     final currentMascotName = (_activePlayer == 1) ? 'Voi Con 🐘' : 'Khỉ Con 🐒';
     Timer(const Duration(seconds: 2), () {
       if (mounted) {
-        HapticFeedback.heavyImpact();
+        AppHaptics.heavyImpact();
         setState(() {
           _bossQ3Recording = false;
           _bossHP = 0; // Boss chết hoàn toàn
@@ -1144,7 +1145,7 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
 
   void _checkBossBattleState() {
     if (_playerHP <= 0) {
-      HapticFeedback.vibrate();
+      AppHaptics.vibrate();
       Timer(const Duration(milliseconds: 1000), () {
         if (mounted) {
           setState(() {
@@ -2100,7 +2101,7 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
           ),
           child: IconButton(
             onPressed: () {
-              HapticFeedback.lightImpact();
+              AppHaptics.lightImpact();
             },
             icon: const Icon(Icons.volume_up_rounded, color: Colors.blue, size: 36),
           ),
@@ -2792,7 +2793,7 @@ class _BoardGameScreenState extends State<BoardGameScreen> with TickerProviderSt
           SizedBox(height: 12.h),
           IconButton(
             onPressed: () {
-              HapticFeedback.lightImpact();
+              AppHaptics.lightImpact();
             },
             icon: const Icon(Icons.volume_up, color: Colors.red, size: 36),
           ),

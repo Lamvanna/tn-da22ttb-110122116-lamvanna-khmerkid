@@ -14,6 +14,7 @@ import 'sub_consonant_game_screen.dart';
 import 'board_game_screen.dart';
 import 'letter_catch_game_screen.dart';
 import 'elephant_run_game_screen.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// Màn hình Chơi - Lộ trình thế giới trò chơi tiểu học (đồng bộ hoàn hảo với trang Học)
 class PlayScreen extends StatefulWidget {
@@ -208,7 +209,7 @@ class _PlayScreenState extends State<PlayScreen> with WidgetsBindingObserver {
   }
 
   void _showComingSoon(BuildContext context) {
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -235,7 +236,7 @@ class _PlayScreenState extends State<PlayScreen> with WidgetsBindingObserver {
   }
 
   void _showLockedMessage(BuildContext context) {
-    HapticFeedback.mediumImpact();
+    AppHaptics.mediumImpact();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -814,7 +815,7 @@ class _PlayScreenState extends State<PlayScreen> with WidgetsBindingObserver {
 
   // ── Start Game Directly ──
   void _startGame(BuildContext context, _GameZone game) {
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     if (game.targetScreen == null) {
       _showComingSoon(context);
     } else {

@@ -57,6 +57,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       sparse: true,
     },
+
     isEmailVerified: {
       type: Boolean,
       default: false,
@@ -67,6 +68,8 @@ const userSchema = new mongoose.Schema(
     },
     passwordResetToken: String,
     passwordResetExpires: Date,
+    resetPasswordOTP: String,
+    resetPasswordOTPExpires: Date,
 
     // ========================================
     // Gamification

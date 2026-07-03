@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../services/auth_service.dart';
 import 'login_screen.dart';
+import '../main_screen.dart';
+import '../admin/admin_main_screen.dart';
 
 /// Màn hình Đăng ký - Đồng bộ phong cách Premium Polish UI/UX với LoginScreen
 class RegisterScreen extends StatefulWidget {
@@ -314,26 +316,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           isPressed: _isGooglePressed,
                           onPressedChange: (val) => setState(() => _isGooglePressed = val),
                         ),
-                        SizedBox(height: 14.h),
 
-                        // Facebook Register Button
-                        _socialButton(
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Đăng ký bằng Facebook hiện tại chưa khả dụng.'),
-                              ),
-                            );
-                          },
-                          logoWidget: Icon(
-                            Icons.facebook,
-                            color: const Color(0xFF1877F2),
-                            size: 24.sp,
-                          ),
-                          label: 'Đăng ký với Facebook',
-                          isPressed: _isFacebookPressed,
-                          onPressedChange: (val) => setState(() => _isFacebookPressed = val),
-                        ),
                         SizedBox(height: 32.h),
 
                         // Quay lại Đăng nhập
@@ -599,8 +582,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
     if (emailInput.isEmpty) {
       emailErr = 'Vui lòng nhập email đăng ký';
-    } else if (!emailInput.contains('@')) {
-      emailErr = 'Địa chỉ email không hợp lệ (cần ký tự @)';
+    } else if (!RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(emailInput)) {
+      emailErr = 'Địa chỉ email không hợp lệ';
     }
 
     if (passwordInput.isEmpty) {
@@ -726,9 +709,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(ctx);
+                    final profile = AuthService().userProfile;
+                    final isAdmin = profile?['role'] == 'admin';
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      MaterialPageRoute(builder: (_) => isAdmin ? const AdminMainScreen() : const MainScreen()),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -737,7 +722,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     elevation: 0,
                   ),
                   child: Text(
-                    'Đăng nhập ngay',
+                    'Bắt đầu học',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700,

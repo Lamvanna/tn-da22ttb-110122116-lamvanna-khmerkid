@@ -9,6 +9,7 @@ import '../../services/score_service.dart';
 import '../../services/storage_service.dart';
 import 'spelling_screen.dart';
 import '../../repositories/progress_repository.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// Bản đồ ghép vần — Timeline cards nhóm theo nguyên âm
 /// Thiết kế: Timeline dots + Stars bên trái, Cards bên phải
@@ -275,7 +276,7 @@ class _SpellingMapScreenState extends State<SpellingMapScreen>
   }
 
   void _openLesson(int idx) {
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     Navigator.push(context,
       MaterialPageRoute(builder: (_) => SpellingScreen(initialIndex: idx)),
     ).then((_) {
@@ -762,7 +763,7 @@ class _CharCircleState extends State<_CharCircle>
 
   void _handleTap() {
     if (widget.onTap == null) return;
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     _tapCtrl.forward().then((_) {
       _tapCtrl.reverse();
       widget.onTap!();

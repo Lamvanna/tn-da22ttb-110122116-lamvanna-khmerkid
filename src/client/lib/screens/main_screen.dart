@@ -10,6 +10,7 @@ import 'play/play_screen.dart';
 import 'profile/profile_screen.dart';
 
 import '../l10n/app_localizations.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// Màn hình chính với Bottom Navigation Bar
 class MainScreen extends StatefulWidget {
@@ -96,7 +97,7 @@ class MainScreenState extends State<MainScreen> {
         behavior: HitTestBehavior.opaque,
         onTap: () {
           setState(() => _currentIndex = index);
-          HapticFeedback.lightImpact();
+          AppHaptics.lightImpact();
         },
         child: Column(
           mainAxisSize: MainAxisSize.min,

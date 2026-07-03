@@ -8,6 +8,7 @@ import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
 import 'coeng_screen.dart';
 import '../../repositories/progress_repository.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// Bản đồ phụ âm có chân — Timeline cards nhóm theo cụm phụ âm kép
 class CoengMapScreen extends StatefulWidget {
@@ -236,7 +237,7 @@ class _CoengMapScreenState extends State<CoengMapScreen>
   }
 
   void _openLesson(int idx) {
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     Navigator.push(context,
       MaterialPageRoute(builder: (_) => CoengScreen(initialIndex: idx)),
     ).then((_) {
@@ -421,7 +422,7 @@ class _CharCircleState extends State<_CharCircle> with SingleTickerProviderState
   void initState() { super.initState(); _tapCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 120)); _scaleAnim = Tween<double>(begin: 1.0, end: 0.9).animate(CurvedAnimation(parent: _tapCtrl, curve: Curves.easeInOut)); }
   @override
   void dispose() { _tapCtrl.dispose(); super.dispose(); }
-  void _handleTap() { if (widget.onTap == null) return; HapticFeedback.lightImpact(); _tapCtrl.forward().then((_) { _tapCtrl.reverse(); widget.onTap!(); }); }
+  void _handleTap() { if (widget.onTap == null) return; AppHaptics.lightImpact(); _tapCtrl.forward().then((_) { _tapCtrl.reverse(); widget.onTap!(); }); }
 
   @override
   Widget build(BuildContext context) {

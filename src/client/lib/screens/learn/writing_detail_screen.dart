@@ -731,21 +731,6 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
           ),
         if (canPrev) SizedBox(width: 8.w),
 
-        // 2. Replay button (Icon only to save space)
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: const Color(0xFFEEEDF2), width: 1.5),
-          ),
-          child: IconButton(
-            onPressed: () => _speak(_lesson.character),
-            icon: const Icon(Icons.volume_up_rounded, color: AppColors.violet),
-            constraints: BoxConstraints(minWidth: 44.w, minHeight: 44.h),
-            padding: EdgeInsets.zero,
-          ),
-        ),
-        SizedBox(width: 8.w),
 
         // 3. Check button (Expanded)
         Expanded(
@@ -798,41 +783,23 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
         // 4. Next button
         if (canNext) ...[
           SizedBox(width: 8.w),
-          Expanded(
-            flex: 1,
-            child: GestureDetector(
-              onTap: _next,
-              child: Container(
-                height: 44.h,
-                decoration: BoxDecoration(
-                  color: AppColors.violet,
-                  borderRadius: BorderRadius.circular(12.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.violet.withValues(alpha: 0.2),
-                      blurRadius: 6.r,
-                      offset: Offset(0, 3.h),
-                    ),
-                  ],
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.violet,
+              borderRadius: BorderRadius.circular(12.r),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.violet.withValues(alpha: 0.2),
+                  blurRadius: 6.r,
+                  offset: Offset(0, 3.h),
                 ),
-                child: Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        context.translate('common.next'),
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-                      SizedBox(width: 4.w),
-                      Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 14.sp),
-                    ],
-                  ),
-                ),
-              ),
+              ],
+            ),
+            child: IconButton(
+              onPressed: _next,
+              icon: Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20.sp),
+              constraints: BoxConstraints(minWidth: 44.w, minHeight: 44.h),
+              padding: EdgeInsets.zero,
             ),
           ),
         ],

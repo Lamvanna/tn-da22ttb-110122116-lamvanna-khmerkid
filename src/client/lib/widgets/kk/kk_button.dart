@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../theme/design_tokens.dart';
 import '../../theme/app_typography.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// ════════════════════════════════════════════════════════════════════
 ///  KkButton — Button hệ thống KhmerKid 2026
@@ -188,7 +189,7 @@ class _KkButtonState extends State<KkButton> {
         onTapCancel: _disabled ? null : () => setState(() => _pressed = false),
         onTapUp: _disabled ? null : (_) {
           setState(() => _pressed = false);
-          HapticFeedback.lightImpact();
+          AppHaptics.lightImpact();
           widget.onPressed?.call();
         },
         child: AnimatedScale(

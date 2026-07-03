@@ -9,6 +9,7 @@ import '../../services/score_service.dart';
 import '../../services/storage_service.dart';
 import 'diacritical_screen.dart';
 import '../../repositories/progress_repository.dart';
+import 'package:khmerkid/utils/app_haptics.dart';
 
 /// Bản đồ học dấu Khmer dạng Timeline - Premium 100% đồng bộ SpellingMapScreen
 class DiacriticalMapScreen extends StatefulWidget {
@@ -223,7 +224,7 @@ class _DiacriticalMapScreenState extends State<DiacriticalMapScreen>
   }
 
   void _openLesson(int idx) {
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -645,7 +646,7 @@ class _CharCircleState extends State<_CharCircle>
 
   void _handleTap() {
     if (widget.onTap == null) return;
-    HapticFeedback.lightImpact();
+    AppHaptics.lightImpact();
     _tapCtrl.forward().then((_) {
       _tapCtrl.reverse();
       widget.onTap!();

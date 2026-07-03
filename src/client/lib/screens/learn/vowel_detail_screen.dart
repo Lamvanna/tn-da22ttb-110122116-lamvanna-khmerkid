@@ -27,8 +27,9 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
   late int _idx;
   late AnimationController _animCtrl;
   late Animation<double> _scaleAnim;
-  List<KhmerVowel> _vowels = KhmerVowelData.vowels;
+  List<KhmerVowel> _vowels = [];
   bool _isLoading = false;
+  Map<String, Map<String, dynamic>> _onlineLessonsMap = {};
   ScoreService? _score;
 
   // Track hoàn thành (0=nghe, 1=nói, 2=viết)
@@ -100,24 +101,30 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
       final lessonsData = await lessonService.fetchLessonsByType('vowel');
       
       final lessonIdMap = <String, String>{};
+      final onlineMap = <String, Map<String, dynamic>>{};
       for (final l in lessonsData) {
         final text = l['khmerText']?.toString() ?? '';
         final id = l['_id']?.toString() ?? l['id']?.toString() ?? '';
         if (text.isNotEmpty && id.isNotEmpty) {
           lessonIdMap[text] = id;
+          onlineMap[text] = Map<String, dynamic>.from(l);
         }
       }
 
       // Ánh xạ ID từ DB vào danh sách tĩnh
       for (final v in fullList) {
-        if (lessonIdMap.containsKey(v.character)) {
-          v.id = lessonIdMap[v.character];
+        final dbKey = v.character.startsWith('អ') && v.character.length > 1
+            ? v.character.substring(1)
+            : v.character;
+        if (lessonIdMap.containsKey(dbKey)) {
+          v.id = lessonIdMap[dbKey];
         }
       }
 
       if (mounted) {
         setState(() {
           _vowels = fullList;
+          _onlineLessonsMap = onlineMap;
           _isLoading = false;
         });
       }
@@ -757,8 +764,13 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
     );
   }
 
-  // ═══════════════════ INLINE SHEET OVERLAY ═══════════════════
   Widget _buildInlineSheet() {
+    final dbKey = _v.character.startsWith('អ') && _v.character.length > 1
+        ? _v.character.substring(1)
+        : _v.character;
+    final online = _onlineLessonsMap[dbKey];
+    final dbAudioUrl = online?['audioUrl']?.toString();
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(28.r),
       child: Container(
@@ -771,9 +783,8 @@ class _VowelDetailScreenState extends State<VowelDetailScreen>
                   character: _v.character,
                   romanized: _v.romanized,
                   pronunciation: _v.pronunciation,
-                  // Nghe đọc TÊN nguyên âm kiểu Khmer: "srăk a", "srăk e"...
-                  // (đọc bằng giọng Việt, không đọc ký tự Khmer ra "a")
-                  speakTextOverride: _v.listenText,
+                  audioUrl: dbAudioUrl,
+                  speakTextOverride: (dbAudioUrl != null && dbAudioUrl.isNotEmpty) ? null : _v.listenText,
                   accentColor: AppColors.tertiary,
                   accentColorDark: AppColors.tertiaryDark,
                   surfaceColor: AppColors.tertiarySurface,

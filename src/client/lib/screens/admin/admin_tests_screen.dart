@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_letter.dart';
 import '../../services/admin_service.dart';
@@ -689,9 +691,42 @@ class _TestQuestionFormPageState extends State<_TestQuestionFormPage> {
 
   late final TextEditingController _qCtrl;
   late final List<TextEditingController> _optCtrls;
+  late final TextEditingController _audioUrlCtrl;
+  bool _uploadingAudio = false;
 
   late String _selectedRangeVal;
   String _selectedAnsVal = '';
+
+  AudioPlayer? _previewPlayer;
+  bool _isPlayingPreview = false;
+
+  void _playPreview(String url) async {
+    if (url.trim().isEmpty) return;
+    if (_isPlayingPreview) {
+      await _previewPlayer?.stop();
+      setState(() => _isPlayingPreview = false);
+      return;
+    }
+
+    _previewPlayer ??= AudioPlayer();
+    setState(() => _isPlayingPreview = true);
+
+    try {
+      await _previewPlayer!.play(UrlSource(url));
+      _previewPlayer!.onPlayerStateChanged.listen((state) {
+        if (state == PlayerState.completed || state == PlayerState.stopped) {
+          if (mounted) {
+            setState(() => _isPlayingPreview = false);
+          }
+        }
+      });
+    } catch (e) {
+      debugPrint('Error playing preview audio: $e');
+      if (mounted) {
+        setState(() => _isPlayingPreview = false);
+      }
+    }
+  }
 
   static const _rangeColors = {
     '1-5': Color(0xFFEC407A),
@@ -731,7 +766,10 @@ class _TestQuestionFormPageState extends State<_TestQuestionFormPage> {
     _selectedRangeVal = q?['testRange'] ?? '1-5';
     _selectedAnsVal = q?['answer'] ?? '';
 
+    _audioUrlCtrl = TextEditingController(text: q?['audioUrl']?.toString() ?? '');
+
     _qCtrl.addListener(() => setState(() {}));
+    _audioUrlCtrl.addListener(() => setState(() {}));
     for (var ctrl in _optCtrls) {
       ctrl.addListener(() => setState(() {}));
     }
@@ -740,6 +778,8 @@ class _TestQuestionFormPageState extends State<_TestQuestionFormPage> {
   @override
   void dispose() {
     _qCtrl.dispose();
+    _audioUrlCtrl.dispose();
+    _previewPlayer?.dispose();
     for (var ctrl in _optCtrls) {
       ctrl.dispose();
     }
@@ -798,6 +838,7 @@ class _TestQuestionFormPageState extends State<_TestQuestionFormPage> {
     required Color color,
     TextInputType? keyboard,
     TextStyle? textStyle,
+    Widget? suffix,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -828,6 +869,7 @@ class _TestQuestionFormPageState extends State<_TestQuestionFormPage> {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13.sp, color: AppColors.textHint),
+            suffixIcon: suffix,
             filled: true,
             fillColor: AppColors.background,
             contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
@@ -930,6 +972,7 @@ class _TestQuestionFormPageState extends State<_TestQuestionFormPage> {
       'options': options,
       'answer': _selectedAnsVal,
       'testRange': _selectedRangeVal,
+      'audioUrl': _audioUrlCtrl.text.trim(),
     };
 
     final result = _isEdit
@@ -1082,6 +1125,10 @@ class _TestQuestionFormPageState extends State<_TestQuestionFormPage> {
                             IconButton(
                               icon: const Icon(Icons.volume_up_rounded, color: Color(0xFF0084FF), size: 20),
                               onPressed: () {
+                                if (_audioUrlCtrl.text.isNotEmpty) {
+                                  _playPreview(_audioUrlCtrl.text);
+                                  return;
+                                }
                                 final ans = _selectedAnsVal;
                                 if (ans.isEmpty) return;
                                 String char = '';
@@ -1199,6 +1246,86 @@ class _TestQuestionFormPageState extends State<_TestQuestionFormPage> {
                   },
                   icon: Icons.timeline_rounded,
                   color: const Color(0xFF0084FF),
+                ),
+              ],
+            ),
+
+            // ── Media Section ──
+            _sectionCard(
+              icon: Icons.audiotrack_rounded,
+              title: 'Âm thanh câu hỏi (Tùy chọn)',
+              color: AppColors.tertiary,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: _uploadingAudio ? null : () async {
+                        final result = await FilePicker.pickFiles(
+                          type: FileType.audio,
+                        );
+                        if (result == null || result.files.single.path == null) return;
+                        setState(() => _uploadingAudio = true);
+                        try {
+                          final url = await AdminService().uploadAudio(result.files.single.path!);
+                          if (url != null) {
+                            _audioUrlCtrl.text = url;
+                            _showSnack('Tải âm thanh lên thành công!', AppColors.successGreen);
+                          } else {
+                            _showSnack('Tải âm thanh thất bại!', AppColors.errorRed);
+                          }
+                        } catch (e) {
+                          _showSnack('Lỗi: $e', AppColors.errorRed);
+                        } finally {
+                          setState(() => _uploadingAudio = false);
+                        }
+                      },
+                      child: Container(
+                        width: 80.w,
+                        height: 80.w,
+                        decoration: BoxDecoration(
+                          color: AppColors.outlineVariant.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(16.r),
+                          border: Border.all(color: AppColors.outlineVariant, width: 1.5),
+                        ),
+                        child: _uploadingAudio
+                            ? const Center(child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0084FF)))
+                            : _audioUrlCtrl.text.isNotEmpty
+                                ? Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.audiotrack_rounded, size: 28.sp, color: AppColors.tertiary),
+                                      SizedBox(height: 4.h),
+                                      Text('Đã có âm', style: GoogleFonts.plusJakartaSans(fontSize: 9.sp, fontWeight: FontWeight.w700, color: AppColors.tertiary)),
+                                    ],
+                                  )
+                                : Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.audiotrack_rounded, size: 24.sp, color: AppColors.tertiary),
+                                      SizedBox(height: 4.h),
+                                      Text('Chọn âm', style: GoogleFonts.plusJakartaSans(fontSize: 9.sp, fontWeight: FontWeight.w700, color: AppColors.tertiary)),
+                                    ],
+                                  ),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: _prettyField(
+                        label: 'URL âm thanh phát âm',
+                        ctrl: _audioUrlCtrl,
+                        hint: 'Dán link âm thanh hoặc chọn tệp',
+                        icon: Icons.link_rounded,
+                        color: AppColors.tertiary,
+                        suffix: _audioUrlCtrl.text.isNotEmpty
+                            ? IconButton(
+                                icon: Icon(_isPlayingPreview ? Icons.stop_rounded : Icons.play_arrow_rounded, color: AppColors.tertiary),
+                                onPressed: () => _playPreview(_audioUrlCtrl.text),
+                              )
+                            : null,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

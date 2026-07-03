@@ -8,6 +8,7 @@ import '../../models/khmer_writing.dart';
 import 'writing_detail_screen.dart';
 import '../../repositories/progress_repository.dart';
 import '../../services/score_service.dart';
+import '../../services/lesson_service.dart';
 
 /// Bản đồ tập viết Khmer — Premium learning path (zigzag) với các thẻ bài học chi tiết
 class WritingMapScreen extends StatefulWidget {
@@ -22,7 +23,7 @@ class _WritingMapScreenState extends State<WritingMapScreen>
   late Animation<double> _pulseAnim;
   late ScrollController _scrollCtrl;
 
-  final List<KhmerWriting> _lessons = KhmerWritingData.lessons;
+  final List<KhmerWriting> _lessons = List.from(KhmerWritingData.lessons);
   ScoreService? _score;
 
   double get _nodeSpacingY => 140.h;
@@ -53,6 +54,34 @@ class _WritingMapScreenState extends State<WritingMapScreen>
   Future<void> _loadScoreAndProgress() async {
     _score = await ScoreService.getInstance();
     try {
+      final lessonService = await LessonService.getInstance();
+      final onlineData = await lessonService.fetchLessonsByType('writing');
+      if (onlineData.isNotEmpty) {
+        final parsed = onlineData.map((l) {
+          final id = l['_id']?.toString();
+          final character = l['khmerText']?.toString() ?? '';
+          final romanized = l['romanized']?.toString() ?? '';
+          final hint = l['meaning']?.toString() ?? '';
+          final topicKey = l['category']?.toString() ?? 'topic_1';
+          final audioUrl = l['audioUrl']?.toString();
+          return KhmerWriting(
+            id: id,
+            character: character,
+            romanized: romanized,
+            hint: hint,
+            topicKey: topicKey,
+            audioUrl: audioUrl,
+          );
+        }).toList();
+
+        if (mounted) {
+          setState(() {
+            _lessons.clear();
+            _lessons.addAll(parsed);
+          });
+        }
+      }
+
       final progress = await ProgressRepository.instance.getProgressMap('writing');
       if (mounted) {
         setState(() {
@@ -537,7 +566,7 @@ class _WritingMapScreenState extends State<WritingMapScreen>
 
   void _openLesson(int idx) {
     Navigator.push(context,
-      MaterialPageRoute(builder: (_) => WritingDetailScreen(initialIndex: idx)),
+      MaterialPageRoute(builder: (_) => WritingDetailScreen(initialIndex: idx, lessons: _lessons)),
     ).then((_) {
       if (mounted) {
         _loadScoreAndProgress();

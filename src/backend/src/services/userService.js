@@ -182,11 +182,19 @@ class UserService {
         updateOps.$inc[field] = 1;
       }
     } else {
-      // Permanent item: add to purchasedItems if not already owned
-      if (user.purchasedItems && user.purchasedItems.includes(itemId)) {
-        throw new AppError('Bạn đã sở hữu vật phẩm này rồi!', 400);
+      // Permanent item: check if it's a real single-owned permanent item
+      const singleOwnedItems = [
+        'voi_hieu_hoc', 'khi_tinh_nghich', 'ho_dung_cam', 'rua_kien_tri', 'cu_thong_thai', 'but_than_ky'
+      ];
+      if (singleOwnedItems.includes(itemId)) {
+        if (user.purchasedItems && user.purchasedItems.includes(itemId)) {
+          throw new AppError('Bạn đã sở hữu vật phẩm này rồi!', 400);
+        }
+        updateOps.$addToSet = { purchasedItems: itemId };
+      } else {
+        // Cho phép mua nhiều rương hoặc chuỗi dự phòng và lưu tích lũy vào mảng
+        updateOps.$push = { purchasedItems: itemId };
       }
-      updateOps.$addToSet = { purchasedItems: itemId };
     }
 
     const updatedUser = await User.findByIdAndUpdate(userId, updateOps, { new: true });
@@ -261,6 +269,186 @@ class UserService {
       level: user.level,
       name: user.name,
       avatar: user.avatar,
+    };
+  }
+
+  /**
+   * Sử dụng một vật phẩm permanent (Rương kim cương hoặc Chuỗi dự phòng)
+   * Xóa vật phẩm khỏi purchasedItems, áp dụng hiệu ứng phần thưởng và lưu vào CSDL
+   */
+  async usePermanentItem(userId, itemId) {
+    const user = await User.findById(userId);
+    if (!user) throw new AppError('Người dùng không tồn tại!', 404);
+
+    if (!user.purchasedItems || !user.purchasedItems.includes(itemId)) {
+      throw new AppError('Bạn không sở hữu vật phẩm này!', 400);
+    }
+
+    // Xóa ĐÚNG 1 phần tử ra khỏi mảng purchasedItems thay vì dùng $pull (xóa tất cả)
+    const index = user.purchasedItems.indexOf(itemId);
+    if (index > -1) {
+      user.purchasedItems.splice(index, 1);
+    }
+    
+    // Đánh dấu mảng purchasedItems là đã thay đổi để Mongoose nhận biết và lưu lại
+    user.markModified('purchasedItems');
+
+    const updateOps = {};
+    
+    // Tỷ lệ 5% mở ra nhân vật chưa sở hữu khi mở bất kỳ phần quà nào
+    let characterUnlocked = null;
+    const isChestOrBadge = ['ruong_kim_cuong', 'huy_hieu_sieu_sao', 'qua_cau_tuyet', 'sach_tri_thuc', 'khinh_khi_cau'].includes(itemId);
+    
+    if (isChestOrBadge && Math.random() < 0.10) {
+      const allCharacters = ['voi_hieu_hoc', 'khi_tinh_nghich', 'ho_dung_cam', 'rua_kien_tri', 'cu_thong_thai'];
+      // Lọc các nhân vật chưa sở hữu trong mảng purchasedItems của user
+      const unowned = allCharacters.filter(c => !user.purchasedItems.includes(c));
+      if (unowned.length > 0) {
+        characterUnlocked = unowned[Math.floor(Math.random() * unowned.length)];
+        user.purchasedItems.push(characterUnlocked);
+      }
+    }
+
+    let reward = null;
+
+    if (itemId === 'ruong_kim_cuong') {
+      // Mở Rương kim cương: Tặng ngẫu nhiên sao, XP và các vật phẩm
+      const earnedStars = Math.floor(Math.random() * 101) + 100; // 100 - 200 sao
+      const earnedXp = Math.floor(Math.random() * 201) + 300;     // 300 - 500 XP
+      
+      user.stars = (user.stars || 0) + earnedStars;
+      user.xp = (user.xp || 0) + earnedXp;
+      
+      if (!user.inventory) user.inventory = {};
+      user.inventory.hints = (user.inventory.hints || 0) + 3;
+      user.inventory.livesPowerups = (user.inventory.livesPowerups || 0) + 2;
+
+      reward = {
+        type: 'ruong_kim_cuong',
+        stars: earnedStars,
+        xp: earnedXp,
+        hints: 3,
+        lives: 2,
+        doubleScore: 0,
+        time: 0,
+        characterUnlocked,
+      };
+    } else if (itemId === 'huy_hieu_sieu_sao') {
+      // Huy hiệu siêu sao: Tập trung vào Sao, XP và Nhân đôi điểm
+      const earnedStars = Math.floor(Math.random() * 101) + 150; // 150 - 250 sao
+      const earnedXp = Math.floor(Math.random() * 201) + 200;     // 200 - 400 XP
+      
+      user.stars = (user.stars || 0) + earnedStars;
+      user.xp = (user.xp || 0) + earnedXp;
+      
+      if (!user.inventory) user.inventory = {};
+      user.inventory.doubleScorePowerups = (user.inventory.doubleScorePowerups || 0) + 2;
+      user.inventory.hints = (user.inventory.hints || 0) + 1;
+
+      reward = {
+        type: 'huy_hieu_sieu_sao',
+        stars: earnedStars,
+        xp: earnedXp,
+        hints: 1,
+        lives: 0,
+        doubleScore: 2,
+        time: 0,
+        characterUnlocked,
+      };
+    } else if (itemId === 'qua_cau_tuyet') {
+      // Quả cầu tuyết: Tập trung vào Đóng băng thời gian và Thêm lượt chơi
+      const earnedStars = Math.floor(Math.random() * 71) + 80;    // 80 - 150 sao
+      const earnedXp = Math.floor(Math.random() * 151) + 150;     // 150 - 300 XP
+      
+      user.stars = (user.stars || 0) + earnedStars;
+      user.xp = (user.xp || 0) + earnedXp;
+      
+      if (!user.inventory) user.inventory = {};
+      user.inventory.timePowerups = (user.inventory.timePowerups || 0) + 3;
+      user.inventory.livesPowerups = (user.inventory.livesPowerups || 0) + 1;
+
+      reward = {
+        type: 'qua_cau_tuyet',
+        stars: earnedStars,
+        xp: earnedXp,
+        hints: 0,
+        lives: 1,
+        doubleScore: 0,
+        time: 3,
+        characterUnlocked,
+      };
+    } else if (itemId === 'sach_tri_thuc') {
+      // Sách tri thức: Tặng cực nhiều XP và Gợi ý học tập
+      const earnedStars = Math.floor(Math.random() * 101) + 200; // 200 - 300 sao
+      const earnedXp = Math.floor(Math.random() * 301) + 500;     // 500 - 800 XP
+      
+      user.stars = (user.stars || 0) + earnedStars;
+      user.xp = (user.xp || 0) + earnedXp;
+      
+      if (!user.inventory) user.inventory = {};
+      user.inventory.hints = (user.inventory.hints || 0) + 3;
+      user.inventory.timePowerups = (user.inventory.timePowerups || 0) + 1;
+
+      reward = {
+        type: 'sach_tri_thuc',
+        stars: earnedStars,
+        xp: earnedXp,
+        hints: 3,
+        lives: 0,
+        doubleScore: 0,
+        time: 1,
+        characterUnlocked,
+      };
+    } else if (itemId === 'khinh_khi_cau') {
+      // Khinh khí cầu: Tặng ngẫu nhiên nhiều sao và Thêm lượt chơi
+      const earnedStars = Math.floor(Math.random() * 201) + 300; // 300 - 500 sao
+      const earnedXp = Math.floor(Math.random() * 201) + 400;     // 400 - 600 XP
+      
+      user.stars = (user.stars || 0) + earnedStars;
+      user.xp = (user.xp || 0) + earnedXp;
+      
+      if (!user.inventory) user.inventory = {};
+      user.inventory.livesPowerups = (user.inventory.livesPowerups || 0) + 3;
+      user.inventory.doubleScorePowerups = (user.inventory.doubleScorePowerups || 0) + 1;
+
+      reward = {
+        type: 'khinh_khi_cau',
+        stars: earnedStars,
+        xp: earnedXp,
+        hints: 0,
+        lives: 3,
+        doubleScore: 1,
+        time: 0,
+        characterUnlocked,
+      };
+    } else if (itemId === 'streak_freeze') {
+      // Dùng Chuỗi dự phòng: Lùi ngày lastLoginDate về hôm qua (giúp bảo toàn/cứu streak)
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      user.lastLoginDate = yesterday;
+
+      reward = {
+        type: 'streak_freeze',
+        message: 'Đã kích hoạt Chuỗi dự phòng thành công! Ngày học cuối cùng của bạn đã được lùi về ngày hôm qua để bảo toàn Streak của bạn.',
+      };
+    } else {
+      reward = {
+        type: 'other',
+        message: 'Đã sử dụng vật phẩm thành công!',
+      };
+    }
+
+    const updatedUser = await user.save();
+
+    return {
+      user: {
+        stars: updatedUser.stars,
+        xp: updatedUser.xp,
+        purchasedItems: updatedUser.purchasedItems || [],
+        inventory: updatedUser.inventory,
+        lastLoginDate: updatedUser.lastLoginDate,
+      },
+      reward,
     };
   }
 }

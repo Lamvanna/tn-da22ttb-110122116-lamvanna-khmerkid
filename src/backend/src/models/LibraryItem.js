@@ -15,8 +15,8 @@ const libraryItemSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['Sách', 'Audio', 'Video'],
-      required: [true, 'Loại tài liệu là bắt buộc (Sách, Audio, Video)'],
+      enum: ['Sách', 'Truyện', 'Audio', 'Video'],
+      required: [true, 'Loại tài liệu là bắt buộc (Sách, Truyện, Audio, Video)'],
     },
     description: {
       type: String,
@@ -47,6 +47,30 @@ const libraryItemSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    pages: [
+      {
+        textKhmer: {
+          type: String,
+          default: '',
+        },
+        textVietnamese: {
+          type: String,
+          default: '',
+        },
+        illustration: {
+          type: String,
+          default: '',
+        },
+        highlights: {
+          type: [String],
+          default: [],
+        },
+      },
+    ],
+    lyrics: {
+      type: String,
+      default: '',
     },
   },
   {

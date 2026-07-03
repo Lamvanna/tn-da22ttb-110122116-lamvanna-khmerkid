@@ -103,6 +103,7 @@ class _TestScreenState extends State<TestScreen> {
               type: TestQuestionType.choice,
               audioChar: targetChar,
               romanized: targetRomanized,
+              audioUrl: item['audioUrl']?.toString(),
             );
           }).toList();
         }
@@ -243,10 +244,15 @@ class _TestScreenState extends State<TestScreen> {
   void _playCurrentQuestionAudio() {
     if (_qIdx < _questions.length) {
       final q = _questions[_qIdx];
-      if (q.type == TestQuestionType.choice && q.audioChar != null) {
-        Future.delayed(const Duration(milliseconds: 300), () {
+      if (q.type == TestQuestionType.choice) {
+        if (q.audioUrl != null && q.audioUrl!.isNotEmpty) {
+          TtsService.instance.speakKhmerLetter(
+            character: '',
+            audioUrl: q.audioUrl,
+          );
+        } else if (q.audioChar != null) {
           TtsService.instance.speakKhmerLetter(character: q.audioChar!);
-        });
+        }
       }
     }
   }
@@ -600,7 +606,12 @@ class _TestScreenState extends State<TestScreen> {
                             const SizedBox(height: 18),
                             GestureDetector(
                               onTap: () {
-                                if (q.audioChar != null) {
+                                if (q.audioUrl != null && q.audioUrl!.isNotEmpty) {
+                                  TtsService.instance.speakKhmerLetter(
+                                    character: '',
+                                    audioUrl: q.audioUrl,
+                                  );
+                                } else if (q.audioChar != null) {
                                   TtsService.instance.speakKhmerLetter(character: q.audioChar!);
                                 }
                               },
@@ -815,6 +826,7 @@ class _TestQ {
   final String? romanized;
   final String? meaning;
   final String? audioChar;
+  final String? audioUrl;
 
   _TestQ({
     required this.q,
@@ -824,5 +836,6 @@ class _TestQ {
     this.romanized,
     this.meaning,
     this.audioChar,
+    this.audioUrl,
   });
 }

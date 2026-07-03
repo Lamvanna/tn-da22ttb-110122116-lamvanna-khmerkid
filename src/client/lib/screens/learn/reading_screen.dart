@@ -8,6 +8,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:string_similarity/string_similarity.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
+import '../../services/lesson_service.dart';
 import '../../models/khmer_reading.dart';
 import '../../services/voice_recognition_service.dart';
 import '../../widgets/feedback_dialog.dart';
@@ -44,7 +45,7 @@ class _ReadingScreenState extends State<ReadingScreen>
 
   late AnimationController _listAnimCtrl;
 
-  final List<KhmerReading> _lessons = KhmerReadingData.lessons;
+  final List<KhmerReading> _lessons = List.from(KhmerReadingData.lessons);
 
   final VoiceRecognitionService _voiceService = VoiceRecognitionService();
   bool _isRecording = false;
@@ -74,6 +75,50 @@ class _ReadingScreenState extends State<ReadingScreen>
   Future<void> _loadScore() async {
     _score = await ScoreService.getInstance();
     if (mounted) setState(() {});
+
+    try {
+      final lessonService = await LessonService.getInstance();
+      final onlineData = await lessonService.fetchLessonsByType('reading');
+      if (onlineData.isNotEmpty) {
+        final parsed = onlineData.map((l) {
+          final title = l['title']?.toString() ?? '';
+          final subtitle = l['description']?.toString() ?? '';
+          final emoji = l['khmerText']?.toString() ?? '📖';
+          final hexColor = l['category']?.toString() ?? '#4CAF50';
+          Color color;
+          try {
+            color = Color(int.parse(hexColor.replaceAll('#', 'FF'), radix: 16));
+          } catch (_) {
+            color = const Color(0xFF4CAF50);
+          }
+          final List examplesList = l['examples'] ?? [];
+          final lines = examplesList.map((e) {
+            final map = Map<String, dynamic>.from(e);
+            return KhmerReadLine(
+              khmer: map['khmer']?.toString() ?? '',
+              romanized: map['romanized']?.toString() ?? '',
+              meaning: map['meaning']?.toString() ?? '',
+            );
+          }).toList();
+          return KhmerReading(
+            title: title,
+            subtitle: subtitle,
+            emoji: emoji,
+            color: color,
+            lines: lines,
+          );
+        }).toList();
+
+        if (mounted) {
+          setState(() {
+            _lessons.clear();
+            _lessons.addAll(parsed);
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error loading online reading lessons: $e');
+    }
   }
 
   void _startRecording() async {

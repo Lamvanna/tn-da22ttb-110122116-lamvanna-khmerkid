@@ -93,6 +93,12 @@ class StorageService {
     await _prefs?.setString(_uKey(_keyLastStudy), todayStr);
   }
 
+  Future<void> freezeStreak() async {
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    final yesterdayStr = '${yesterday.year}-${yesterday.month}-${yesterday.day}';
+    await _prefs?.setString(_uKey(_keyLastStudy), yesterdayStr);
+  }
+
   // ─── LETTER PROGRESS ────────────────────────────────────────
   static const _keyLetterProgress = 'letter_progress';
 
@@ -275,18 +281,24 @@ class StorageService {
   // ─── SHOP ITEMS ──────────────────────────────────────────────
   static const _keyPurchasedItems = 'purchased_items';
 
-  Set<String> getPurchasedItems() {
-    return _prefs?.getStringList(_uKey(_keyPurchasedItems))?.toSet() ?? {};
+  List<String> getPurchasedItems() {
+    return _prefs?.getStringList(_uKey(_keyPurchasedItems)) ?? [];
   }
 
   Future<void> addPurchasedItem(String itemKey) async {
-    final set = getPurchasedItems();
-    set.add(itemKey);
-    await _prefs?.setStringList(_uKey(_keyPurchasedItems), set.toList());
+    final list = getPurchasedItems();
+    list.add(itemKey);
+    await _prefs?.setStringList(_uKey(_keyPurchasedItems), list);
   }
 
-  Future<void> setPurchasedItems(Set<String> items) async {
-    await _prefs?.setStringList(_uKey(_keyPurchasedItems), items.toList());
+  Future<void> removePurchasedItem(String itemKey) async {
+    final list = getPurchasedItems();
+    list.remove(itemKey); // Chỉ xóa một phần tử trùng khớp đầu tiên
+    await _prefs?.setStringList(_uKey(_keyPurchasedItems), list);
+  }
+
+  Future<void> setPurchasedItems(List<String> items) async {
+    await _prefs?.setStringList(_uKey(_keyPurchasedItems), items);
   }
 
   // ─── SETTINGS (Giữ nguyên toàn cục để giữ cấu hình thiết bị) ─────────────────────────

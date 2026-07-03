@@ -245,7 +245,7 @@ class ProgressService {
           starsGain = Number(stars) || 0;
           xpGain = Number(xp) || 0;
         } else {
-          if (resolvedType === 'consonant' || resolvedType === 'vowel' || resolvedType === 'number') {
+          if (resolvedType === 'consonant' || resolvedType === 'consonant_series' || resolvedType === 'vowel' || resolvedType === 'number') {
             starsGain = 8;
             xpGain = 55;
           } else if (resolvedType === 'spelling' || resolvedType === 'diacritical' || resolvedType === 'coeng' || resolvedType === 'closed_syllable') {

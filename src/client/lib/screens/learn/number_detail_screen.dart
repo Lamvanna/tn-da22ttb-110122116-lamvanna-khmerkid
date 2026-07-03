@@ -30,6 +30,7 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
   late Animation<double> _scaleAnim;
   List<KhmerNumber> _numbers = KhmerNumberData.numbers;
   bool _isLoading = false;
+  Map<String, Map<String, dynamic>> _onlineLessonsMap = {};
   ScoreService? _score;
 
   // Track hoàn thành (0=nghe, 1=nói, 2=viết)
@@ -100,11 +101,13 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
       final lessonsData = await lessonService.fetchLessonsByType('number');
       
       final lessonIdMap = <String, String>{};
+      final onlineMap = <String, Map<String, dynamic>>{};
       for (final l in lessonsData) {
         final text = l['khmerText']?.toString() ?? '';
         final id = l['_id']?.toString() ?? l['id']?.toString() ?? '';
         if (text.isNotEmpty && id.isNotEmpty) {
           lessonIdMap[text] = id;
+          onlineMap[text] = Map<String, dynamic>.from(l);
         }
       }
 
@@ -118,6 +121,7 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
       if (mounted) {
         setState(() {
           _numbers = fullList;
+          _onlineLessonsMap = onlineMap;
           _isLoading = false;
         });
       }
@@ -821,6 +825,9 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
 
   // ═══════════════════ INLINE SHEET OVERLAY ═══════════════════
   Widget _buildInlineSheet() {
+    final online = _onlineLessonsMap[_num.character];
+    final dbAudioUrl = online?['audioUrl']?.toString();
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(28.r),
       child: Container(
@@ -834,6 +841,7 @@ class _NumberDetailScreenState extends State<NumberDetailScreen>
                   character: _num.character,
                   romanized: _num.value,
                   pronunciation: _num.pronunciation,
+                  audioUrl: dbAudioUrl,
                   accentColor: AppColors.tertiary,
                   accentColorDark: AppColors.tertiaryDark,
                   surfaceColor: AppColors.tertiarySurface,

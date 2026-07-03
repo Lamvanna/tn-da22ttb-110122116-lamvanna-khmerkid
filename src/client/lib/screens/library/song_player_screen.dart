@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../../constants/app_colors.dart';
 import '../../widgets/app_header.dart';
 import 'category_list_screen.dart';
@@ -14,6 +15,7 @@ class SongItem {
   final String image;
   final String lyrics;
   final Color categoryColor;
+  final String? url;
 
   const SongItem({
     required this.titleKhmer,
@@ -23,6 +25,7 @@ class SongItem {
     required this.image,
     required this.lyrics,
     required this.categoryColor,
+    this.url,
   });
 }
 
@@ -56,53 +59,61 @@ class _SongPlayerScreenState extends State<SongPlayerScreen> with TickerProvider
   // Animation controller for visualizer
   late AnimationController _visualizerCtrl;
 
+  // Real Audio Player
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
   @override
   void initState() {
     super.initState();
     _initPlaylist();
     _initVisualizer();
     _selectInitialSong();
+    _initAudioPlayer();
   }
 
   void _initPlaylist() {
-    _songs = [
-      const SongItem(
-        titleKhmer: 'ក្មេងៗ ច្រៀងលេង',
-        titleVietnamese: 'Trẻ em ca hát vui đùa',
-        category: 'Vui nhộn',
-        duration: '02:35',
-        image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/f_auto,q_auto,w_300/v1781781829/khmerkid/library/lhn2ivplvojj5mfayoia.png',
-        categoryColor: Color(0xFF4CAF50),
-        lyrics: 'ក្មេងៗ ច្រៀងលេង ច្រៀងលេង\nសប្បាយ សប្បាយ សប្បាយណាស់\nយើងរាំ យើងច្រៀង\nសប្បាយណាស់ថ្ងៃនេះ!',
-      ),
-      const SongItem(
-        titleKhmer: 'ដំរីតូច',
-        titleVietnamese: 'Chú voi con',
-        category: 'Động vật',
-        duration: '01:58',
-        image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/f_auto,q_auto,w_300/v1781781830/khmerkid/library/shzcfks9ptkmthq6wqp5.png',
-        categoryColor: Color(0xFF2196F3),
-        lyrics: 'ដំរី ដំរី ដំរីតូច\nមានច្រមុះវែង ត្រចៀកធំ\nដើរលេងក្នុងព្រៃជ្រៅ\nសប្បាយរីករាយណាស់!',
-      ),
-      const SongItem(
-        titleKhmer: 'គេងលក់ យប់នេះ',
-        titleVietnamese: 'Đi ngủ nào bé ơi',
-        category: 'Giấc ngủ',
-        duration: '02:12',
-        image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/f_auto,q_auto,w_300/v1781781828/khmerkid/library/bxax1yqy9fde0pkqtxs5.png',
-        categoryColor: Color(0xFF9C27B0),
-        lyrics: 'គេងលក់ គេងលក់ កូនសម្លាញ់\nយប់នេះមានផ្កាយភ្លឺល្អ\nបិទភ្នែកគេងលក់ទៅ\nយល់សប្តិឃើញរឿងល្អ។',
-      ),
-      const SongItem(
-        titleKhmer: 'ខ្ញុំស្រឡាញ់គ្រួសារ',
-        titleVietnamese: 'Em yêu gia đình',
-        category: 'Gia đình',
-        duration: '02:48',
-        image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/f_auto,q_auto,w_300/v1781781820/khmerkid/library/dnakvq21vgkv0oabe4pw.png',
-        categoryColor: Color(0xFFFF9800),
-        lyrics: 'ខ្ញុំស្រឡាញ់ប៉ាម៉ាក់\nខ្ញុំស្រឡាញ់បងប្អូន\nគ្រួសារយើងសប្បាយ\nរស់នៅក្បែរគ្នានិច្ច។',
-      ),
-    ];
+    if (widget.playlist != null && widget.playlist!.isNotEmpty) {
+      _songs = widget.playlist!;
+    } else {
+      _songs = [
+        const SongItem(
+          titleKhmer: 'ក្មេងៗ ច្រៀងលេង',
+          titleVietnamese: 'Trẻ em ca hát vui đùa',
+          category: 'Vui nhộn',
+          duration: '02:35',
+          image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/f_auto,q_auto,w_300/v1781781829/khmerkid/library/lhn2ivplvojj5mfayoia.png',
+          categoryColor: Color(0xFF4CAF50),
+          lyrics: 'ក្មេងៗ ច្រៀងលេង ច្រៀងលេង\nសប្បាយ សប្បាយ សប្បាយណាស់\nយើងរាំ យើងច្រៀង\nសប្បាយណាស់ngàyនេះ!',
+        ),
+        const SongItem(
+          titleKhmer: 'ដំរីតូច',
+          titleVietnamese: 'Chú voi con',
+          category: 'Động vật',
+          duration: '01:58',
+          image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/f_auto,q_auto,w_300/v1781781830/khmerkid/library/shzcfks9ptkmthq6wqp5.png',
+          categoryColor: Color(0xFF2196F3),
+          lyrics: 'ដំរី ដំរី ដំរីតូច\nមានច្រមុះវែង ត្រចៀកធំ\nដើរលេងក្នុងព្រៃជ្រៅ\nសប្បាយរីករាយណាស់!',
+        ),
+        const SongItem(
+          titleKhmer: 'គេងលក់ យប់នេះ',
+          titleVietnamese: 'Đi ngủ nào bé ơi',
+          category: 'Giấc ngủ',
+          duration: '02:12',
+          image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/f_auto,q_auto,w_300/v1781781828/khmerkid/library/bxax1yqy9fde0pkqtxs5.png',
+          categoryColor: Color(0xFF9C27B0),
+          lyrics: 'គេងលក់ គេងលក់ កូនសម្លាញ់\nយប់នេះមានផ្កាយភ្លឺល្អ\nបិទភ្នែកគេងលក់ទៅ\nយល់សប្តិឃើញរឿងល្អ។',
+        ),
+        const SongItem(
+          titleKhmer: 'ខ្ញុំស្រឡាញ់គ្រួសារ',
+          titleVietnamese: 'Em yêu gia đình',
+          category: 'Gia đình',
+          duration: '02:48',
+          image: 'https://res.cloudinary.com/dvnrhbazd/image/upload/f_auto,q_auto,w_300/v1781781820/khmerkid/library/dnakvq21vgkv0oabe4pw.png',
+          categoryColor: Color(0xFFFF9800),
+          lyrics: 'ខ្ញុំស្រឡាញ់ប៉ាម៉ាក់\nខ្ញុំស្រឡាញ់បងប្អូន\nគ្រួសារយើងសប្បាយ\nរស់នៅក្បែរគ្នានិច្ច។',
+        ),
+      ];
+    }
   }
 
   void _initVisualizer() {
@@ -136,20 +147,80 @@ class _SongPlayerScreenState extends State<SongPlayerScreen> with TickerProvider
   void dispose() {
     _playbackTimer?.cancel();
     _visualizerCtrl.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
-  void _togglePlay() {
-    setState(() {
-      _isPlaying = !_isPlaying;
-      if (_isPlaying) {
-        _visualizerCtrl.repeat(reverse: true);
-        _startTimer();
-      } else {
-        _visualizerCtrl.stop();
-        _playbackTimer?.cancel();
-      }
+  void _initAudioPlayer() {
+    _audioPlayer.onPositionChanged.listen((pos) {
+      if (!mounted) return;
+      setState(() {
+        _sliderValue = pos.inSeconds.toDouble();
+      });
     });
+
+    _audioPlayer.onDurationChanged.listen((dur) {
+      if (!mounted) return;
+      setState(() {
+        _maxDurationInSeconds = dur.inSeconds.toDouble();
+      });
+    });
+
+    _audioPlayer.onPlayerStateChanged.listen((state) {
+      if (!mounted) return;
+      setState(() {
+        _isPlaying = state == PlayerState.playing;
+        if (_isPlaying) {
+          _visualizerCtrl.repeat(reverse: true);
+        } else {
+          _visualizerCtrl.stop();
+        }
+      });
+    });
+
+    _audioPlayer.onPlayerComplete.listen((event) {
+      if (!mounted) return;
+      _nextSong();
+    });
+    
+    _playCurrentSong();
+  }
+
+  void _playCurrentSong() async {
+    final currentSong = _songs[_currentIndex];
+    if (currentSong.url != null && currentSong.url!.isNotEmpty) {
+      await _audioPlayer.stop();
+      await _audioPlayer.play(UrlSource(currentSong.url!));
+      await _audioPlayer.setPlaybackRate(_playbackSpeed);
+    } else {
+      await _audioPlayer.stop();
+      _playbackTimer?.cancel();
+      if (_isPlaying) {
+        _startTimer();
+      }
+    }
+  }
+
+  void _togglePlay() {
+    final currentSong = _songs[_currentIndex];
+    if (currentSong.url != null && currentSong.url!.isNotEmpty) {
+      if (_isPlaying) {
+        _audioPlayer.pause();
+      } else {
+        _audioPlayer.resume();
+      }
+    } else {
+      setState(() {
+        _isPlaying = !_isPlaying;
+        if (_isPlaying) {
+          _visualizerCtrl.repeat(reverse: true);
+          _startTimer();
+        } else {
+          _visualizerCtrl.stop();
+          _playbackTimer?.cancel();
+        }
+      });
+    }
   }
 
   void _startTimer() {
@@ -177,9 +248,7 @@ class _SongPlayerScreenState extends State<SongPlayerScreen> with TickerProvider
     setState(() {
       _currentIndex = (_currentIndex + 1) % _songs.length;
       _updateMaxDuration();
-      if (_isPlaying) {
-        _startTimer();
-      }
+      _playCurrentSong();
     });
   }
 
@@ -187,17 +256,20 @@ class _SongPlayerScreenState extends State<SongPlayerScreen> with TickerProvider
     setState(() {
       _currentIndex = (_currentIndex - 1 + _songs.length) % _songs.length;
       _updateMaxDuration();
-      if (_isPlaying) {
-        _startTimer();
-      }
+      _playCurrentSong();
     });
   }
 
   void _changeSpeed(double change) {
     setState(() {
       _playbackSpeed = (_playbackSpeed + change).clamp(0.5, 2.0);
-      if (_isPlaying) {
-        _startTimer(); // Restart timer with new speed
+      final currentSong = _songs[_currentIndex];
+      if (currentSong.url != null && currentSong.url!.isNotEmpty) {
+        _audioPlayer.setPlaybackRate(_playbackSpeed);
+      } else {
+        if (_isPlaying) {
+          _startTimer();
+        }
       }
     });
   }
@@ -392,6 +464,10 @@ class _SongPlayerScreenState extends State<SongPlayerScreen> with TickerProvider
                                     setState(() {
                                       _sliderValue = val;
                                     });
+                                    final currentSong = _songs[_currentIndex];
+                                    if (currentSong.url != null && currentSong.url!.isNotEmpty) {
+                                      _audioPlayer.seek(Duration(seconds: val.toInt()));
+                                    }
                                   },
                                 ),
                               ),

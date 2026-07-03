@@ -117,7 +117,7 @@ class _PlayScreenState extends State<PlayScreen> with WidgetsBindingObserver {
         sub: context.translate('games.game2_sub'),
         icon: Icons.forest_rounded,
         img: 'image/Giải cứu thú rừng.png',
-        prog: getProg('Giải cứu thú rừng', altKey: 'match_word'),
+        prog: getProg('Giải cứu thú cưng', altKey: 'match_word'),
         color: const Color(0xFF2E7D32),
         stars: 10,
         btn: context.translate('games.play_now'),

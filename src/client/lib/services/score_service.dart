@@ -62,11 +62,11 @@ class ScoreService {
     return (totalXp % 100) / 100.0;
   }
   
-  Set<String> get purchasedItems {
+  List<String> get purchasedItems {
     // Ưu tiên dữ liệu từ server (source of truth)
     final serverItems = AuthService().userProfile?['purchasedItems'];
     if (serverItems != null && serverItems is List) {
-      return serverItems.map((e) => e.toString()).toSet();
+      return serverItems.map((e) => e.toString()).toList();
     }
     return _storage.getPurchasedItems();
   }
@@ -213,8 +213,16 @@ class ScoreService {
   }
   Future<void> updateStreak() async => await _storage.updateStreak();
 
+  Future<void> freezeStreak() async {
+    await _storage.freezeStreak();
+  }
+
   Future<void> addPurchasedItem(String itemKey) async {
     await _storage.addPurchasedItem(itemKey);
+  }
+
+  Future<void> removePurchasedItem(String itemKey) async {
+    await _storage.removePurchasedItem(itemKey);
   }
 
   /// Đồng bộ dữ liệu local (storage) từ server profile
@@ -241,7 +249,7 @@ class ScoreService {
     // Sync purchased items
     final purchasedItems = profile['purchasedItems'];
     if (purchasedItems != null && purchasedItems is List) {
-      await _storage.setPurchasedItems(purchasedItems.map((e) => e.toString()).toSet());
+      await _storage.setPurchasedItems(purchasedItems.map((e) => e.toString()).toList());
     }
   }
 
@@ -290,6 +298,7 @@ class ScoreService {
     String letterText = 'ក',
     String transliteration = 'ko',
     int? xp,
+    String lessonType = 'consonant',
   }) async {
     int earnedStars = stars;
     int earnedXp = xp ?? (stars * 10);
@@ -300,13 +309,13 @@ class ScoreService {
     // Cập nhật streak
     await _storage.updateStreak();
 
-    final resolvedId = lessonId ?? 'consonant_$letterIndex';
+    final resolvedId = lessonId ?? '${lessonType}_$letterIndex';
 
     // Lưu trực tiếp lên MongoDB thông qua ProgressRepository
     try {
       await ProgressRepository.instance.completeLesson(
         lessonId: resolvedId,
-        lessonType: 'consonant',
+        lessonType: lessonType,
         lessonOrder: letterIndex,
         stars: earnedStars,
         xp: earnedXp,

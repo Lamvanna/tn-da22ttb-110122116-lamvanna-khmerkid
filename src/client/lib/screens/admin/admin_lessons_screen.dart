@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../../constants/app_colors.dart';
 import '../../services/admin_service.dart';
 
@@ -37,6 +38,8 @@ class _AdminLessonsScreenState extends State<AdminLessonsScreen> {
     'vocabulary': 'Từ vựng',
     'sentence': 'Câu',
     'number': 'Số',
+    'reading': 'Tập đọc',
+    'writing': 'Luyện viết',
   };
 
   static const _typeColors = {
@@ -50,6 +53,8 @@ class _AdminLessonsScreenState extends State<AdminLessonsScreen> {
     'vocabulary': AppColors.tertiary,
     'sentence': AppColors.coral,
     'number': AppColors.secondary,
+    'reading': Color(0xFF00E676),
+    'writing': Color(0xFFFF9100),
   };
 
   static const _typeIcons = {
@@ -63,6 +68,8 @@ class _AdminLessonsScreenState extends State<AdminLessonsScreen> {
     'vocabulary': Icons.menu_book_rounded,
     'sentence': Icons.text_fields_rounded,
     'number': Icons.calculate_rounded,
+    'reading': Icons.chrome_reader_mode_rounded,
+    'writing': Icons.edit_note_rounded,
   };
 
   @override
@@ -722,6 +729,7 @@ class _LessonFormPageState extends State<_LessonFormPage> {
   late final TextEditingController _khmerCtrl;
   late final TextEditingController _romanizedCtrl;
   late final TextEditingController _meaningCtrl;
+  late final TextEditingController _pronunciationCtrl;
   late final TextEditingController _orderCtrl;
   late final TextEditingController _categoryCtrl;
   late final TextEditingController _exampleKhmerCtrl;
@@ -729,12 +737,44 @@ class _LessonFormPageState extends State<_LessonFormPage> {
   late final TextEditingController _exampleMeaningCtrl;
   late final TextEditingController _imageUrlCtrl;
   late final TextEditingController _audioUrlCtrl;
+  late final TextEditingController _readingLinesCtrl;
   bool _uploadingImg = false;
   bool _uploadingAudio = false;
   late String _selectedType;
   late String _selectedDifficulty;
   late String _selectedSpellingCategory;
   late bool _isActive;
+
+  AudioPlayer? _previewPlayer;
+  bool _isPlayingPreview = false;
+
+  void _playPreview(String url) async {
+    if (url.trim().isEmpty) return;
+    if (_isPlayingPreview) {
+      await _previewPlayer?.stop();
+      setState(() => _isPlayingPreview = false);
+      return;
+    }
+
+    _previewPlayer ??= AudioPlayer();
+    setState(() => _isPlayingPreview = true);
+
+    try {
+      await _previewPlayer!.play(UrlSource(url));
+      _previewPlayer!.onPlayerStateChanged.listen((state) {
+        if (state == PlayerState.completed || state == PlayerState.stopped) {
+          if (mounted) {
+            setState(() => _isPlayingPreview = false);
+          }
+        }
+      });
+    } catch (e) {
+      debugPrint('Error playing preview audio: $e');
+      if (mounted) {
+        setState(() => _isPlayingPreview = false);
+      }
+    }
+  }
 
   final List<String> spellingCategories = [
     'Ghép vần phụ âm - nguyên âm',
@@ -832,6 +872,8 @@ class _LessonFormPageState extends State<_LessonFormPage> {
     _selectedDifficulty = lesson?['difficulty'] ?? 'beginner';
     _isActive = lesson?['isActive'] ?? true;
 
+    _pronunciationCtrl = TextEditingController(text: lesson?['pronunciation']?.toString() ?? '');
+
     final List initExamples = lesson?['examples'] ?? [];
     Map<String, dynamic> firstEx = {};
     if (initExamples.isNotEmpty && initExamples[0] is Map) {
@@ -856,6 +898,19 @@ class _LessonFormPageState extends State<_LessonFormPage> {
     _imageUrlCtrl = TextEditingController(text: lesson?['imageUrl']?.toString() ?? lesson?['image']?.toString() ?? '');
     _audioUrlCtrl = TextEditingController(text: lesson?['audioUrl']?.toString() ?? lesson?['audio']?.toString() ?? '');
 
+    if (lesson?['type'] == 'reading') {
+      final lines = initExamples.map((e) {
+        if (e is Map) {
+          final m = Map<String, dynamic>.from(e);
+          return m['khmer']?.toString() ?? '';
+        }
+        return '';
+      }).where((l) => l.isNotEmpty).join('\n');
+      _readingLinesCtrl = TextEditingController(text: lines);
+    } else {
+      _readingLinesCtrl = TextEditingController();
+    }
+
     _selectedSpellingCategory = spellingCategories.contains(_categoryCtrl.text)
         ? _categoryCtrl.text
         : spellingCategories[0];
@@ -874,6 +929,8 @@ class _LessonFormPageState extends State<_LessonFormPage> {
     _exampleMeaningCtrl.addListener(() => setState(() {}));
     _imageUrlCtrl.addListener(() => setState(() {}));
     _audioUrlCtrl.addListener(() => setState(() {}));
+    _readingLinesCtrl.addListener(() => setState(() {}));
+    _pronunciationCtrl.addListener(() => setState(() {}));
   }
 
   @override
@@ -882,6 +939,7 @@ class _LessonFormPageState extends State<_LessonFormPage> {
     _khmerCtrl.dispose();
     _romanizedCtrl.dispose();
     _meaningCtrl.dispose();
+    _pronunciationCtrl.dispose();
     _orderCtrl.dispose();
     _categoryCtrl.dispose();
     _exampleKhmerCtrl.dispose();
@@ -889,6 +947,8 @@ class _LessonFormPageState extends State<_LessonFormPage> {
     _exampleMeaningCtrl.dispose();
     _imageUrlCtrl.dispose();
     _audioUrlCtrl.dispose();
+    _readingLinesCtrl.dispose();
+    _previewPlayer?.dispose();
     super.dispose();
   }
 
@@ -980,6 +1040,8 @@ class _LessonFormPageState extends State<_LessonFormPage> {
     required Color color,
     TextInputType? keyboard,
     TextStyle? textStyle,
+    Widget? suffix,
+    int? maxLines,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -999,6 +1061,7 @@ class _LessonFormPageState extends State<_LessonFormPage> {
         TextField(
           controller: ctrl,
           keyboardType: keyboard,
+          maxLines: maxLines ?? 1,
           style: textStyle ??
               GoogleFonts.plusJakartaSans(
                   fontSize: 14.sp,
@@ -1012,6 +1075,7 @@ class _LessonFormPageState extends State<_LessonFormPage> {
                 fontWeight: FontWeight.w500),
             prefixIcon:
                 Icon(icon, color: color.withValues(alpha: 0.7), size: 20.sp),
+            suffixIcon: suffix,
             filled: true,
             fillColor: Colors.white,
             contentPadding:
@@ -1246,6 +1310,7 @@ class _LessonFormPageState extends State<_LessonFormPage> {
       'khmerText': khmerText,
       'romanized': _romanizedCtrl.text.trim(),
       'meaning': _meaningCtrl.text.trim(),
+      'pronunciation': _pronunciationCtrl.text.trim(),
       'type': _selectedType,
       'difficulty': _selectedDifficulty,
       'order': int.tryParse(_orderCtrl.text) ?? 0,
@@ -1253,13 +1318,28 @@ class _LessonFormPageState extends State<_LessonFormPage> {
       'isActive': _isActive,
       'imageUrl': _imageUrlCtrl.text.trim(),
       'audioUrl': _audioUrlCtrl.text.trim(),
-      'examples': [
-        {
-          'khmer': _exampleKhmerCtrl.text.trim(),
-          'romanized': _exampleRomanizedCtrl.text.trim(),
-          'meaning': _exampleMeaningCtrl.text.trim(),
-        }
-      ],
+      'examples': _selectedType == 'reading'
+          ? _readingLinesCtrl.text
+              .split('\n')
+              .map((line) {
+                final khmer = line.trim();
+                if (khmer.isEmpty) return null;
+                return {
+                  'khmer': khmer,
+                  'romanized': '',
+                  'meaning': '',
+                };
+              })
+              .where((e) => e != null)
+              .cast<Map<String, dynamic>>()
+              .toList()
+          : [
+              {
+                'khmer': _exampleKhmerCtrl.text.trim(),
+                'romanized': _exampleRomanizedCtrl.text.trim(),
+                'meaning': _exampleMeaningCtrl.text.trim(),
+              }
+            ],
     };
 
     final result = _isEdit
@@ -1401,29 +1481,52 @@ class _LessonFormPageState extends State<_LessonFormPage> {
                   // SECTION 1: CONTENT INFO
                   _sectionCard(
                     icon: Icons.edit_note_rounded,
-                    title: 'Nội dung bài học',
+                    title: _selectedType == 'writing'
+                        ? 'Nội dung bài Chính tả'
+                        : 'Nội dung bài học',
                     color: formColor,
                     children: [
                       _prettyField(
                         label: 'Tiêu đề',
                         ctrl: _titleCtrl,
-                        hint: 'Nhập tiêu đề bài học',
+                        hint: _selectedType == 'writing'
+                            ? 'Ví dụ: Luyện viết: ឆ្មា'
+                            : 'Nhập tiêu đề bài học',
                         icon: Icons.title_rounded,
                         color: formColor,
                       ),
                       SizedBox(height: 14.h),
                       _prettyField(
-                        label: 'Chữ Khmer (Hiển thị)',
+                        label: _selectedType == 'writing'
+                            ? '✏️ Đáp án đúng (Chữ Khmer học sinh cần gõ)'
+                            : 'Chữ Khmer (Hiển thị)',
                         ctrl: _khmerCtrl,
-                        hint: 'Nhập chữ Khmer (Ví dụ: ក)',
-                        icon: Icons.translate_rounded,
+                        hint: _selectedType == 'writing'
+                            ? 'Nhập đáp án chính xác (Ví dụ: ឆ្មា)'
+                            : 'Nhập chữ Khmer (Ví dụ: ក)',
+                        icon: _selectedType == 'writing'
+                            ? Icons.check_circle_rounded
+                            : Icons.translate_rounded,
                         color: formColor,
                         textStyle: GoogleFonts.battambang(
                           fontSize: 22.sp,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
+                          color: _selectedType == 'writing'
+                              ? const Color(0xFF2E7D32)
+                              : AppColors.textPrimary,
                         ),
                       ),
+                      if (_selectedType == 'writing') ...[
+                        SizedBox(height: 6.h),
+                        Text(
+                          '💡 Đây là chữ mà học sinh phải nghe và gõ lại đúng. Hệ thống sẽ so sánh kết quả nhập với giá trị này.',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textHint,
+                          ),
+                        ),
+                      ],
                       SizedBox(height: 14.h),
                       Row(
                         children: [
@@ -1431,7 +1534,9 @@ class _LessonFormPageState extends State<_LessonFormPage> {
                             child: _prettyField(
                               label: 'Phiên âm',
                               ctrl: _romanizedCtrl,
-                              hint: 'Ví dụ: ka',
+                              hint: _selectedType == 'writing'
+                                  ? 'Ví dụ: chma'
+                                  : 'Ví dụ: ka',
                               icon: Icons.abc_rounded,
                               color: formColor,
                             ),
@@ -1439,20 +1544,71 @@ class _LessonFormPageState extends State<_LessonFormPage> {
                           SizedBox(width: 12.w),
                           Expanded(
                             child: _prettyField(
-                              label: 'Nghĩa từ',
+                              label: _selectedType == 'writing'
+                                  ? 'Gợi ý / Mô tả'
+                                  : 'Nghĩa từ',
                               ctrl: _meaningCtrl,
-                              hint: 'Nhập nghĩa',
-                              icon: Icons.info_outline_rounded,
+                              hint: _selectedType == 'writing'
+                                  ? 'Ví dụ: Con mèo dễ thương'
+                                  : 'Nhập nghĩa',
+                              icon: _selectedType == 'writing'
+                                  ? Icons.lightbulb_outline_rounded
+                                  : Icons.info_outline_rounded,
                               color: formColor,
                             ),
                           ),
                         ],
                       ),
+                      if (_selectedType != 'reading' && _selectedType != 'writing') ...[
+                        SizedBox(height: 14.h),
+                        _prettyField(
+                          label: 'Cách đọc / Phát âm (tiếng Việt)',
+                          ctrl: _pronunciationCtrl,
+                          hint: _selectedType == 'vocabulary'
+                              ? 'Ví dụ: đamrây (cho từ ដំរី) hoặc chkae (cho từ ឆ្កែ)'
+                              : 'Nhập cách đọc tiếng Việt',
+                          icon: Icons.record_voice_over_rounded,
+                          color: formColor,
+                        ),
+                      ],
                     ],
                   ),
 
                   // SECTION 1.5: EXAMPLE VOCABULARY
-                  if (_selectedType == 'consonant' || _selectedType == 'vowel') ...[
+                  if (_selectedType == 'reading') ...[
+                    SizedBox(height: 16.h),
+                    _sectionCard(
+                      icon: Icons.chrome_reader_mode_rounded,
+                      title: 'Danh sách các câu tập đọc',
+                      color: formColor,
+                      children: [
+                        _prettyField(
+                          label: 'Nội dung tập đọc (Mỗi dòng một câu bằng chữ Khmer)',
+                          ctrl: _readingLinesCtrl,
+                          hint: 'Ví dụ:\nក   ខ\nកា   การ   កុំ   កកេរ\nខ្ញុំ រៀន នៅ សាលា។',
+                          icon: Icons.list_alt_rounded,
+                          color: formColor,
+                          maxLines: 8,
+                          textStyle: GoogleFonts.battambang(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        Text(
+                          '💡 Lưu ý: Nhập văn bản chữ Khmer, mỗi câu viết trên một dòng.',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textHint,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else if (_selectedType == 'consonant' ||
+                      _selectedType == 'consonant_series' ||
+                      _selectedType == 'vowel') ...[
                     SizedBox(height: 16.h),
                     _sectionCard(
                       icon: Icons.lightbulb_outline_rounded,
@@ -1645,6 +1801,12 @@ class _LessonFormPageState extends State<_LessonFormPage> {
                               hint: 'Dán link âm thanh hoặc chọn tệp',
                               icon: Icons.link_rounded,
                               color: formColor,
+                              suffix: _audioUrlCtrl.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: Icon(_isPlayingPreview ? Icons.stop_rounded : Icons.play_arrow_rounded, color: AppColors.tertiary),
+                                      onPressed: () => _playPreview(_audioUrlCtrl.text),
+                                    )
+                                  : null,
                             ),
                           ),
                         ],
@@ -1676,7 +1838,9 @@ class _LessonFormPageState extends State<_LessonFormPage> {
                                 'diacritical',
                                 'vocabulary',
                                 'sentence',
-                                'number'
+                                'number',
+                                'reading',
+                                'writing',
                               ]
                                   .map((t) => DropdownMenuItem(
                                       value: t,
@@ -1749,9 +1913,13 @@ class _LessonFormPageState extends State<_LessonFormPage> {
                                     }),
                                   )
                                 : _prettyField(
-                                    label: 'Danh mục / Nhóm',
+                                    label: _selectedType == 'writing'
+                                        ? 'Chủ đề viết (Ví dụ: topic_1)'
+                                        : (_selectedType == 'vocabulary' ? 'Chủ đề từ vựng (Ví dụ: Động vật)' : 'Danh mục / Nhóm'),
                                     ctrl: _categoryCtrl,
-                                    hint: 'Ví dụ: Phụ âm ក',
+                                    hint: _selectedType == 'writing'
+                                        ? 'topic_1'
+                                        : (_selectedType == 'vocabulary' ? 'Ví dụ: Động vật, Trái cây, Gia đình' : 'Ví dụ: Phụ âm ក'),
                                     icon: Icons.category_rounded,
                                     color: formColor,
                                   ),

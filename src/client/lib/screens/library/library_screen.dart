@@ -782,11 +782,24 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       ),
                     );
                   } else if (doc.type == 'Audio') {
+                    final audioList = _latestDocs.where((d) => d.type == 'Audio').map<SongItem>((d) {
+                      return SongItem(
+                        titleKhmer: d.title,
+                        titleVietnamese: d.desc,
+                        category: 'Bài hát',
+                        duration: d.duration ?? '02:35',
+                        image: d.image,
+                        lyrics: d.lyrics ?? '',
+                        categoryColor: const Color(0xFFFD79A8),
+                        url: d.contentUrl,
+                      );
+                    }).toList();
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => SongPlayerScreen(
                           initialSongTitle: doc.title,
+                          playlist: audioList.isNotEmpty ? audioList : null,
                         ),
                       ),
                     );
@@ -798,6 +811,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           title: doc.title,
                           description: doc.desc,
                           imagePath: doc.image,
+                          videoUrl: doc.contentUrl,
                         ),
                       ),
                     );
@@ -1006,11 +1020,24 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
           );
         } else if (doc.type == 'Audio') {
+          final audioList = _latestDocs.where((d) => d.type == 'Audio').map<SongItem>((d) {
+            return SongItem(
+              titleKhmer: d.title,
+              titleVietnamese: d.desc,
+              category: 'Bài hát',
+              duration: d.duration ?? '02:35',
+              image: d.image,
+              lyrics: d.lyrics ?? '',
+              categoryColor: const Color(0xFFFD79A8),
+              url: d.contentUrl,
+            );
+          }).toList();
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => SongPlayerScreen(
                 initialSongTitle: doc.title,
+                playlist: audioList.isNotEmpty ? audioList : null,
               ),
             ),
           );
@@ -1022,6 +1049,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 title: doc.title,
                 description: doc.desc,
                 imagePath: doc.image,
+                videoUrl: doc.contentUrl,
               ),
             ),
           );

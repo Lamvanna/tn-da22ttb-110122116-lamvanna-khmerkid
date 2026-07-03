@@ -297,7 +297,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
       _gameOver = true;
     });
     _scoreService?.completeGame(
-      'Giải cứu thú rừng',
+      'Giải cứu thú cưng',
       _score,
       syncToBackend: true,
       correctAnswers: _currentLevelIdx,
@@ -366,7 +366,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
       
       if (_gameOver) {
         _scoreService?.completeGame(
-          'Giải cứu thú rừng',
+          'Giải cứu thú cưng',
           _score,
           syncToBackend: true,
           correctAnswers: _currentLevelIdx,
@@ -480,7 +480,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
       _score += addedScore;
     });
 
-    _scoreService?.completeGame('Giải cứu thú rừng', addedScore, syncToBackend: false);
+    _scoreService?.completeGame('Giải cứu thú cưng', addedScore, syncToBackend: false);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -546,7 +546,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
   void _showGameFinishedDialog() async {
     _timer?.cancel();
     final result = await _scoreService?.completeGame(
-      'Giải cứu thú rừng',
+      'Giải cứu thú cưng',
       _score,
       syncToBackend: true,
       correctAnswers: _levels.length,
@@ -1218,7 +1218,7 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen>
               ),
             ),
             SizedBox(height: 24.h),
-            Text('Giải cứu thú rừng',
+            Text('Giải cứu thú cưng',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 32.sp, fontWeight: FontWeight.w900, color: const Color(0xFF1B5E20),
                 shadows: [

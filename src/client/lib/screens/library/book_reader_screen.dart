@@ -60,7 +60,25 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
   void initState() {
     super.initState();
     if (_isStory) {
-      _storyPages = _getStoryPages(widget.title, widget.imagePath);
+      if (widget.pages != null && widget.pages!.isNotEmpty) {
+        _storyPages = widget.pages!.map((p) {
+          final h = p['highlights'];
+          List<String> highlightsList = [];
+          if (h is List) {
+            highlightsList = List<String>.from(h.map((x) => x.toString()));
+          }
+          return _BookPage(
+            textKhmer: p['textKhmer']?.toString() ?? '',
+            textVietnamese: p['textVietnamese']?.toString() ?? '',
+            illustration: (p['illustration'] != null && p['illustration'].toString().isNotEmpty)
+                ? p['illustration'].toString()
+                : widget.imagePath,
+            highlights: highlightsList,
+          );
+        }).toList();
+      } else {
+        _storyPages = _getStoryPages(widget.title, widget.imagePath);
+      }
     }
     _initTts();
     _transformationController.addListener(_onTransformationChanged);

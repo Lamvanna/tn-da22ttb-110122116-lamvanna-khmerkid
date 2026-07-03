@@ -1,19 +1,23 @@
 /// Model dữ liệu cho bài tập viết chữ Khmer
 class KhmerWriting {
+  final String? id;           // ID từ MongoDB
   final String character;     // Ký tự cần viết
   final String romanized;     // Phiên âm Latin
   final String type;          // 'consonant', 'vowel', 'combined'
   final String hint;          // Hướng dẫn viết
   final String topicKey;      // Key đề tài/chủ đề riêng của bài viết
+  final String? audioUrl;     // URL âm thanh thực tế tải lên
   int starRating;
   bool isLearned;
 
   KhmerWriting({
+    this.id,
     required this.character,
     required this.romanized,
     required this.topicKey,
     this.type = 'consonant',
     this.hint = '',
+    this.audioUrl,
     this.starRating = 0,
     this.isLearned = false,
   });

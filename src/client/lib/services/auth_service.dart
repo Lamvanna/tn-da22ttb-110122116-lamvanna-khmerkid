@@ -891,7 +891,7 @@ class AuthService extends ChangeNotifier {
       // Đồng bộ danh sách vật phẩm đã mua từ CSDL vào thiết bị
       final purchasedItems = profile['purchasedItems'];
       if (purchasedItems != null && purchasedItems is List) {
-        await storage.setPurchasedItems(purchasedItems.map((e) => e.toString()).toSet());
+        await storage.setPurchasedItems(purchasedItems.map((e) => e.toString()).toList());
       }
 
       debugPrint('🔄 Đồng bộ profile và inventory từ server lên thiết bị thành công! (Name: ${profile['name']}, Stars: ${profile['stars']}, XP: ${profile['xp']}, Avatar: ${profile['avatar']})');
@@ -951,6 +951,42 @@ class AuthService extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('❌ Error purchasing item: $e');
+      return {'success': false, 'message': 'Không thể kết nối máy chủ: $e'};
+    }
+  }
+
+  /// Sử dụng vật phẩm permanent (Rương kim cương, Chuỗi dự phòng)
+  Future<Map<String, dynamic>> usePermanentItem({
+    required String itemId,
+  }) async {
+    if (_accessToken == null) return {'success': false, 'message': 'Chưa đăng nhập'};
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/users/use-item'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_accessToken',
+        },
+        body: jsonEncode({
+          'itemId': itemId,
+        }),
+      ).timeout(_httpTimeout);
+
+      final responseData = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        // Cập nhật profile mới nhất để đồng bộ CSDL local
+        await fetchProfile();
+        return {
+          'success': true,
+          'data': responseData['data'] ?? {},
+          'reward': responseData['data']?['reward'],
+        };
+      } else {
+        return {'success': false, 'message': responseData['message'] ?? 'Lỗi sử dụng vật phẩm'};
+      }
+    } catch (e) {
+      debugPrint('❌ Error using permanent item: $e');
       return {'success': false, 'message': 'Không thể kết nối máy chủ: $e'};
     }
   }

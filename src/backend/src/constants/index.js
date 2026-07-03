@@ -29,12 +29,16 @@ const AUTH_PROVIDERS = {
 const LESSON_TYPES = {
   CONSONANT: 'consonant',       // phụ âm
   VOWEL: 'vowel',               // nguyên âm
+  CONSONANT_SERIES: 'consonant_series', // phụ âm o-ô
+  DIACRITICAL: 'diacritical',   // học dấu
   SPELLING: 'spelling',         // ghép vần
   CLOSED_SYLLABLE: 'closed_syllable', // ghép vần đóng
   VOCABULARY: 'vocabulary',     // từ vựng
   SENTENCE: 'sentence',         // câu
   NUMBER: 'number',             // số
   COENG: 'coeng',               // chữ ghép
+  READING: 'reading',           // tập đọc
+  WRITING: 'writing',           // luyện viết
 };
 
 // ========================================

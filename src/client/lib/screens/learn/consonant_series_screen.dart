@@ -7,7 +7,9 @@ import '../../models/khmer_vowel.dart';
 import '../../models/khmer_letter.dart';
 import '../../services/score_service.dart';
 import '../../services/storage_service.dart';
-import 'letter_detail_screen.dart';
+import '../../services/tts_service.dart';
+import '../../services/lesson_service.dart';
+import '../../repositories/progress_repository.dart';
 import 'vowel_detail_screen.dart';
 
 class ConsonantSeriesScreen extends StatefulWidget {
@@ -27,6 +29,7 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
 
   final List<KhmerConsonantSeries> _consonants = KhmerConsonantSeriesData.consonants;
   final List<KhmerVowel> _vowels = KhmerVowelData.vowels;
+  Map<String, Map<String, dynamic>> _onlineLessonsMap = {};
 
   late String _selectedCategory;
   late final List<String> _categories;
@@ -59,29 +62,46 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
       CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
     _scrollCtrl = ScrollController();
     _loadScore();
+    _loadOnlineLessons();
+  }
+
+  Future<void> _loadOnlineLessons() async {
+    try {
+      final lessonService = await LessonService.getInstance();
+      final lessonsData = await lessonService.fetchLessonsByType('consonant_series');
+      final map = <String, Map<String, dynamic>>{};
+      for (final l in lessonsData) {
+        final text = l['khmerText']?.toString() ?? '';
+        if (text.isNotEmpty) {
+          map[text] = Map<String, dynamic>.from(l);
+        }
+      }
+      if (mounted) {
+        setState(() => _onlineLessonsMap = map);
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error loading online consonant_series lessons: $e');
+    }
   }
 
   Future<void> _loadScore() async {
     _score = await ScoreService.getInstance();
     try {
-      final storage = await StorageService.getInstance();
-      final letterProgress = storage.getLetterProgress();
-      final vowelProgress = storage.getVowelProgress();
-
-      // Update consonants progress dynamically
+      // Load consonant_series progress from ProgressRepository
+      final csProgress = await ProgressRepository.instance.getProgressMap('consonant_series');
       for (int i = 0; i < _consonants.length; i++) {
-        final c = _consonants[i];
-        final mainIndex = KhmerLetterData.consonants.indexWhere((item) => item.character == c.character);
-        if (mainIndex != -1 && letterProgress.containsKey(mainIndex)) {
-          c.isLearned = true;
-          c.starRating = letterProgress[mainIndex]!;
+        if (csProgress.containsKey(i)) {
+          _consonants[i].isLearned = true;
+          _consonants[i].starRating = csProgress[i]!;
         } else {
-          c.isLearned = false;
-          c.starRating = 0;
+          _consonants[i].isLearned = false;
+          _consonants[i].starRating = 0;
         }
       }
 
       // Update vowels progress dynamically
+      final storage = await StorageService.getInstance();
+      final vowelProgress = storage.getVowelProgress();
       for (int i = 0; i < _vowels.length; i++) {
         final v = _vowels[i];
         final mainIndex = KhmerVowelData.vowels.indexWhere((item) => item.character == v.character);
@@ -279,64 +299,80 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
       displayText = item.character.replaceFirst('អ', '');
     }
 
-    return Container(
-      width: _nodeSize, height: _nodeSize + 20.w,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14.r),
-        gradient: LinearGradient(
-          begin: Alignment.topCenter, end: Alignment.bottomCenter,
-          colors: [
-            Color.lerp(color, Colors.white, 0.20)!,
-            color,
-            Color.lerp(color, Colors.black, 0.12)!,
-          ],
-          stops: const [0.0, 0.45, 1.0],
-        ),
-        border: Border.all(color: Color.lerp(color, Colors.white, 0.4)!, width: 2.5.w),
-        boxShadow: [
-          BoxShadow(
-            color: Color.lerp(color, Colors.black, 0.4)!.withValues(alpha: 0.5),
-            blurRadius: 0, offset: Offset(0, 3.h)),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(displayText,
-            style: GoogleFonts.battambang(
-              fontSize: (item is KhmerVowel) ? 46.sp : 40.sp,
-              fontWeight: FontWeight.w700,
-              color: Colors.white, height: 1.1,
-              shadows: [Shadow(
-                color: Colors.black.withValues(alpha: 0.20),
-                blurRadius: 2, offset: const Offset(0, 1))])),
-          SizedBox(height: 4.h),
-          Text(
-            item.romanized,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w700,
-              color: Colors.white.withValues(alpha: 0.95),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: _nodeSize, height: _nodeSize + 20.w,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14.r),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter, end: Alignment.bottomCenter,
+              colors: [
+                Color.lerp(color, Colors.white, 0.20)!,
+                color,
+                Color.lerp(color, Colors.black, 0.12)!,
+              ],
+              stops: const [0.0, 0.45, 1.0],
             ),
+            border: Border.all(color: Color.lerp(color, Colors.white, 0.4)!, width: 2.5.w),
+            boxShadow: [
+              BoxShadow(
+                color: Color.lerp(color, Colors.black, 0.4)!.withValues(alpha: 0.5),
+                blurRadius: 0, offset: Offset(0, 3.h)),
+            ],
           ),
-          if (done) ...[
-            SizedBox(height: 2.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                3,
-                (starIndex) => Icon(
-                  Icons.star_rounded,
-                  size: 14.sp,
-                  color: starIndex < item.starRating
-                      ? const Color(0xFFFFD600)
-                      : Colors.white.withValues(alpha: 0.3),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(displayText,
+                style: GoogleFonts.battambang(
+                  fontSize: (item is KhmerVowel) ? 46.sp : 40.sp,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white, height: 1.1,
+                  shadows: [Shadow(
+                    color: Colors.black.withValues(alpha: 0.20),
+                    blurRadius: 2, offset: const Offset(0, 1))])),
+              SizedBox(height: 4.h),
+              Text(
+                item.romanized,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white.withValues(alpha: 0.95),
                 ),
               ),
+            ],
+          ),
+        ),
+        // ── Checkmark badge for learned items ──
+        if (done)
+          Positioned(
+            top: -4.h,
+            right: -4.w,
+            child: Container(
+              width: 22.w,
+              height: 22.w,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFF43A047), width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 4.r,
+                    offset: Offset(0, 1.h),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.check_rounded,
+                size: 14.w,
+                color: const Color(0xFF43A047),
+              ),
             ),
-          ],
-        ],
-      ),
+          ),
+      ],
     );
   }
 
@@ -537,36 +573,55 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
                   fontSize: 14.sp, fontWeight: FontWeight.w600, color: const Color(0xFF718096))),
               ])),
           SizedBox(height: 24.h),
-          // Learn/Practice CTA Button
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [_currentColor, Color.lerp(_currentColor, Colors.black, 0.15)!],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-              borderRadius: BorderRadius.circular(16.r),
-              boxShadow: [
-                BoxShadow(
-                  color: _currentColor.withValues(alpha: 0.35),
-                  blurRadius: 12.r,
-                  offset: Offset(0, 4.h),
-                ),
-              ],
+          // Listen / Learn CTA Button
+          if (item is KhmerConsonantSeries) ...[
+            // ── CONSONANT SERIES: Listen button only ──
+            _ConsonantSeriesListenButton(
+              item: item,
+              color: _currentColor,
+              audioUrl: _onlineLessonsMap[item.character]?['audioUrl']?.toString(),
+              onCompleted: () {
+                // Mark lesson complete
+                final idx = KhmerConsonantSeriesData.consonants.indexWhere((c) => c.character == item.character);
+                if (idx != -1) {
+                  final online = _onlineLessonsMap[item.character];
+                  final lessonId = online?['_id']?.toString() ?? online?['id']?.toString() ?? 'consonant_series_$idx';
+                  ScoreService.getInstance().then((scoreService) {
+                    return scoreService.completeLetterLesson(
+                      idx, 3,
+                      xp: 55,
+                      lessonId: lessonId,
+                      letterText: item.character,
+                      transliteration: item.romanized,
+                      lessonType: 'consonant_series',
+                    );
+                  }).then((_) {
+                    _loadScore();
+                  });
+                }
+              },
             ),
-            child: ElevatedButton(
-              onPressed: () {
-                if (item is KhmerConsonantSeries) {
-                  final mainIndex = KhmerLetterData.consonants.indexWhere((c) => c.character == item.character);
-                  if (mainIndex != -1) {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => LetterDetailScreen(initialIndex: mainIndex)),
-                    ).then((_) => _loadScore());
-                  }
-                } else if (item is KhmerVowel) {
+          ] else if (item is KhmerVowel) ...[
+            // ── VOWEL: Navigate to detail screen ──
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [_currentColor, Color.lerp(_currentColor, Colors.black, 0.15)!],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                borderRadius: BorderRadius.circular(16.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: _currentColor.withValues(alpha: 0.35),
+                    blurRadius: 12.r,
+                    offset: Offset(0, 4.h),
+                  ),
+                ],
+              ),
+              child: ElevatedButton(
+                onPressed: () {
                   final mainIndex = KhmerVowelData.vowels.indexWhere((v) => v.character == item.character);
                   if (mainIndex != -1) {
                     Navigator.pop(context);
@@ -575,34 +630,150 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
                       MaterialPageRoute(builder: (_) => VowelDetailScreen(initialIndex: mainIndex)),
                     ).then((_) => _loadScore());
                   }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 14.h),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.play_circle_filled_rounded, color: Colors.white, size: 20.sp),
-                  SizedBox(width: 8.w),
-                  Text(
-                    item.isLearned ? 'Luyện tập lại' : 'Bắt đầu học ngay',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.play_circle_filled_rounded, color: Colors.white, size: 20.sp),
+                    SizedBox(width: 8.w),
+                    Text(
+                      item.isLearned ? 'Luyện tập lại' : 'Bắt đầu học ngay',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
+          ],
           SizedBox(height: 8.h),
         ]),
+      ),
+    );
+  }
+}
+
+/// ═══════════════════════════════════════════════════════════════
+/// Stateful button widget to handle listen + completion for consonant series
+/// ═══════════════════════════════════════════════════════════════
+class _ConsonantSeriesListenButton extends StatefulWidget {
+  final KhmerConsonantSeries item;
+  final Color color;
+  final String? audioUrl;
+  final VoidCallback onCompleted;
+
+  const _ConsonantSeriesListenButton({
+    required this.item,
+    required this.color,
+    required this.onCompleted,
+    this.audioUrl,
+  });
+
+  @override
+  State<_ConsonantSeriesListenButton> createState() => _ConsonantSeriesListenButtonState();
+}
+
+class _ConsonantSeriesListenButtonState extends State<_ConsonantSeriesListenButton> {
+  bool _isPlaying = false;
+  bool _hasListened = false;
+
+  Future<void> _playAudio() async {
+    if (_isPlaying) return;
+    setState(() => _isPlaying = true);
+
+    final tts = TtsService.instance;
+    tts.onComplete = () {
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+          _hasListened = true;
+        });
+        // Auto mark completed after listening
+        widget.onCompleted();
+      }
+    };
+    tts.onError = (_) {
+      if (mounted) setState(() => _isPlaying = false);
+    };
+
+    await tts.speakKhmerLetter(
+      character: widget.item.character,
+      pronunciation: widget.item.pronunciation,
+      romanized: widget.item.romanized,
+      audioUrl: widget.audioUrl,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: _hasListened
+              ? [const Color(0xFF66BB6A), const Color(0xFF43A047)]
+              : [widget.color, Color.lerp(widget.color, Colors.black, 0.15)!],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: widget.color.withValues(alpha: 0.35),
+            blurRadius: 12.r,
+            offset: Offset(0, 4.h),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: _playAudio,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(vertical: 14.h),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (_isPlaying)
+              SizedBox(
+                width: 20.w, height: 20.w,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            else if (_hasListened)
+              Icon(Icons.check_circle_rounded, color: Colors.white, size: 20.sp)
+            else
+              Icon(Icons.volume_up_rounded, color: Colors.white, size: 20.sp),
+            SizedBox(width: 8.w),
+            Text(
+              _isPlaying
+                  ? 'Đang phát...'
+                  : _hasListened
+                      ? 'Đã nghe ✓  Nghe lại'
+                      : '🔊 Nghe phát âm',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -7,6 +7,8 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
+import '../../services/lesson_service.dart';
+import '../../services/tts_service.dart';
 import '../../models/khmer_diacritical.dart';
 import '../../widgets/khmer_write_widget.dart';
 import '../../widgets/khmer_speak_widget.dart';
@@ -30,13 +32,15 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
   late AnimationController _animCtrl;
   late Animation<double> _scaleAnim;
   final List<KhmerDiacritical> _lessons = KhmerDiacriticalData.diacriticals;
+  Map<String, Map<String, dynamic>> _onlineLessonsMap = {};
+  bool _isLoading = true;
   final Map<int, Set<int>> _completedSteps = {};
   int _activeSheet = 0;
   bool _isAlreadyDone = false;
 
   @override
   void initState() {
-    _loadScore();
+    _loadScoreAndLessons();
     super.initState();
     _idx = widget.initialIndex;
     _animCtrl = AnimationController(
@@ -108,7 +112,7 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
         transliteration: _lesson.romanized,
       );
     }).then((_) {
-      _loadScore();
+      _loadScoreAndLessons();
     }).catchError((e) {
       debugPrint('Error saving diacritical progress: $e');
     });
@@ -388,9 +392,35 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
 
   bool _isStepComplete(int step) => _completedSteps[_idx]?.contains(step) ?? false;
 
-  Future<void> _loadScore() async {
-    _score = await ScoreService.getInstance();
-    if (mounted) setState(() {});
+  Future<void> _loadScoreAndLessons() async {
+    try {
+      _score = await ScoreService.getInstance();
+      
+      final lessonService = await LessonService.getInstance();
+      final lessonsData = await lessonService.fetchLessonsByType('spelling');
+      
+      final onlineMap = <String, Map<String, dynamic>>{};
+      for (final l in lessonsData) {
+        final text = l['khmerText']?.toString() ?? '';
+        if (text.isNotEmpty) {
+          onlineMap[text] = Map<String, dynamic>.from(l);
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _onlineLessonsMap = onlineMap;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error loading diacritical score and lessons: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -887,6 +917,9 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
 
   // ═══════════════════ INLINE SHEET ═══════════════════
   Widget _buildInlineSheet() {
+    final online = _onlineLessonsMap[_lesson.example];
+    final dbAudioUrl = online?['audioUrl']?.toString();
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(28.r),
       child: Container(
@@ -901,6 +934,7 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
                     child: _InlineListenContent(
                       lesson: _lesson,
                       formula: _getFormula(_lesson),
+                      audioUrl: dbAudioUrl,
                       onComplete: () => _markStepComplete(0),
                     ),
                   ),
@@ -1229,10 +1263,12 @@ class _DiacriticalFormula {
 class _InlineListenContent extends StatefulWidget {
   final KhmerDiacritical lesson;
   final _DiacriticalFormula formula;
+  final String? audioUrl;
   final VoidCallback onComplete;
   const _InlineListenContent({
     required this.lesson,
     required this.formula,
+    this.audioUrl,
     required this.onComplete,
   });
 
@@ -1242,11 +1278,8 @@ class _InlineListenContent extends StatefulWidget {
 
 class _InlineListenContentState extends State<_InlineListenContent>
     with SingleTickerProviderStateMixin {
-  final FlutterTts _tts = FlutterTts();
   bool _isPlaying = false;
   int _playCount = 0;
-  bool _ttsReady = false;
-  bool _khmerSupported = false;
   late AnimationController _pulseCtrl;
 
   @override
@@ -1256,40 +1289,10 @@ class _InlineListenContentState extends State<_InlineListenContent>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-    _initTts();
-  }
-
-  Future<void> _initTts() async {
-    final languages = await _tts.getLanguages;
-    final langList = (languages as List).map((l) => l.toString().toLowerCase()).toList();
-    _khmerSupported = langList.any((l) => l.contains('km') || l.contains('khmer'));
-    await _tts.setLanguage(
-      _khmerSupported
-          ? 'km'
-          : langList.any((l) => l.contains('vi'))
-              ? 'vi-VN'
-              : 'en-US',
-    );
-    await _tts.setSpeechRate(0.4);
-    await _tts.setVolume(1.0);
-    _tts.setCompletionHandler(() {
-      if (mounted) {
-        setState(() => _isPlaying = false);
-        _pulseCtrl.stop();
-      }
-    });
-    _tts.setErrorHandler((_) {
-      if (mounted) {
-        setState(() => _isPlaying = false);
-        _pulseCtrl.stop();
-      }
-    });
-    if (mounted) setState(() => _ttsReady = true);
   }
 
   @override
   void dispose() {
-    _tts.stop();
     _pulseCtrl.dispose();
     super.dispose();
   }
@@ -1301,16 +1304,40 @@ class _InlineListenContentState extends State<_InlineListenContent>
       _playCount++;
     });
     _pulseCtrl.repeat(reverse: true);
-    final text = _khmerSupported ? widget.formula.result : widget.lesson.exampleMeaning;
-    final result = await _tts.speak(text);
-    if (result != 1 && mounted) {
-      Future.delayed(const Duration(milliseconds: 2500), () {
-        if (mounted) {
-          setState(() => _isPlaying = false);
-          _pulseCtrl.stop();
-        }
-      });
+
+    final tts = TtsService.instance;
+    tts.onStart = () {
+      if (mounted) setState(() => _isPlaying = true);
+    };
+    tts.onComplete = () {
+      if (mounted) {
+        setState(() => _isPlaying = false);
+        _pulseCtrl.stop();
+      }
+    };
+    tts.onError = (err) {
+      if (mounted) {
+        setState(() => _isPlaying = false);
+        _pulseCtrl.stop();
+      }
+    };
+
+    if (widget.audioUrl != null && widget.audioUrl!.isNotEmpty) {
+      await tts.speakKhmerLetter(
+        character: widget.formula.result,
+        audioUrl: widget.audioUrl,
+      );
+    } else {
+      final isKhmer = tts.isInitialized;
+      if (!isKhmer) {
+        await tts.speakVietnamese(widget.lesson.exampleMeaning);
+      } else {
+        await tts.speakKhmerLetter(
+          character: widget.formula.result,
+        );
+      }
     }
+
     if (_playCount >= 1) widget.onComplete();
   }
 
@@ -1368,7 +1395,7 @@ class _InlineListenContentState extends State<_InlineListenContent>
                   ),
                   SizedBox(height: 24.h),
                   GestureDetector(
-                    onTap: _ttsReady ? _play : null,
+                    onTap: _play,
                     child: AnimatedBuilder(
                       animation: _pulseCtrl,
                       builder:

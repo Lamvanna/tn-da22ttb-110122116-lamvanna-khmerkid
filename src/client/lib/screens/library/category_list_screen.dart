@@ -261,11 +261,25 @@ class CategoryListScreen extends StatelessWidget {
             ),
           );
         } else if (doc.type == 'Audio') {
+          final list = customItems ?? DocItem.fallbackDocs;
+          final audioList = list.where((d) => d.type == 'Audio').map<SongItem>((d) {
+            return SongItem(
+              titleKhmer: d.title,
+              titleVietnamese: d.desc,
+              category: 'Bài hát',
+              duration: d.duration ?? '02:35',
+              image: d.image,
+              lyrics: d.lyrics ?? '',
+              categoryColor: const Color(0xFFFD79A8),
+              url: d.contentUrl,
+            );
+          }).toList();
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => SongPlayerScreen(
                 initialSongTitle: doc.title,
+                playlist: audioList.isNotEmpty ? audioList : null,
               ),
             ),
           );
@@ -277,6 +291,7 @@ class CategoryListScreen extends StatelessWidget {
                 title: doc.title,
                 description: doc.desc,
                 imagePath: doc.image,
+                videoUrl: doc.contentUrl,
               ),
             ),
           );

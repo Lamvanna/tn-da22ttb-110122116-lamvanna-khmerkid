@@ -8,6 +8,7 @@ plugins {
 android {
     namespace = "com.khmerkid.khmerkid"
     compileSdk = 36
+    buildToolsVersion = "35.0.0"
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

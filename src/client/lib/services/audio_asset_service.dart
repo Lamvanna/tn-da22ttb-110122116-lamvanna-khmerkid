@@ -300,21 +300,32 @@ class AudioAssetService {
     return playFromAsset(assetPath);
   }
 
+  bool _isVowelMark(String char) {
+    if (char.isEmpty) return false;
+    final code = char.codeUnitAt(0);
+    return code >= 0x17B6 && code <= 0x17C8;
+  }
+
   /// Phát âm tự động (tự nhận diện loại)
   Future<bool> playCharacter(String character) async {
+    String query = character;
+    if (character.length == 1 && _isVowelMark(character)) {
+      query = 'អ$character';
+    }
+
     // Thử phụ âm trước
-    if (_consonantAudioMap.containsKey(character)) {
-      return playConsonant(character);
+    if (_consonantAudioMap.containsKey(query)) {
+      return playConsonant(query);
     }
 
     // Thử nguyên âm
-    if (_vowelAudioMap.containsKey(character)) {
-      return playVowel(character);
+    if (_vowelAudioMap.containsKey(query)) {
+      return playVowel(query);
     }
 
     // Thử số
-    if (_numberAudioMap.containsKey(character)) {
-      return playNumber(character);
+    if (_numberAudioMap.containsKey(query)) {
+      return playNumber(query);
     }
 
     debugPrint('[AudioAssetService] ⚠️ No audio found for: $character');
@@ -336,9 +347,13 @@ class AudioAssetService {
 
   /// Đường dẫn khai báo trong map cho 1 ký tự (phụ âm/nguyên âm/số).
   String? _mappedPath(String character) {
-    return _consonantAudioMap[character] ??
-           _vowelAudioMap[character] ??
-           _numberAudioMap[character];
+    String query = character;
+    if (character.length == 1 && _isVowelMark(character)) {
+      query = 'អ$character';
+    }
+    return _consonantAudioMap[query] ??
+           _vowelAudioMap[query] ??
+           _numberAudioMap[query];
   }
 
   // ─── Stop ───────────────────────────────────────────────────────

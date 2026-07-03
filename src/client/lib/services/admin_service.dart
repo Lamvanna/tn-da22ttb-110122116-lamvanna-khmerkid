@@ -15,6 +15,9 @@ class AdminService {
   /// Timeout cho mọi request
   static const Duration _timeout = Duration(seconds: 12);
 
+  /// Timeout dành riêng cho việc tải tệp lên (ảnh, âm thanh, video, pdf)
+  static const Duration _uploadTimeout = Duration(seconds: 120);
+
   /// Base URL lấy từ AuthService
   String get _baseUrl => AuthService().baseUrl;
 
@@ -390,7 +393,7 @@ class AdminService {
       final file = File(filePath);
       if (await file.exists()) {
         request.files.add(await http.MultipartFile.fromPath('image', file.path));
-        final streamedResponse = await request.send().timeout(_timeout);
+        final streamedResponse = await request.send().timeout(_uploadTimeout);
         final response = await http.Response.fromStream(streamedResponse);
         if (response.statusCode == 200 || response.statusCode == 201) {
           final responseData = jsonDecode(response.body);
@@ -414,7 +417,7 @@ class AdminService {
       final file = File(filePath);
       if (await file.exists()) {
         request.files.add(await http.MultipartFile.fromPath('pdf', file.path));
-        final streamedResponse = await request.send().timeout(_timeout);
+        final streamedResponse = await request.send().timeout(_uploadTimeout);
         final response = await http.Response.fromStream(streamedResponse);
         if (response.statusCode == 200 || response.statusCode == 201) {
           final responseData = jsonDecode(response.body);
@@ -438,7 +441,7 @@ class AdminService {
       final file = File(filePath);
       if (await file.exists()) {
         request.files.add(await http.MultipartFile.fromPath('audio', file.path));
-        final streamedResponse = await request.send().timeout(_timeout);
+        final streamedResponse = await request.send().timeout(_uploadTimeout);
         final response = await http.Response.fromStream(streamedResponse);
         if (response.statusCode == 200 || response.statusCode == 201) {
           final responseData = jsonDecode(response.body);
@@ -462,7 +465,7 @@ class AdminService {
       final file = File(filePath);
       if (await file.exists()) {
         request.files.add(await http.MultipartFile.fromPath('video', file.path));
-        final streamedResponse = await request.send().timeout(_timeout);
+        final streamedResponse = await request.send().timeout(_uploadTimeout);
         final response = await http.Response.fromStream(streamedResponse);
         if (response.statusCode == 200 || response.statusCode == 201) {
           final responseData = jsonDecode(response.body);

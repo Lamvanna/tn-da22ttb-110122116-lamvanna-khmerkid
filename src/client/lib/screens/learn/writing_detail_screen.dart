@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_writing.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/feedback_dialog.dart';
 import '../../services/score_service.dart';
+import '../../services/tts_service.dart';
 
 /// Trang chi tiết tập viết — Chuyển đổi thành Dictation: Chính tả - Nghe và gõ lại
 class WritingDetailScreen extends StatefulWidget {
   final int initialIndex;
-  const WritingDetailScreen({super.key, this.initialIndex = 0});
+  final List<KhmerWriting>? lessons;
+  const WritingDetailScreen({super.key, this.initialIndex = 0, this.lessons});
 
   @override
   State<WritingDetailScreen> createState() => _WritingDetailScreenState();
 }
 
 class _WritingDetailScreenState extends State<WritingDetailScreen> {
-  final List<KhmerWriting> _lessons = KhmerWritingData.lessons;
-  final FlutterTts _tts = FlutterTts();
+  late final List<KhmerWriting> _lessons;
   late int _current;
   int _doneCount = 0;
   int _totalStars = 0;
@@ -55,8 +55,8 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _lessons = widget.lessons ?? KhmerWritingData.lessons;
     _current = widget.initialIndex;
-    _initTts();
     _loadDoneCount();
   }
 
@@ -81,22 +81,16 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
     }
   }
 
-  Future<void> _initTts() async {
-    final languages = await _tts.getLanguages;
-    final langList = (languages as List).map((l) => l.toString().toLowerCase()).toList();
-    final hasKhmer = langList.any((l) => l.contains('km') || l.contains('khmer'));
-    await _tts.setLanguage(hasKhmer ? 'km' : 'vi-VN');
-    await _tts.setSpeechRate(0.35);
-    await _tts.setVolume(1.0);
-  }
-
   Future<void> _speak(String text, {bool isSlow = false}) async {
     if (isSlow) {
-      await _tts.setSpeechRate(0.15);
+      await TtsService.instance.setSpeed(TtsSpeed.slow);
     } else {
-      await _tts.setSpeechRate(0.35);
+      await TtsService.instance.setSpeed(TtsSpeed.normal);
     }
-    await _tts.speak(text);
+    await TtsService.instance.speakKhmerLetter(
+      character: text,
+      audioUrl: _lesson.audioUrl,
+    );
   }
 
   void _next() {
@@ -160,15 +154,29 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
     });
   }
 
+  String _normalizeKhmer(String input) {
+    return input
+        .replaceAll(' ', '')
+        .replaceAll('\u200b', '') // Loại bỏ Zero Width Space (Zboard tự sinh ra)
+        .replaceAll('\u200c', '') // Zero Width Non-Joiner
+        .replaceAll('\u200d', '') // Zero Width Joiner
+        .replaceAll('\u25cc', '') // Dotted circle placeholder
+        .replaceAll('◌', '')      // Một dạng dotted circle khác
+        .replaceAll('\n', '')
+        .replaceAll('\r', '')
+        .trim()
+        .toLowerCase();
+  }
+
   Future<void> _check() async {
     final targetChar = _lesson.character;
     final entered = _inputCtrl.text.trim();
     
     if (entered.isEmpty) return;
     
-    // Chuẩn hóa ký tự trước khi đối chiếu
-    final normTarget = targetChar.replaceAll(' ', '').replaceAll('◌', '').replaceAll('\u25cc', '').toLowerCase();
-    final normEntered = entered.replaceAll(' ', '').replaceAll('◌', '').replaceAll('\u25cc', '').toLowerCase();
+    // Chuẩn hóa ký tự trước khi đối chiếu để tránh lỗi do ZWSP ẩn
+    final normTarget = _normalizeKhmer(targetChar);
+    final normEntered = _normalizeKhmer(entered);
     
     final isPassed = normTarget == normEntered;
     int stars = isPassed ? 3 : 0;
@@ -183,7 +191,7 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
       await scoreService.completeWritingLesson(
         _current,
         stars,
-        lessonId: null,
+        lessonId: _lesson.id, // Truyền ID từ MongoDB
         strokes: const [],
         targetCharacter: targetChar,
         passed: isPassed,
@@ -213,11 +221,8 @@ class _WritingDetailScreenState extends State<WritingDetailScreen> {
     }
   }
 
-
-
   @override
   void dispose() {
-    _tts.stop();
     _inputCtrl.dispose();
     super.dispose();
   }

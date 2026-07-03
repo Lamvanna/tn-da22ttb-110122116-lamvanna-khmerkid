@@ -64,6 +64,21 @@ class UserController {
       next(error);
     }
   }
+
+  /** POST /api/users/use-item */
+  async useItem(req, res, next) {
+    try {
+      const { itemId } = req.body;
+      if (!itemId) {
+        return res.status(400).json({ success: false, message: 'Thiếu ID vật phẩm cần sử dụng!' });
+      }
+
+      const result = await userService.usePermanentItem(req.user._id, itemId);
+      sendSuccess(res, 'Sử dụng vật phẩm thành công!', result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new UserController();

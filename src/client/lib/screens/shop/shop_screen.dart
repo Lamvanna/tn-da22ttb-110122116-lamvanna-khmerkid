@@ -17,7 +17,7 @@ class ShopScreen extends StatefulWidget {
 class _ShopScreenState extends State<ShopScreen> {
   int _selectedTab = 0; // 0: Tất cả, 1: Nhân vật, 2: Vật phẩm, 3: Khác
   int _starBalance = 0;
-  Set<String> _purchasedItems = {};
+  List<String> _purchasedItems = [];
   bool _isLoading = true;
   late ScoreService _scoreService;
 
@@ -212,7 +212,8 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   Future<void> _buyItem(_ShopItem item) async {
-    if (!item.isConsumable && _purchasedItems.contains(item.id)) {
+    final isSingleOwned = item.category == 'nhan_vat' || item.id == 'but_than_ky';
+    if (!item.isConsumable && isSingleOwned && _purchasedItems.contains(item.id)) {
       _showSnack(context.translate('shop.already_owned', args: {'name': context.translateShopItemName(item.id, item.name)}));
       return;
     }
@@ -789,7 +790,8 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   Widget _buildShopItemCard(_ShopItem item, {double? width}) {
-    final purchased = !item.isConsumable && _purchasedItems.contains(item.id);
+    final isSingleOwned = item.category == 'nhan_vat' || item.id == 'but_than_ky';
+    final purchased = !item.isConsumable && isSingleOwned && _purchasedItems.contains(item.id);
     final canAfford = _starBalance >= item.price;
     final showCount = item.isConsumable && (item.id.startsWith('pu_'));
     final ownedCount = showCount ? _getOwnedCount(item.id) : 0;

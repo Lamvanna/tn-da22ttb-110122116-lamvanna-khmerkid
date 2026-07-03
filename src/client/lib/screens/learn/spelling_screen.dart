@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../constants/app_colors.dart';
 import '../../services/score_service.dart';
+import '../../services/lesson_service.dart';
 import '../../models/khmer_spelling.dart';
 import '../../widgets/khmer_listen_widget.dart';
 import '../../widgets/khmer_write_widget.dart';
@@ -29,6 +30,8 @@ class _SpellingScreenState extends State<SpellingScreen>
   late AnimationController _animCtrl;
   late Animation<double> _scaleAnim;
   final List<KhmerSpelling> _lessons = KhmerSpellingData.lessons;
+  Map<String, Map<String, dynamic>> _onlineLessonsMap = {};
+  bool _isLoading = true;
 
   // Track hoàn thành (0=nghe, 1=nói, 2=viết)
   final Map<int, Set<int>> _completedSteps = {};
@@ -40,7 +43,7 @@ class _SpellingScreenState extends State<SpellingScreen>
 
   @override
   void initState() {
-    _loadScore();
+    _loadScoreAndLessons();
     super.initState();
     _idx = widget.initialIndex;
     _animCtrl = AnimationController(
@@ -403,9 +406,40 @@ class _SpellingScreenState extends State<SpellingScreen>
   bool _isStepComplete(int step) =>
       _completedSteps[_idx]?.contains(step) ?? false;
 
-    Future<void> _loadScore() async {
-    _score = await ScoreService.getInstance();
-    if (mounted) setState(() {});
+  Future<void> _loadScoreAndLessons() async {
+    try {
+      _score = await ScoreService.getInstance();
+      
+      final lessonService = await LessonService.getInstance();
+      final lessonsData = await lessonService.fetchLessonsByType('spelling');
+      
+      final lessonIdMap = <String, String>{};
+      final onlineMap = <String, Map<String, dynamic>>{};
+      for (final l in lessonsData) {
+        final text = l['khmerText']?.toString() ?? '';
+        final id = l['_id']?.toString() ?? l['id']?.toString() ?? '';
+        if (text.isNotEmpty && id.isNotEmpty) {
+          lessonIdMap[text] = id;
+          onlineMap[text] = Map<String, dynamic>.from(l);
+        }
+      }
+
+
+
+      if (mounted) {
+        setState(() {
+          _onlineLessonsMap = onlineMap;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error loading spelling score and lessons: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -822,8 +856,10 @@ class _SpellingScreenState extends State<SpellingScreen>
     );
   }
 
-  // ═══════════════════ INLINE SHEET OVERLAY ═══════════════════
   Widget _buildInlineSheet() {
+    final online = _onlineLessonsMap[_lesson.combined];
+    final dbAudioUrl = online?['audioUrl']?.toString();
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(28.r),
       child: Container(
@@ -839,6 +875,7 @@ class _SpellingScreenState extends State<SpellingScreen>
                       character: _lesson.combined,
                       romanized: _lesson.romanized,
                       pronunciation: _lesson.romanized,
+                      audioUrl: dbAudioUrl,
                       accentColor: AppColors.tertiary,
                       accentColorDark: AppColors.tertiaryDark,
                       surfaceColor: AppColors.tertiarySurface,

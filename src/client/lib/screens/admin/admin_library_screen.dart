@@ -1,8 +1,10 @@
+import 'dart:io' show File;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:video_player/video_player.dart';
 import '../../constants/app_colors.dart';
 import '../../services/admin_service.dart';
 import '../../services/auth_service.dart';
@@ -810,6 +812,7 @@ class _LibraryFormPageState extends State<_LibraryFormPage> {
   late final TextEditingController _ratingCtrl;
   late final TextEditingController _lyricsCtrl;
   late final TextEditingController _durationCtrl;
+  late final TextEditingController _viewsCtrl;
   late String _selectedType;
 
   // Story pages state
@@ -842,6 +845,7 @@ class _LibraryFormPageState extends State<_LibraryFormPage> {
     _ratingCtrl = TextEditingController(text: '${item?['rating'] ?? 5.0}');
     _lyricsCtrl = TextEditingController(text: item?['lyrics'] ?? '');
     _durationCtrl = TextEditingController(text: item?['duration'] ?? '');
+    _viewsCtrl = TextEditingController(text: '${item?['views'] ?? 0}');
     final dbType = item?['type'] ?? widget.defaultType ?? 'Sách';
     if (dbType == 'Sách') {
       final t = (item?['title'] ?? '').toString().toLowerCase();
@@ -884,6 +888,7 @@ class _LibraryFormPageState extends State<_LibraryFormPage> {
     _imgCtrl.addListener(() => setState(() {}));
     _contentUrlCtrl.addListener(() => setState(() {}));
     _ratingCtrl.addListener(() => setState(() {}));
+    _viewsCtrl.addListener(() => setState(() {}));
   }
 
   @override
@@ -895,6 +900,7 @@ class _LibraryFormPageState extends State<_LibraryFormPage> {
     _ratingCtrl.dispose();
     _lyricsCtrl.dispose();
     _durationCtrl.dispose();
+    _viewsCtrl.dispose();
     for (final p in _storyPages) {
       (p['textKhmer'] as TextEditingController).dispose();
       (p['textVietnamese'] as TextEditingController).dispose();
@@ -1090,6 +1096,7 @@ class _LibraryFormPageState extends State<_LibraryFormPage> {
       'isActive': _isActive,
       'duration': _durationCtrl.text.trim(),
       'lyrics': _selectedType == 'Audio' ? _lyricsCtrl.text.trim() : '',
+      'views': int.tryParse(_viewsCtrl.text) ?? 0,
     };
 
     // Include story pages data for Truyện type
@@ -1518,6 +1525,24 @@ class _LibraryFormPageState extends State<_LibraryFormPage> {
                                     if (result == null || result.files.single.path == null) return;
                                     setState(() => _uploadingPdf = true);
                                     try {
+                                      // Auto-detect video duration if Video is selected
+                                      if (_selectedType == 'Video') {
+                                        try {
+                                          final localFile = File(result.files.single.path!);
+                                          final controller = VideoPlayerController.file(localFile);
+                                          await controller.initialize();
+                                          final seconds = controller.value.duration.inSeconds;
+                                          final m = (seconds / 60).floor();
+                                          final s = seconds % 60;
+                                          final mStr = m.toString().padLeft(2, '0');
+                                          final sStr = s.toString().padLeft(2, '0');
+                                          _durationCtrl.text = '$mStr:$sStr';
+                                          await controller.dispose();
+                                        } catch (e) {
+                                          debugPrint('Error getting video duration: $e');
+                                        }
+                                      }
+
                                       String? url;
                                       if (_selectedType == 'Sách') {
                                         url = await AdminService().uploadPdf(result.files.single.path!);
@@ -1885,22 +1910,23 @@ class _LibraryFormPageState extends State<_LibraryFormPage> {
                       ],
                     ),
 
-                  // ── SECTION: AUDIO DETAILS (only for Audio) ──
-                  if (_selectedType == 'Audio')
+                  // ── SECTION: AUDIO/VIDEO DETAILS (for Audio & Video) ──
+                  if (_selectedType == 'Audio' || _selectedType == 'Video')
                     _sectionCard(
-                      icon: Icons.music_note_rounded,
-                      title: 'Chi tiết bài hát',
+                      icon: Icons.movie_creation_outlined,
+                      title: _selectedType == 'Audio' ? 'Chi tiết bài hát' : 'Chi tiết video',
                       color: const Color(0xFF8B5CF6),
                       children: [
                         _prettyField(
                           label: 'Thời lượng (mm:ss)',
                           ctrl: _durationCtrl,
-                          hint: 'VD: 02:35',
+                          hint: 'VD: 08:45',
                           icon: Icons.timer_rounded,
                           color: const Color(0xFF8B5CF6),
                         ),
-                        SizedBox(height: 14.h),
-                        Column(
+                        if (_selectedType == 'Audio') ...[
+                          SizedBox(height: 14.h),
+                          Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
@@ -1945,7 +1971,8 @@ class _LibraryFormPageState extends State<_LibraryFormPage> {
                           ],
                         ),
                       ],
-                    ),
+                    ],
+                  ),
 
                   // ── SECTION: RATING & VISIBILITY ──
                   _sectionCard(
@@ -1966,33 +1993,44 @@ class _LibraryFormPageState extends State<_LibraryFormPage> {
                               keyboard: TextInputType.number,
                             ),
                           ),
-                          SizedBox(width: 20.w),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          SizedBox(width: 12.w),
+                          Expanded(
+                            child: _prettyField(
+                              label: 'Số lượt xem',
+                              ctrl: _viewsCtrl,
+                              hint: '0',
+                              icon: Icons.remove_red_eye_rounded,
+                              color: formColor,
+                              keyboard: TextInputType.number,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 14.h),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              Row(
-                                children: [
-                                  Icon(Icons.visibility_rounded, size: 16.sp, color: formColor.withValues(alpha: 0.8)),
-                                  SizedBox(width: 6.w),
-                                  Text(
-                                    'Trạng thái hiển thị',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 13.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 4.h),
-                              Switch(
-                                value: _isActive,
-                                activeThumbColor: formColor,
-                                onChanged: (val) => setState(() {
-                                  _isActive = val;
-                                }),
+                              Icon(Icons.visibility_rounded, size: 16.sp, color: formColor.withValues(alpha: 0.8)),
+                              SizedBox(width: 6.w),
+                              Text(
+                                'Trạng thái hiển thị',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary,
+                                ),
                               ),
                             ],
+                          ),
+                          SizedBox(height: 4.h),
+                          Switch(
+                            value: _isActive,
+                            activeThumbColor: formColor,
+                            onChanged: (val) => setState(() {
+                              _isActive = val;
+                            }),
                           ),
                         ],
                       ),

@@ -23,7 +23,7 @@ class _AdminGamesScreenState extends State<AdminGamesScreen> {
 
   static const _gameLabels = {
     'letter_catch': 'Bắt chữ Khmer',
-    'word_search': 'Giải cứu thú rừng',
+    'word_search': 'Giải cứu thú cưng',
     'sentence_builder': 'Đảo quốc Ngữ pháp',
     'math_garden': 'Khu vườn Toán học',
   };
@@ -302,6 +302,8 @@ class _AdminGamesScreenState extends State<AdminGamesScreen> {
     final isActive = q['isActive'] ?? true;
     final id = q['_id']?.toString() ?? q['id']?.toString() ?? '';
     final color = const Color(0xFF0084FF);
+    final ad = q['additionalData'] is Map ? Map<String, dynamic>.from(q['additionalData']) : {};
+    final emoji = ad['emoji']?.toString() ?? '';
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -341,9 +343,13 @@ class _AdminGamesScreenState extends State<AdminGamesScreen> {
                         ),
                         child: Center(
                           child: Text(
-                            answer.isNotEmpty ? (answer.length > 2 ? answer.substring(0, 2) : answer) : '?',
-                            style: GoogleFonts.battambang(
-                                fontSize: 16.sp, fontWeight: FontWeight.w800, color: color),
+                            _selectedGameKey == 'word_search' && emoji.isNotEmpty
+                                ? emoji
+                                : (answer.isNotEmpty ? (answer.length > 2 ? answer.substring(0, 2) : answer) : '?'),
+                            style: _selectedGameKey == 'word_search' && emoji.isNotEmpty
+                                ? TextStyle(fontSize: 24.sp)
+                                : GoogleFonts.battambang(
+                                    fontSize: 16.sp, fontWeight: FontWeight.w800, color: color),
                           ),
                         ),
                       ),
@@ -979,14 +985,18 @@ class _GameQuestionFormPageState extends State<_GameQuestionFormPage> {
                         ),
                         child: Center(
                           child: Text(
-                            _answerCtrl.text.isNotEmpty
-                                ? (_answerCtrl.text.length > 2 ? _answerCtrl.text.substring(0, 2) : _answerCtrl.text)
-                                : '?',
-                            style: GoogleFonts.battambang(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w800,
-                              color: color,
-                            ),
+                            widget.gameKey == 'word_search' && _emojiCtrl.text.isNotEmpty
+                                ? _emojiCtrl.text
+                                : (_answerCtrl.text.isNotEmpty
+                                    ? (_answerCtrl.text.length > 2 ? _answerCtrl.text.substring(0, 2) : _answerCtrl.text)
+                                    : '?'),
+                            style: widget.gameKey == 'word_search' && _emojiCtrl.text.isNotEmpty
+                                ? TextStyle(fontSize: 22.sp)
+                                : GoogleFonts.battambang(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: color,
+                                  ),
                           ),
                         ),
                       ),
@@ -1075,8 +1085,10 @@ class _GameQuestionFormPageState extends State<_GameQuestionFormPage> {
                     ),
                   ],
                 ),
-                SizedBox(height: 14.h),
-                _choicesChipInput(color),
+                if (widget.gameKey == 'letter_catch' || widget.gameKey == 'sentence_builder') ...[
+                  SizedBox(height: 14.h),
+                  _choicesChipInput(color),
+                ],
               ],
             ),
             SizedBox(height: 16.h),
@@ -1384,7 +1396,7 @@ class _GameQuestionFormPageState extends State<_GameQuestionFormPage> {
   Widget _wordSearchSection(Color color) {
     return _sectionCard(
       icon: Icons.grid_on_rounded,
-      title: 'Cấu hình — Giải cứu thú rừng',
+      title: 'Cấu hình — Giải cứu thú cưng',
       color: color,
       children: [
         Row(

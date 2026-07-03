@@ -2,18 +2,21 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:video_player/video_player.dart';
 import 'category_list_screen.dart';
 
 class VideoDetailScreen extends StatefulWidget {
   final String title;
   final String description;
   final String imagePath;
+  final String? videoUrl;
 
   const VideoDetailScreen({
     super.key,
     required this.title,
     required this.description,
     required this.imagePath,
+    this.videoUrl,
   });
 
   @override
@@ -66,6 +69,9 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
     ),
   ];
 
+  VideoPlayerController? _videoController;
+  bool _isInitialized = false;
+
   @override
   void initState() {
     super.initState();
@@ -74,12 +80,64 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
     _activeImagePath = widget.imagePath;
     _activeViews = '1.2K lượt xem';
     _activeDate = '2 ngày trước';
+    _initVideoPlayer(widget.videoUrl);
   }
 
   @override
   void dispose() {
     _playbackTimer?.cancel();
+    _videoController?.removeListener(_videoListener);
+    _videoController?.dispose();
     super.dispose();
+  }
+
+  void _initVideoPlayer(String? url) async {
+    if (url == null || url.trim().isEmpty) {
+      setState(() {
+        _videoController?.removeListener(_videoListener);
+        _videoController?.dispose();
+        _videoController = null;
+        _isInitialized = false;
+      });
+      return;
+    }
+    
+    if (_videoController != null) {
+      _videoController!.removeListener(_videoListener);
+      await _videoController!.dispose();
+    }
+    
+    setState(() {
+      _isInitialized = false;
+      _isPlaying = false;
+    });
+    
+    try {
+      _videoController = VideoPlayerController.networkUrl(Uri.parse(url));
+      await _videoController!.initialize();
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+          _totalDuration = _videoController!.value.duration.inSeconds.toDouble();
+        });
+        _videoController!.addListener(_videoListener);
+      }
+    } catch (e) {
+      debugPrint('Error initializing video player: $e');
+    }
+  }
+
+  void _videoListener() {
+    if (!mounted || _videoController == null) return;
+    final value = _videoController!.value;
+    setState(() {
+      _currentSliderValue = value.position.inSeconds.toDouble();
+      _isPlaying = value.isPlaying;
+      if (value.position >= value.duration) {
+        _isPlaying = false;
+        _videoController?.pause();
+      }
+    });
   }
 
   void _startPlaybackTimer() {
@@ -103,14 +161,26 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
   }
 
   void _togglePlay() {
-    setState(() {
-      _isPlaying = !_isPlaying;
-      if (_isPlaying) {
-        _startPlaybackTimer();
-      } else {
-        _stopPlaybackTimer();
-      }
-    });
+    if (_videoController != null && _isInitialized) {
+      setState(() {
+        if (_videoController!.value.isPlaying) {
+          _videoController!.pause();
+          _isPlaying = false;
+        } else {
+          _videoController!.play();
+          _isPlaying = true;
+        }
+      });
+    } else {
+      setState(() {
+        _isPlaying = !_isPlaying;
+        if (_isPlaying) {
+          _startPlaybackTimer();
+        } else {
+          _stopPlaybackTimer();
+        }
+      });
+    }
   }
 
   String _formatDuration(double seconds) {
@@ -261,20 +331,27 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
-                            // Thumbnail image
-                            _activeImagePath.startsWith('http')
-                                ? Image.network(
-                                    DocItem.optimizeUrl(_activeImagePath, width: 600),
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    fit: BoxFit.cover,
+                            // Thumbnail image / Video Player
+                            _videoController != null && _isInitialized
+                                ? Center(
+                                    child: AspectRatio(
+                                      aspectRatio: _videoController!.value.aspectRatio,
+                                      child: VideoPlayer(_videoController!),
+                                    ),
                                   )
-                                : Image.asset(
-                                    _activeImagePath,
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    fit: BoxFit.cover,
-                                  ),
+                                : (_activeImagePath.startsWith('http')
+                                    ? Image.network(
+                                        DocItem.optimizeUrl(_activeImagePath, width: 600),
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.asset(
+                                        _activeImagePath,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        fit: BoxFit.cover,
+                                      )),
 
                             // Translucent Play/Pause Overlay Button
                             GestureDetector(
@@ -338,6 +415,9 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
                                             setState(() {
                                               _currentSliderValue = val;
                                             });
+                                            if (_videoController != null && _isInitialized) {
+                                              _videoController!.seekTo(Duration(seconds: val.toInt()));
+                                            }
                                           },
                                         ),
                                       ),
@@ -669,6 +749,7 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
           _currentSliderValue = 0.0;
           _totalDuration = _parseDuration(item.duration);
         });
+        _initVideoPlayer(null);
       },
       child: Padding(
         padding: EdgeInsets.only(bottom: 12.h),

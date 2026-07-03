@@ -39,6 +39,14 @@ const testQuestionSchema = new mongoose.Schema(
       default: true,
       index: true,
     },
+    audioUrl: {
+      type: String,
+      default: '',
+    },
+    audioPublicId: {
+      type: String,
+      default: '',
+    },
   },
   {
     timestamps: true,

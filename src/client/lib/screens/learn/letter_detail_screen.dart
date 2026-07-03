@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../constants/app_colors.dart';
 import '../../models/khmer_letter.dart';
+import '../../models/khmer_consonant_series.dart';
 import '../../services/score_service.dart';
 import '../../services/lesson_service.dart';
 import '../../services/storage_service.dart';
@@ -19,8 +20,13 @@ import '../../repositories/progress_repository.dart';
 /// Tích hợp TTS (nghe), stroke validation (viết)
 class LetterDetailScreen extends StatefulWidget {
   final int initialIndex;
+  final bool isConsonantSeries;
 
-  const LetterDetailScreen({super.key, this.initialIndex = 0});
+  const LetterDetailScreen({
+    super.key,
+    this.initialIndex = 0,
+    this.isConsonantSeries = false,
+  });
 
   @override
   State<LetterDetailScreen> createState() => _LetterDetailScreenState();
@@ -31,7 +37,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
   late int _idx;
   late AnimationController _animCtrl;
   late Animation<double> _scaleAnim;
-  List<KhmerLetter> _letters = KhmerLetterData.consonants;
+  List<KhmerLetter> _letters = [];
   bool _isLoading = false;
   Map<String, Map<String, dynamic>> _onlineLessonsMap = {};
 
@@ -47,6 +53,18 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
   @override
   void initState() {
     _idx = widget.initialIndex;
+    _letters = widget.isConsonantSeries
+        ? KhmerConsonantSeriesData.consonants.map((item) {
+            return KhmerLetter(
+              character: item.character,
+              romanized: item.romanized,
+              pronunciation: item.pronunciation,
+              meaning: item.exampleMeaning.isNotEmpty ? item.exampleMeaning : item.romanized,
+              starRating: item.starRating,
+              isLearned: item.isLearned,
+            );
+          }).toList()
+        : KhmerLetterData.consonants;
     _animCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -70,23 +88,35 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
       }
 
       // 1. Tạo bản sao từ danh sách tĩnh chất lượng cao để bảo toàn nghĩa tiếng Việt, hình ảnh minh họa và biểu tượng cảm xúc (emoji)
-      final List<KhmerLetter> fullList = KhmerLetterData.consonants.map((item) {
-        return KhmerLetter(
-          id: item.id,
-          character: item.character,
-          romanized: item.romanized,
-          pronunciation: item.pronunciation,
-          meaning: item.meaning,
-          starRating: item.starRating,
-          isLearned: item.isLearned,
-          isTest: item.isTest,
-          testRange: item.testRange,
-        );
-      }).toList();
+      final List<KhmerLetter> fullList = widget.isConsonantSeries
+          ? KhmerConsonantSeriesData.consonants.map((item) {
+              return KhmerLetter(
+                character: item.character,
+                romanized: item.romanized,
+                pronunciation: item.pronunciation,
+                meaning: item.exampleMeaning.isNotEmpty ? item.exampleMeaning : item.romanized,
+                starRating: item.starRating,
+                isLearned: item.isLearned,
+              );
+            }).toList()
+          : KhmerLetterData.consonants.map((item) {
+              return KhmerLetter(
+                id: item.id,
+                character: item.character,
+                romanized: item.romanized,
+                pronunciation: item.pronunciation,
+                meaning: item.meaning,
+                starRating: item.starRating,
+                isLearned: item.isLearned,
+                isTest: item.isTest,
+                testRange: item.testRange,
+              );
+            }).toList();
 
       // 2. Nạp trực tiếp từ ProgressRepository cache RAM trực tuyến
       try {
-        final letterProgress = await ProgressRepository.instance.getProgressMap('consonant');
+        final progressType = widget.isConsonantSeries ? 'consonant_series' : 'consonant';
+        final letterProgress = await ProgressRepository.instance.getProgressMap(progressType);
         for (int i = 0; i < fullList.length; i++) {
           if (!fullList[i].isTest) {
             if (letterProgress.containsKey(i)) {
@@ -109,7 +139,8 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
 
       // 3. Tải danh sách dynamic lessons từ database để lấy ID của từng chữ trong nền
       final lessonService = await LessonService.getInstance();
-      final lessonsData = await lessonService.fetchLessonsByType('consonant');
+      final lessonType = widget.isConsonantSeries ? 'consonant_series' : 'consonant';
+      final lessonsData = await lessonService.fetchLessonsByType(lessonType);
       
       final lessonIdMap = <String, String>{};
       final onlineMap = <String, Map<String, dynamic>>{};
@@ -140,7 +171,18 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
       debugPrint('⚠️ Error loading dynamic lessons: $e');
       if (mounted) {
         setState(() {
-          _letters = KhmerLetterData.consonants;
+          _letters = widget.isConsonantSeries
+              ? KhmerConsonantSeriesData.consonants.map((item) {
+                  return KhmerLetter(
+                    character: item.character,
+                    romanized: item.romanized,
+                    pronunciation: item.pronunciation,
+                    meaning: item.exampleMeaning.isNotEmpty ? item.exampleMeaning : item.romanized,
+                    starRating: item.starRating,
+                    isLearned: item.isLearned,
+                  );
+                }).toList()
+              : KhmerLetterData.consonants;
           _isLoading = false;
         });
       }
@@ -153,7 +195,21 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
     super.dispose();
   }
 
-  KhmerLetter get _letter => _letters.isNotEmpty ? _letters[_idx] : KhmerLetterData.consonants[_idx];
+  KhmerLetter get _letter {
+    if (_letters.isNotEmpty) return _letters[_idx];
+    if (widget.isConsonantSeries) {
+      final item = KhmerConsonantSeriesData.consonants[_idx];
+      return KhmerLetter(
+        character: item.character,
+        romanized: item.romanized,
+        pronunciation: item.pronunciation,
+        meaning: item.exampleMeaning.isNotEmpty ? item.exampleMeaning : item.romanized,
+        starRating: item.starRating,
+        isLearned: item.isLearned,
+      );
+    }
+    return KhmerLetterData.consonants[_idx];
+  }
 
   bool _isLocked(int idx) {
     if (_letters.isEmpty) return idx != 0;
@@ -175,7 +231,8 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
     if (_completedSteps[_idx]!.contains(step)) return;
     setState(() => _completedSteps[_idx]!.add(step));
 
-    if (_completedSteps[_idx]!.length == 3) {
+    final requiredSteps = widget.isConsonantSeries ? 1 : 3;
+    if (_completedSteps[_idx]!.length >= requiredSteps) {
       setState(() => _showConfetti = true);
       _onLetterCompleted();
     }
@@ -185,7 +242,8 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
     _letters[_idx].isLearned = true;
     _letters[_idx].starRating = 3;
 
-    final lessonId = _letter.id ?? 'consonant_$_idx';
+    final lessonType = widget.isConsonantSeries ? 'consonant_series' : 'consonant';
+    final lessonId = _letter.id ?? '${lessonType}_$_idx';
     ProgressRepository.instance.isLessonCompleted(lessonId).then((done) {
       if (mounted) {
         setState(() {
@@ -197,11 +255,12 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
     ScoreService.getInstance().then((scoreService) {
       return scoreService.completeLetterLesson(
         _idx,
-        8,
+        3,
         xp: 55,
-        lessonId: _letter.id ?? 'consonant_$_idx',
+        lessonId: _letter.id ?? '${lessonType}_$_idx',
         letterText: _letter.character,
         transliteration: _letter.romanized,
+        lessonType: lessonType,
       );
     }).then((_) {
       if (mounted) setState(() {});
@@ -783,19 +842,20 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                // Subscript form top-right
-                Positioned(
-                  top: -56.h,
-                  right: -8.w,
-                  child: Text(
-                    '${_letter.character}្${_letter.character}',
-                    style: GoogleFonts.battambang(
-                      fontSize: 34.sp,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1E88E5).withValues(alpha: 0.7),
+                // Subscript form top-right (hide for consonant_series)
+                if (!widget.isConsonantSeries)
+                  Positioned(
+                    top: -56.h,
+                    right: -8.w,
+                    child: Text(
+                      '${_letter.character}\u17D2${_letter.character}',
+                      style: GoogleFonts.battambang(
+                        fontSize: 34.sp,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF1E88E5).withValues(alpha: 0.7),
+                      ),
                     ),
                   ),
-                ),
                 // Big character center
                 Center(
                   child: Column(
@@ -840,78 +900,81 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
             ),
           ),
           SizedBox(height: 14.h),
-          // ── Bottom: info row ──
-          Container(
-            margin: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEEF4FC),
-              borderRadius: BorderRadius.circular(18.r),
-              border: Border.all(color: const Color(0xFF1E88E5).withValues(alpha: 0.15)),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF1E88E5).withValues(alpha: 0.08),
-                  blurRadius: 10.r,
-                  offset: Offset(0, 3.h),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            _getKhmerWord(),
-                            style: GoogleFonts.battambang(
-                              fontSize: 26.sp,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1565C0),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 6.h),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.volume_up_rounded,
-                            size: 16.w,
-                            color: const Color(0xFF1E88E5),
-                          ),
-                          SizedBox(width: 6.w),
-                          Text(
-                            _getExampleMeaning(),
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+          // ── Bottom: info row ── (hidden for consonant_series)
+          if (!widget.isConsonantSeries)
+            Container(
+              margin: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEEF4FC),
+                borderRadius: BorderRadius.circular(18.r),
+                border: Border.all(color: const Color(0xFF1E88E5).withValues(alpha: 0.15)),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF1E88E5).withValues(alpha: 0.08),
+                    blurRadius: 10.r,
+                    offset: Offset(0, 3.h),
                   ),
-                ),
-                SizedBox(width: 12.w),
-                SizedBox(
-                  width: 80.w,
-                  height: 80.w,
-                  child: Transform.translate(
-                    offset: Offset(-10.w, 0),
-                    child: OverflowBox(
-                      maxWidth: 110.w,
-                      maxHeight: 110.w,
-                      child: _buildIllustration(),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              _getKhmerWord(),
+                              style: GoogleFonts.battambang(
+                                fontSize: 26.sp,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF1565C0),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 6.h),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.volume_up_rounded,
+                              size: 16.w,
+                              color: const Color(0xFF1E88E5),
+                            ),
+                            SizedBox(width: 6.w),
+                            Text(
+                              _getExampleMeaning(),
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                  SizedBox(width: 12.w),
+                  SizedBox(
+                    width: 80.w,
+                    height: 80.w,
+                    child: Transform.translate(
+                      offset: Offset(-10.w, 0),
+                      child: OverflowBox(
+                        maxWidth: 110.w,
+                        maxHeight: 110.w,
+                        child: _buildIllustration(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+          if (widget.isConsonantSeries)
+            SizedBox(height: 12.h),
         ],
       ),
     );
@@ -997,6 +1060,25 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
 
 
   Widget _buildActionRow() {
+    // For consonant_series: only Listen button, larger and centered
+    if (widget.isConsonantSeries) {
+      return Center(
+        child: SizedBox(
+          width: 200.w,
+          child: GestureDetector(
+            onTap: _showListenSheet,
+            child: _actionCard(
+              imagePath: 'image/Nghe.png',
+              label: context.translate('common.listen'),
+              sub: context.translate('learn.listen_pronunciation'),
+              bgColor: const Color(0xFFE8F5E9),
+              accentColor: const Color(0xFF43A047),
+              stepIdx: 0,
+            ),
+          ),
+        ),
+      );
+    }
     return Row(
       children: [
         Expanded(

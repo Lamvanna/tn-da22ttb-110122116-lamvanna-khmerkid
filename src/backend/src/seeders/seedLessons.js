@@ -118,6 +118,94 @@ const diacriticalSpellingList = [
   { khmer: 'កក់', romanized: 'kok', meaning: 'Gội đầu / Đặt chỗ', pronunciation: 'kok', category: 'Ghép vần có dấu' },
 ];
 
+const readingList = [
+  {
+    title: 'Bài 1: Phụ âm cơ bản',
+    description: 'Đọc phụ âm ក - ខ',
+    khmerText: '📖',
+    category: '#4CAF50',
+    examples: [
+      { khmer: 'ក   ខ' },
+      { khmer: 'ា  េ  ែ  េា  ំ  ុ  ាំ' },
+      { khmer: 'កា   ការ   កុំ   កកេរ' },
+      { khmer: 'ខ   ខំ   ខែ   ខោ   ខាំ' },
+      { khmer: 'ក  កា  ការ  កុំ  កកេរ' },
+      { khmer: 'ខ  ខំ  ខែ  ខោ  ខាំ  ៗ' },
+      { khmer: 'កុំ  ខាំ  ខោ  ខំ  កកេរ  ៗ' },
+      { khmer: 'កុំ  ខំ  ខាំ  ខោ  ៗ' }
+    ]
+  },
+  {
+    title: 'Bài 2: Từ đơn giản',
+    description: 'Đọc từ 1-2 âm tiết',
+    khmerText: '📗',
+    category: '#2196F3',
+    examples: [
+      { khmer: 'កា' },
+      { khmer: 'គោ' },
+      { khmer: 'ឆ្មា' },
+      { khmer: 'ឆ្កែ' },
+      { khmer: 'ត្រី' }
+    ]
+  },
+  {
+    title: 'Bài 3: Câu ngắn',
+    description: 'Đọc câu đơn giản',
+    khmerText: '📘',
+    category: '#E91E63',
+    examples: [
+      { khmer: 'ម៉ែ ស្រឡាញ់ ខ្ញុំ' },
+      { khmer: 'ខ្ញុំ ទៅ សាលា' },
+      { khmer: 'ប៉ា ធ្វើ ការ' }
+    ]
+  },
+  {
+    title: 'Bài 4: Số đếm',
+    description: 'Đọc số từ 1-10',
+    khmerText: '📙',
+    category: '#FFFF98',
+    examples: [
+      { khmer: '១ ២ ៣ ៤ ៥' },
+      { khmer: '៦ ៧ ៨ ៩ ១០' }
+    ]
+  },
+  {
+    title: 'Bài 5: Đoạn văn',
+    description: 'Đọc đoạn văn ngắn',
+    khmerText: '📕',
+    category: '#7E57C2',
+    examples: [
+      { khmer: 'ខ្ញុំ ឈ្មោះ សុខា។' },
+      { khmer: 'ខ្ញុំ រៀន នៅ សាលា។' },
+      { khmer: 'ខ្ញុំ ស្រឡាញ់ គ្រូ។' },
+      { khmer: 'ខ្ញុំ ស្រឡាញ់ ម៉ែ ប៉ា។' }
+    ]
+  }
+];
+
+const writingList = [
+  { character: 'ឆ្មា', romanized: 'chma', meaning: 'Con mèo dễ thương', category: 'topic_1' },
+  { character: 'ឆ្កែ', romanized: 'chkae', meaning: 'Con chó trung thành', category: 'topic_2' },
+  { character: 'គោ', romanized: 'ko', meaning: 'Con bò kéo xe', category: 'topic_3' },
+  { character: 'សេះ', romanized: 'seh', meaning: 'Con ngựa chạy nhanh', category: 'topic_4' },
+  { character: 'មាន់', romanized: 'moan', meaning: 'Con gà gáy sáng', category: 'topic_5' },
+  { character: 'ត្រី', romanized: 'trey', meaning: 'Con cá bơi dưới nước', category: 'topic_6' },
+  { character: 'ដំរី', romanized: 'damrei', meaning: 'Con voi to lớn', category: 'topic_7' },
+  { character: 'ប៉ា', romanized: 'pa', meaning: 'Bố yêu thương bé', category: 'topic_8' },
+  { character: 'ម៉ែ', romanized: 'mae', meaning: 'Mẹ hiền chăm sóc bé', category: 'topic_9' },
+  { character: 'តា', romanized: 'ta', meaning: 'Ông kể chuyện hay', category: 'topic_10' },
+  { character: 'យាយ', romanized: 'yeay', meaning: 'Bà ru bé ngủ', category: 'topic_11' },
+  { character: 'បង', romanized: 'bong', meaning: 'Anh chị nhường nhịn bé', category: 'topic_12' },
+  { character: 'ប្អូន', romanized: 'paoun', meaning: 'Em bé đáng yêu', category: 'topic_13' },
+  { character: 'ចេក', romanized: 'chek', meaning: 'Chuối chín vàng ngọt', category: 'topic_14' },
+  { character: 'ដូង', romanized: 'doung', meaning: 'Nước dừa thơm mát', category: 'topic_15' },
+  { character: 'ស្វាយ', romanized: 'svay', meaning: 'Xoài chín ngọt lịm', category: 'topic_16' },
+  { character: 'សាលា', romanized: 'sala', meaning: 'Trường học mến yêu', category: 'topic_17' },
+  { character: 'គ្រូ', romanized: 'kru', meaning: 'Cô giáo dạy học', category: 'topic_18' },
+  { character: 'សៀវភៅ', romanized: 'sievphov', meaning: 'Sách mở ra tri thức', category: 'topic_19' },
+  { character: 'ដៃ', romanized: 'dai', meaning: 'Bàn tay bé nhỏ', category: 'topic_20' }
+];
+
 const sentenceList = [
   { khmer: 'ខ្ញុំរៀនភាសាខ្មែរ', romanized: 'khnhom rien pheasa khmer', meaning: 'Tôi học tiếng Khmer', pronunciation: 'khnhom rien pheasa khmer', category: 'Giao tiếp cơ bản' },
   { khmer: 'សួស្តីឆ្នាំថ្មី', romanized: 'soustey chnam tmey', meaning: 'Chúc mừng năm mới', pronunciation: 'soustey chnam tmey', category: 'Giao tiếp cơ bản' },
@@ -395,6 +483,39 @@ const seedLessons = async () => {
       });
     }
 
+    // 9. Seed Reading (Tập đọc)
+    for (const item of readingList) {
+      lessonsToInsert.push({
+        title: item.title,
+        description: item.description,
+        type: LESSON_TYPES.READING,
+        khmerText: item.khmerText,
+        romanized: item.title,
+        meaning: item.description,
+        difficulty: DIFFICULTY.BEGINNER,
+        order: orderCounter++,
+        category: item.category,
+        examples: item.examples,
+        isActive: true,
+      });
+    }
+
+    // 10. Seed Writing (Luyện viết)
+    for (const item of writingList) {
+      lessonsToInsert.push({
+        title: `Luyện viết: ${item.character}`,
+        description: item.meaning,
+        type: LESSON_TYPES.WRITING,
+        khmerText: item.character,
+        romanized: item.romanized,
+        meaning: item.meaning,
+        difficulty: DIFFICULTY.BEGINNER,
+        order: orderCounter++,
+        category: item.category,
+        isActive: true,
+      });
+    }
+
     const insertedLessons = await Lesson.insertMany(lessonsToInsert);
     console.log(`🎉 Successfully seeded ${insertedLessons.length} new lessons!`);
     console.log(`- Consonants: ${consonantsList.length}`);
@@ -406,6 +527,8 @@ const seedLessons = async () => {
     console.log(`- Coeng (Chữ ghép): ${coengList.length}`);
     console.log(`- Sentences: ${sentenceList.length}`);
     console.log(`- Numbers: ${numberList.length}`);
+    console.log(`- Reading (Tập đọc): ${readingList.length}`);
+    console.log(`- Writing (Luyện viết): ${writingList.length}`);
 
     return insertedLessons;
   } catch (error) {

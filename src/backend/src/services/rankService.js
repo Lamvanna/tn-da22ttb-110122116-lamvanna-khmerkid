@@ -57,7 +57,7 @@ class RankService {
           lessonXp: {
             $sum: {
               $cond: [
-                { $in: ["$completedLessons.lessonType", ["consonant", "vowel", "number"]] },
+                { $in: ["$completedLessons.lessonType", ["consonant", "consonant_series", "vowel", "number"]] },
                 55,
                 {
                   $cond: [
@@ -148,7 +148,7 @@ class RankService {
           lessonXp: {
             $sum: {
               $cond: [
-                { $in: ["$completedLessons.lessonType", ["consonant", "vowel", "number"]] },
+                { $in: ["$completedLessons.lessonType", ["consonant", "consonant_series", "vowel", "number"]] },
                 55,
                 {
                   $cond: [

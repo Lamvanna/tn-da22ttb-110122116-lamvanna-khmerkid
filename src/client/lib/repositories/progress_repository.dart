@@ -79,6 +79,13 @@ class ProgressRepository {
                   }
                 }
               }
+            } else {
+              // Lesson không còn tồn tại trên server (404) do database bị seed lại
+              p['lessonOrder'] = -99;
+              p['lessonType'] = 'unknown';
+              if (kDebugMode) {
+                print('[ProgressRepo] Remote lesson $lessonId not found on server. Marked as unknown to prevent re-fetching.');
+              }
             }
           }
         }
@@ -319,6 +326,13 @@ class ProgressRepository {
                     print('[ProgressRepo] Healed lesson $lessonId ($khmerText) order to $resolvedOrder');
                   }
                 }
+              }
+            } else {
+              // Lesson không còn tồn tại trên server (404) do database bị seed lại
+              p['lessonOrder'] = -99;
+              p['lessonType'] = 'unknown';
+              if (kDebugMode) {
+                print('[ProgressRepo] Lesson $lessonId not found on server. Marked as unknown.');
               }
             }
           }

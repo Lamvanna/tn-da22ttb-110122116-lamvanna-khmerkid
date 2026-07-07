@@ -118,6 +118,21 @@ const diacriticalSpellingList = [
   { khmer: 'កក់', romanized: 'kok', meaning: 'Gội đầu / Đặt chỗ', pronunciation: 'kok', category: 'Ghép vần có dấu' },
 ];
 
+const diacriticalList = [
+  { character: '់', name: 'បន្តក់', romanized: 'Bantoc', description: 'Dấu ngắn - rút gọn nguyên âm', example: 'កក់', meaning: 'gội', category: 'Dấu Khmer' },
+  { character: 'ំ', name: 'និគ្គហិត', romanized: 'Nikahit', description: 'Dấu âm mũi - thêm âm m', example: 'កំ', meaning: 'nắm', category: 'Dấu Khmer' },
+  { character: 'ះ', name: 'រះមុក', romanized: 'Reahmuk', description: 'Dấu hơi thở - thêm âm h', example: 'សះ', meaning: 'lành', category: 'Dấu Khmer' },
+  { character: 'ៈ', name: 'យុគលពិន្ទុ', romanized: 'Yukolpintu', description: 'Dấu hai chấm - ngắn hóa nguyên âm', example: 'នៈ', meaning: 'ấy', category: 'Dấu Khmer' },
+  { character: '៉', name: 'មូសិកទន្ត', romanized: 'Musekadoan', description: 'Chuyển phụ âm hàng ô sang hàng o', example: 'ម៉ា', meaning: 'mẹ', category: 'Dấu Khmer' },
+  { character: '៊', name: 'ត្រីសព្ទ', romanized: 'Treysap', description: 'Chuyển phụ âm hàng o sang hàng ô', example: 'ស៊ី', meaning: 'ăn', category: 'Dấu Khmer' },
+  { character: '្', name: 'ជើង', romanized: 'Cheung', description: 'Phụ âm dưới - ghép phụ âm kép', example: 'ស្រា', meaning: 'rượu', category: 'Dấu Khmer' },
+  { character: 'ៗ', name: 'លេខទោ', romanized: 'Lekto', description: 'Dấu lặp từ - lặp lại từ trước', example: 'ធំៗ', meaning: 'lớn lớn', category: 'Dấu Khmer' },
+  { character: '។', name: 'ខ័ណ្ឌ', romanized: 'Khan', description: 'Dấu chấm câu - kết thúc câu', example: 'ខ្ញុំទៅ។', meaning: 'Tôi đi.', category: 'Dấu Khmer' },
+  { character: '៎', name: 'កាកបាត', romanized: 'Kakabat', description: 'Dấu nhấn mạnh cảm xúc', example: 'អត់៎', meaning: 'không đâu!', category: 'Dấu Khmer' },
+  { character: '៌', name: 'របាត', romanized: 'Robat', description: 'Dấu r viết trên - thay thế រ', example: 'ធម៌', meaning: 'dharma', category: 'Dấu Khmer' },
+  { character: '័', name: 'សំយោគសញ្ញា', romanized: 'Samyok Sannya', description: 'Dấu thay đổi nguyên âm mặc định', example: 'ខ័ន', meaning: 'chặn', category: 'Dấu Khmer' },
+];
+
 const readingList = [
   {
     title: 'Bài 1: Phụ âm cơ bản',
@@ -126,13 +141,9 @@ const readingList = [
     category: '#4CAF50',
     examples: [
       { khmer: 'ក   ខ' },
-      { khmer: 'ា  េ  ែ  េា  ំ  ុ  ាំ' },
-      { khmer: 'កា   ការ   កុំ   កកេរ' },
-      { khmer: 'ខ   ខំ   ខែ   ខោ   ខាំ' },
-      { khmer: 'ក  កា  ការ  កុំ  កកេរ' },
-      { khmer: 'ខ  ខំ  ខែ  ខោ  ខាំ  ៗ' },
-      { khmer: 'កុំ  ខាំ  ខោ  ខំ  កកេរ  ៗ' },
-      { khmer: 'កុំ  ខំ  ខាំ  ខោ  ៗ' }
+      { khmer: 'ា  េ  ែ' },
+      { khmer: 'កា   ការ   កកេរ' },
+      { khmer: 'ខ   ខែ' }
     ]
   },
   {
@@ -408,6 +419,31 @@ const seedLessons = async () => {
       });
     }
 
+    // 5.6. Seed Diacritical (Dấu Khmer)
+    for (const item of diacriticalList) {
+      lessonsToInsert.push({
+        title: `Dấu Khmer: ${item.name}`,
+        description: item.description,
+        type: LESSON_TYPES.DIACRITICAL,
+        khmerText: item.example,
+        romanized: item.romanized,
+        meaning: item.meaning,
+        pronunciation: item.romanized,
+        difficulty: DIFFICULTY.INTERMEDIATE,
+        order: orderCounter++,
+        category: item.category,
+        isActive: true,
+        questions: [
+          {
+            question: `Dấu "${item.character}" (${item.name}) có chức năng gì?`,
+            options: [item.description, 'Dấu chấm câu', 'Dấu lặp từ', 'Dấu ngắn'],
+            correctAnswer: 0,
+            explanation: `Dấu "${item.character}" (${item.name}) có chức năng: ${item.description}.`
+          }
+        ]
+      });
+    }
+
     // 6. Seed Coeng (Chữ ghép / chân chữ)
     for (const item of coengList) {
       lessonsToInsert.push({
@@ -523,6 +559,7 @@ const seedLessons = async () => {
     console.log(`- Vocabulary: ${vocabularyList.length}`);
     console.log(`- Spelling (Ghép vần): ${spellingList.length}`);
     console.log(`- Diacritical Spelling (Ghép vần có dấu): ${diacriticalSpellingList.length}`);
+    console.log(`- Diacritical (Dấu Khmer): ${diacriticalList.length}`);
     console.log(`- Closed Syllables (Vần đóng): ${closedSyllableList.length}`);
     console.log(`- Coeng (Chữ ghép): ${coengList.length}`);
     console.log(`- Sentences: ${sentenceList.length}`);

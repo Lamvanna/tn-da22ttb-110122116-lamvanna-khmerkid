@@ -602,58 +602,31 @@ class _ConsonantSeriesScreenState extends State<ConsonantSeriesScreen>
               },
             ),
           ] else if (item is KhmerVowel) ...[
-            // ── VOWEL: Navigate to detail screen ──
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [_currentColor, Color.lerp(_currentColor, Colors.black, 0.15)!],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-                borderRadius: BorderRadius.circular(16.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: _currentColor.withValues(alpha: 0.35),
-                    blurRadius: 12.r,
-                    offset: Offset(0, 4.h),
-                  ),
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: () {
-                  final mainIndex = KhmerVowelData.vowels.indexWhere((v) => v.character == item.character);
-                  if (mainIndex != -1) {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => VowelDetailScreen(initialIndex: mainIndex)),
-                    ).then((_) => _loadScore());
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 14.h),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.play_circle_filled_rounded, color: Colors.white, size: 20.sp),
-                    SizedBox(width: 8.w),
-                    Text(
-                      item.isLearned ? 'Luyện tập lại' : 'Bắt đầu học ngay',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            // ── VOWEL: Listen button with auto-complete ──
+            _VowelSeriesListenButton(
+              item: item,
+              color: _currentColor,
+              isSeriesO: _isSeriesO,
+              audioUrl: _onlineLessonsMap[item.character]?['audioUrl']?.toString(),
+              onCompleted: () {
+                // Đánh dấu hoàn thành bài học nguyên âm tương ứng
+                final mainIndex = KhmerVowelData.vowels.indexWhere((v) => v.character == item.character);
+                if (mainIndex != -1) {
+                  final online = _onlineLessonsMap[item.character];
+                  final lessonId = online?['_id']?.toString() ?? online?['id']?.toString() ?? 'vowel_$mainIndex';
+                  ScoreService.getInstance().then((scoreService) {
+                    return scoreService.completeVowelLesson(
+                      mainIndex, 3,
+                      xp: 55,
+                      lessonId: lessonId,
+                      vowelText: item.character,
+                      transliteration: item.romanized,
+                    );
+                  }).then((_) {
+                    _loadScore();
+                  });
+                }
+              },
             ),
           ],
           SizedBox(height: 8.h),
@@ -712,6 +685,126 @@ class _ConsonantSeriesListenButtonState extends State<_ConsonantSeriesListenButt
       romanized: widget.item.romanized,
       audioUrl: widget.audioUrl,
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: _hasListened
+              ? [const Color(0xFF66BB6A), const Color(0xFF43A047)]
+              : [widget.color, Color.lerp(widget.color, Colors.black, 0.15)!],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: widget.color.withValues(alpha: 0.35),
+            blurRadius: 12.r,
+            offset: Offset(0, 4.h),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: _playAudio,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(vertical: 14.h),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (_isPlaying)
+              SizedBox(
+                width: 20.w, height: 20.w,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            else if (_hasListened)
+              Icon(Icons.check_circle_rounded, color: Colors.white, size: 20.sp)
+            else
+              Icon(Icons.volume_up_rounded, color: Colors.white, size: 20.sp),
+            SizedBox(width: 8.w),
+            Text(
+              _isPlaying
+                  ? 'Đang phát...'
+                  : _hasListened
+                      ? 'Đã nghe ✓  Nghe lại'
+                      : '🔊 Nghe phát âm',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// ═══════════════════════════════════════════════════════════════
+/// Stateful button widget to handle listen + completion for vowel series
+/// ═══════════════════════════════════════════════════════════════
+class _VowelSeriesListenButton extends StatefulWidget {
+  final KhmerVowel item;
+  final Color color;
+  final bool isSeriesO;
+  final String? audioUrl;
+  final VoidCallback onCompleted;
+
+  const _VowelSeriesListenButton({
+    required this.item,
+    required this.color,
+    required this.isSeriesO,
+    required this.onCompleted,
+    this.audioUrl,
+  });
+
+  @override
+  State<_VowelSeriesListenButton> createState() => _VowelSeriesListenButtonState();
+}
+
+class _VowelSeriesListenButtonState extends State<_VowelSeriesListenButton> {
+  bool _isPlaying = false;
+  bool _hasListened = false;
+
+  Future<void> _playAudio() async {
+    if (_isPlaying) return;
+    setState(() => _isPlaying = true);
+
+    final tts = TtsService.instance;
+    tts.onComplete = () {
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+          _hasListened = true;
+        });
+        widget.onCompleted();
+      }
+    };
+    tts.onError = (_) {
+      if (mounted) setState(() => _isPlaying = false);
+    };
+
+    // Để phát âm thanh nguyên âm thuần túy (không dính phụ âm 'ក' hay 'គ' gây hiểu lầm):
+    // Hàng O dùng phụ âm câm 'អ' (chính là widget.item.character)
+    // Hàng Ô dùng phụ âm câm giọng Ô 'អ៊'
+    final syllableText = widget.isSeriesO
+        ? widget.item.character
+        : widget.item.character.replaceFirst('អ', 'អ៊');
+
+    // Đọc chữ ghép nguyên âm thuần túy tiếng Khmer
+    await tts.speak(syllableText);
   }
 
   @override

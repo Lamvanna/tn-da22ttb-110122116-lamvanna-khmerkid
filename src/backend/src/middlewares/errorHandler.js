@@ -64,11 +64,16 @@ const globalErrorHandler = (err, req, res, next) => {
 
   // Log error in development
   if (process.env.NODE_ENV === 'development') {
-    console.error('❌ Error:', {
-      message: err.message,
-      stack: err.stack,
-      statusCode: err.statusCode,
-    });
+    // Chỉ in stack trace đối với lỗi server (5xx) hoặc các lỗi không mong muốn (không phải operational)
+    if (err.statusCode >= 500 || !err.isOperational) {
+      console.error('❌ Error:', {
+        message: err.message,
+        stack: err.stack,
+        statusCode: err.statusCode,
+      });
+    } else {
+      console.warn(`⚠️ Warning [${err.statusCode}]: ${err.message} (${req.method} ${req.originalUrl})`);
+    }
   }
 
   // Handle specific error types

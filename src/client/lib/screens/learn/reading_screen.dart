@@ -224,27 +224,18 @@ class _ReadingScreenState extends State<ReadingScreen>
         _incorrectLessonWords = incorrectCount;
         _isProcessing = false;
 
-        // Mark all lines as read to complete progress
-        for (int i = 0; i < lesson.lines.length; i++) {
-          _clickedLines.add(i);
+        if (correctCount > 0) {
+          // Mark all lines as read to complete progress
+          for (int i = 0; i < lesson.lines.length; i++) {
+            _clickedLines.add(i);
+          }
         }
       });
-      _checkProgress();
 
-      if (mounted) {
-        if (incorrectCount == 0) {
-          FeedbackDialog.showSuccess(
-            context,
-            xpEarned: 15,
-            message: context.translate('learn.reading_success'),
-          );
-        } else if (correctCount > 0) {
-          FeedbackDialog.showSuccess(
-            context,
-            xpEarned: 5,
-            message: 'Tốt lắm! Con đã đọc đúng $correctCount/${correctCount + incorrectCount} chữ! Hãy cố gắng thêm nhé! 👍',
-          );
-        } else {
+      if (correctCount > 0) {
+        _checkProgress();
+      } else {
+        if (mounted) {
           FeedbackDialog.showFailure(
             context,
             message: context.translate('learn.incorrect_reading_warning'),
@@ -591,12 +582,13 @@ class _ReadingScreenState extends State<ReadingScreen>
   void _checkProgress() {
     if (_isCompleting) return;
     final lesson = _lessons[_currentLesson];
-    if (_clickedLines.length == lesson.lines.length) {
-      _onLessonCompleted();
+    // Chỉ hoàn thành bài khi người dùng đã ghi âm và có kết quả nhận diện (đọc đúng ít nhất 1 chữ)
+    if (_hasLessonResult && _correctLessonWords > 0 && _clickedLines.length == lesson.lines.length) {
+      _onLessonCompleted(correctCount: _correctLessonWords, incorrectCount: _incorrectLessonWords);
     }
   }
 
-  void _onLessonCompleted() {
+  void _onLessonCompleted({int correctCount = 0, int incorrectCount = 0}) {
     if (_isCompleting) return;
     final lesson = _lessons[_currentLesson];
     if (lesson.isLearned) return; // Already completed
@@ -617,11 +609,11 @@ class _ReadingScreenState extends State<ReadingScreen>
     // Trigger dialog after 1.2 seconds
     Future.delayed(const Duration(milliseconds: 1200), () {
       if (!mounted) return;
-      _showCompletionDialog();
+      _showCompletionDialog(correctCount: correctCount, incorrectCount: incorrectCount);
     });
   }
 
-  void _showCompletionDialog() {
+  void _showCompletionDialog({int correctCount = 0, int incorrectCount = 0}) {
     final hasNext = _currentLesson < _lessons.length - 1;
     showDialog(
       context: context,
@@ -657,7 +649,11 @@ class _ReadingScreenState extends State<ReadingScreen>
                 ),
                 SizedBox(height: 10.h),
                 Text(
-                  'Bạn đã hoàn thành bài tập đọc "${_lessons[_currentLesson].title.split(':').last.trim()}"',
+                  correctCount > 0
+                      ? (incorrectCount == 0
+                          ? 'Tuyệt vời! Con đã đọc đúng toàn bộ bài đọc! 🎉'
+                          : 'Tốt lắm! Con đã đọc đúng $correctCount/${correctCount + incorrectCount} chữ! 👍')
+                      : 'Bạn đã hoàn thành bài tập đọc "${_lessons[_currentLesson].title.split(':').last.trim()}"',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 16.sp,

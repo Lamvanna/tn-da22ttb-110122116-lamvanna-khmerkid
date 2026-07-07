@@ -398,7 +398,7 @@ class _DiacriticalScreenState extends State<DiacriticalScreen>
       _score = await ScoreService.getInstance();
       
       final lessonService = await LessonService.getInstance();
-      final lessonsData = await lessonService.fetchLessonsByType('spelling');
+      final lessonsData = await lessonService.fetchLessonsByType('diacritical');
       
       final onlineMap = <String, Map<String, dynamic>>{};
       for (final l in lessonsData) {

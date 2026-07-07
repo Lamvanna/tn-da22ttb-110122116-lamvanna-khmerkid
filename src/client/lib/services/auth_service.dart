@@ -38,7 +38,12 @@ class AuthService extends ChangeNotifier {
     scopes: ['email', 'profile'],
   );
 
+  // Máy chủ Render (Mở comment dòng này và đóng comment dòng dưới nếu muốn dùng mây)
+  // static String _activeBaseUrl = 'https://tn-da22ttb-110122116-lamvanna-khmerkid.onrender.com/api';
+  
+  // Máy chủ Local trên máy tính (Dùng để test nội bộ)
   static String _activeBaseUrl = 'http://192.168.1.4:5000/api';
+
   static Future<void>? _detectFuture;
 
   /// Cổng & đường dẫn API của backend (dùng để ráp URL khi quét mạng)
@@ -54,6 +59,7 @@ class AuthService extends ChangeNotifier {
 
   /// Danh sách các IP máy chủ dự phòng (Candidate IPs)
   static final List<String> _candidateUrls = [
+    'https://tn-da22ttb-110122116-lamvanna-khmerkid.onrender.com/api', // Máy chủ chính thức trên Render
     'http://192.168.1.4:5000/api', // IP Wi-Fi phòng/nhà hiện tại
     'http://172.20.10.4:5000/api', // IP Wi-Fi Hotspot 4G phát từ điện thoại
     'http://10.0.2.2:5000/api',    // IP máy ảo Android Emulator kết nối với localhost
@@ -123,6 +129,12 @@ class AuthService extends ChangeNotifier {
   }
 
   static Future<void> _detectActiveServerImpl() async {
+    // Nếu _activeBaseUrl được định nghĩa là HTTPS (máy chủ Render), bỏ qua tự dò tìm để tránh nhận IP cũ từ SharedPreferences
+    if (_activeBaseUrl.startsWith('https://')) {
+      debugPrint('🌐 [AuthService] Đang dùng máy chủ HTTPS (Render). Bỏ qua tự dò tìm: $_activeBaseUrl');
+      return;
+    }
+
     if (kIsWeb) {
       _activeBaseUrl = 'http://localhost:5000/api';
       return;

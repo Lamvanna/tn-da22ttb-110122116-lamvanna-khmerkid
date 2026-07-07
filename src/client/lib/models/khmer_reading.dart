@@ -46,13 +46,9 @@ class KhmerReadingData {
       color: const Color(0xFF4CAF50),
       lines: [
         const KhmerReadLine(khmer: 'ក   ខ', romanized: 'Ka   Kha', meaning: 'Phụ âm Ka và Kha'),
-        const KhmerReadLine(khmer: 'ា  េ  ែ  េា  ំ  ុ  ាំ', romanized: 'aa  ey  ae  ao  om  o  am', meaning: 'Các nguyên âm phụ'),
-        const KhmerReadLine(khmer: 'កា   ការ   កុំ   កកេរ', romanized: 'Kaa   Kar   Kom   Kaker', meaning: 'Từ ghép với phụ âm ក'),
-        const KhmerReadLine(khmer: 'ខ   ខំ   ខែ   ខោ   ខាំ', romanized: 'Kha   Khom   Khae   Khao   Kham', meaning: 'Từ ghép với phụ âm ខ'),
-        const KhmerReadLine(khmer: 'ក  កា  ការ  កុំ  កកេរ', romanized: 'Ka  Kaa  Kar  Kom  Kaker', meaning: 'Tập đọc phụ âm ក'),
-        const KhmerReadLine(khmer: 'ខ  ខំ  ខែ  ខោ  ខាំ  ៗ', romanized: 'Kha  Khom  Khae  Khao  Kham  Kham', meaning: 'Tập đọc phụ âm ខ'),
-        const KhmerReadLine(khmer: 'កុំ  ខាំ  ខោ  ខំ  កកេរ  ៗ', romanized: 'Kom  kham  khao  khom  kaker  kaker', meaning: 'Đừng cắn quần, hãy tập gặm nhấm!'),
-        const KhmerReadLine(khmer: 'កុំ  ខំ  ខាំ  ខោ  ៗ', romanized: 'Kom  khom  kham  khao  khao', meaning: 'Đừng cố cắn quần!'),
+        const KhmerReadLine(khmer: 'ា  េ  ែ', romanized: 'aa  ey  ae', meaning: 'Các nguyên âm phụ'),
+        const KhmerReadLine(khmer: 'កា   ការ   កកេរ', romanized: 'Kaa   Kar   Kaker', meaning: 'Từ ghép với phụ âm ក'),
+        const KhmerReadLine(khmer: 'ខ   ខែ', romanized: 'Kha   Khae', meaning: 'Từ ghép với phụ âm ខ'),
       ],
     ),
     KhmerReading(

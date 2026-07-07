@@ -25,6 +25,7 @@ class ProgressRepository {
 
   // RAM cache for completed lessons to bypass local database entirely
   List<dynamic> _completedLessonsCache = [];
+  List<String> _unlockedLessonsCache = []; // Cache cho unlocked lessons
   bool _hasLoaded = false;
 
   /// Stream controller để notify UI khi progress thay đổi
@@ -46,6 +47,11 @@ class ProgressRepository {
       if (data != null) {
         final rawList = data['completedLessons'] as List? ?? [];
         final progressList = rawList.map((l) => Map<String, dynamic>.from(l as Map)).toList();
+
+        // Load unlocked lessons từ server
+        final rawUnlocked = data['unlockedLessons'] as List? ?? [];
+        _unlockedLessonsCache = rawUnlocked.map((id) => id.toString()).toList();
+        if (kDebugMode) print('[ProgressRepo] Loaded ${_unlockedLessonsCache.length} unlocked lessons from server');
 
         // ─── ĐỒNG BỘ/GIẢI QUYẾT SAI LỆCH CHỈ SỐ (LESSON ORDER HEALING) ───
         final objectIdRegex = RegExp(r'^[0-9a-fA-F]{24}$');
@@ -186,13 +192,44 @@ class ProgressRepository {
 
   /// Lấy danh sách bài đã mở khóa
   Future<List<String>> getUnlockedLessonIds() async {
-    // Với mô hình trực tuyến, coi các bài đã hoàn thành là mở khóa.
-    return await getCompletedLessonIds();
+    if (!_hasLoaded) {
+      await loadRemoteProgress();
+    }
+    
+    // Merge: completed lessons + explicitly unlocked lessons từ server
+    final completedIds = await getCompletedLessonIds();
+    final allUnlocked = <String>{...completedIds, ..._unlockedLessonsCache};
+    
+    return allUnlocked.toList();
   }
 
   /// Kiểm tra bài đã unlock chưa
   Future<bool> isLessonUnlocked(String lessonId) async {
-    return true;
+    if (!_hasLoaded) {
+      await loadRemoteProgress();
+    }
+    
+    // Kiểm tra xem lessonId có trong unlockedLessons không
+    // Với logic trực tuyến: bài đầu tiên luôn unlock, các bài khác phải được backend unlock
+    final unlockedIds = await getUnlockedLessonIds();
+    
+    // Nếu có trong danh sách completed thì coi như unlocked
+    if (unlockedIds.contains(lessonId)) {
+      return true;
+    }
+    
+    // Kiểm tra xem có phải bài đầu tiên không (fallback cho các bài chưa có trong DB)
+    // Nếu lessonId có dạng "type_0" thì là bài đầu tiên
+    if (lessonId.contains('_')) {
+      final parts = lessonId.split('_');
+      final orderStr = parts.last;
+      final order = int.tryParse(orderStr);
+      if (order == 0) {
+        return true; // Bài đầu tiên luôn mở
+      }
+    }
+    
+    return false;
   }
 
   /// Kiểm tra bài đã hoàn thành chưa
@@ -419,6 +456,7 @@ class ProgressRepository {
   Future<void> clearUserData() async {
     await _localDS.clearUserProgress(_userId);
     _completedLessonsCache = [];
+    _unlockedLessonsCache = [];
     _hasLoaded = false;
     _progressController.add(null);
   }

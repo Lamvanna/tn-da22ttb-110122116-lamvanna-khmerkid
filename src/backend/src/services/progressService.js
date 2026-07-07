@@ -225,9 +225,28 @@ class ProgressService {
       });
     }
 
-    // Auto-unlock
+    // Auto-unlock current lesson
     if (!progress.unlockedLessons.includes(lessonId)) {
       progress.unlockedLessons.push(lessonId);
+    }
+
+    // ─── AUTO-UNLOCK NEXT LESSON (Sequential Logic) ───
+    // Nếu bài học có lessonOrder hợp lệ, tự động mở bài tiếp theo (order + 1) cùng loại
+    if (resolvedType && resolvedOrder !== null && resolvedOrder !== undefined) {
+      // Tìm bài học tiếp theo cùng type với order = current order + 1
+      const Lesson = require('../models/Lesson');
+      const nextLesson = await Lesson.findOne({
+        type: resolvedType,
+        order: resolvedOrder + 1,
+      });
+
+      if (nextLesson) {
+        const nextLessonId = nextLesson._id.toString();
+        if (!progress.unlockedLessons.includes(nextLessonId)) {
+          progress.unlockedLessons.push(nextLessonId);
+          console.log(`[ProgressService] ✅ Auto-unlocked next lesson: ${nextLessonId} (${resolvedType} #${resolvedOrder + 1})`);
+        }
+      }
     }
 
     progress.lastSyncAt = new Date();

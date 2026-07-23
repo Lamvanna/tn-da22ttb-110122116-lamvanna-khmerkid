@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ========================================
  * Progress Service
  * ========================================
@@ -31,7 +31,7 @@ class ProgressService {
   }
 
   /**
-   * GET /api/progress/get — Lấy toàn bộ progress
+   * GET /api/progress/get ΓÇö Lß║Ñy to├án bß╗Ö progress
    */
   async getProgress(userId) {
     const progress = await this.getOrCreateProgress(userId);
@@ -58,15 +58,15 @@ class ProgressService {
   }
 
   /**
-   * POST /api/progress/sync — Bidirectional sync (take-max strategy)
+   * POST /api/progress/sync ΓÇö Bidirectional sync (take-max strategy)
    */
   async syncProgress(userId, clientData) {
     const progress = await this.getOrCreateProgress(userId);
     const clientLessons = clientData.completedLessons || [];
 
-    // ═══════════════════════════════════════════════════
+    // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
     // MERGE: Take-max strategy
-    // ═══════════════════════════════════════════════════
+    // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
 
     // Build server map { lessonId -> lessonData }
     const serverMap = new Map();
@@ -74,7 +74,7 @@ class ProgressService {
       serverMap.set(lesson.lessonId, lesson);
     }
 
-    // Merge client lessons vào server
+    // Merge client lessons v├áo server
     for (const clientLesson of clientLessons) {
       const existing = serverMap.get(clientLesson.lessonId);
       
@@ -103,20 +103,20 @@ class ProgressService {
     // Convert map back to array
     const mergedLessons = Array.from(serverMap.values());
 
-    // ═══════════════════════════════════════════════════
+    // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
     // MERGE: Unlocked lessons (union)
-    // ═══════════════════════════════════════════════════
+    // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
     const clientUnlocked = clientData.unlockedLessons || [];
     const mergedUnlocked = [...new Set([
       ...progress.unlockedLessons,
       ...clientUnlocked,
-      // Auto-unlock: mọi bài completed đều unlock
+      // Auto-unlock: mß╗ìi b├ái completed ─æß╗üu unlock
       ...mergedLessons.filter(l => l.isCompleted).map(l => l.lessonId),
     ])];
 
-    // ═══════════════════════════════════════════════════
+    // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
     // SAVE merged progress
-    // ═══════════════════════════════════════════════════
+    // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
     const oldCompletedCount = progress.completedLessons.filter(l => l.isCompleted).length;
     progress.completedLessons = mergedLessons;
     progress.unlockedLessons = mergedUnlocked;
@@ -161,12 +161,12 @@ class ProgressService {
   }
 
   /**
-   * POST /api/progress/complete — Hoàn thành 1 bài học
+   * POST /api/progress/complete ΓÇö Ho├án th├ánh 1 b├ái hß╗ìc
    */
   async completeLesson(userId, lessonId, stars, lessonType, lessonOrder = null, xp = null) {
     const progress = await this.getOrCreateProgress(userId);
 
-    // Tự động phân giải lessonOrder và lessonType nếu thiếu
+    // Tß╗▒ ─æß╗Öng ph├ón giß║úi lessonOrder v├á lessonType nß║┐u thiß║┐u
     let resolvedOrder = lessonOrder;
     let resolvedType = lessonType;
 
@@ -194,7 +194,7 @@ class ProgressService {
       resolvedOrder = 0;
     }
 
-    // Tìm lesson trong progress
+    // T├¼m lesson trong progress
     const existingIdx = progress.completedLessons.findIndex(
       l => l.lessonId === lessonId
     );
@@ -202,7 +202,7 @@ class ProgressService {
     const isAlreadyCompleted = existingIdx >= 0 && progress.completedLessons[existingIdx].isCompleted;
 
     if (existingIdx >= 0) {
-      // Update — take max stars
+      // Update ΓÇö take max stars
       const existing = progress.completedLessons[existingIdx];
       existing.stars = Math.max(existing.stars || 0, stars);
       existing.isCompleted = true;
@@ -225,28 +225,9 @@ class ProgressService {
       });
     }
 
-    // Auto-unlock current lesson
+    // Auto-unlock
     if (!progress.unlockedLessons.includes(lessonId)) {
       progress.unlockedLessons.push(lessonId);
-    }
-
-    // ─── AUTO-UNLOCK NEXT LESSON (Sequential Logic) ───
-    // Nếu bài học có lessonOrder hợp lệ, tự động mở bài tiếp theo (order + 1) cùng loại
-    if (resolvedType && resolvedOrder !== null && resolvedOrder !== undefined) {
-      // Tìm bài học tiếp theo cùng type với order = current order + 1
-      const Lesson = require('../models/Lesson');
-      const nextLesson = await Lesson.findOne({
-        type: resolvedType,
-        order: resolvedOrder + 1,
-      });
-
-      if (nextLesson) {
-        const nextLessonId = nextLesson._id.toString();
-        if (!progress.unlockedLessons.includes(nextLessonId)) {
-          progress.unlockedLessons.push(nextLessonId);
-          console.log(`[ProgressService] ✅ Auto-unlocked next lesson: ${nextLessonId} (${resolvedType} #${resolvedOrder + 1})`);
-        }
-      }
     }
 
     progress.lastSyncAt = new Date();
@@ -255,7 +236,7 @@ class ProgressService {
     // Update User gamification
     const user = await User.findById(userId);
     if (user) {
-      // Cộng stars + XP phải KHỚP với Flutter client step-by-step hoặc lấy động từ client gửi lên
+      // Cß╗Öng stars + XP phß║úi KHß╗ÜP vß╗¢i Flutter client step-by-step hoß║╖c lß║Ñy ─æß╗Öng tß╗½ client gß╗¡i l├¬n
       let starsGain = 0;
       let xpGain = 0;
 
@@ -287,7 +268,7 @@ class ProgressService {
       const completedCount = progress.completedLessons.filter(l => l.isCompleted).length;
       user.learningProgress.totalLessonsCompleted = completedCount;
 
-      // Tăng counter theo loại bài học (cho badge yêu cầu)
+      // T─âng counter theo loß║íi b├ái hß╗ìc (cho badge y├¬u cß║ºu)
       if (!isAlreadyCompleted) {
         if (resolvedType === 'reading') {
           user.learningProgress.readingLessonsCompleted = (user.learningProgress.readingLessonsCompleted || 0) + 1;
@@ -336,7 +317,7 @@ class ProgressService {
   }
 
   /**
-   * POST /api/progress/unlock — Mở khóa bài học
+   * POST /api/progress/unlock ΓÇö Mß╗ƒ kh├│a b├ái hß╗ìc
    */
   async unlockLesson(userId, lessonId) {
     const progress = await this.getOrCreateProgress(userId);

@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../data/local/progress_local_datasource.dart';
@@ -14,7 +14,7 @@ import '../models/khmer_number.dart';
 import 'lesson_repository.dart';
 import '../services/connectivity_service.dart';
 
-/// Repository cho Tiến Độ Học — Offline-First, Database-Driven
+/// Repository cho Tiß║┐n ─Éß╗Ö Hß╗ìc ΓÇö Offline-First, Database-Driven
 /// MongoDB = source of truth, Isar = local cache + offline support
 class ProgressRepository {
   static ProgressRepository? _instance;
@@ -25,10 +25,9 @@ class ProgressRepository {
 
   // RAM cache for completed lessons to bypass local database entirely
   List<dynamic> _completedLessonsCache = [];
-  List<String> _unlockedLessonsCache = []; // Cache cho unlocked lessons
   bool _hasLoaded = false;
 
-  /// Stream controller để notify UI khi progress thay đổi
+  /// Stream controller ─æß╗â notify UI khi progress thay ─æß╗òi
   final _progressController = StreamController<void>.broadcast();
   Stream<void> get onProgressChanged => _progressController.stream;
 
@@ -39,7 +38,7 @@ class ProgressRepository {
     return _instance!;
   }
 
-  /// Nạp tiến độ học trực tuyến từ server
+  /// Nß║íp tiß║┐n ─æß╗Ö hß╗ìc trß╗▒c tuyß║┐n tß╗½ server
   Future<void> loadRemoteProgress() async {
     if (!AuthService().isAuthenticated) return;
     try {
@@ -48,16 +47,11 @@ class ProgressRepository {
         final rawList = data['completedLessons'] as List? ?? [];
         final progressList = rawList.map((l) => Map<String, dynamic>.from(l as Map)).toList();
 
-        // Load unlocked lessons từ server
-        final rawUnlocked = data['unlockedLessons'] as List? ?? [];
-        _unlockedLessonsCache = rawUnlocked.map((id) => id.toString()).toList();
-        if (kDebugMode) print('[ProgressRepo] Loaded ${_unlockedLessonsCache.length} unlocked lessons from server');
-
-        // ─── ĐỒNG BỘ/GIẢI QUYẾT SAI LỆCH CHỈ SỐ (LESSON ORDER HEALING) ───
+        // ΓöÇΓöÇΓöÇ ─Éß╗ÆNG Bß╗ÿ/GIß║óI QUYß║╛T SAI Lß╗åCH CHß╗ê Sß╗É (LESSON ORDER HEALING) ΓöÇΓöÇΓöÇ
         final objectIdRegex = RegExp(r'^[0-9a-fA-F]{24}$');
         for (final p in progressList) {
           final lessonId = p['lessonId']?.toString();
-          // Sửa các bài học bị sai hoặc mặc định là 0 hoặc thiếu type
+          // Sß╗¡a c├íc b├ái hß╗ìc bß╗ï sai hoß║╖c mß║╖c ─æß╗ïnh l├á 0 hoß║╖c thiß║┐u type
           if (lessonId != null && 
               objectIdRegex.hasMatch(lessonId) && 
               (p['lessonOrder'] == 0 || p['lessonOrder'] == null || p['lessonType'] == null || p['lessonType'] == '')) {
@@ -86,7 +80,7 @@ class ProgressRepository {
                 }
               }
             } else {
-              // Lesson không còn tồn tại trên server (404) do database bị seed lại
+              // Lesson kh├┤ng c├▓n tß╗ôn tß║íi tr├¬n server (404) do database bß╗ï seed lß║íi
               p['lessonOrder'] = -99;
               p['lessonType'] = 'unknown';
               if (kDebugMode) {
@@ -105,20 +99,20 @@ class ProgressRepository {
     }
   }
 
-  /// User ID hiện tại
+  /// User ID hiß╗çn tß║íi
   String get _userId {
     final profile = AuthService().userProfile;
     return profile?['_id']?.toString() ?? profile?['id']?.toString() ?? 'local';
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // COMPLETE LESSON — Core flow
-  // ═══════════════════════════════════════════════════════════════
+  // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+  // COMPLETE LESSON ΓÇö Core flow
+  // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
 
-  /// Hoàn thành bài học — Offline-First
-  /// 1. Save local ngay → UI update tức thì
+  /// Ho├án th├ánh b├ái hß╗ìc ΓÇö Offline-First
+  /// 1. Save local ngay ΓåÆ UI update tß╗⌐c th├¼
   /// 2. Auto-unlock next lesson trong local
-  /// 3. Queue sync → background push MongoDB
+  /// 3. Queue sync ΓåÆ background push MongoDB
   Future<void> completeLesson({
     required String lessonId,
     required String lessonType,
@@ -128,13 +122,13 @@ class ProgressRepository {
   }) async {
     if (kDebugMode) print('[ProgressRepo] Online-driven: completing lesson $lessonId on server (stars: $stars, xp: $xp)');
 
-    // ─── OPTIMISTIC UI UPDATE ───
+    // ΓöÇΓöÇΓöÇ OPTIMISTIC UI UPDATE ΓöÇΓöÇΓöÇ
     final isDone = await isLessonCompleted(lessonId);
     if (!isDone) {
-      // 1. Cộng Sao & XP trực quan tức thì trên Header
+      // 1. Cß╗Öng Sao & XP trß╗▒c quan tß╗⌐c th├¼ tr├¬n Header
       AuthService().addStarsAndXpOptimistically(stars, xp ?? 0);
 
-      // 2. Thêm tạm thời vào RAM cache để bản đồ học cập nhật hoàn thành ngay lập tức
+      // 2. Th├¬m tß║ím thß╗¥i v├áo RAM cache ─æß╗â bß║ún ─æß╗ô hß╗ìc cß║¡p nhß║¡t ho├án th├ánh ngay lß║¡p tß╗⌐c
       _completedLessonsCache.add({
         'lessonId': lessonId,
         'lessonType': lessonType,
@@ -146,7 +140,7 @@ class ProgressRepository {
       _progressController.add(null);
     }
 
-    // Kích hoạt gọi trực tiếp lên server
+    // K├¡ch hoß║ít gß╗ìi trß╗▒c tiß║┐p l├¬n server
     if (ConnectivityService.instance.isOnline) {
       final result = await _remoteDS.completeLesson(
         lessonId: lessonId,
@@ -157,9 +151,9 @@ class ProgressRepository {
       );
 
       if (result != null) {
-        // Tải lại thông tin cá nhân mới nhất để cập nhật UI Stars & XP (đảm bảo đồng bộ chính xác từ server)
+        // Tß║úi lß║íi th├┤ng tin c├í nh├ón mß╗¢i nhß║Ñt ─æß╗â cß║¡p nhß║¡t UI Stars & XP (─æß║úm bß║úo ─æß╗ông bß╗Ö ch├¡nh x├íc tß╗½ server)
         await AuthService().fetchProfile();
-        // Cập nhật lại cache tiến độ học tập trên RAM
+        // Cß║¡p nhß║¡t lß║íi cache tiß║┐n ─æß╗Ö hß╗ìc tß║¡p tr├¬n RAM
         await loadRemoteProgress();
       }
     } else {
@@ -169,15 +163,15 @@ class ProgressRepository {
     // Notify UI (final check)
     _progressController.add(null);
 
-    // Cập nhật lịch thông báo nhắc học offline
+    // Cß║¡p nhß║¡t lß╗ïch th├┤ng b├ío nhß║»c hß╗ìc offline
     LocalNotificationService().scheduleDailyReminders(studiedToday: true);
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // READ PROGRESS — Online-driven memory cache
-  // ═══════════════════════════════════════════════════════════════
+  // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+  // READ PROGRESS ΓÇö Online-driven memory cache
+  // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
 
-  /// Lấy danh sách bài đã hoàn thành
+  /// Lß║Ñy danh s├ích b├ái ─æ├ú ho├án th├ánh
   Future<List<String>> getCompletedLessonIds() async {
     if (!_hasLoaded) {
       await loadRemoteProgress();
@@ -190,55 +184,24 @@ class ProgressRepository {
     }).where((id) => id.isNotEmpty).toList();
   }
 
-  /// Lấy danh sách bài đã mở khóa
+  /// Lß║Ñy danh s├ích b├ái ─æ├ú mß╗ƒ kh├│a
   Future<List<String>> getUnlockedLessonIds() async {
-    if (!_hasLoaded) {
-      await loadRemoteProgress();
-    }
-    
-    // Merge: completed lessons + explicitly unlocked lessons từ server
-    final completedIds = await getCompletedLessonIds();
-    final allUnlocked = <String>{...completedIds, ..._unlockedLessonsCache};
-    
-    return allUnlocked.toList();
+    // Vß╗¢i m├┤ h├¼nh trß╗▒c tuyß║┐n, coi c├íc b├ái ─æ├ú ho├án th├ánh l├á mß╗ƒ kh├│a.
+    return await getCompletedLessonIds();
   }
 
-  /// Kiểm tra bài đã unlock chưa
+  /// Kiß╗âm tra b├ái ─æ├ú unlock ch╞░a
   Future<bool> isLessonUnlocked(String lessonId) async {
-    if (!_hasLoaded) {
-      await loadRemoteProgress();
-    }
-    
-    // Kiểm tra xem lessonId có trong unlockedLessons không
-    // Với logic trực tuyến: bài đầu tiên luôn unlock, các bài khác phải được backend unlock
-    final unlockedIds = await getUnlockedLessonIds();
-    
-    // Nếu có trong danh sách completed thì coi như unlocked
-    if (unlockedIds.contains(lessonId)) {
-      return true;
-    }
-    
-    // Kiểm tra xem có phải bài đầu tiên không (fallback cho các bài chưa có trong DB)
-    // Nếu lessonId có dạng "type_0" thì là bài đầu tiên
-    if (lessonId.contains('_')) {
-      final parts = lessonId.split('_');
-      final orderStr = parts.last;
-      final order = int.tryParse(orderStr);
-      if (order == 0) {
-        return true; // Bài đầu tiên luôn mở
-      }
-    }
-    
-    return false;
+    return true;
   }
 
-  /// Kiểm tra bài đã hoàn thành chưa
+  /// Kiß╗âm tra b├ái ─æ├ú ho├án th├ánh ch╞░a
   Future<bool> isLessonCompleted(String lessonId) async {
     final completedIds = await getCompletedLessonIds();
     return completedIds.contains(lessonId);
   }
 
-  /// Lấy progress map {index: stars} cho tương thích ngược
+  /// Lß║Ñy progress map {index: stars} cho t╞░╞íng th├¡ch ng╞░ß╗úc
   Future<Map<int, int>> getProgressMap(String lessonType) async {
     if (!_hasLoaded) {
       await loadRemoteProgress();
@@ -255,7 +218,7 @@ class ProgressRepository {
     return map;
   }
 
-  /// Lấy tất cả progress theo loại bài
+  /// Lß║Ñy tß║Ñt cß║ú progress theo loß║íi b├ái
   Future<List<Map<String, dynamic>>> getProgressByType(String lessonType) async {
     if (!_hasLoaded) {
       await loadRemoteProgress();
@@ -276,13 +239,13 @@ class ProgressRepository {
     return result;
   }
 
-  /// Đếm số bài hoàn thành theo loại
+  /// ─Éß║┐m sß╗æ b├ái ho├án th├ánh theo loß║íi
   Future<int> getCompletedCount(String lessonType) async {
     final completed = AuthService().userProfile?['learningProgress']?['completedLessons'] as List? ?? [];
     return completed.where((item) => item is Map && item['type'] == lessonType).length;
   }
 
-  /// Đếm số bài hoàn thành theo loại (đồng bộ từ RAM cache)
+  /// ─Éß║┐m sß╗æ b├ái ho├án th├ánh theo loß║íi (─æß╗ông bß╗Ö tß╗½ RAM cache)
   int getCompletedCountSync(String lessonType) {
     return _completedLessonsCache.where((item) {
       if (item is Map) {
@@ -292,25 +255,25 @@ class ProgressRepository {
     }).length;
   }
 
-  /// Kiểm tra xem bé đã hoàn thành bài học nào hôm nay chưa
+  /// Kiß╗âm tra xem b├⌐ ─æ├ú ho├án th├ánh b├ái hß╗ìc n├áo h├┤m nay ch╞░a
   Future<bool> hasStudiedToday() async {
     return false;
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // SYNC — Full bidirectional sync với MongoDB
-  // ═══════════════════════════════════════════════════════════════
+  // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+  // SYNC ΓÇö Full bidirectional sync vß╗¢i MongoDB
+  // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
 
-  /// Full sync — gọi khi login hoặc khi có mạng lại
+  /// Full sync ΓÇö gß╗ìi khi login hoß║╖c khi c├│ mß║íng lß║íi
   Future<void> fullSync() async {
     final userId = _userId;
     if (userId == 'local') {
-      if (kDebugMode) print('[ProgressRepo] ⚠️ Not logged in, skipping sync');
+      if (kDebugMode) print('[ProgressRepo] ΓÜá∩╕Å Not logged in, skipping sync');
       return;
     }
 
     try {
-      // 1. Lấy local progress chưa sync
+      // 1. Lß║Ñy local progress ch╞░a sync
       final unsyncedProgress = await _localDS.getUnsyncedProgress(userId);
       final localData = unsyncedProgress.map((p) => {
         'lessonId': p.lessonId,
@@ -322,26 +285,26 @@ class ProgressRepository {
         'completedAt': p.completedAt?.toIso8601String(),
       }).toList();
 
-      // 2. Gửi lên server + nhận merged result
+      // 2. Gß╗¡i l├¬n server + nhß║¡n merged result
       final serverResult = await _remoteDS.syncProgress({
         'completedLessons': localData,
         'lastSyncAt': DateTime.now().toIso8601String(),
       });
 
       if (serverResult != null) {
-        // 3. Update local với merged data từ server
+        // 3. Update local vß╗¢i merged data tß╗½ server
         final serverLessons = serverResult['completedLessons'] as List<dynamic>? ?? [];
         final progressList = serverLessons.map((l) => Map<String, dynamic>.from(l as Map)).toList();
 
-        // ─── ĐỒNG BỘ/GIẢI QUYẾT SAI LỆCH CHỈ SỐ (LESSON ORDER HEALING) ───
-        // Regex kiểm tra MongoDB ObjectId hợp lệ (24 hex chars)
+        // ΓöÇΓöÇΓöÇ ─Éß╗ÆNG Bß╗ÿ/GIß║óI QUYß║╛T SAI Lß╗åCH CHß╗ê Sß╗É (LESSON ORDER HEALING) ΓöÇΓöÇΓöÇ
+        // Regex kiß╗âm tra MongoDB ObjectId hß╗úp lß╗ç (24 hex chars)
         final objectIdRegex = RegExp(r'^[0-9a-fA-F]{24}$');
         for (final p in progressList) {
           final lessonId = p['lessonId']?.toString();
-          // Chỉ cần sửa đổi các bài học có lessonOrder bị sai hoặc mặc định là 0
-          // Và lessonId phải là MongoDB ObjectId hợp lệ (bỏ qua các ID tổng hợp như 'writing_0')
+          // Chß╗ë cß║ºn sß╗¡a ─æß╗òi c├íc b├ái hß╗ìc c├│ lessonOrder bß╗ï sai hoß║╖c mß║╖c ─æß╗ïnh l├á 0
+          // V├á lessonId phß║úi l├á MongoDB ObjectId hß╗úp lß╗ç (bß╗Å qua c├íc ID tß╗òng hß╗úp nh╞░ 'writing_0')
           if (lessonId != null && objectIdRegex.hasMatch(lessonId) && (p['lessonOrder'] == 0 || p['lessonOrder'] == null)) {
-            // Lấy thông tin bài học từ local cache/server
+            // Lß║Ñy th├┤ng tin b├ái hß╗ìc tß╗½ local cache/server
             final lesson = await LessonRepository.instance.getLessonById(lessonId);
             if (lesson != null) {
               final type = lesson['type']?.toString();
@@ -365,7 +328,7 @@ class ProgressRepository {
                 }
               }
             } else {
-              // Lesson không còn tồn tại trên server (404) do database bị seed lại
+              // Lesson kh├┤ng c├▓n tß╗ôn tß║íi tr├¬n server (404) do database bß╗ï seed lß║íi
               p['lessonOrder'] = -99;
               p['lessonType'] = 'unknown';
               if (kDebugMode) {
@@ -377,7 +340,7 @@ class ProgressRepository {
 
         await _localDS.bulkSaveProgress(userId, progressList);
 
-        // 4. Đánh dấu đã sync
+        // 4. ─É├ính dß║Ñu ─æ├ú sync
         final ids = unsyncedProgress.map((p) => p.id).toList();
         await _localDS.markSynced(ids);
 
@@ -389,14 +352,14 @@ class ProgressRepository {
         // 6. Notify UI
         _progressController.add(null);
 
-        if (kDebugMode) print('[ProgressRepo] ✅ Full sync completed! (${progressList.length} lessons merged)');
+        if (kDebugMode) print('[ProgressRepo] Γ£à Full sync completed! (${progressList.length} lessons merged)');
       }
     } catch (e) {
-      if (kDebugMode) print('[ProgressRepo] ⚠️ Full sync failed: $e');
+      if (kDebugMode) print('[ProgressRepo] ΓÜá∩╕Å Full sync failed: $e');
     }
   }
 
-  /// Save profile cache vào Isar
+  /// Save profile cache v├áo Isar
   Future<void> saveProfileCache(Map<String, dynamic> profile) async {
     await _localDS.saveProfileCache(_userId, profile);
   }
@@ -406,7 +369,7 @@ class ProgressRepository {
     await _localDS.bulkSaveProgress(userId, progressList);
   }
 
-  /// Đồng bộ tiến độ từ local Isar sang SharedPreferences
+  /// ─Éß╗ông bß╗Ö tiß║┐n ─æß╗Ö tß╗½ local Isar sang SharedPreferences
   Future<void> syncLocalProgressToSharedPreferences() async {
     try {
       final storage = await StorageService.getInstance();
@@ -446,17 +409,16 @@ class ProgressRepository {
       for (final p in writings) {
         await storage.saveWritingProgress(p['lessonOrder'] as int, p['stars'] as int);
       }
-      if (kDebugMode) print('[ProgressRepo] ✅ Synced local progress from Isar to StorageService SharedPreferences');
+      if (kDebugMode) print('[ProgressRepo] Γ£à Synced local progress from Isar to StorageService SharedPreferences');
     } catch (e) {
-      if (kDebugMode) print('[ProgressRepo] ⚠️ Error syncing Isar to SharedPreferences: $e');
+      if (kDebugMode) print('[ProgressRepo] ΓÜá∩╕Å Error syncing Isar to SharedPreferences: $e');
     }
   }
 
-  /// Xóa dữ liệu khi logout
+  /// X├│a dß╗» liß╗çu khi logout
   Future<void> clearUserData() async {
     await _localDS.clearUserProgress(_userId);
     _completedLessonsCache = [];
-    _unlockedLessonsCache = [];
     _hasLoaded = false;
     _progressController.add(null);
   }

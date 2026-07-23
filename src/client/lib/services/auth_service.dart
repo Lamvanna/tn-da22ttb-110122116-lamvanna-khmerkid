@@ -38,11 +38,11 @@ class AuthService extends ChangeNotifier {
     scopes: ['email', 'profile'],
   );
 
-  // Máy chủ Render (Mở comment dòng này và đóng comment dòng dưới nếu muốn dùng mây)
-  // static String _activeBaseUrl = 'https://tn-da22ttb-110122116-lamvanna-khmerkid.onrender.com/api';
+  // Máy chủ Render (Production - Đang sử dụng)
+  static String _activeBaseUrl = 'https://tn-da22ttb-110122116-lamvanna-khmerkid.onrender.com/api';
   
   // Máy chủ Local trên máy tính (Dùng để test nội bộ)
-  static String _activeBaseUrl = 'http://192.168.1.4:5000/api';
+  // static String _activeBaseUrl = 'http://192.168.1.4:5000/api';
 
   static Future<void>? _detectFuture;
 

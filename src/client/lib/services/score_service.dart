@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -6,7 +6,7 @@ import 'auth_service.dart';
 import 'storage_service.dart';
 import '../repositories/progress_repository.dart';
 
-/// Service quản lý điểm số, sao, XP và gamification
+/// Service quß║ún l├╜ ─æiß╗âm sß╗æ, sao, XP v├á gamification
 class ScoreService {
   static ScoreService? _instance;
   late StorageService _storage;
@@ -21,12 +21,12 @@ class ScoreService {
     return _instance!;
   }
 
-  // ─── GETTERS ─────────────────────────────────────────────────
-  /// Stars từ backend MongoDB (source of truth)
+  // ΓöÇΓöÇΓöÇ GETTERS ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  /// Stars tß╗½ backend MongoDB (source of truth)
   int get totalStars {
     return (AuthService().userProfile?['stars'] as num?)?.toInt() ?? _storage.getStars();
   }
-  /// XP từ backend MongoDB (source of truth)
+  /// XP tß╗½ backend MongoDB (source of truth)
   int get totalXp {
     return (AuthService().userProfile?['xp'] as num?)?.toInt() ?? _storage.getXp();
   }
@@ -63,7 +63,7 @@ class ScoreService {
   }
   
   List<String> get purchasedItems {
-    // Ưu tiên dữ liệu từ server (source of truth)
+    // ╞»u ti├¬n dß╗» liß╗çu tß╗½ server (source of truth)
     final serverItems = AuthService().userProfile?['purchasedItems'];
     if (serverItems != null && serverItems is List) {
       return serverItems.map((e) => e.toString()).toList();
@@ -77,7 +77,7 @@ class ScoreService {
   int get livesPowerupsLeft => _storage.getLivesPowerupsCount();
   int get doubleScorePowerupsLeft => _storage.getDoubleScorePowerupsCount();
 
-  // Biến theo dõi giá trị inventory đã đồng bộ gần nhất (tránh gọi server trùng lặp)
+  // Biß║┐n theo d├╡i gi├í trß╗ï inventory ─æ├ú ─æß╗ông bß╗Ö gß║ºn nhß║Ñt (tr├ính gß╗ìi server tr├╣ng lß║╖p)
   int _lastSyncedHints = -1;
   int _lastSyncedTime = -1;
   int _lastSyncedLives = -1;
@@ -142,38 +142,38 @@ class ScoreService {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        if (kDebugMode) print('[ScoreService] Đồng bộ inventory lên CSDL thành công!');
-        // Cập nhật giá trị đã đồng bộ gần nhất
+        if (kDebugMode) print('[ScoreService] ─Éß╗ông bß╗Ö inventory l├¬n CSDL th├ánh c├┤ng!');
+        // Cß║¡p nhß║¡t gi├í trß╗ï ─æ├ú ─æß╗ông bß╗Ö gß║ºn nhß║Ñt
         _lastSyncedHints = hintsLeft;
         _lastSyncedTime = timePowerupsLeft;
         _lastSyncedLives = livesPowerupsLeft;
         _lastSyncedDouble = doubleScorePowerupsLeft;
-        // Cập nhật profile mới để đảm bảo tính nhất quán
+        // Cß║¡p nhß║¡t profile mß╗¢i ─æß╗â ─æß║úm bß║úo t├¡nh nhß║Ñt qu├ín
         await authService.fetchProfile();
       } else {
         if (kDebugMode) {
-          print('[ScoreService] Đồng bộ inventory thất bại. Mã lỗi: ${response.statusCode}, Nội dung: ${response.body}');
+          print('[ScoreService] ─Éß╗ông bß╗Ö inventory thß║Ñt bß║íi. M├ú lß╗ùi: ${response.statusCode}, Nß╗Öi dung: ${response.body}');
         }
       }
     } catch (e) {
-      if (kDebugMode) print('[ScoreService] Lỗi đồng bộ inventory: $e');
+      if (kDebugMode) print('[ScoreService] Lß╗ùi ─æß╗ông bß╗Ö inventory: $e');
     }
   }
 
-  /// Kiểm tra và đồng bộ vật phẩm đã hồi phục lên CSDL
-  /// Gọi khi mở màn hình game, khi app quay lại foreground, v.v.
-  /// Chỉ gửi request khi phát hiện số lượng thay đổi (hồi phục xảy ra)
+  /// Kiß╗âm tra v├á ─æß╗ông bß╗Ö vß║¡t phß║⌐m ─æ├ú hß╗ôi phß╗Ñc l├¬n CSDL
+  /// Gß╗ìi khi mß╗ƒ m├án h├¼nh game, khi app quay lß║íi foreground, v.v.
+  /// Chß╗ë gß╗¡i request khi ph├ít hiß╗çn sß╗æ l╞░ß╗úng thay ─æß╗òi (hß╗ôi phß╗Ñc xß║úy ra)
   Future<void> syncRegeneratedInventory() async {
     final authService = AuthService();
     if (!authService.isAuthenticated) return;
 
-    // Đọc số lượng hiện tại — _getRegeneratedCount() tự động tính hồi phục
+    // ─Éß╗ìc sß╗æ l╞░ß╗úng hiß╗çn tß║íi ΓÇö _getRegeneratedCount() tß╗▒ ─æß╗Öng t├¡nh hß╗ôi phß╗Ñc
     final hints = hintsLeft;
     final time = timePowerupsLeft;
     final lives = livesPowerupsLeft;
     final dbl = doubleScorePowerupsLeft;
 
-    // So sánh với giá trị đã đồng bộ gần nhất — nếu giống nhau thì bỏ qua
+    // So s├ính vß╗¢i gi├í trß╗ï ─æ├ú ─æß╗ông bß╗Ö gß║ºn nhß║Ñt ΓÇö nß║┐u giß╗æng nhau th├¼ bß╗Å qua
     if (_lastSyncedHints == hints &&
         _lastSyncedTime == time &&
         _lastSyncedLives == lives &&
@@ -182,9 +182,9 @@ class ScoreService {
     }
 
     if (kDebugMode) {
-      print('[ScoreService] Phát hiện thay đổi inventory do hồi phục! '
-          'Gợi ý: $_lastSyncedHints→$hints, Thời gian: $_lastSyncedTime→$time, '
-          'Mạng: $_lastSyncedLives→$lives, Nhân đôi: $_lastSyncedDouble→$dbl');
+      print('[ScoreService] Ph├ít hiß╗çn thay ─æß╗òi inventory do hß╗ôi phß╗Ñc! '
+          'Gß╗úi ├╜: $_lastSyncedHintsΓåÆ$hints, Thß╗¥i gian: $_lastSyncedTimeΓåÆ$time, '
+          'Mß║íng: $_lastSyncedLivesΓåÆ$lives, Nh├ón ─æ├┤i: $_lastSyncedDoubleΓåÆ$dbl');
     }
 
     await _syncInventoryToBackend();
@@ -195,7 +195,7 @@ class ScoreService {
   int get livesCooldownRemaining => _storage.getLivesPowerupsCooldownRemaining();
   int get doubleScoreCooldownRemaining => _storage.getDoubleScoreCooldownRemaining();
 
-  // ─── EARN & SPEND REWARDS ────────────────────────────────────
+  // ΓöÇΓöÇΓöÇ EARN & SPEND REWARDS ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   
   Future<bool> spendStars(int amount) async {
     return await _storage.spendStars(amount);
@@ -225,8 +225,8 @@ class ScoreService {
     await _storage.removePurchasedItem(itemKey);
   }
 
-  /// Đồng bộ dữ liệu local (storage) từ server profile
-  /// Gọi sau khi AuthService.fetchProfile() đã tải profile mới
+  /// ─Éß╗ông bß╗Ö dß╗» liß╗çu local (storage) tß╗½ server profile
+  /// Gß╗ìi sau khi AuthService.fetchProfile() ─æ├ú tß║úi profile mß╗¢i
   Future<void> syncFromProfile() async {
     final profile = AuthService().userProfile;
     if (profile == null) return;
@@ -253,8 +253,8 @@ class ScoreService {
     }
   }
 
-  /// Nhận thưởng cho từng hoạt động nhỏ trong bài học
-  /// step: 0 = Nghe, 1 = Nói, 2 = Viết
+  /// Nhß║¡n th╞░ß╗ƒng cho tß╗½ng hoß║ít ─æß╗Öng nhß╗Å trong b├ái hß╗ìc
+  /// step: 0 = Nghe, 1 = N├│i, 2 = Viß║┐t
   Future<Map<String, int>> completeStepReward(int step) async {
     int stars = 0;
     int xp = 0;
@@ -269,33 +269,33 @@ class ScoreService {
       xp = 25;
     }
     
-    // Stars/XP do backend cộng khi hoàn thành bài (qua completeLesson API)
+    // Stars/XP do backend cß╗Öng khi ho├án th├ánh b├ái (qua completeLesson API)
     await _storage.updateStreak();
     return {'stars': stars, 'xp': xp};
   }
 
-  /// Nhận thưởng bonus hoàn thành cả 3 hoạt động
+  /// Nhß║¡n th╞░ß╗ƒng bonus ho├án th├ánh cß║ú 3 hoß║ít ─æß╗Öng
   Future<Map<String, int>> completeBonusReward() async {
     int stars = 1;
     int xp = 10;
-    // Stars/XP do backend cộng
+    // Stars/XP do backend cß╗Öng
     await _storage.updateStreak();
     return {'stars': stars, 'xp': xp};
   }
 
-  /// Nhận toàn bộ thưởng (mặc định 5 sao và 60 XP) khi hoàn thành bài học 3 bước
+  /// Nhß║¡n to├án bß╗Ö th╞░ß╗ƒng (mß║╖c ─æß╗ïnh 5 sao v├á 60 XP) khi ho├án th├ánh b├ái hß╗ìc 3 b╞░ß╗¢c
   Future<Map<String, int>> completeWholeLessonReward({int stars = 5, int xp = 60}) async {
-    // Stars/XP do backend cộng
+    // Stars/XP do backend cß╗Öng
     await _storage.updateStreak();
     return {'stars': stars, 'xp': xp};
   }
 
-  /// Hoàn thành bài học chữ cái
+  /// Ho├án th├ánh b├ái hß╗ìc chß╗» c├íi
   Future<Map<String, int>> completeLetterLesson(
     int letterIndex,
     int stars, {
     required String? lessonId,
-    String letterText = 'ក',
+    String letterText = 'ß₧Ç',
     String transliteration = 'ko',
     int? xp,
     String lessonType = 'consonant',
@@ -306,12 +306,12 @@ class ScoreService {
     // Check achievements
     await _checkAchievements();
 
-    // Cập nhật streak
+    // Cß║¡p nhß║¡t streak
     await _storage.updateStreak();
 
     final resolvedId = lessonId ?? '${lessonType}_$letterIndex';
 
-    // Lưu trực tiếp lên MongoDB thông qua ProgressRepository
+    // L╞░u trß╗▒c tiß║┐p l├¬n MongoDB th├┤ng qua ProgressRepository
     try {
       await ProgressRepository.instance.completeLesson(
         lessonId: resolvedId,
@@ -321,18 +321,18 @@ class ScoreService {
         xp: earnedXp,
       );
     } catch (e) {
-      debugPrint('⚠️ Error completing letter lesson: $e');
+      debugPrint('ΓÜá∩╕Å Error completing letter lesson: $e');
     }
 
     return {'stars': earnedStars, 'xp': earnedXp};
   }
 
-  /// Hoàn thành bài học nguyên âm
+  /// Ho├án th├ánh b├ái hß╗ìc nguy├¬n ├óm
   Future<Map<String, int>> completeVowelLesson(
     int vowelIndex,
     int stars, {
     required String? lessonId,
-    String vowelText = 'ា',
+    String vowelText = 'ß₧╢',
     String transliteration = 'aa',
     int? xp,
   }) async {
@@ -354,13 +354,13 @@ class ScoreService {
         xp: earnedXp,
       );
     } catch (e) {
-      debugPrint('⚠️ Error completing vowel lesson: $e');
+      debugPrint('ΓÜá∩╕Å Error completing vowel lesson: $e');
     }
 
     return {'stars': earnedStars, 'xp': earnedXp};
   }
 
-  /// Hoàn thành bài học tập đọc
+  /// Ho├án th├ánh b├ái hß╗ìc tß║¡p ─æß╗ìc
   Future<Map<String, int>> completeReadingLesson(
     int readingIndex,
     int stars, {
@@ -385,18 +385,18 @@ class ScoreService {
         xp: earnedXp,
       );
     } catch (e) {
-      debugPrint('⚠️ Error completing reading lesson: $e');
+      debugPrint('ΓÜá∩╕Å Error completing reading lesson: $e');
     }
 
     return {'stars': earnedStars, 'xp': earnedXp};
   }
 
-  /// Hoàn thành bài học số Khmer
+  /// Ho├án th├ánh b├ái hß╗ìc sß╗æ Khmer
   Future<Map<String, int>> completeNumberLesson(
     int numberIndex,
     int stars, {
     required String? lessonId,
-    String numberText = '០',
+    String numberText = 'ßƒá',
     String transliteration = '0',
     int? xp,
   }) async {
@@ -418,19 +418,19 @@ class ScoreService {
         xp: earnedXp,
       );
     } catch (e) {
-      debugPrint('⚠️ Error completing number lesson: $e');
+      debugPrint('ΓÜá∩╕Å Error completing number lesson: $e');
     }
 
     return {'stars': earnedStars, 'xp': earnedXp};
   }
 
-  /// Hoàn thành bài học dấu Khmer
+  /// Ho├án th├ánh b├ái hß╗ìc dß║Ñu Khmer
   Future<Map<String, int>> completeDiacriticalLesson(
     int diacriticalIndex,
     int stars, {
     required String? lessonId,
-    String diacriticalText = '់',
-    String transliteration = '់',
+    String diacriticalText = 'ßƒï',
+    String transliteration = 'ßƒï',
     int? xp,
   }) async {
     int earnedStars = stars;
@@ -451,18 +451,18 @@ class ScoreService {
         xp: earnedXp,
       );
     } catch (e) {
-      debugPrint('⚠️ Error completing diacritical lesson: $e');
+      debugPrint('ΓÜá∩╕Å Error completing diacritical lesson: $e');
     }
 
     return {'stars': earnedStars, 'xp': earnedXp};
   }
 
-  /// Hoàn thành bài học ghép vần Khmer
+  /// Ho├án th├ánh b├ái hß╗ìc gh├⌐p vß║ºn Khmer
   Future<Map<String, int>> completeSpellingLesson(
     int spellingIndex,
     int stars, {
     required String? lessonId,
-    String spellingText = 'កា',
+    String spellingText = 'ß₧Çß₧╢',
     String transliteration = 'kaa',
     int? xp,
   }) async {
@@ -484,13 +484,13 @@ class ScoreService {
         xp: earnedXp,
       );
     } catch (e) {
-      debugPrint('⚠️ Error completing spelling lesson: $e');
+      debugPrint('ΓÜá∩╕Å Error completing spelling lesson: $e');
     }
 
     return {'stars': earnedStars, 'xp': earnedXp};
   }
 
-  /// Hoàn thành bài luyện viết Khmer (hỗ trợ đánh giá AI 2 lớp)
+  /// Ho├án th├ánh b├ái luyß╗çn viß║┐t Khmer (hß╗ù trß╗ú ─æ├ính gi├í AI 2 lß╗¢p)
   Future<Map<String, dynamic>> completeWritingLesson(
     int writingIndex,
     int stars, {
@@ -505,9 +505,9 @@ class ScoreService {
 
     await _checkAchievements();
 
-    // Đồng bộ lên backend trước để chạy đánh giá AI 2 lớp
+    // ─Éß╗ông bß╗Ö l├¬n backend tr╞░ß╗¢c ─æß╗â chß║íy ─æ├ính gi├í AI 2 lß╗¢p
     final backendResult = await _syncWritingResult(
-      stars * 33, // Điểm số dự phòng từ số sao
+      stars * 33, // ─Éiß╗âm sß╗æ dß╗▒ ph├▓ng tß╗½ sß╗æ sao
       lessonId: lessonId,
       strokes: strokes,
       targetCharacter: targetCharacter,
@@ -532,7 +532,7 @@ class ScoreService {
           xp: earnedXp,
         );
       } catch (e) {
-        debugPrint('⚠️ Error completing writing lesson: $e');
+        debugPrint('ΓÜá∩╕Å Error completing writing lesson: $e');
       }
     } else {
       earnedStars = 0;
@@ -546,7 +546,7 @@ class ScoreService {
     };
   }
 
-  /// Hoàn thành bài kiểm tra
+  /// Ho├án th├ánh b├ái kiß╗âm tra
   Future<Map<String, int>> completeTest({
     required int correct,
     required int total,
@@ -570,12 +570,12 @@ class ScoreService {
     return {'stars': earnedStars, 'xp': earnedXp, 'testStars': stars};
   }
 
-  /// Tính toán số sao nhận được dựa trên số câu đúng và tổng số câu
+  /// T├¡nh to├ín sß╗æ sao nhß║¡n ─æ╞░ß╗úc dß╗▒a tr├¬n sß╗æ c├óu ─æ├║ng v├á tß╗òng sß╗æ c├óu
   int calculateGameStars(int correct, int total) {
     if (total <= 0) return 0;
     
-    // Thang điểm tối đa 20 câu đúng ứng với 20⭐.
-    // Chuyển đổi tỉ lệ đúng sang thang điểm 20:
+    // Thang ─æiß╗âm tß╗æi ─æa 20 c├óu ─æ├║ng ß╗⌐ng vß╗¢i 20Γ¡É.
+    // Chuyß╗ân ─æß╗òi tß╗ë lß╗ç ─æ├║ng sang thang ─æiß╗âm 20:
     final scaledCorrect = ((correct / total) * 20).round().clamp(0, 20);
 
     if (scaledCorrect <= 2) return 0;
@@ -594,24 +594,24 @@ class ScoreService {
     return 20; // 19 - 20
   }
 
-  /// Tính toán XP nhận được dựa trên số sao đạt được
+  /// T├¡nh to├ín XP nhß║¡n ─æ╞░ß╗úc dß╗▒a tr├¬n sß╗æ sao ─æß║ít ─æ╞░ß╗úc
   int calculateGameXp(int stars) {
-    // XP = (Sao đạt được ÷ 20) × 70 (làm tròn số nguyên, tối đa 70 XP)
+    // XP = (Sao ─æß║ít ─æ╞░ß╗úc ├╖ 20) ├ù 70 (l├ám tr├▓n sß╗æ nguy├¬n, tß╗æi ─æa 70 XP)
     return ((stars / 20.0) * 70.0).round().clamp(0, 70);
   }
 
-  /// Tính xếp loại dựa trên tỉ lệ đúng
+  /// T├¡nh xß║┐p loß║íi dß╗▒a tr├¬n tß╗ë lß╗ç ─æ├║ng
   String calculateGameRating(int correct, int total) {
-    if (total <= 0) return '🌱 Cần cố gắng';
+    if (total <= 0) return '≡ƒî▒ Cß║ºn cß╗æ gß║»ng';
     final accuracy = ((correct / total) * 100).round();
-    if (accuracy >= 100) return '👑 Hoàn hảo';
-    if (accuracy >= 85) return '🌟 Xuất sắc';
-    if (accuracy >= 70) return '🎉 Tốt';
-    if (accuracy >= 50) return '👍 Khá';
-    return '🌱 Cần cố gắng';
+    if (accuracy >= 100) return '≡ƒææ Ho├án hß║úo';
+    if (accuracy >= 85) return '≡ƒîƒ Xuß║Ñt sß║»c';
+    if (accuracy >= 70) return '≡ƒÄë Tß╗æt';
+    if (accuracy >= 50) return '≡ƒæì Kh├í';
+    return '≡ƒî▒ Cß║ºn cß╗æ gß║»ng';
   }
 
-  /// Hoàn thành mini-game
+  /// Ho├án th├ánh mini-game
   Future<Map<String, dynamic>> completeGame(
     String gameName,
     int score, {
@@ -621,7 +621,7 @@ class ScoreService {
   }) async {
     int stars = 0;
     int xp = 0;
-    String rating = '🌱 Cần cố gắng';
+    String rating = '≡ƒî▒ Cß║ºn cß╗æ gß║»ng';
 
     if (correctAnswers != null && totalQuestions != null && totalQuestions > 0) {
       stars = calculateGameStars(correctAnswers, totalQuestions);
@@ -634,10 +634,10 @@ class ScoreService {
       rating = calculateGameRating(scorePercent, 100);
     }
 
-    // Lưu local
+    // L╞░u local
     await _storage.saveGameScore(gameName, score);
 
-    // Chỉ cộng sao, XP và cập nhật thành tích khi game kết thúc (syncToBackend = true)
+    // Chß╗ë cß╗Öng sao, XP v├á cß║¡p nhß║¡t th├ánh t├¡ch khi game kß║┐t th├║c (syncToBackend = true)
     if (syncToBackend) {
       await _storage.addStars(stars);
       await _storage.addXp(xp);
@@ -659,7 +659,7 @@ class ScoreService {
     };
   }
 
-  /// Học từ vựng
+  /// Hß╗ìc tß╗½ vß╗▒ng
   Future<void> learnVocab(String wordKhmer) async {
     final learned = _storage.getLearnedVocab();
     if (learned.contains(wordKhmer)) return;
@@ -670,27 +670,27 @@ class ScoreService {
   }
 
 
-  // ─── STATISTICS (Dynamic from MongoDB) ────────────────────────
+  // ΓöÇΓöÇΓöÇ STATISTICS (Dynamic from MongoDB) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
-  /// Tổng số bài học đã hoàn thành (từ MongoDB learningProgress)
+  /// Tß╗òng sß╗æ b├ái hß╗ìc ─æ├ú ho├án th├ánh (tß╗½ MongoDB learningProgress)
   int get totalLessonsCompleted {
     final lp = AuthService().userProfile?['learningProgress'];
     return (lp?['totalLessonsCompleted'] as num?)?.toInt() ?? 0;
   }
 
-  /// Tổng số game đã chơi (từ MongoDB learningProgress)
+  /// Tß╗òng sß╗æ game ─æ├ú ch╞íi (tß╗½ MongoDB learningProgress)
   int get totalGamesPlayed {
     final lp = AuthService().userProfile?['learningProgress'];
     return (lp?['totalGamesPlayed'] as num?)?.toInt() ?? 0;
   }
 
-  /// Tổng thời gian học (phút) (từ MongoDB learningProgress)
+  /// Tß╗òng thß╗¥i gian hß╗ìc (ph├║t) (tß╗½ MongoDB learningProgress)
   int get totalStudyTime {
     final lp = AuthService().userProfile?['learningProgress'];
     return (lp?['totalStudyTime'] as num?)?.toInt() ?? 0;
   }
 
-  /// Skill levels (0-100) từ MongoDB
+  /// Skill levels (0-100) tß╗½ MongoDB
   int get listeningLevel {
     final lp = AuthService().userProfile?['learningProgress'];
     return (lp?['listeningLevel'] as num?)?.toInt() ?? 0;
@@ -734,13 +734,13 @@ class ScoreService {
   }
 
   int _countLearned(String type, int Function() storageCountGetter) {
-    // 1. Hãy thử lấy từ RAM cache của ProgressRepository trước (chứa đủ cả ID dạng Object và ID dự phòng)
+    // 1. H├úy thß╗¡ lß║Ñy tß╗½ RAM cache cß╗ºa ProgressRepository tr╞░ß╗¢c (chß╗⌐a ─æß╗º cß║ú ID dß║íng Object v├á ID dß╗▒ ph├▓ng)
     final cacheCount = ProgressRepository.instance.getCompletedCountSync(type);
     if (cacheCount > 0) {
       return cacheCount;
     }
 
-    // 2. Fallback sang userProfile completedLessons (hỗ trợ cả field 'type' và 'lessonType')
+    // 2. Fallback sang userProfile completedLessons (hß╗ù trß╗ú cß║ú field 'type' v├á 'lessonType')
     final lp = AuthService().userProfile?['learningProgress'];
     final completed = lp?['completedLessons'] as List?;
     if (completed != null && completed.isNotEmpty) {
@@ -754,40 +754,40 @@ class ScoreService {
     return storageCountGetter();
   }
 
-  /// Tổng số chữ đã học (MongoDB completedLessons count, fallback to local)
+  /// Tß╗òng sß╗æ chß╗» ─æ├ú hß╗ìc (MongoDB completedLessons count, fallback to local)
   int get lettersLearned => _countLearned('consonant', () => _storage.getLetterProgress().length);
 
-  /// Tổng số nguyên âm đã học
+  /// Tß╗òng sß╗æ nguy├¬n ├óm ─æ├ú hß╗ìc
   int get vowelsLearned => _countLearned('vowel', () => _storage.getVowelProgress().length);
 
-  /// Tổng số bài tập đọc đã học
+  /// Tß╗òng sß╗æ b├ái tß║¡p ─æß╗ìc ─æ├ú hß╗ìc
   int get readingLearned => _countLearned('reading', () => _storage.getReadingProgress().length);
 
-  /// Tổng số số đã học
+  /// Tß╗òng sß╗æ sß╗æ ─æ├ú hß╗ìc
   int get numbersLearned => _countLearned('number', () => _storage.getNumberProgress().length);
 
-  /// Tổng số dấu đã học
+  /// Tß╗òng sß╗æ dß║Ñu ─æ├ú hß╗ìc
   int get diacriticalsLearned => _countLearned('diacritical', () => _storage.getDiacriticalProgress().length);
 
-  /// Tổng số bài ghép vần đã học
+  /// Tß╗òng sß╗æ b├ái gh├⌐p vß║ºn ─æ├ú hß╗ìc
   int get spellingLearned => _countLearned('spelling', () => _storage.getSpellingProgress().length);
 
-  /// Tổng số bài vần đóng đã học
+  /// Tß╗òng sß╗æ b├ái vß║ºn ─æ├│ng ─æ├ú hß╗ìc
   int get closedSyllableLearned => _countLearned('closed_syllable', () => 0);
 
-  /// Tổng số bài phụ âm chân đã học
+  /// Tß╗òng sß╗æ b├ái phß╗Ñ ├óm ch├ón ─æ├ú hß╗ìc
   int get coengLearned => _countLearned('coeng', () => 0);
 
-  /// Tổng số bài luyện viết đã học
+  /// Tß╗òng sß╗æ b├ái luyß╗çn viß║┐t ─æ├ú hß╗ìc
   int get writingLearned => _countLearned('writing', () => _storage.getWritingProgress().length);
 
-  /// Tổng số từ vựng đã học
+  /// Tß╗òng sß╗æ tß╗½ vß╗▒ng ─æ├ú hß╗ìc
   int get vocabLearned => _storage.getLearnedVocab().length;
 
-  /// Tổng số bài test
+  /// Tß╗òng sß╗æ b├ái test
   int get totalTests => _storage.getTestHistory().length;
 
-  /// Điểm TB bài test
+  /// ─Éiß╗âm TB b├ái test
   double get avgTestScore {
     final history = _storage.getTestHistory();
     if (history.isEmpty) return 0;
@@ -798,7 +798,7 @@ class ScoreService {
     return total / history.length;
   }
 
-  /// Số huy chương (từ MongoDB badges + achievements)
+  /// Sß╗æ huy ch╞░╞íng (tß╗½ MongoDB badges + achievements)
   int get totalMedals {
     final profile = AuthService().userProfile;
     final badges = profile?['badges'] as List? ?? [];
@@ -808,35 +808,35 @@ class ScoreService {
     return _storage.getUnlockedAchievements().length;
   }
 
-  // ─── ACHIEVEMENTS CHECK ──────────────────────────────────────
+  // ΓöÇΓöÇΓöÇ ACHIEVEMENTS CHECK ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   Future<void> _checkAchievements() async {
-    // Bước đầu tiên: hoàn thành 1 bài học
+    // B╞░ß╗¢c ─æß║ºu ti├¬n: ho├án th├ánh 1 b├ái hß╗ìc
     if (lettersLearned >= 1) await _storage.unlockAchievement('first_lesson');
 
-    // 5 ngày streak
+    // 5 ng├áy streak
     if (streak >= 5) await _storage.unlockAchievement('streak_5');
 
-    // 10 bài test
+    // 10 b├ái test
     if (totalTests >= 10) await _storage.unlockAchievement('test_10');
 
-    // Học hết 33 phụ âm
+    // Hß╗ìc hß║┐t 33 phß╗Ñ ├óm
     if (lettersLearned >= 33) await _storage.unlockAchievement('all_consonants');
 
-    // 100% bài test
+    // 100% b├ái test
     final history = _storage.getTestHistory();
     if (history.any((t) => t['correct'] == t['total'])) {
       await _storage.unlockAchievement('perfect_test');
     }
 
-    // Nuôi thú 30 lần
-    // (sẽ được gọi từ pet screen)
+    // Nu├┤i th├║ 30 lß║ºn
+    // (sß║╜ ─æ╞░ß╗úc gß╗ìi tß╗½ pet screen)
   }
 
-  /// Kiểm tra achievement có mở khóa chưa
+  /// Kiß╗âm tra achievement c├│ mß╗ƒ kh├│a ch╞░a
   bool isAchievementUnlocked(String id) =>
       _storage.getUnlockedAchievements().contains(id);
 
-  /// Đồng bộ kết quả game lên backend MongoDB Atlas
+  /// ─Éß╗ông bß╗Ö kß║┐t quß║ú game l├¬n backend MongoDB Atlas
   Future<void> _syncGameResult(
     String gameName,
     int score, {
@@ -846,25 +846,25 @@ class ScoreService {
     try {
       final authService = AuthService();
       if (!authService.isAuthenticated) {
-        if (kDebugMode) print('[ScoreService] Chưa đăng nhập. Không đồng bộ lên backend.');
+        if (kDebugMode) print('[ScoreService] Ch╞░a ─æ─âng nhß║¡p. Kh├┤ng ─æß╗ông bß╗Ö l├¬n backend.');
         return;
       }
 
       String gameType = 'catch_letter';
-      if (gameName.contains('catch') || gameName == 'Bắt chữ Khmer') {
+      if (gameName.contains('catch') || gameName == 'Bß║»t chß╗» Khmer') {
         gameType = 'catch_letter';
-      } else if (gameName.contains('match') || gameName == 'Nối từ' || gameName.contains('Giải cứu') || gameName.contains('word_search')) {
+      } else if (gameName.contains('match') || gameName == 'Nß╗æi tß╗½' || gameName.contains('Giß║úi cß╗⌐u') || gameName.contains('word_search')) {
         gameType = 'match_word';
-      } else if (gameName.contains('arrange') || gameName == 'Sắp xếp chữ') {
+      } else if (gameName.contains('arrange') || gameName == 'Sß║»p xß║┐p chß╗»') {
         gameType = 'arrange_letter';
-      } else if (gameName.contains('listening') || gameName == 'Trắc nghiệm nghe') {
+      } else if (gameName.contains('listening') || gameName == 'Trß║»c nghiß╗çm nghe') {
         gameType = 'listening_quiz';
-      } else if (gameName.contains('pronunciation') || gameName == 'Trắc nghiệm phát âm') {
+      } else if (gameName.contains('pronunciation') || gameName == 'Trß║»c nghiß╗çm ph├ít ├óm') {
         gameType = 'pronunciation_quiz';
       }
 
       final url = Uri.parse('${authService.baseUrl}/games/result');
-      if (kDebugMode) print('[ScoreService] Đồng bộ kết quả game lên backend: $url ($gameName -> $gameType)');
+      if (kDebugMode) print('[ScoreService] ─Éß╗ông bß╗Ö kß║┐t quß║ú game l├¬n backend: $url ($gameName -> $gameType)');
 
       final response = await http.post(
         url,
@@ -883,20 +883,20 @@ class ScoreService {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        if (kDebugMode) print('[ScoreService] Đồng bộ kết quả game lên backend thành công!');
-        // Tải lại profile mới nhất từ MongoDB
+        if (kDebugMode) print('[ScoreService] ─Éß╗ông bß╗Ö kß║┐t quß║ú game l├¬n backend th├ánh c├┤ng!');
+        // Tß║úi lß║íi profile mß╗¢i nhß║Ñt tß╗½ MongoDB
         await authService.fetchProfile();
       } else {
         if (kDebugMode) {
-          print('[ScoreService] Đồng bộ kết quả game thất bại. Mã lỗi: ${response.statusCode}, Nội dung: ${response.body}');
+          print('[ScoreService] ─Éß╗ông bß╗Ö kß║┐t quß║ú game thß║Ñt bß║íi. M├ú lß╗ùi: ${response.statusCode}, Nß╗Öi dung: ${response.body}');
         }
       }
     } catch (e) {
-      if (kDebugMode) print('[ScoreService] Lỗi khi đồng bộ kết quả game: $e');
+      if (kDebugMode) print('[ScoreService] Lß╗ùi khi ─æß╗ông bß╗Ö kß║┐t quß║ú game: $e');
     }
   }
 
-  /// Đồng bộ kết quả Viết lên backend (hỗ trợ đánh giá 2 lớp bằng AI)
+  /// ─Éß╗ông bß╗Ö kß║┐t quß║ú Viß║┐t l├¬n backend (hß╗ù trß╗ú ─æ├ính gi├í 2 lß╗¢p bß║▒ng AI)
   Future<Map<String, dynamic>?> _syncWritingResult(
     int score, {
     String? lessonId,
